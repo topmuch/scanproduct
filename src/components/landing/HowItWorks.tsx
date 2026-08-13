@@ -2,6 +2,7 @@
 
 import { FileText, QrCode, TrendingUp, ArrowRight } from "lucide-react";
 import { QRCodeCanvas } from "qrcode.react";
+import { getScanUrl } from "@/lib/qr-utils";
 import { AnimatedSection } from "./AnimatedSection";
 import { SectionBadge } from "./SectionBadge";
 
@@ -34,7 +35,7 @@ const STEPS: Step[] = [
     number: 2,
     icon: (
       <QRCodeCanvas
-        value="https://verifscan.roomscan.pro/1/demo-step"
+        value={getScanUrl("demo-step")}
         size={96}
         fgColor="#10B981"
         level="M"

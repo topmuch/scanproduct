@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { ArrowRight, Check, ShieldCheck, Lock, TrendingUp } from "lucide-react";
 import { QRCodeCanvas } from "qrcode.react";
+import { getScanUrl } from "@/lib/qr-utils";
 import { CountUp } from "./CountUp";
 
 const fadeUp = {
@@ -225,7 +226,7 @@ export function Hero() {
               >
                 <div className="rounded-lg bg-white p-1">
                   <QRCodeCanvas
-                    value="https://verifscan.roomscan.pro/1/demo-bissap"
+                    value={getScanUrl("demo-bissap")}
                     size={80}
                     level="M"
                     marginSize={1}

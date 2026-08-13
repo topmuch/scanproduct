@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { QRCodeCanvas } from "qrcode.react";
 import { Download, Copy, Check, QrCode } from "lucide-react";
 import type { LotWithDetails } from "@/lib/public-data";
+import { getScanUrl } from "@/lib/qr-utils";
 
 type Props = {
   lot: LotWithDetails;
@@ -18,7 +19,9 @@ export function QRCodeSection({ lot }: Props) {
   const canvasWrapperRef = useRef<HTMLDivElement>(null);
   const [copied, setCopied] = useState(false);
 
-  const publicUrl = `https://verifscan.roomscan.pro/1/${lot.id}`;
+  // Absolute URL pointing to the public product passport route `/p/[lotId]`.
+  // Built at runtime from the current origin so it works in every deployment.
+  const publicUrl = getScanUrl(lot.id);
 
   function handleDownload() {
     const canvas = canvasWrapperRef.current?.querySelector("canvas");

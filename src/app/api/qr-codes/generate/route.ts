@@ -52,17 +52,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate the QR codes
-    const baseUrl = process.env.NEXT_PUBLIC_SCAN_URL || "https://verifscan.roomscan.pro/1";
+    // Generate the QR codes — each encodes the public product passport URL
+    // `/p/<lotId>` so scanning opens the lot's digital passport page.
+    const baseUrl =
+      process.env.NEXT_PUBLIC_SCAN_URL?.replace(/\/$/, "") ||
+      "https://verifscan.sn";
     const qrCodes = [];
 
     for (let i = 0; i < qty; i++) {
-      // Generate a unique code
+      // Generate a unique code (stored in DB for tracking/analytics)
       const uniqueCode = `${lot.lotNumber || lot.reference}-${Date.now()}-${i}-${Math.random()
         .toString(36)
         .slice(2, 8)
         .toUpperCase()}`;
-      const publicUrl = `${baseUrl}/${lot.id}?code=${uniqueCode}`;
+      // The scannable URL points to the public route `/p/[lotId]`.
+      const publicUrl = `${baseUrl}/p/${lot.id}?code=${uniqueCode}`;
 
       const qrCode = await db.qRCode.create({
         data: {

@@ -14,10 +14,11 @@ import {
   Clock,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { QRCodeCanvas } from "qrcode.react";
 import { formatNombre } from "@/lib/fabricant-data";
 import { useFabricantNav } from "@/lib/fabricant-store";
 import { useLots, useProduits } from "@/lib/fabricant-data-store";
-import { downloadQRCode } from "@/lib/qr-utils";
+import { downloadQRCode, getScanUrl } from "@/lib/qr-utils";
 import { ProductImage } from "@/components/fabricant/ProductImage";
 import { toast } from "sonner";
 import {
@@ -90,7 +91,7 @@ export function LotDetailPage() {
   const scansParJour = Math.max(1, Math.round(lot.scans / 30));
 
   function copyLink() {
-    const link = `https://verifscan.roomscan.pro/1/${lot!.id}`;
+    const link = getScanUrl(lot!.id);
     if (navigator.clipboard) {
       navigator.clipboard.writeText(link).catch(() => {});
     }
@@ -99,7 +100,8 @@ export function LotDetailPage() {
   }
 
   function handleDownloadQR() {
-    downloadQRCode(lot!.numero, `${lot!.numero}-qr.png`);
+    // Encode the real public scan URL so the downloaded QR is scannable.
+    downloadQRCode(getScanUrl(lot!.id), `${lot!.numero}-qr.png`);
     toast.success(`QR code de ${lot!.numero} téléchargé`);
   }
 
@@ -204,19 +206,19 @@ export function LotDetailPage() {
             title="QR codes générés"
             subtitle={`${formatNombre(lot.qrCodes)} codes associés à ce lot`}
             action={
-              <GradientButton className="!py-2">
+              <GradientButton className="!py-2" onClick={handleDownloadQR}>
                 <Download className="h-4 w-4" />
-                Télécharger tous les QR codes
+                Télécharger le QR code
               </GradientButton>
             }
           >
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {Array.from({ length: 8 }).map((_, i) => (
+              {Array.from({ length: Math.min(8, Math.max(1, lot.qrCodes)) }).map((_, i) => (
                 <div
                   key={i}
                   className="flex flex-col items-center rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] p-3"
                 >
-                  <MiniQR color="#111827" />
+                  <RealMiniQR lotId={lot.id} />
                   <span className="mt-2 font-mono text-[10px] text-[#6B7280]">
                     QR-{String(i + 1).padStart(3, "0")}
                   </span>
@@ -227,8 +229,11 @@ export function LotDetailPage() {
               ))}
             </div>
             <p className="mt-3 text-center text-[12px] text-[#9CA3AF]">
-              Affichage de 8 QR codes sur {formatNombre(lot.qrCodes)} —{" "}
-              <button className="font-medium text-[#2563EB] hover:underline">
+              Affichage de {Math.min(8, Math.max(1, lot.qrCodes))} QR codes sur {formatNombre(lot.qrCodes)} —{" "}
+              <button
+                className="font-medium text-[#2563EB] hover:underline"
+                onClick={() => setPage("qr-codes")}
+              >
                 Voir tous les QR codes →
               </button>
             </p>
@@ -405,34 +410,16 @@ function ActionButton({
   );
 }
 
-function MiniQR({ color }: { color: string }) {
-  const N = 9;
-  const cells: boolean[] = [];
-  for (let i = 0; i < N * N; i++) {
-    const r = Math.floor(i / N);
-    const c = i % N;
-    const inCorner =
-      (r < 2 && c < 2) || (r < 2 && c >= N - 2) || (r >= N - 2 && c < 2);
-    if (inCorner) {
-      const rr = r < 2 ? r : r - (N - 2);
-      const cc = c < 2 ? c : c - (N - 2);
-      cells.push(rr === 0 && cc === 0);
-    } else {
-      cells.push((r * 7 + c * 11 + (r * c) % 3) % 2 === 0);
-    }
-  }
+function RealMiniQR({ lotId }: { lotId: string }) {
   return (
-    <div
-      className="grid w-full gap-0"
-      style={{ gridTemplateColumns: `repeat(${N}, 1fr)` }}
-    >
-      {cells.map((on, i) => (
-        <div
-          key={i}
-          className="aspect-square"
-          style={{ backgroundColor: on ? color : "white" }}
-        />
-      ))}
-    </div>
+    <QRCodeCanvas
+      value={getScanUrl(lotId)}
+      size={84}
+      level="M"
+      marginSize={0}
+      fgColor="#111827"
+      bgColor="#FFFFFF"
+      style={{ width: "100%", height: "auto" }}
+    />
   );
 }

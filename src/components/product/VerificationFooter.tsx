@@ -1,6 +1,7 @@
 import { Lock, ShieldCheck, Facebook, Twitter } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import type { LotWithDetails } from "@/lib/public-data";
+import { getScanOrigin } from "@/lib/qr-utils";
 
 type Props = {
   lot: LotWithDetails;
@@ -10,11 +11,15 @@ type Props = {
  * VerificationFooter — dark card at the bottom showing blockchain verification
  * hash and share buttons.
  * Server component (links open new tabs — no client interactivity needed).
+ *
+ * NOTE: `getScanUrl` reads `window.location.origin` on the client, but this is
+ * a server component so we build the URL manually from `getScanOrigin()` (which
+ * falls back to the `NEXT_PUBLIC_SCAN_URL` env var on the server).
  */
 export function VerificationFooter({ lot }: Props) {
   const hash = lot.blockchainHash ?? null;
   const shortHash = hash ? `${hash.slice(0, 12)}…${hash.slice(-8)}` : null;
-  const publicUrl = `https://verifscan.roomscan.pro/1/${lot.id}`;
+  const publicUrl = `${getScanOrigin().replace(/\/$/, "")}/p/${lot.id}`;
   const shareText = encodeURIComponent(
     `Découvrez le passeport numérique VerifScan de ce produit : ${publicUrl}`
   );

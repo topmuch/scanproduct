@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import Link from "next/link";
 import type { Metadata } from "next";
 
 import {
@@ -62,7 +62,36 @@ export default async function ProductPage({
 
   const lot = await getLotWithDetails(lotId);
   if (!lot) {
-    notFound();
+    // Graceful fallback — a scanned QR code whose lot is not (yet) registered
+    // should never show a raw server 404. Instead we render a friendly
+    // "product not found" page that keeps the public header/footer and lets
+    // the visitor browse the public catalog.
+    return (
+      <div className="flex min-h-screen flex-col bg-[#F9FAFB]">
+        <PublicHeader />
+        <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col items-center justify-center px-4 py-20 text-center">
+          <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-[#FEF3C7] text-[40px]">
+            🔍
+          </div>
+          <h1 className="font-display text-[28px] font-bold text-[#111827] sm:text-[32px]">
+            Produit introuvable
+          </h1>
+          <p className="mt-3 max-w-md text-[15px] leading-relaxed text-[#6B7280]">
+            Ce QR code ne correspond à aucun lot enregistré pour le moment.
+            Le produit n&apos;a peut-être pas encore été publié, ou le lot a été
+            retiré. Vous pouvez consulter l&apos;ensemble de nos produits
+            vérifiés dans le catalogue public.
+          </p>
+          <Link
+            href="/produits"
+            className="mt-8 inline-flex items-center gap-2 rounded-lg bg-[#10B981] px-5 py-3 text-[14px] font-semibold text-white shadow-sm transition-colors hover:bg-[#059669]"
+          >
+            Voir le catalogue public
+          </Link>
+        </main>
+        <PublicFooter />
+      </div>
+    );
   }
 
   // Fire and forget — don't block the page render on scan recording

@@ -30,8 +30,9 @@ import { toast } from "sonner";
 
 // ============================================================================
 // QRCodeDisplay — real scannable QR code using qrcode.react.
-// Encodes a URL like https://verifscan.roomscan.pro/1/<code> so the QR is functional.
-// (getScanUrl is imported from @/lib/qr-utils.)
+// Encodes the public scan URL `${origin}/p/<lotId>` (built by getScanUrl from
+// @/lib/qr-utils) so every QR is fully functional and resolves to the lot's
+// digital passport page.
 // ============================================================================
 function QRCodeDisplay({
   code,

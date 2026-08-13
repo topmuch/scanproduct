@@ -34,6 +34,7 @@ import {
 import { QRCodeCanvas } from "qrcode.react";
 import { MARQUE, SESSIONS, JOURNAL_CONNEXION } from "@/lib/fabricant-data";
 import { useFabricantNav, type SettingsSection } from "@/lib/fabricant-store";
+import { getScanUrl } from "@/lib/qr-utils";
 import { cn } from "@/lib/utils";
 
 // ============================================================================
@@ -571,7 +572,7 @@ function LogoSection() {
           <div className="flex flex-col items-center gap-2">
             <div className="rounded-xl border border-[#E5E7EB] bg-white p-3 shadow-sm">
               <QRCodeCanvas
-                value="https://verifscan.roomscan.pro/1/preview"
+                value={getScanUrl("preview")}
                 size={160}
                 level="H"
                 marginSize={1}

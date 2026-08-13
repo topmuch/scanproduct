@@ -5,15 +5,34 @@ import { createRoot } from "react-dom/client";
 import { QRCodeCanvas } from "qrcode.react";
 
 /**
- * Base URL used to build the scan URL embedded inside QR codes.
- * Falls back to the production VerifScan URL when the env var is not set.
+ * Resolves the absolute origin that QR codes should point to.
+ *
+ * QR codes MUST encode an absolute URL (https://...) so that, once printed
+ * and scanned by a phone, the camera opens the actual product passport page.
+ *
+ * - On the client we use `window.location.origin` so the URL always matches
+ *   the deployment the user is currently browsing (sandbox preview, prod…).
+ * - On the server (SSR / API routes) we fall back to the
+ *   `NEXT_PUBLIC_SCAN_URL` env var, or a sensible default.
  */
-export const SCAN_BASE_URL =
-  process.env.NEXT_PUBLIC_SCAN_URL || "https://verifscan.roomscan.pro/1";
+export function getScanOrigin(): string {
+  if (typeof window !== "undefined") {
+    return window.location.origin;
+  }
+  return process.env.NEXT_PUBLIC_SCAN_URL || "https://verifscan.sn";
+}
 
-/** Builds the scannable URL for a given QR code identifier. */
-export function getScanUrl(code: string): string {
-  return `${SCAN_BASE_URL}/${code}`;
+/**
+ * Builds the absolute, scannable URL for a given lot.
+ *
+ * The public product passport lives at `/p/[lotId]` (see
+ * `src/app/p/[lotId]/page.tsx`), so the URL is `${origin}/p/${lotId}`.
+ *
+ * @param lotId The lot identifier (database cuid for real lots).
+ */
+export function getScanUrl(lotId: string): string {
+  const base = getScanOrigin().replace(/\/$/, "");
+  return `${base}/p/${lotId}`;
 }
 
 /**
