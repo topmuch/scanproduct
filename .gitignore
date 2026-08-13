@@ -32,6 +32,8 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+# Allow .env.example to be committed (template for deployment)
+!.env.example
 
 # vercel
 .vercel
