@@ -1,0 +1,509 @@
+# VerifScan — Worklog
+
+Project: VerifScan landing page (SaaS de traçabilité alimentaire via QR codes)
+Slogan: "La vérité au bout du scan"
+
+Design system:
+- Couleurs primaires: #2563EB (bleu), #10B981 (vert), #F59E0B (orange)
+- Fond: #FFFFFF + #F9FAFB (sections alternées)
+- Typo: Poppins (titres) + Inter (corps)
+- Style: vibrant, lumineux, moderne, mobile-first, pas de dark mode
+
+---
+Task ID: 1
+Agent: main
+Task: Configurer layout.tsx (fonts Poppins+Inter, metadata VerifScan) et globals.css (couleurs, design system)
+
+Work Log:
+- Exploration de la structure du projet existant
+- Vérification du dev server (tourne sur port 3000)
+
+Stage Summary:
+- Prêt à configurer les fonts et le design system VerifScan
+
+---
+Task ID: 2-12
+Agent: main
+Task: Construction complète de la page d'accueil VerifScan (toutes les sections) + vérification end-to-end
+
+Work Log:
+- Tâche 1: layout.tsx — fonts Poppins (titres) + Inter (corps) via next/font, metadata VerifScan (title, description, OG, Twitter, FR locale). globals.css — design system VerifScan (couleurs #2563EB/#10B981/#F59E0B, variables CSS, utilitaires gradient, animations keyframes float/slow-spin).
+- Tâche 2: Composants utilitaires — AnimatedSection (fade-in + slide-up au scroll via useInView), CountUp (animation 0→valeur avec easeOutExpo), SectionBadge (pill eyebrow), Logo (icône QR stylisée bleu+vert + wordmark, variant light pour footer).
+- Tâche 3: Header — sticky fixed, blur backdrop au scroll, nav desktop (5 liens + underline animé), boutons Connexion + Devenir partenaire (gradient), badge +10 points flottant, drawer mobile (hamburger + AnimatePresence, scroll lock).
+- Tâche 4: Hero — gradient subtil EFF6FF→F0FDF4→white, badge passeport numérique, H1 avec "authenticité" en bleu, CTA + avantages inline, 3 stats avec CountUp, logos clients, mockup smartphone 3D animé (float) avec écran produit Bissap, badges flottants blockchain/scanné 0.3s, cercles flous décoratifs.
+- Tâche 5: Features — 3 cards (Traçabilité totale/Export simplifié/Statistiques utiles) avec icônes en cercles colorés, hover élévation translateY, liens Découvrir, apparition staggered au scroll.
+- Tâche 6: HowItWorks — timeline horizontale 3 étapes (numéros bleu/vert/orange dans cercles, ligne de connexion gradient), illustration mini-processus, CTA Démarrer maintenant, responsive vertical sur mobile.
+- Tâche 7: Testimonials — 3 cards (Marième Diop/Ibrahima Ndiaye/Awa Sow) avec étoiles, citations, avatars initiales colorés, border-left bleu, + 4 stats en bas (250+/4.9/12458/4 pays).
+- Tâche 8: StatsBanner — gradient bleu profond #2563EB→#1E40AF, 4 stats avec icônes blanches + CountUp, badge essai gratuit 14 jours.
+- Tâche 9: Pricing — toggle Mensuel/Annuel animé (layoutId), 3 plans (Starter/Pro mis en avant/Business), prix FCFA, anciens prix barrés en annuel, badge "Le plus populaire" gradient orange, listes fonctionnalités avec checkmarks.
+- Tâche 10: FinalCTA — gradient F9FAFB→EFF6FF, H2 + sous-titre, 2 boutons (gradient + outline), 4 avantages. Footer — fond #0F172A, 5 colonnes (brand+description+badge blockchain+socials / Produit / Entreprise / Légal / Contact avec icônes), ligne séparation, copyright + "Conçu au Sénégal".
+- Tâche 11: page.tsx assemblé avec min-h-screen flex flex-col (footer sticky/pushed). Lint passé sans erreur. next.config.ts: ajout allowedDevOrigins.
+- Tâche 12: Vérification end-to-end Agent Browser:
+  * Page se charge (200), titre correct "VerifScan — La vérité au bout du scan"
+  * Snapshot confirme toutes les sections rendues (header, hero, features, how-it-works, testimonials, stats, pricing, CTA, footer)
+  * Aucune erreur console / aucune erreur runtime / aucune erreur d'hydratation
+  * Test toggle pricing: Mensuel 10000/25000/75000 → Annuel 7000/17500/52500 (avec anciens prix barrés, -30% correct)
+  * Test menu mobile: hamburger affiché <768px, drawer s'ouvre avec nav complète + CTAs + fermeture
+  * VLM a validé visuellement: header sticky ✓, hero avec mockup ✓, couleurs marque cohérentes ✓, footer complet ✓, timeline 3 étapes avec cercles colorés + ligne connector ✓, témoignages 3 cards avec étoiles/avatars ✓
+
+Stage Summary:
+- Page d'accueil VerifScan livrée: 9 sections complètes, design system respecté, animations Framer Motion (fade/slide/float/count-up/toggle), responsive mobile/tablette/desktop, sticky footer.
+- Composants modulaires dans src/components/landing/ (Header, Hero, PhoneMockup, Features, HowItWorks, Testimonials, StatsBanner, Pricing, FinalCTA, Footer + utilitaires AnimatedSection/CountUp/SectionBadge/Logo).
+- Lint OK, dev server OK (port 3000), aucune erreur.
+- Vérification browser end-to-end réussie (interactivité + rendu visuel validés par VLM).
+
+---
+Task ID: 3-a
+Agent: admin-dashboard-builder
+Task: Build the SuperAdmin Dashboard page
+
+Work Log:
+- Read worklog.md and explored existing admin infra (admin-store.ts, admin-data.ts, ui.tsx, charts.tsx, landing/CountUp.tsx) to align with established patterns.
+- Identified required exports from admin-data.ts: GLOBAL_KPI, SIGNUPS_DATA, PLAN_DISTRIBUTION, TOP_MAKERS, REVENUE_DATA, ACTIVITY_LOGS, formatFCFA.
+- Created src/components/admin/pages/DashboardPage.tsx ("use client") exporting DashboardPage.
+- Built 4 KPI cards (Total Fabricants, Revenus MRR, Scans Totaux, Tickets Ouverts) in responsive grid with colored 48px icon circles, CountUp values, trend arrows (ArrowUpRight green / ArrowDownRight red) and contextual subtext.
+- Built 4 chart cards: AreaTrend (Nouveaux fabricants, #2563EB), Donut (Répartition des plans, center total 258), BarH (Top fabricants, noms tronqués à 22 chars, h=380), BarV (Revenus en milliers de FCFA, #10B981).
+- Built Activité récente table: 5 columns (Timestamp, Type badge, Description, Utilisateur avatar 32px gradient + nom, Action Voir), 8 premières lignes de ACTIVITY_LOGS, hover bg #F9FAFB, overflow-x-auto, footer "Affichage 1-8 sur 162" + bouton Suivant.
+- Mapped activity types to Badge colors: Inscription→green, Paiement→blue, Support→yellow, Alerte→red, Système→gray.
+- Wired "Voir tout" + "Voir" actions to useAdminNav setPage("support").
+- Ran bunx eslint on the file — passed with zero errors/warnings.
+
+Stage Summary:
+- DashboardPage.tsx livré (1 fichier créé, aucun fichier existant modifié hors worklog).
+- KPIs animés via CountUp, 4 charts Recharts via composants réutilisables (AreaTrend/Donut/BarH/BarV), table d'activité responsive avec scroll horizontal.
+- Design system respecté: palette #2563EB/#10B981/#F59E0B/#EF4444, Cards rounded-xl border #E5E7EB, hover -translate-y-0.5 + shadow.
+- ESLint OK, prêt à être monté dans le routeur admin.
+
+---
+Task ID: 6-a-7-a
+Agent: admin-categories-support-builder
+Task: Build the SuperAdmin Categories page + Support list & ticket detail pages
+
+Work Log:
+- Read worklog.md and existing infrastructure (admin-store.ts, admin-data.ts, ui.tsx, AdminSidebar/AdminHeader) to understand patterns and types.
+- Confirmed CATEGORIES (9 entries, 8 active + 1 inactive) and TICKETS (8 entries) data shapes + formatDate/formatFCFA helpers.
+- Verified sonner + lucide-react are installed; eslint config is relaxed (no-unused-vars off, etc.).
+- Created `src/components/admin/pages/` directory.
+- File 1 — CategoriesPage.tsx:
+  * SectionTitle with dynamic active-count subtitle + "Nouvelle catégorie" primary button.
+  * Responsive grid (1/2/3 cols) of category cards: 48px emoji in colored circle, name, product count, active/inactive Badge, hover-revealed action row (Edit / Pause-Play toggle / Trash — disabled when products > 0).
+  * Categories stored in component state (deep copy of CATEGORIES) so add/edit/delete/toggle work live; cards sorted by `order`.
+  * Modal: overlay click-to-close, body scroll lock, 500px white rounded-2xl, form with Nom (3-50 char validation), Emoji (live 40px preview), Description (textarea maxLength 200 + counter), Ordre (number + help text), Statut (pill toggle Active/Inactive). Footer Annuler (outline) + Enregistrer (primary, disabled when errors or required fields empty). On save: updates or generates new ID + toast.success via sonner.
+- File 2 — SupportPage.tsx:
+  * SectionTitle "Support Client" + "Créer un ticket interne" button (toast.info placeholder).
+  * Custom pill Tabs: Ouverts(12) / En cours(5) / Résolus(145) / Tous(162) with count badges — active = bg #2563EB white, default = 1px #E5E7EB hover #F9FAFB.
+  * Two filter pill rows (Priorité + Catégorie) with "Tous" reset + single-select toggle behavior; null = all.
+  * Card-wrapped table (overflow-x-auto, min-w-[1100px]) with 9 columns: ID mono / Sujet (clickable → openDetail) / Demandeur (32px colored avatar + name + company) / Priorité Badge (gray/blue/orange/red) / Statut Badge (blue/yellow/gray/green) / Assigné (gradient AV avatar or italic "Non assigné") / Créé le (formatDate) / Dernière réponse / Actions (Eye/UserPlus/XCircle with toast placeholders).
+  * Row h-16, hover #F9FAFB, empty-state row when no matches.
+- File 3 — TicketDetailPage.tsx:
+  * Resolves ticket via selectedId (fallback TICKETS[0]); "← Retour aux tickets" calls goBack().
+  * 2-column grid lg:[1fr_340px].
+  * Left: Card with ticket header (#ID mono, h2 subject, Statut Badge + "Changer" indicator, Priorité Badge + "Changer" indicator) then conversation section. Messages: client = bg #F9FAFB rounded-xl with colored avatar; admin = bg #EFF6FF border-left 3px #2563EB with gradient "AV" avatar + "Admin" pill badge. Stack gap-4.
+  * Reply zone Card: textarea min-h-120 + ghost buttons (Joindre / Réponse type / Mentionner) + "Envoyer et fermer" (outline) + "Envoyer" (primary with Send icon).
+  * Right: Informations Card (Demandeur link, Email with Copy button + clipboard + toast, Plan Badge, Créé le, Assigné à with ChevronDown, Tags badges + dashed "+ Ajouter" pill). InternalNotesCard with lock icon, list of notes on bg #FFFBEB (date #92400E + author + content), live Add input+button (Enter to submit). Actions Card stacked outline buttons (Changer priorité / Réassigner / Fusionner avec...) + success "Fermer le ticket" + danger "Supprimer".
+- Ran eslint on all three files → 0 errors / 0 warnings. TypeScript check also clean (no errors in admin/pages; only unrelated skills/ and examples/ errors outside scope).
+
+Stage Summary:
+- Three production-ready SuperAdmin pages delivered in `src/components/admin/pages/`: CategoriesPage.tsx (grid + create/edit modal with validation + sonner toasts + live toggle/delete), SupportPage.tsx (tabbed + filtered ticket table wired to openDetail navigation), TicketDetailPage.tsx (conversation thread + reply zone + sidebar Info/Notes/Actions cards with live note adding).
+- All three use only the shared ui.tsx primitives (PageContainer/Card/CardHeader/Badge/Button/SectionTitle), `useAdminNav` for nav, lucide-react icons, and `sonner` toast for feedback — fully consistent with the existing admin design system.
+- Lint + TypeScript clean. No files modified outside the 3 new page files + worklog append.
+
+---
+Task ID: 4-a
+Agent: admin-users-builder
+Task: Build the SuperAdmin Users list + detail pages
+
+Work Log:
+- Read worklog.md, admin-data.ts (MAKERS_TABLE, ALL_MAKERS_COUNT=258, formatFCFA, formatDate, Maker type), admin-store.ts (useAdminNav), ui.tsx (PageContainer, Card, CardHeader, Badge, SectionTitle, Button), charts.tsx (AreaTrend).
+- Created src/components/admin/pages/ directory.
+- Built UsersPage.tsx (list page): SectionTitle with "Exporter CSV" action (real CSV export via Blob/download), search input (bg #F9FAFB, border #E5E7EB, h-10, Search icon left), 4 status filter pills (Tous/Actifs/Inactifs/Suspendus) with counts and active=blue state, Card wrapping overflow-x-auto table with 9 columns (checkbox, Entreprise with logoColor circle+company+contact, Contact, Plan Badge, Statut Badge with dot, Produits, Scans fr-FR, Inscription formatDate, Actions ⋮). Each row h-16, hover #F9FAFB, selected bg light blue. Row dropdown menu (openId state + outside-click close via mousedown listener) with 6 actions: Voir détails (openDetail("user-detail", id)), Modifier, Changer de plan, Suspendre/Réactiver (icon toggles Pause/Play based on status), Envoyer un message, Supprimer (red). Bulk actions sticky bar shown when selection>0: count chip + Suspendre/Changer de plan/Exporter sélection/Tout désélectionner. Empty state for no results. Pagination footer with "Affichage 1-N sur 258", page size selector 20|50|100, Précédent/1/2/3/.../Suivant.
+- Built UserDetailPage.tsx (detail page): "← Retour" button (goBack), grid lg:grid-cols-[1fr_360px]. Left column: (1) Informations entreprise Card with 100px logoColor circle (border-2 #E5E7EB), H2 company, plan+status badges, ID; 6 InfoRows in 3-col grid (Email with Copy, Téléphone with tel: link, WhatsApp with wa.me link, Adresse, Date d'inscription, Dernière connexion). (2) Abonnement actuel Card with plan badge, price (formatFCFA(mrr)+" FCFA/mois"), next billing date, "À jour" green chip; 3 buttons (Changer de plan / Voir l'historique / Annuler l'abonnement danger outline); 3 quota boxes (Produits text, QR codes progress bar with % >80%=orange else green and "used / total" hint, Statistiques "Illimité"). (3) Produits Card with mini table (Photo colored square gradient, Nom, Catégorie, Lots, Scans, Statut Badge) or empty state, "Voir tous les produits" outline button full width. (4) Historique des scans Card: AreaTrend (#2563EB, height 240) using scans30d mapped to {label:"J1..J30", value}; total scans + moyenne/jour stat boxes; Top produits scannés list (top 5 by scans) with horizontal bar colored logoColor. Right column: Actions rapides Card (Contacter WhatsApp success, Envoyer email, Créer ticket support, Ajouter une note — all full width stacked); Notes internes Card (notes list with date/author/content + input + Enregistrer button); Activité récente Card (timeline with vertical line + colored dots, date+label, "Voir tout" ghost button).
+- Ran eslint on both files: PASSED (no errors). Ran tsc --noEmit: no errors specific to the two new files.
+
+Stage Summary:
+- Two production-quality admin pages delivered: UsersPage.tsx (list) and UserDetailPage.tsx (detail) in src/components/admin/pages/.
+- Both use the existing admin design system (PageContainer, Card, CardHeader, Badge, SectionTitle, Button, AreaTrend) and are wired to the Zustand nav store (openDetail/goBack) and centralized mock data (MAKERS_TABLE, ALL_MAKERS_COUNT, formatFCFA, formatDate).
+- UsersPage supports: live search (company/email/contact), 4 status filter pills with counts, multi-select via checkboxes with bulk actions bar, per-row dropdown with 6 actions, real CSV export (filtered or selected), pagination footer.
+- UserDetailPage renders full maker context: company header, contact grid with copy/call/WhatsApp shortcuts, subscription card with quota progress bars, products mini-table, 30-day scans AreaTrend chart with top-products ranking, quick actions, internal notes, and activity timeline.
+- Lint + TypeScript clean. No files modified outside the two new pages and the appended worklog entry.
+
+---
+Task ID: 8-a
+Agent: admin-stats-builder
+Task: Build the SuperAdmin Statistics page
+
+Work Log:
+- Read worklog.md and explored existing admin infra (admin-data.ts, ui.tsx, charts.tsx, CountUp.tsx) to align with the established design system.
+- Confirmed data shapes: GLOBAL_KPI, SIGNUPS_DATA, REVENUE_DATA, SCANS_DAILY, SCANS_BY_HOUR, SCANS_BY_WEEKDAY, RETENTION_DATA, CHURN_DATA, TOP_CITIES (10), TOP_MAKERS (10), PERF_DATA ({latency, errorRate, uptime} each {day, value}[]).
+- Created `src/components/admin/pages/StatsPage.tsx` ("use client") exporting `StatsPage` + default export.
+- Header: SectionTitle "Statistiques Globales" with action = period pill row (7j | 30j | 90j | 12m | Personnalisé, default "30j" via useState) on the left + outline "Exporter rapport PDF" Button with FileDown icon on the right. Active pill = bg #2563EB white; inactive = border #E5E7EB. Export triggers sonner toast.success with selected period.
+- Section 1 "Vue d'ensemble": 6 KPI cards (grid 2/3/6 cols) — Total fabricants 258 (Users/blue), Fabricants actifs 245 (UserCheck/green), Total produits 1247 (Package/orange), Total lots 8934 (Layers/purple), Total QR codes 45678 (QrCode/blue), Total scans 1245892 (ScanLine/green). Each card: 40px colored icon circle, uppercase xs label, CountUp value text-2xl bold. Hover -translate-y-0.5 + shadow.
+- Section 2 "Croissance": 4 chart Cards (2-col grid). BarV Inscriptions (#2563EB), AreaTrend Revenus MRR (#10B981), LineTrend Rétention (#8B5CF6), LineTrend Churn (#EF4444). All height 260.
+- Section 3 "Activité": 4 visuals (2-col grid). AreaTrend Scans par jour (#2563EB), BarV Scans par heure (#F59E0B), BarV Scans par jour de semaine (#10B981), and a list-card "Top produits scannés" rendering all 10 TOP_MAKERS rows on bg #F9FAFB with rank circle (gold/silver/bronze palette), truncated name, gradient bar #10B981→#2563EB sized relative to top maker, and scans count.
+- Section 4 "Géographie": full-width Card with CardHeader + 2-col layout. Left = stylized Sénégal map placeholder (dashed-border rounded-2xl, gradient bg from #F9FAFB→#EFF6FF, big translucent 🗺️, "Sénégal 🇸🇳" label, 5 absolutely-positioned colored dots for Dakar/Thiès/Saint-Louis/Mbour/Touba with sizes proportional to scans, animate-pulse halo, hover tooltip showing city + scans count, always-visible city label, legend chip bottom-left). Right = "Top 10 villes par scans" table with columns Rang / Ville (+MapPin icon + progress bar #2563EB/70) / Scans (fr-FR) / Part (%), hover bg #F9FAFB, header bg #F9FAFB.
+- Section 5 "Performance technique": 3 Cards (3-col grid). Each CardHeader has a colored 8x8 icon badge (Zap/blue, AlertTriangle/red, Server/green). Charts: LineTrend latency #2563EB h220, LineTrend errorRate #EF4444 h220, BarV uptime #10B981 h220. Below each chart, a bg #F9FAFB strip showing the KPI value (245ms / 0.12% / 99.98%) + green Badge ("Optimal" / "Optimal" / "Conforme" with Activity icon). Uptime strip also shows "Objectif 99.9%".
+- Used cn() from @/lib/utils for conditional class merging on period pills.
+- Fixed two issues caught during verification: (1) typo "Survolz" → "Survolez"; (2) replaced a non-existent custom `ping-slow` keyframe with Tailwind's built-in `animate-pulse`; (3) mapped PERF_DATA.{latency,errorRate,uptime} from {day, value}[] to {label, value}[] to satisfy chart component prop types.
+- Ran `bunx eslint src/components/admin/pages/StatsPage.tsx` → 0 errors / 0 warnings.
+- Ran `bunx tsc --noEmit` filtered for StatsPage → 0 errors after the PERF_DATA mapping fix.
+
+Stage Summary:
+- StatsPage.tsx livré (1 nouveau fichier, aucun fichier existant modifié hors worklog).
+- 5 sections complètes: Vue d'ensemble (6 KPI CountUp), Croissance (4 charts Recharts), Activité (3 charts + 1 ranked list avec barres gradient), Géographie (map stylisée Sénégal avec points animés + table Top 10 villes), Performance technique (3 charts + indicateurs avec badges).
+- Design system respecté: palette #2563EB/#10B981/#F59E0B/#EF4444/#8B5CF6, Cards rounded-xl border #E5E7EB, hover -translate-y-0.5 + shadow, polices Poppins (display) / Inter (corps), Tailwind utility classes uniquement.
+- Sélecteur de période fonctionnel (useState), export PDF avec feedback toast sonner.
+- ESLint + TypeScript strict: 0 erreurs. Prêt à être monté dans le routeur admin.
+
+---
+Task ID: 9-a
+Agent: admin-settings-builder
+Task: Build the SuperAdmin Settings page
+
+Work Log:
+- Read worklog.md and explored existing infra: admin-store.ts (useAdminNav with settingsSection/setSettingsSection default "general"), ui.tsx (PageContainer/Card/CardHeader/Badge/SectionTitle/Button), shadcn ui components (switch, checkbox, select, radio-group all Radix-based), landing/Logo.tsx (QR icon + wordmark), CategoriesPage for pattern reference.
+- Created src/components/admin/pages/SettingsPage.tsx ("use client") exporting SettingsPage. File is ~880 lines, organized in clear sections: shared field primitives → sub-menu → 7 section components → main page.
+- Layout: PageContainer + SectionTitle header + flex flex-col lg:flex-row gap-6 with left aside (240px desktop / horizontal scroll mobile) wrapping a Card-wrapped SettingsNav, right main flex-1 rendering the active section.
+- Sub-menu SettingsNav: 7 buttons (Général/Settings, Email & Notifications/Mail, Paiement/CreditCard, Sécurité/Shield, API & Intégrations/Webhook, Apparence/Palette, Maintenance/Wrench), h-11 px-4 rounded-lg text-sm font-medium, active = border-l-[3px] #2563EB bg #EFF6FF text #2563EB, default = border-transparent text #374151 hover bg #F9FAFB. Mobile: flex overflow-x-auto (horizontal pills), desktop: flex-col.
+- Shared primitives: Field (label 14px medium #374151 + control + optional hint), FormRow (2-col grid sm:), PasswordInput (eye toggle local state), CopyButton (clipboard + ✅ feedback + toast), ReadOnlyField (mono bg #F3F4F6), CardFooter (border-t px-5 py-4 flex justify-end gap-3), inputClass/textareaClass/selectTriggerClass with focus:border #2563EB ring #2563EB/10. Switch className override data-[state=checked]:bg-[#2563EB] applied consistently.
+- GeneralSection: Card with CardHeader "Paramètres généraux" + 2-col grid (Nom, Slogan), Logo upload zone (dashed border, Logo preview + "Changer le logo" + hint PNG/SVG 2MB), Favicon upload zone (32px V preview), URL du site, Email de contact, Téléphone, Fuseau horaire (Select with Africa/Dakar/Paris/UTC/NY), Langue par défaut (Select Français/Anglais/Wolof), Adresse textarea. Footer "Enregistrer les modifications" with toast.
+- EmailSection: 3 stacked Cards. (1) SMTP: Serveur/Port/Utilisateur/Mot de passe (eye toggle)/Chiffrement radio TLS-SSL-Aucun (state), footer with green "✅ Connexion réussie" + "Tester la connexion" outline + "Enregistrer" primary. (2) Templates: 5 rows (Inscription, Bienvenue, Réinitialisation, Notification paiement, Rapport hebdomadaire) each with name + subject input + Éditer (Pencil) + Preview (Eye). (3) Notifications admin: 5 toggle rows in 2-col grid (Switch) + email destinataire input + Enregistrer.
+- PaymentSection: 4 stacked Cards (CinetPay, Stripe, Orange Money, Wave). Each CardHeader has provider name + Switch (Activé/Désactivé) + status Badge ("✅ Connecté" green or "❌ Non configuré" gray). When enabled: API Key (PasswordInput), Mode radio (Test/Production), Webhook URL (ReadOnlyField + CopyButton), footer with "Tester la connexion" outline. Local state object per provider (enabled/connected/mode/webhook). Final "Enregistrer toutes les configurations" button below all cards.
+- SecuritySection: 3 Cards. (1) Authentification: Durée session, Refresh token, 2FA obligatoire admin (Switch default on), Tentatives login max. (2) Mots de passe: Longueur min, Complexité checkboxes (Majuscule/Minuscule/Chiffre on, Caractère spécial off), Historique, Expiration (0 = jamais). (3) Rate limiting & CORS: API, Login, Upload rate inputs + CORS origines textarea (one per line) + Méthodes autorisées checkboxes (GET/POST/PUT/DELETE/PATCH). Footer "Enregistrer".
+- ApiSection: Single Card with API base URL (ReadOnlyField + Copy), masked API key + "Régénérer" button (KeyRound icon + toast with description), Webhooks table (URL/events/actions with Pencil + Trash2), "Ajouter un webhook" outline button, Documentation link card with ExternalLink icon to docs.verifscan.sn.
+- AppearanceSection: Single Card with Thème radio (Clair/Sombre/Système, default Clair, styled as bordered pills with active=blue ring), Couleur primaire 5 swatches (#2563EB/#10B981/#F59E0B/#8B5CF6/#EC4899) selectable with check mark on selected + ring, Logo login upload zone (dashed, Logo preview), Texte de bienvenue textarea. Footer "Enregistrer".
+- MaintenanceSection: 3 Cards. (1) Mode maintenance: Switch in CardHeader (Activé/Désactivé), Message textarea, IP autorisées input. (2) Sauvegardes: Fréquence Select (Quotidienne/Hebdomadaire/Mensuelle), Heure (time input), Rétention, last backup info row with Database icon + "26 juillet 2026 à 02:00" + "2.3 GB" + "✅ Réussie" green Badge, footer "Sauvegarder maintenant" primary + "Télécharger la dernière sauvegarde" outline. (3) Cache & Logs: Cache status "156 MB" with "Vider le cache" + "Régénérer les QR codes" outline buttons, logs système section with Niveau radio (INFO/WARNING/ERROR default INFO) + Rétention, footer "Télécharger les logs" outline.
+- All save/test/copy actions trigger sonner toasts (toast.success/info/error) with contextual French messages. Icons all imported from lucide-react as specified (Settings/Mail/CreditCard/Shield/Webhook/Palette/Wrench/Upload/Eye/EyeOff/KeyRound/Plus/Copy/Check/Save/Download/Trash2/RefreshCw/Database/FileDown/Pencil + ExternalLink bonus for docs link).
+- Ran bunx eslint on the file → PASSED with zero errors/warnings. Ran bunx tsc --noEmit → no errors specific to SettingsPage.tsx.
+
+Stage Summary:
+- SettingsPage.tsx delivered (1 new file created, no other files modified besides worklog append).
+- 7 fully-implemented settings sections wired to useAdminNav().settingsSection with default "general", responsive layout (240px vertical sidebar on desktop / horizontal scrollable pills on mobile), all interactive elements have local state (switches, radios, checkboxes, password visibility, color swatch, payment provider enable states).
+- Consistent design system: Cards rounded-xl border #E5E7EB, inputs h-10 bg #F9FAFB focus:border #2563EB, shadcn Switch/Checkbox/Select/RadioGroup with #2563EB override, all actions trigger sonner toasts in French.
+- ESLint + TypeScript clean. Ready to be mounted in the admin router.
+
+---
+Task ID: 5-a
+Agent: admin-subscriptions-builder
+Task: Build the SuperAdmin Subscriptions list + Plans config pages
+
+Work Log:
+- Read worklog.md and existing infra (admin-data.ts MAKERS_TABLE/GLOBAL_KPI/PLANS_CONFIG/formatFCFA/formatDate, admin-store.ts useAdminNav, ui.tsx primitives, SupportPage/CategoriesPage for tab+pills patterns, shadcn Switch/Checkbox/Select).
+- Created src/components/admin/pages/SubscriptionsPage.tsx ("use client", exports SubscriptionsPage):
+  * SectionTitle "Gestion des Abonnements" with subtitle `Revenus MRR : ${formatFCFA(GLOBAL_KPI.mrr)} FCFA` (= 4 850 000 FCFA) + outline Button "Exporter rapports" (Download icon → toast.success).
+  * Custom pill Tabs (state-managed): Tous(258) | Actifs(245) | En essai(13) | Suspendus(8) | Annulés(5). Active = bg #2563EB text white with count chip bg-white/20; inactive = border #E5E7EB hover #F9FAFB with count chip bg #F3F4F6.
+  * Filter pills row in a bordered card: Plan (Tous/Starter/Pro/Enterprise), Statut paiement (Tous/À jour/En retard/Échoué), Date (Tous/Ce mois/Ce trimestre/Cette année). Reusable `FilterPills<T>` helper.
+  * Tab→filter mapping: Actifs=status Actif, En essai=plan Essai, Suspendus=status Suspendu, Annulés=status Inactif & plan≠Essai. Payment status derived from status (Actif→À jour, Inactif→En retard, Suspendu→Échoué). Date filter uses nextBilling vs reference date 2026-08-13.
+  * Table Card with overflow-x-auto (min-w-[1100px]), 8 cols: Entreprise (40px logoColor circle+company+contact), Plan Badge (Starter=blue/Pro=green/Enterprise=orange/Essai=gray), Prix mensuel (formatFCFA(mrr)+" FCFA" or "—" for Essai), Statut Badge (derived: Actif green/Suspendu red/Essai yellow/Annulé gray), Début abonnement (formatDate(registeredAt)), Prochaine facturation (formatDate(nextBilling) or "—" for Essai), Méthode paiement (pill with icon: Wallet=Wave, Smartphone=Orange Money, CreditCard=CB/Virement), Actions (Eye→openDetail("user-detail",id), Pencil→toast.info edit, Pause→toast.warning suspend).
+  * Row h-16, border-b #F3F4F6, hover #F9FAFB. Empty state row when no matches. Footer with "Affichage 1-N sur M" + disabled Précédent/Suivant.
+  * Summary cards grid grid-cols-2 lg:grid-cols-4 gap-4: Total MRR (CreditCard in green circle, ↑ +8.5%), ARR projeté (TrendingUp in blue circle, "Sur 12 mois"), Taux de rétention (Heart in orange circle, "Objectif 90%"), Churn rate (TrendingDown in red circle, "↓ -0.5pts").
+  * Centered "Configuration des plans" outline button (Settings2 icon) → setPage("plans").
+- Created src/components/admin/pages/PlansConfigPage.tsx ("use client", exports PlansConfigPage):
+  * Back link "← Abonnements" (ArrowLeft, setPage("subscriptions")). SectionTitle "Configuration des Plans" + subtitle + Badge "{active}/3 plans actifs".
+  * Three editable plan cards in grid grid-cols-1 lg:grid-cols-3 gap-6. Each card via `PlanCard` component:
+    - Header: plan name (text-xl font-bold) + badge + Switch (Actif/Inactif) on right with colored status label.
+    - Pro card: border-2 #2563EB + bg gradient from-[#EFF6FF] to-[#F0FDF4]; badge rendered manually as orange gradient pill (from-[#F59E0B] to-[#F97316]) with Star icon + "Le plus populaire". Starter/Enterprise: default Badge (gray) with PLANS_CONFIG badge text.
+    - Price section: two number inputs (Mensuel, Annuel) with "FCFA" suffix; green pill "Économie annuelle : X%" auto-computed = round((1 - yearly/(monthly*12))*100).
+    - Limites section: Produits / QR codes/mois / Utilisateurs (each number input + Illimité/Limité pill toggle for Pro & Enterprise — Illimité sets value=-1 and shows "∞"; Limité restores sensible default), plus Statistiques radix Select (Basiques/Avancées/BI).
+    - Fonctionnalités section: radix Checkboxes for 6 base features + 3 Enterprise-only extras (White label/SSO/SLA 99.9%) shown only on Enterprise card.
+    - Footer: full-width primary "Enregistrer" Button (Save icon) → toast.success(`Plan ${name} enregistré`).
+  * Global options Card (CardHeader "Options globales"): grid md:grid-cols-2 with Essai gratuit (number + "jours" suffix, default 14), Carte bancaire requise (Switch Oui/Non, default Non), Relance automatique (number + "jours avant échéance", default 3), Suspension automatique (number + "jours après échec", default 7). Footer: "Réinitialiser" outline + "Enregistrer les paramètres globaux" primary (Save) → toast.success.
+  * Local state via useState with deep copy of PLANS_CONFIG (`buildInitialPlans()` casts `stats` to StatsLevel to satisfy strict typing). Reusable `Field`, `LimitField`, and shared `inputCls` for consistent input styling.
+- Ran `bunx eslint` on both files → 0 errors / 0 warnings. Initial `tsc --noEmit` flagged one error in PlansConfigPage (PLANS_CONFIG.limits.stats inferred as `string`, not `StatsLevel`); fixed by casting `c.limits.stats as StatsLevel` in `buildInitialPlans`. Re-ran tsc → no errors on either file.
+
+Stage Summary:
+- Two production-ready SuperAdmin pages delivered in src/components/admin/pages/: SubscriptionsPage.tsx (tabbed+filtered subscription table + 4 summary cards + Plans CTA) and PlansConfigPage.tsx (3 editable plan cards with pricing/limits/features + global options card).
+- Both use only the shared admin ui.tsx primitives + shadcn Switch/Checkbox/Select + lucide-react icons + sonner toasts + useAdminNav, fully consistent with the established admin design system (palette #2563EB/#10B981/#F59E0B/#EF4444, rounded-xl/2xl cards, h-10 inputs, #E5E7EB borders, #F9FAFB hover).
+- SubscriptionsPage: filter logic combines active tab (5 segments) + 3 pill filters (Plan/Payment/Date), 8-col table with derived status badges + payment-method icon pills, action buttons wired to openDetail + toasts.
+- PlansConfigPage: live editing of monthly/yearly prices with auto savings %, Illimité/Limité toggles for Pro/Enterprise limits, feature checkboxes (incl. Enterprise extras), Actif/Inactif switches per plan, sonner toasts on save, plus global trial/reminder/suspension settings.
+- ESLint + TypeScript clean. No files modified outside the two new pages + this worklog append.
+
+---
+Task ID: FINAL
+Agent: main
+Task: Intégration du panel SuperAdmin + router + vérification end-to-end
+
+Work Log:
+- Créé AdminShell.tsx (router qui switch entre les 10 pages admin selon useAdminNav().page)
+- Mis à jour layout.tsx pour ajouter le Toaster Sonner (richColors, position top-right) nécessaire aux toasts des pages admin
+- Réécrit page.tsx avec un toggle flottant (bottom-right) entre "Landing" et "SuperAdmin" — permet de basculer entre la landing page VerifScan et le panel admin
+- Corrigé l'import barrel → imports individuels depuis chaque fichier de composant landing (le module @/components/landing n'avait pas d'index)
+- Lint ESLint passé sans erreur sur tout le projet
+- Vérification Agent Browser end-to-end:
+  * Landing page: se charge (200), titre correct
+  * Toggle "SuperAdmin": bascule vers l'admin, dashboard rendu (sidebar + header + 4 KPI + 4 charts + table activité)
+  * Navigation sidebar Dashboard → Utilisateurs → Catégories → Support → Statistiques → Paramètres toutes fonctionnelles
+  * Modal création catégorie s'ouvre avec tous les champs (Nom, Emoji, Description, Ordre, Statut) + boutons Annuler/Enregistrer
+  * Page détail utilisateur accessible via dropdown "Voir détails" (Informations, Abonnement, Produits, Historique scans, Actions rapides, Notes, Activité)
+  * Sections Paramètres switchables (Général → Sécurité affiche Authentification/Mots de passe/Rate limiting & CORS avec toggle 2FA)
+  * Aucune erreur console/runtime, page charge en 200
+
+Stage Summary:
+- Panel SuperAdmin VerifScan livré: 10 pages complètes (Dashboard, Users list+detail, Subscriptions list+Plans config, Categories CRUD, Stats, Support list+ticket detail, Settings 7 sections)
+- Architecture: store Zustand (admin-store.ts), données mockées centralisées (admin-data.ts), composants UI réutilisables (ui.tsx, charts.tsx), layout AdminShell + Sidebar(260px) + Header(70px sticky)
+- Design system respecté: #2563EB primaire, #10B981 succès, #F59E0B attention, #EF4444 danger, Inter, dense et professionnel
+- Toggle flottant permet de comparer landing page et panel admin sur la même route /
+- Lint OK, dev server OK (port 3000), aucune erreur
+- Vérification browser end-to-end réussie (toutes les pages navigables + interactions validées)
+
+---
+Task ID: F-1
+Agent: main
+Task: Foundation du Dashboard Fabricant VerifScan (store, data, UI partagés, shell, sidebar, header, page.tsx)
+
+Work Log:
+- Créé `/src/lib/fabricant-store.ts` — store Zustand pour navigation (page, selectedId, settingsSection, mobileSidebarOpen)
+- Créé `/src/lib/fabricant-data.ts` — données mock complètes: 24 produits, 87 lots, QR codes, KPIs, graphiques (scans 30j, semaine, heure), activités, top produits, score transparence (7 détails + recommandations + classement), 8 badges gamification, abonnement + 10 paiements + 3 plans + 3 QR packs, stats (KPIs, répartition, top villes, durée consultation, appareils, actions), notifications, sessions, journal connexion, catégories, pays CEDEAO. Fonctions formatFCFA/formatNombre.
+- Créé `/src/components/fabricant/ui.tsx` — composants partagés: CountUpNumber, StatusBadge, PageHeader, SectionCard, KpiCard, PillFilter, EmptyState, GradientButton, OutlineButton, ProgressBar, InsightBox
+- Créé `/src/components/fabricant/FabricantSidebar.tsx` — sidebar 260px fixed, logo + badge "Fabricant", 3 sections menu (PRINCIPAL/ANALYTIQUE/COMPTE), 8 items avec badges, CTA upgrade gradient orange, profil entreprise (Sarine Bio / Pro)
+- Créé `/src/components/fabricant/FabricantHeader.tsx` — header 70px sticky, breadcrumb + titre, recherche (⌘K), notifications dropdown (4 notifs), avatar dropdown (profil/paramètres/déconnexion)
+- Créé `/src/components/fabricant/FabricantShell.tsx` — layout: sidebar + header + main content (max-w-1400px), route 10 pages (accueil, produits, produit-detail, lots, lot-detail, qr-codes, statistiques, score, abonnement, parametres)
+- Créé 10 pages stub (placeholders minimaux) pour compilation
+- Mis à jour `/src/app/page.tsx` — ViewSwitcher 3 vues: Landing / Fabricant (défaut) / SuperAdmin, bouton flottant en bas à droite
+
+Stage Summary:
+- Foundation complète et compilable. Dev server tourne sur port 3000 sans erreur.
+- Design system: bleu #2563EB, vert #10B981, orange #F59E0B, violet #8B5CF6. Fond #FFFFFF + #F9FAFB. Inter via globals.css.
+- Marque: Sarine Bio, Plan Pro, 25000 FCFA/mois.
+- 10 pages à construire par subagents en parallèle (Accueil, Produits+Detail, Lots+Detail, QR Codes, Statistiques, Score, Abonnement, Parametres).
+
+---
+Task ID: 3-a
+Agent: general-purpose
+Task: Build AccueilPage (dashboard with KPIs, scans chart, activity feed, top products, transparency score, gamification badges)
+
+Work Log:
+- Lu worklog.md, ui.tsx (composants partagés), fabricant-data.ts (KPIS, SCANS_30J, ACTIVITES, TOP_PRODUITS, SCORE_TRANSPARENCE, BADGES, MARQUE, formatNombre), fabricant-store.ts (useFabricantNav.setPage) et le stub AccueilPage.tsx
+- Vérifié que recharts ^2.15.4 et framer-motion ^12.23.2 sont installés dans package.json
+- Écrasé le stub src/components/fabricant/pages/AccueilPage.tsx avec une implémentation complète `"use client"` + export nommé `AccueilPage`. 7 sections construites dans l'ordre demandé:
+  1. Welcome bar — gradient #EFF6FF→#F0FDF4, greeting "Bonjour, Sarine Bio 👋" + sous-titre + date "Dimanche 26 juillet 2026", GradientButton "Créer un nouveau lot" → setPage("lots"), OutlineButton "Voir mes statistiques" → setPage("statistiques")
+  2. Profile progress — carte blanche, ProgressBar 75% gradient blue→green h-2, lien "Voir les détails" → setPage("parametres")
+  3. 4 KPI cards — grid sm:2 lg:4, KpiCard pour Produits (📦 #EFF6FF), Lots (🏷️ #F0FDF4), QR Codes (📱 #FFFBEB), Scans (📈 #F3E8FF), chaque onClick route vers la page correspondante; subTexts construits depuis KPIS (actifs/brouillons/rappelés, moyenne/jour) — pour QR Codes, subText "Quota : 2 340 / 5 000" conforme au brief
+  4. Graphique Évolution des scans — SectionCard + PillFilter (7j/30j/90j/12m, défaut "30j") + bouton "Voir les détails". Recharts AreaChart 300px: Area stroke #2563EB 3px + fill linearGradient id="scanGradient" (0.2→0 opacity), XAxis dataKey="jour" tick #9CA3AF 12px, YAxis minimal, CartesianGrid #F3F4F6 vertical=false, Tooltip custom (ScanTooltip) blanc arrondi shadow, ResponsiveContainer. Pour 7j on slice les 7 derniers jours; 30j/90j/12m utilisent SCANS_30J complet (mock limité à 30 jours).
+  5. Dernières actions (lg:col-span-3) + Top 5 produits scannés (lg:col-span-2) en grid lg:5. Activités: liste ACTIVITES (5) avec icône dans cercle coloré (activity.color à 10% alpha), texte 14px, time 12px #6B7280, hover bg #F9FAFB, footer "Voir tout l'historique". Top produits: rang 1-5 dans cercle coloré (RANK_COLORS = [#2563EB, #10B981, #F59E0B, #8B5CF6, #EC4899]), photo 40px rounded-full, nom SemiBold, scans #6B7280, mini progress bar relative bg #2563EB width=scans/maxScans*100%, footer "Voir tous les produits".
+  6. Score de Transparence — carte gradient #F3E8FF→#EFF6FF, header "💎 Votre Score de Transparence" + badge violet "Top 15% des fabricants". Layout grid lg:[260px_1fr]: à gauche "95/100" 48px Bold #8B5CF6 + niveau "Transparence exemplaire"; à droite ProgressBar 95% gradient #8B5CF6→#2563EB h-3 + 4 chips (✅ Identité 15/15, ✅ Origine 15/15, ✅ Composition 20/20, ⚠️ Certifications 10/15). InsightBox "💡 Ajoutez la certification Halal pour atteindre 100%" (couleur violet). OutlineButton "Voir les détails" + bouton violet #8B5CF6 "Améliorer mon score", les deux → setPage("score").
+  7. Badges gamification — titre "Vos réussites 🏆" + sous-titre, grid grid-cols-2 lg:grid-cols-4. Pour chacun des 8 BADGES: carte blanche rounded-xl border #E5E7EB p-5 text-center, icône 48px dans cercle bg #F9FAFB. Si debloque=true: "✅ Débloqué" #10B981 + date, légère glow box-shadow violet. Si debloque=false: "🔒 Verrouillé" #9CA3AF, ProgressBar value=progression gradient blue→green h-1.5, "{progression}%", opacity 0.6 + icône grayscale. Description 12px #9CA3AF.
+- Animations framer-motion légères: fade-in + slide-up sur welcome bar, profile progress et section transparence; stagger sur les cartes de badges (delay 0.04*idx)
+- Toutes les navigations: setPage("lots"), setPage("statistiques"), setPage("produits"), setPage("qr-codes"), setPage("score"), setPage("parametres")
+- `npx tsc --noEmit` — 0 erreur sur AccueilPage.tsx (les 4 erreurs restantes sont dans examples/ et skills/, fichiers hors du projet)
+- `npx eslint src/components/fabricant/pages/AccueilPage.tsx` — 0 erreur / 0 warning
+- Dev server (port 3000) répond 200
+
+Stage Summary:
+- Page Accueil du Dashboard Fabricant livrée dans src/components/fabricant/pages/AccueilPage.tsx, 7 sections complètes, design system respecté (#2563EB/#10B981/#F59E0B/#8B5CF6, font-display pour titres, rounded-xl, border #E5E7EB, bg #FFFFFF/#F9FAFB)
+- Utilise exclusivement les composants partagés (KpiCard, SectionCard, PillFilter, GradientButton, OutlineButton, ProgressBar, InsightBox, PageHeader importé) + données mock centralisées (KPIS, SCANS_30J, ACTIVITES, TOP_PRODUITS, SCORE_TRANSPARENCE, BADGES, MARQUE, formatNombre) + store Zustand useFabricantNav
+- Recharts AreaChart avec gradient personnalisé + tooltip custom; framer-motion pour animations d'entrée
+- Toutes les CTA câblées vers les pages cibles via setPage. Responsive mobile-first (grid collapses en 1 colonne).
+- TypeScript + ESLint propres. Aucun fichier modifié en dehors de AccueilPage.tsx (et cet append au worklog).
+
+---
+Task ID: 3-d
+Agent: general-purpose
+Task: Build QRCodesPage (quota banner + filters + QR grid cards + generation modal)
+
+Work Log:
+- Lecture du worklog, de ui.tsx (StatusBadge, PageHeader, SectionCard, PillFilter, EmptyState, GradientButton, OutlineButton, ProgressBar), de fabricant-data.ts (QR_CODES 24 items, KPIS.qrCodes {total: 1250, quota: 5000}, formatNombre, LOTS, PRODUITS) et de fabricant-store.ts (useFabricantNav — non requis ici mais consulté).
+- Conception d'un composant helper `QRPattern` (SVG 21×21, version 1 QR) : hash djb2 du code → PRNG mulberry32 déterministe, 3 finder squares (top-left, top-right, bottom-left) avec anneaux noir/blanc/noir, séparateur blanc 1px autour des finders, reste = pixels aléatoires ~50%. Rendu SVG (rect noir sur fond blanc) pour performance vs 441 divs DOM.
+- Création du composant principal `QRCodesPage` :
+  * Header: PageHeader "Mes QR Codes" / "1 250 QR codes générés" + OutlineButton "Exporter tout" (Download) + GradientButton "Générer des QR codes" (Plus, ouvre modal).
+  * Bannière quota: card avec ProgressBar value=1250 max=5000 h-2.5 gradient bleu→vert, label "1 250 / 5 000 utilisés", à droite "3 750 restants" + "Réinitialise le 15 août". (Note: KPIS.qrCodes.total = 1250, remaining calculé = 3750, mais on garde l'affichage spec-compliant via les valeurs réelles.)
+  * Barre de filtres flex-wrap: input recherche (icône Search), 4 selects natifs (produit/lot/date/tri), PillFilter statut Tous/Actifs/Désactivés.
+  * Barre d'actions en masse (visible quand sélection > 0) : compteur "N QR codes sélectionnés" + boutons Télécharger / Désactiver / Exporter ZIP / Supprimer (rouge). Bouton "Sélectionner tout visible" au-dessus de la grille.
+  * Grille: `grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4`. Chaque carte: checkbox top-left, QRPattern 150×150 centré avec bordure, code monospace 12px, lot 13px Semibold, produit 12px, date JJ/MM/AAAA 11px, "📱 N scans" 13px Medium, StatusBadge, puis 3 boutons (Télécharger, Voir, MoreVertical → menu Copier/Désactiver/Supprimer).
+  * EmptyState "📱 Aucun QR code trouvé" quand la liste filtrée est vide.
+  * Pagination: 12 par page → 2 pages, "Affichage 1-12 sur 24", boutons Précédent/Suivant + numéros de page.
+  * Modal de génération (max-w-[600px] bg-white rounded-2xl, overlay bg-black/50 backdrop-blur): sélection lot (12 lots de LOTS), nombre (input number default 100, helper "Quota restant : 2 660", max 2660), taille (radio cards Petit 2cm / Moyen 3cm / Grand 5cm), format (checkboxes PNG/PDF/SVG), options (checkboxes Inclure lot/produit/logo/marges), couleur (color picker, default #000000), aperçu QR + label, résumé "100 QR codes · PNG, PDF · ~15 MB", footer Annuler / Générer.
+  * Toast de succès (top-center, auto-dismiss 3.5s) "✅ 100 QR codes générés avec succès" après soumission du modal.
+- État React: useState pour search, productFilter, lotFilter, statusFilter, sortFilter, dateFilter, selectedIds (Set), modalOpen, openMenuId, page, toast. useMemo pour la liste filtrée/triée et les listes uniques de produits/lots. useEffect pour reset page à 1 sur changement de filtres, et auto-dismiss du toast.
+- Type-check `npx tsc --noEmit` : aucune erreur sur QRCodesPage.tsx (les erreurs restantes concernent des fichiers d'exemples/skills non liés).
+- Tous les textes en français, mobile-first responsive (2 cols mobile → 4 cols desktop), couleurs spec (#2563EB, #10B981, #F59E0B, #EF4444), cartes rounded-lg border #E5E7EB hover shadow-md.
+
+Stage Summary:
+- QRCodesPage.tsx complètement implémenté (~600 lignes) : helper `QRPattern` (SVG déterministe 21×21 avec finder squares), page avec bannière quota, 6 filtres (recherche + produit + lot + statut + date + tri), barre d'actions en masse, grille responsive de cartes QR sélectionnables avec menu d'actions par carte, pagination 12/page, et modal de génération complet (lot/nombre/taille/formats/options/couleur/aperçu/résumé). Toast de succès. Type-check propre. Prêt pour intégration dans le dashboard Fabricant.
+
+---
+Task ID: 3-b
+Agent: general-purpose
+Task: Build ProduitsPage (product grid + filters + creation modal with preview) and ProduitDetailPage
+
+Work Log:
+- Lecture du worklog + infra partagée (ui.tsx, fabricant-data.ts, fabricant-store.ts) pour aligner les composants et la data (24 PRODUITS, CATEGORIES, LOTS).
+- Implémentation ProduitsPage.tsx :
+  * PageHeader "Mes Produits" / "24 produits créés" + GradientButton "+ Nouveau produit".
+  * Barre de filtres : input recherche (icône Search), select catégorie (Toutes + CATEGORIES), PillFilter statut (Tous/Actifs/Brouillons/Masqués), select tri (Récent/Ancien/A-Z/Z-A/Plus scanné).
+  * Grille 1/2/3 colonnes responsive — chaque carte : photo 200px, StatusBadge sur backdrop blanc, nom, marque, badge catégorie + poids, stats (lots/scans/mois), footer 4 boutons (Voir, Modifier, Lots) + menu MoreVertical (Dupliquer/Masquer-Afficher/Supprimer) avec backdrop click-outside.
+  * Modal création/édition (max-w-800, rounded-2xl, backdrop noir/50, AnimatePresence) — layout lg:grid-cols-5 : col-span-3 formulaire (Infos générales : nom/marque/catégorie/poids/description avec compteur 0/500 ; Visuels : zone drag&drop dashed ; Visibilité : Switch + radio Actif/Brouillon/Masqué), col-span-2 aperçu live (photo placeholder 📷, nom, marque, badge catégorie, description, badge "✅ Produit authentique", note). Footer : Annuler / Enregistrer en brouillon / Créer le produit.
+  * EmptyState "📦 Aucun produit trouvé" + bouton Réinitialiser quand la liste filtrée est vide.
+  * Navigation : onVoir → openDetail("produit-detail", id), onLots → setPage("lots").
+- Implémentation ProduitDetailPage.tsx :
+  * Récupération du produit via useFabricantNav().selectedId dans PRODUITS ; fallback EmptyState si introuvable.
+  * Bouton retour "← Retour aux produits" + PageHeader (nom + marque + StatusBadge).
+  * Layout lg:grid-cols-3 : col-span-2 gauche (photo 400px, SectionCard "Informations générales" 7 rangées dont badge catégorie, SectionCard "Statistiques" 3 mini-KPIs CountUpNumber Lots/Scans totaux/Scans-mois, SectionCard "Lots associés" tableau filtré LOTS par produitId avec colonnes Numéro/Date fabrication/Statut/Scans + bouton "Voir tous les lots"), col-span-1 droite (SectionCard "Actions rapides" : Modifier/Générer QR codes/Voir les scans/Masquer-Afficher/Supprimer rouge, SectionCard "QR code" avec SVG QR-like déterministe par product.id + bouton Télécharger, SectionCard "Résumé" synthèse).
+  * FakeQRCode : SVG 21x21 modules générés deterministically (hash du product id), 3 finder squares (coins) — rendu visuel QR crédible sans dépendance externe.
+- Vérification : `npx next build` ✓ Compiled successfully en 20.4s, aucune erreur TypeScript sur src/components/fabricant.
+
+Stage Summary:
+- ProduitsPage.tsx : page liste complète avec recherche/filtres/tri, grille de cartes interactives (menu d'actions par carte), modal de création/édition avec aperçu live.
+- ProduitDetailPage.tsx : page détail complète avec photo, infos, stats animées, tableau des lots associés, sidebar d'actions, QR code SVG généré + résumé.
+- Les deux fichiers démarrent par "use client"; exportent ProduitsPage / ProduitDetailPage ; consomment les composants partagés (PageHeader, SectionCard, StatusBadge, PillFilter, EmptyState, GradientButton, OutlineButton, CountUpNumber) et la data shared (PRODUITS, LOTS, CATEGORIES, MARQUE, formatNombre) + store de navigation (openDetail/setPage). Build Next.js 16 passe sans erreur.
+
+---
+Task ID: 3-c
+Agent: general-purpose
+Task: Build LotsPage (table + multi-step creation modal + bulk actions) and LotDetailPage
+
+Work Log:
+- Read worklog.md, src/lib/fabricant-data.ts (LOTS=87, PRODUITS=24, PAYS_CEDEAO=15, formatNombre), src/lib/fabricant-store.ts (useFabricantNav setPage/openDetail), src/components/fabricant/ui.tsx (PageHeader/SectionCard/StatusBadge/PillFilter/GradientButton/OutlineButton/EmptyState).
+- Inspected FabricantShell.tsx to confirm router switch on `page` ("lots"/"lot-detail") + how openDetail("lot-detail", id) wires selectedId.
+- Built src/components/fabricant/pages/LotsPage.tsx (~1050 lines):
+  * PageHeader "Gestion des Lots" / "87 lots créés" + GradientButton "+ Nouveau lot".
+  * Filters bar (flex-wrap gap-3): search input (icon), product select (Tous + 24 produits), PillFilter status (Tous/Actifs/Rappelés/Expirés), date select (Toutes/7j/30j/90j/Personnalisé), sort select (Récent/Ancien/Plus scanné/Date péremption). "Personnalisé" reveals 2 date inputs.
+  * Bulk actions sticky bar (top-[70px]) shown when selectedIds.size>0 via AnimatePresence: count chip + "Télécharger QR codes"/"Marquer comme rappelés"/"Exporter CSV"/"Supprimer (red)".
+  * Table (overflow-x-auto, min-w-[1100px]) with 9 cols: styled checkbox (custom h-5 w-5 with Check/indeterminate bar), Numéro (mono #2563EB), Produit (40px img + nom 14SB), Date fab (13px JJ/MM/AAAA), Date perm + ⚠️ icon if expiring soon, StatusBadge, Scans (right), QR codes (right), Actions (MoreVertical dropdown). Row left-border 3px red (rappelle) / orange (peremption within 7d) / gray (expire). Outside-click closes dropdown via data-lot-menu closest check.
+  * Pagination footer: "Affichage X-Y sur Z" + Previous/[1…N]/Next with ellipsis for >7 pages.
+  * Multi-step creation modal (fixed inset-0 z-50 bg-black/50 backdrop-blur, max-w-[700px] rounded-2xl):
+    - StepProgress: 3 circles (1=Produit, 2=Informations, 3=QR Codes) with gradient connecting line that fills based on (current-1)/2; active=#2563EB, done=#10B981 with Check icon, future=#E5E7EB.
+    - Step 1: searchable product select (button + dropdown with search input + filtered list with photo+nom+marque+categorie), "Créer un nouveau produit" link.
+    - Step 2: 2-col grid (Numéro* mono input + "Générer" RefreshCw button, Poids), 2-col grid (Date fab*, Date perm* with "Dans X jours" hint), Ingrédients* textarea, 2-col grid (Lieu fab*, Lieu transformation disabled when "Identique" checkbox checked), Pays de vente* checkbox grid 3-col (PAYS_CEDEAO) with Tout sélectionner/désélectionner + counter, Notes internes textarea.
+    - Step 3: Nombre QR (number input, "Quota restant: 2 660" hint), Taille radio (Petit 2cm/Moyen 3cm/Grand 5cm), Format checkboxes (PNG/PDF/SVG, default PNG+PDF), Options impression (4 checkboxes + étiquettes/page select 10/20/30/40), Couleur QR color picker with swatch preview. Preview pane: mock QR (11x11 deterministic grid with corner finder patterns colored from qrCouleur) + label with product name + lot number, résumé line "100 QR codes · PNG, PDF · ~15 MB · Quota restant après: 2 560".
+    - Footer per step: Précédent (OutlineButton if step>1) | Annuler (OutlineButton) | Suivant (GradientButton, disabled if step invalid) or "Créer le lot et générer QR codes" (GradientButton) on step 3.
+    - Success state (AnimatePresence): spring-scale green check, "✅ Lot créé avec succès !", résumé card (numéro/produit/QR count), 3 buttons (Télécharger QR codes GradientButton → onClose, Voir le lot OutlineButton → openDetail("lot-detail","l88"), Créer un autre lot OutlineButton → reset()).
+  * State: filters (search/productFilter/statusFilter/dateFilter/dateFrom/dateTo/sortFilter), selectedIds Set, openMenuId, currentPage, modalOpen. Pagination reset on filter change uses the "adjust state during render" React pattern (filterKey comparison) to avoid useEffect+setState cascading render lint error.
+  * Quota constants: QUOTA_RESTANT=2660, computed quotaApres = max(0, 2660 - qrCount), tailleMo = round(qrCount * 0.15 * 10)/10.
+- Built src/components/fabricant/pages/LotDetailPage.tsx (~340 lines):
+  * "← Retour aux lots" link → setPage("lots"). PageHeader title=lot.numero (mono via font-mono on value, not on h1), subtitle=lot.produitNom, children=StatusBadge.
+  * 2-col layout (lg:grid-cols-3): left col-span-2, right col-span-1.
+  * Left: SectionCard "Informations du lot" (2-col dl grid with icon+label+value: Numéro mono blue, Produit, Date fab, Date perm, Lieu fab, Statut StatusBadge). SectionCard "Ingrédients" (split by comma → rounded-full badges). SectionCard "QR codes générés" with header action GradientButton "Télécharger tous les QR codes", grid 4-col of 8 mini QR cards (9x9 grid mock + QR-XXX + N scans). SectionCard "Pays de vente" (3 green badges Sénégal/Mali/Côte d'Ivoire).
+  * Right: SectionCard "Statistiques" (centered big scans count in #2563EB 40px, then list Scans/jour moyenne + Dernière consultation "il y a 3h" + QR codes générés). SectionCard "Actions" (4 ActionButtons: Télécharger QR default, Copier le lien with "Lien copié ✓" feedback via navigator.clipboard + 2s timeout, Marquer comme rappelé orange, Supprimer red). SectionCard "Produit associé" (clickable card → openDetail("produit-detail", lot.produitId), 48px photo + nom + marque + categorie + arrow).
+  * EmptyState fallback when selectedId doesn't match a lot in LOTS.
+- Ran `bunx tsc --noEmit` filtered on fabricant → 0 errors.
+- Ran `bunx eslint` on both files: initially 1 error (set-state-in-effect for currentPage reset) + 4 warnings (unused eslint-disable-next-line @next/next/no-img-element). Fixed: refactored to filterKey comparison pattern (adjust state during render, React docs recommended); removed 4 unused eslint-disable directives. Re-ran → 0 errors / 0 warnings.
+
+Stage Summary:
+- LotsPage.tsx (~1050 lines) and LotDetailPage.tsx (~340 lines) delivered, both starting with "use client" and exporting named functions.
+- LotsPage: full filter stack (search/product/status pill/date range/sort), bulk-actions sticky bar, table with selection + visual indicators (red border rappelle, orange border + ⚠️ for peremption <7j), per-row dropdown menu, 20-per-page pagination with ellipsis, multi-step creation modal with 3-step progress bar + searchable product select + pays CEDEAO grid + QR preview (11x11 mock with finder patterns) + success state.
+- LotDetailPage: 2-col layout (lg:grid-cols-3), Informations du lot + Ingrédients badges + QR codes grid (8 mini cards) + Pays de vente badges on left; Statistiques (big scans number) + Actions (download/copy with feedback/rappel orange/delete red) + Produit associé clickable card on right.
+- Both files use only shared ui.tsx primitives + lucide-react icons + framer-motion (AnimatePresence for modal/dropdown/bulk bar) + zustand nav store, fully consistent with the established fabricant design system (#2563EB/#10B981/#F59E0B/#EF4444, rounded-xl, #E5E7EB borders, #F9FAFB hover, mono font for lot numbers, StatusBadge from ui.tsx).
+- ESLint + TypeScript clean. No files modified outside the two new pages + worklog append.
+
+---
+Task ID: 3-f
+Agent: general-purpose
+Task: Build ScorePage (score global hero + 7 detail cards + 3 recommendations + ranking table)
+
+Work Log:
+- Read worklog.md, shared ui.tsx (PageHeader, SectionCard, OutlineButton, ProgressBar, CountUpNumber), fabricant-data.ts (SCORE_TRANSPARENCE structure + CLASSEMENT_FABRICANTS), and fabricant-store.ts.
+- Inspected existing placeholder ScorePage.tsx + AccueilPage.tsx for convention/patterns.
+- Overwrote ScorePage.tsx with a "use client" full implementation:
+  • Header via PageHeader with right-side gradient badge (linear-gradient #8B5CF6 → #2563EB) "💎 95/100 — Transparence exemplaire".
+  • Section 1 hero: rounded-2xl gradient bg (#F3E8FF → #EFF6FF), CountUpNumber end=95 suffix="/100" in 64px font-display text-[#8B5CF6], level + top % subtitle on left, ProgressBar value=95 gradient purple→blue height h-4 + comparison row on right (responsive stack on mobile).
+  • Section 2 "Détail par critère": grid-cols-1 md:2 lg:3 of 7 DetailCard components. Each card: icon + titre + statut badge (Complet=green / Partiel=orange), score "{score}/{max} pts" colored green/orange, ProgressBar with matching green/orange gradient, optional sub-items list with ✅/❌ lucide Check/X icons and pts. Framer-motion fade-in stagger.
+  • Section 3 "💡 Comment atteindre 100% ?": grid-cols-1 md:3 of 3 RecoCard components. Each card: icon in purple tint circle, titre, green "+5 pts" gain badge, description, StarRating (filled = etoiles / empty = 5-etoiles) + difficulte text, action button (OutlineButton "En savoir plus" for first two, purple bg #8B5CF6 "Ajouter maintenant" for the last).
+  • Section 4 "🏆 Classement des fabricants": SectionCard with table (Rang | Fabricant | Score | Niveau | Tendance). NiveauBadge component handles Platine (purple #F3E8FF/#8B5CF6), Or (yellow #FEF3C7/#92400E), Argent (gray #F3F4F6/#4B5563). TendanceCell uses ArrowUp/ArrowRight-rotated/Minus lucide icons with green/red/gray colors. The "vous=true" row (Sarine Bio (Vous), rank 12) is highlighted with bg #F3E8FF, bold text, and 👈 indicator. Footer OutlineButton "Voir le classement complet" with Trophy icon.
+- Imported lucide-react icons (Trophy, ArrowUp, ArrowRight, Minus, Star, Check, X).
+- All text French, mobile-first responsive, framer-motion for entrance animations.
+- Verified: npx tsc --noEmit reports no errors in project source (only unrelated examples/skills folders). ESLint clean on the file.
+
+Stage Summary:
+- Produced /home/z/my-project/src/components/fabricant/pages/ScorePage.tsx — a complete, type-safe, lint-clean implementation of the VerifScan "Score de Transparence" page with purple (#8B5CF6) + blue (#2563EB) transparency theme. Four sections delivered: animated hero card with count-up score, 7-criterion detail grid with sub-item checklists, 3 recommendation cards with star difficulty ratings, and a ranked manufacturer table with highlighted "vous" row. Ready to be wired into the fabricant dashboard via the existing useFabricantNav store ("score" page).
+
+---
+Task ID: 3-g
+Agent: general-purpose
+Task: Build AbonnementPage (current plan + payment history + plan comparison + QR packs + cancellation)
+
+Work Log:
+- Read worklog.md, shared UI (ui.tsx: PageHeader, SectionCard, StatusBadge, PillFilter, GradientButton, OutlineButton, ProgressBar), fabricant-data.ts (ABONNEMENT, PAIEMENTS, PLANS, QR_PACKS, formatFCFA, formatNombre), and fabricant-store.ts for context.
+- Verified lucide-react (0.525) is available and the target page file was a placeholder.
+- Overwrote /home/z/my-project/src/components/fabricant/pages/AbonnementPage.tsx with a full "use client" implementation exporting `AbonnementPage`.
+- Section 1 (Plan actuel): hero card with #EFF6FF→#F0FDF4 gradient, border-2 #2563EB, 32px Bold "Pro" + green "Actif" badge, 24px Bold "25 000 FCFA/mois", info row (date début / prochaine facturation / paiement), 3-column quota grid (Produits ∞ green, QR codes 1 250/5 000 with orange 25% bar, Statistiques ∞ green), GradientButton "Upgrade vers Business" + OutlineButton "Voir les autres plans" + text "Gérer la facturation", 2-column avantages list with green Check icons.
+- Section 2 (Historique des paiements): SectionCard with PillFilter status (Tous/Réussis/Échoués) + period select (30j/90j/12m/Personnalisé), table (Date | Montant | Statut StatusBadge | Méthode | Référence monospace | Actions = Download + Eye icon buttons) over all 10 PAIEMENTS with filter logic, summary footer (Total payé 12 mois + prochain paiement) + "Télécharger toutes les factures (ZIP)" OutlineButton, "Méthode de paiement" sub-section with Orange Money + "Modifier" + 4 method badges (Orange Money active / Wave / Carte bancaire / Virement) using Smartphone, Wallet, CreditCard, Building2 lucide icons.
+- Section 3 (Comparer les plans): PillFilter [Mensuel] [Annuel -30%] (useState), 3-column grid of PLANS cards. Pro card has border-2 #2563EB, gradient bg, and "⭐ Plan actuel" gradient badge. Pricing adapts to billing cycle (mensuel: {prixMensuel}/mois; annuel: {prixAnnuel}/an + crossed-out monthly*12). Feature list with Check icons for Produits/QR codes/Statistiques/Support plus Business-only fonctionnalites (Marketplace B2B, API access, White label, SSO). Buttons: Starter → OutlineButton "Downgrade" (disabled), Pro → gray "Plan actuel" (disabled), Business → GradientButton "Upgrade vers Business". Footer note "Le changement est immédiat et proratisé."
+- Section 4 (QR packs supplémentaires): title + subtitle, 3-column grid of QR_PACKS. pk2 (recommended) has border-2 #F59E0B and GradientButton; pk1 and pk3 use OutlineButton. Each card shows quantité, formatFCFA(prix), prixUnitaire, and computed savings. Below: "Quantité personnalisée" panel with number input (controlled state, 10 FCFA/QR), live total price calculation, and GradientButton "Acheter" (disabled when qty ≤ 0).
+- Section 5 (Annuler l'abonnement): orange card (bg #FEF3C7, border #F59E0B). Title "⚠️ Annuler mon abonnement" (#92400E), confirmation message, 4-item consequences list with ⚠️ markers, reason dropdown (Trop cher / Fonctionnalités insuffisantes / Je n'utilise plus / Concurrent / Autre) with conditional textarea when "Autre" selected, optional feedback textarea. Retention offer card (white bg) with "💡 Offre spéciale : 20% de réduction pendant 3 mois", "20 000 FCFA/mois", small GradientButton "Accepter l'offre". Footer: green-gradient "Garder mon abonnement" button (bg #10B981) + red danger "Confirmer l'annulation" button (bg #EF4444) with AlertTriangle icon.
+- State: useState for billing (mensuel/annuel), paymentFilter (tous/reussis/echoues), period (30j/90j/12m/perso), cancelReason, customQrQty. useMemo for filteredPayments and total12Mois.
+- Verified: npx tsc --noEmit — no errors in project source (only unrelated examples/ and skills/ folders). npx eslint on the file — clean.
+
+Stage Summary:
+- Produced /home/z/my-project/src/components/fabricant/pages/AbonnementPage.tsx — a complete, type-safe, lint-clean implementation of the VerifScan "Mon Abonnement" page with the blue/green/orange design system. All 5 sections delivered: hero card for current plan with quota usage, payment history table with filters + payment methods, plan comparison grid with billing toggle, QR code pack purchase cards + custom quantity calculator, and cancellation flow with retention offer. Mobile-first responsive, framer-motion entrance animations, all currency via formatFCFA. Ready to be wired into the fabricant dashboard via the existing useFabricantNav store ("abonnement" page).
+
+---
+Task ID: 3-h
+Agent: general-purpose
+Task: Build ParametresPage (7 sub-sections: entreprise, logo, contact, securite, notifications, integrations, donnees)
+
+Work Log:
+- Read shared infrastructure: ui.tsx (PageHeader, SectionCard, GradientButton, OutlineButton, PillFilter), fabricant-data.ts (MARQUE, SESSIONS x3, JOURNAL_CONNEXION x5), fabricant-store.ts (useFabricantNav with settingsSection + setSettingsSection, SettingsSection type).
+- Read existing placeholder ParametresPage.tsx (single loading div) and confirmed shadcn Switch exists at @/components/ui/switch — chose to implement a custom inline Toggle for full color control matching design system (#2563EB on / #D1D5DB off) instead.
+- Authored full implementation (~880 lines) with "use client", lucide-react icons (Building2, Image as ImageIcon, Mail, Shield, Bell, Plug, Database, Check, X, Eye, EyeOff, AlertTriangle, Trash2, Download, Smartphone, Globe, ChevronDown), shared UI imports, data imports, store import.
+- Built reusable primitives inside the file: Field (label + required + helper), SelectInput (custom chevron-down), Toggle (sliding knob), SectionTitle, SaveRow, Badge, UploadZone (drag-drop dashed), LogoPreview (120x120 circular gradient with SB initials), ColorField (swatch + hex input + preview rectangle), PasswordStrengthBar (4-segment colored bar + Faible/Moyen/Fort/Très fort label), RequirementRow (check/x icon), PasswordInput (eye toggle for visibility).
+- Layout: PageHeader + grid lg:grid-cols-[240px_1fr] gap-6. Sidebar is sticky on desktop (lg:sticky lg:top-6 lg:self-start) and switches to horizontal scroll tabs on mobile (flex gap-2 overflow-x-auto lg:flex-col). 7 nav items each call setSettingsSection; active = bg #EFF6FF text #2563EB border-left 3px #2563EB; inactive = text #6B7280 hover:bg #F9FAFB. Items all carry border-l-[3px] border-l-transparent so layout doesn't jump.
+- Section entreprise: 2-col grid for nom + secteur select, description textarea with live 0/500 char counter (capped at 500), année/site web 2-col, réseaux sociaux 2x2 grid (Facebook/Instagram/LinkedIn/Twitter) with colored brand letter badges inside inputs, NIF input, GradientButton Enregistrer.
+- Section logo: logo entreprise card with UploadZone + 120x120 LogoPreview side-by-side + 3 recommendation bullets; logo pour QR codes card with helper; couleurs de marque card with 2 ColorField rows (primary #2563EB, secondary #10B981) — swatches update live; nom de la marque input; Enregistrer.
+- Section contact: email (helper visible on product pages), phone with 🇸🇳 +221 prefix, WhatsApp optional, embedded adresse physique sub-card (rue, ville, région select with 13 régions, pays select default Sénégal, code postal), horaires d'ouverture input; Enregistrer.
+- Section securite: password change form (3 password inputs with eye toggles) + 4-segment strength bar computed from length/upper/lower/number/special + 5-item requirements checklist (4 checked once met, special char stays gray if missing) + confirm password with live match indicator; 2FA card with "Désactivée" gray badge + 3 avantages with green checks + GradientButton Activer la 2FA; appareils connectés mapped from SESSIONS (icon, appareil, localisation · ip (mono) · derniereActivite, "Session actuelle" green badge for current or "Déconnecter" red outline button for others) + "Déconnecter toutes les autres sessions" red outline button in card header; journal de connexion with PillFilter 7j/30j/90j + HTML table (5 rows from JOURNAL_CONNEXION) with ✅ Réussi green / ❌ Échoué red statut.
+- Section notifications: email card with 6 NotifRowView rows — each has label/description + frequency dropdown (varies: frequency multi-option / day / threshold 50%/75%/90% / none) + Toggle; in-app card with same 6 items as independent toggles; SMS card with phone input + 3 alert toggles (lot rappelé, problème paiement, sécurité) + 50 FCFA/SMS cost note; Enregistrer les préférences.
+- Section integrations: 2-col grid of 4 SectionCards (Cloudinary 🖼️ Connecté green + Configurer, Orange Money 🟠 Connecté + Configurer, Wave 🌊 Non connecté gray + Connecter GradientButton, Slack 💬 Non connecté + Connecter). Each card has emoji avatar, name, category, description, status badge, action button.
+- Section donnees: "Vos données" card with Exporter en JSON / Exporter en CSV / Télécharger toutes les factures OutlineButtons; "Confidentialité" card with 3 toggles (profil public, partage stats anonymisées, cookies analytics); "Zone de danger" red-bordered section with AlertTriangle icon, Supprimer le compte heading, warning text, red Supprimer définitivement OutlineButton.
+- State management: useState for description text (entreprise), primary/secondary colors (logo), 3 password fields + journalRange (securite), 6 notifs array + 3 smsAlerts (notifications), 3 privacy toggles (donnees), show/hide inside PasswordInput. All sections are independent components to keep state local.
+- Verified: npx tsc --noEmit — zero errors in ParametresPage.tsx (only pre-existing unrelated errors in examples/, skills/, StatistiquesPage.tsx). npx eslint on the file — clean. Dev server on port 3000 returns 200.
+
+Stage Summary:
+- Produced /home/z/my-project/src/components/fabricant/pages/ParametresPage.tsx (~880 lines) — a complete, type-safe, lint-clean implementation of the VerifScan "Paramètres" page with all 7 sub-sections wired to the useFabricantNav.settingsSection store. Uses shared UI primitives (PageHeader, SectionCard, GradientButton, OutlineButton, PillFilter), shared data (MARQUE, SESSIONS, JOURNAL_CONNEXION), lucide-react icons, and a custom inline Toggle for precise color control. Mobile-first responsive: sidebar collapses to horizontal scroll tabs on small screens, becomes sticky vertical nav on desktop. Includes live password strength meter, char counter, color picker with live swatch preview, toggle switches, and a red-bordered danger zone. Ready to be navigated via the existing "parametres" page in the fabricant dashboard.
+
+---
+Task ID: 3-e
+Agent: general-purpose
+Task: Build StatistiquesPage (6 KPIs + 7 Recharts charts + 1 stylized geographic viz + insights)
+
+Work Log:
+- Read shared infrastructure: ui.tsx (PageHeader, SectionCard, KpiCard, PillFilter, InsightBox, OutlineButton, CountUpNumber), fabricant-data.ts (STATS_KPIS, SCANS_30J, SCANS_SEMAINE, SCANS_HEURE, REPARTITION_PRODUITS, TOP_VILLES, DUREE_CONSULTATION, TYPE_APPAREIL, ACTIONS_PRODUIT, formatNombre), fabricant-store.ts (useFabricantNav).
+- Verified recharts@2.15.4 and lucide-react@0.525.0 already installed.
+- Wrote /src/components/fabricant/pages/StatistiquesPage.tsx (overwriting the placeholder):
+  * Header: PageHeader + PillFilter (7j/30j/90j/12m/Personnalisé, useState default "30j") + OutlineButton "Exporter rapport PDF" with FileDown icon.
+  * Section 1 "Vue d'ensemble": h2 + 6 KpiCard grid (grid-cols-2 md:grid-cols-3 lg:grid-cols-6) with per-KPI icon/iconBg config; tendance prefixed with "↑" arrow (except the "Produits scannés" ratio which stays "75%").
+  * Section 2 "Évolution des scans": full-width AreaChart (gradient blue→transparent, custom ChartTooltip) + 2 side-by-side cards: BarChart (semaine, green, radius [6,6,0,0], horizontal grid, InsightBox "pic samedi") + horizontal BarChart (heure, orange, layout="vertical", YAxis category, InsightBox "peak 10h-14h").
+  * Section 3 "Performance par produit": lg:grid-cols-5 with donut PieChart (innerRadius 60/outerRadius 100, paddingAngle 2, Cells using REPARTITION_PRODUITS couleurs, absolute-positioned center label "12 458") + custom legend (color dot + name + % + count) on lg:col-span-2; Top produits table on lg:col-span-3 (Rang | photo+nom | scans | % | tendance TrendingUp/Down | "Voir détails" link) filtering out "Autres" (7 rows), followed by 2 InsightBox.
+  * Section 4 "Analyse géographique": lg:grid-cols-5 with custom stylized Sénégal map on lg:col-span-3 (gradient bg #F0FDF4→#EFF6FF, h-[360px] relative container, 8 absolutely-positioned bubbles sized 44-96px proportional to scans, colored green/orange/red by intensity, with legend "Faible → Élevé") + Top villes table on lg:col-span-2 (8 rows from TOP_VILLES, tendance icons) + InsightBox "60% Dakar".
+  * Section 5 "Comportement des consommateurs": lg:grid-cols-3 grid with BarChart (Durée consultation, purple, histogram), PieChart (Type appareil, donut, "85% Mobile" center overlay, legend below), horizontal BarChart (Actions produit, orange, YAxis width 130) — each followed by an InsightBox.
+- Extracted named components RepartitionTooltip & AppareilTooltip to work around Recharts' `Tooltip content={...}` overload typing (instead of inline arrow functions). Created a reusable ChartTooltip component for the AreaChart & BarCharts.
+- TypeScript check: 0 errors in StatistiquesPage.tsx (npx tsc --noEmit --skipLibCheck). Remaining TS errors are only in unrelated examples/ and skills/ directories.
+- Browser test (agent-browser): clicked Statistiques nav item, verified all 37 expected content strings present (Vue d'ensemble, Exporter rapport PDF, Évolution des scans, Scans par jour de la semaine, Scans par heure, Répartition des scans par produit, Top produits, Carte des scans, Top villes, Durée de consultation, Actions sur la page produit, Sénégal, all 8 cities, all 7 products, peak, ingrédients, Voir détails, Total scans, Faible/Élevé, Mobile/Desktop/Tablette). No console errors, no runtime errors.
+- SVG inspection confirmed 7 Recharts charts render correctly: AreaChart (2 paths), Semaine BarChart (7 paths), Heure BarChart (24 paths), Répartition PieChart (8 sectors), Durée BarChart (5 paths), Appareil PieChart (3 sectors), Actions BarChart (4 paths).
+
+Stage Summary:
+- Delivered a full StatistiquesPage (~830 lines, "use client") with 5 sections, 6 animated KPI cards (CountUpNumber via KpiCard), 7 Recharts charts (1 AreaChart, 4 BarCharts, 2 PieCharts/donuts) using ResponsiveContainer, 1 custom stylized Sénégal geographic bubble visualization with intensity legend, 2 data tables (Top produits with photos + Top villes), and 8 InsightBox callouts. State via useState for period selector. Consistent custom tooltip styling (white bg, rounded-lg, border, shadow) via shared ChartTooltip + 2 specialized pie tooltips. Fully responsive (grids collapse to 1-2 cols on mobile, charts have fixed heights). All text French. TypeScript clean, dev server running, all content verified via headless browser.
+
+---
+Task ID: 4
+Agent: main
+Task: Verification end-to-end du Dashboard Fabricant (lint + Agent Browser sur toutes les pages)
+
+Work Log:
+- Lancé 8 subagents en parallèle (2 vagues de 4) pour construire les 10 pages (Accueil, Produits, ProduitDetail, Lots, LotDetail, QR Codes, Statistiques, Score, Abonnement, Parametres)
+- Corrigé 4 erreurs lint:
+  - ProduitDetailPage.tsx: extrait le composant `Finder` (défini dans le render) vers un composant top-level `FinderSquare` (fix `react-hooks/static-components`)
+  - QRCodesPage.tsx: remplacé `useEffect(() => setPage(1))` par le pattern "adjust during render" (fix `react-hooks/set-state-in-effect`)
+  - Nettoyé 3 directives eslint-disable inutilisées avec `--fix`
+- Lint final: 0 erreurs, 0 warnings
+- Verification Agent Browser:
+  - Page Accueil: tous les éléments rendus (welcome bar, 4 KPIs avec count-up, AreaChart Recharts, activités, top produits, score transparence, 8 badges gamification)
+  - Page Produits: grille de cards avec photos, filtres (recherche + catégorie + statut + tri), modal création s'ouvre correctement
+  - Page Lots: tableau avec checkboxes, pagination, dropdowns actions
+  - Page QR Codes: grille 4 colonnes avec QR codes SVG générés, quota banner, filtres
+  - Page Statistiques: 6 KPIs + 8 graphiques Recharts (AreaChart, BarChart, PieChart, carte géographique stylisée)
+  - Page Score: hero score 95/100, 7 cards détail, 3 recommandations, tableau classement
+  - Page Abonnement: plan actuel, historique paiements, comparaison plans, QR packs, annulation
+  - Page Parametres: sidebar 7 sections, formulaires complets (entreprise, logo, contact, sécurité avec sessions/journal, notifications, intégrations, données)
+  - Test interactions: modal produit s'ouvre, dropdown notifications, menu mobile (hamburger → drawer)
+  - Test responsive: viewport mobile 390x844 — hamburger menu fonctionne, drawer s'ouvre avec navigation
+  - Aucune erreur console, aucune erreur runtime sur toutes les pages
+- Dev log: GET / 200 sur toutes les navigations, compilations réussies
+
+Stage Summary:
+- Dashboard Fabricant VerifScan COMPLET et vérifié end-to-end
+- 10 pages fonctionnelles (8 principales + 2 pages détail)
+- Layout: sidebar 260px fixe + header 70px sticky + contenu scrollable
+- Design system cohérent: #2563EB (bleu), #10B981 (vert), #F59E0B (orange), #8B5CF6 (violet)
+- Gamification: 8 badges, score transparence, classement fabricants
+- Responsive mobile-first avec menu drawer
+- ViewSwitcher en bas à droite permet de basculer entre Landing / Fabricant / SuperAdmin
