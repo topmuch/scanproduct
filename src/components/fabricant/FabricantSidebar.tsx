@@ -14,6 +14,7 @@ import {
   Sparkles,
   X,
 } from "lucide-react";
+import { signOut } from "next-auth/react";
 import { Logo } from "@/components/landing/Logo";
 import { useFabricantNav, type FabricantPage } from "@/lib/fabricant-store";
 import { MARQUE } from "@/lib/fabricant-data";
@@ -175,6 +176,7 @@ export function FabricantSidebar() {
         </div>
         <button
           type="button"
+          onClick={() => signOut({ callbackUrl: "/login" })}
           className="mt-2 flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-[13px] text-[#6B7280] transition-colors hover:bg-[#FEE2E2] hover:text-[#EF4444]"
         >
           <LogOut className="h-4 w-4" />

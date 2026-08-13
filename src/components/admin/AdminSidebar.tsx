@@ -13,6 +13,7 @@ import {
   LogOut,
   ShieldCheck,
 } from "lucide-react";
+import { signOut } from "next-auth/react";
 import { Logo } from "@/components/landing/Logo";
 import { useAdminNav, type AdminPage } from "@/lib/admin-store";
 import { cn } from "@/lib/utils";
@@ -147,6 +148,7 @@ export function AdminSidebar() {
           </div>
           <button
             type="button"
+            onClick={() => signOut({ callbackUrl: "/login" })}
             className="flex h-8 w-8 items-center justify-center rounded-md text-[#6B7280] transition-colors hover:bg-[#FEE2E2] hover:text-[#EF4444]"
             aria-label="Déconnexion"
             title="Déconnexion"

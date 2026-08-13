@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Search, Bell, ChevronRight, Menu, X, User, Settings as SettingsIcon, LogOut } from "lucide-react";
+import { signOut } from "next-auth/react";
 import { useAdminNav, type AdminPage } from "@/lib/admin-store";
 import { ACTIVITY_LOGS } from "@/lib/admin-data";
 import { cn } from "@/lib/utils";
@@ -151,7 +152,10 @@ export function AdminHeader() {
                   </button>
                 </li>
                 <li className="border-t border-[#F3F4F6]">
-                  <button className="flex w-full items-center gap-2.5 px-4 py-2.5 text-[13px] text-[#EF4444] hover:bg-[#FEE2E2]">
+                  <button
+                    onClick={() => signOut({ callbackUrl: "/login" })}
+                    className="flex w-full items-center gap-2.5 px-4 py-2.5 text-[13px] text-[#EF4444] hover:bg-[#FEE2E2]"
+                  >
                     <LogOut className="h-4 w-4" /> Déconnexion
                   </button>
                 </li>

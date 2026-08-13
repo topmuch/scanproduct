@@ -591,3 +591,30 @@ Stage Summary:
 - Demo credentials: admin@verifscan.sn / Admin123!2025 (SuperAdmin) · sarine@biocosmetique.sn / Demo1234! (Fabricant)
 - Coolify deployment ready: Dockerfile + .env.example + COOLIFY.md + /api/health
 - ESLint passes clean, no runtime errors, all routes return correct HTTP codes
+
+---
+Task ID: bugfix-logout-upload-1
+Agent: main (Z.ai Code)
+Task: Fix 2 bugs reported after Coolify deployment: (1) logout button non-functional in SuperAdmin + Fabricant, (2) image upload in product creation modal non-functional
+
+Work Log:
+- Bug 1 — Logout: Found 4 logout buttons (AdminHeader, AdminSidebar, FabricantHeader, FabricantSidebar) all had NO onClick handler — purely decorative. Added `import { signOut } from "next-auth/react"` and `onClick={() => signOut({ callbackUrl: "/login" })}` to all 4 buttons.
+- Bug 2 — Image upload: Found the "Visuels" section in ProduitsPage.tsx ProductModal was a static placeholder (no input, no handlers). Built full upload flow:
+  - Created /api/upload endpoint: auth-required POST, accepts multipart/form-data, validates type (JPG/PNG/WebP/GIF) + size (5MB max), saves to /public/uploads/<uuid>.<ext>, returns { url }
+  - Added to ProductModal: imageUrl state, uploading state, uploadError state, dragActive state, fileInputRef
+  - handleFile callback: client-side validation → FormData POST to /api/upload → sets imageUrl on success
+  - onDrop + onFileChange handlers for drag/drop and click-to-browse
+  - Replaced static dropzone with: empty state (Upload icon + instructions, clickable + drag/drop) OR filled state (image preview + "Changer"/"Retirer" buttons)
+  - Loading state: spinner overlay during upload
+  - Error state: red alert box below dropzone
+  - Wired uploaded imageUrl to the right-side preview panel (replaced static 📷 placeholder)
+- Fixed Product type field: was using product?.image (doesn't exist), changed to product?.photo (correct field name)
+- Auto-fixed 2 unused eslint-disable warnings
+- Browser-verified: login as fabricant → click Déconnexion → redirected to /login ✅
+- Browser-verified: open product modal → upload test PNG → file saved to public/uploads/<uuid>.png, image preview showing, POST /api/upload returned 201 ✅
+
+Stage Summary:
+- Logout: 4 buttons wired to signOut({ callbackUrl: "/login" }) — works for both SuperAdmin and Fabricant
+- Image upload: full flow (file input + drag/drop + API endpoint + preview + error handling) — POST /api/upload returns 201 with { url }
+- ESLint passes clean (0 errors, 0 warnings)
+- Both fixes browser-verified end-to-end

@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Bell, Search, Menu, ChevronDown, User, Settings, LogOut, ChevronRight } from "lucide-react";
+import { signOut } from "next-auth/react";
 import { useFabricantNav, type FabricantPage } from "@/lib/fabricant-store";
 import { MARQUE, NOTIFICATIONS } from "@/lib/fabricant-data";
 import { cn } from "@/lib/utils";
@@ -152,7 +153,10 @@ export function FabricantHeader() {
                   Paramètres
                   <ChevronRight className="ml-auto h-3.5 w-3.5 text-[#9CA3AF]" />
                 </button>
-                <button className="flex w-full items-center gap-2.5 px-4 py-2 text-[13px] text-[#EF4444] hover:bg-[#FEE2E2]">
+                <button
+                  onClick={() => signOut({ callbackUrl: "/login" })}
+                  className="flex w-full items-center gap-2.5 px-4 py-2 text-[13px] text-[#EF4444] hover:bg-[#FEE2E2]"
+                >
                   <LogOut className="h-4 w-4" />
                   Déconnexion
                 </button>
