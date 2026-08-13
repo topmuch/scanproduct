@@ -9,7 +9,7 @@ import { QRCodeCanvas } from "qrcode.react";
  * Falls back to the production VerifScan URL when the env var is not set.
  */
 export const SCAN_BASE_URL =
-  process.env.NEXT_PUBLIC_SCAN_URL || "https://verifscan.sn/scan";
+  process.env.NEXT_PUBLIC_SCAN_URL || "https://verifscan.roomscan.pro/1";
 
 /** Builds the scannable URL for a given QR code identifier. */
 export function getScanUrl(code: string): string {

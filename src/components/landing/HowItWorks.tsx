@@ -34,7 +34,7 @@ const STEPS: Step[] = [
     number: 2,
     icon: (
       <QRCodeCanvas
-        value="https://verifscan.sn/p/demo-step"
+        value="https://verifscan.roomscan.pro/1/demo-step"
         size={96}
         fgColor="#10B981"
         level="M"

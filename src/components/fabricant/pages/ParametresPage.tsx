@@ -571,7 +571,7 @@ function LogoSection() {
           <div className="flex flex-col items-center gap-2">
             <div className="rounded-xl border border-[#E5E7EB] bg-white p-3 shadow-sm">
               <QRCodeCanvas
-                value="https://verifscan.sn/p/preview"
+                value="https://verifscan.roomscan.pro/1/preview"
                 size={160}
                 level="H"
                 marginSize={1}

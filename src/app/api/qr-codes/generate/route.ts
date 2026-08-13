@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate the QR codes
-    const baseUrl = process.env.NEXT_PUBLIC_SCAN_URL || "https://verifscan.sn/p";
+    const baseUrl = process.env.NEXT_PUBLIC_SCAN_URL || "https://verifscan.roomscan.pro/1";
     const qrCodes = [];
 
     for (let i = 0; i < qty; i++) {

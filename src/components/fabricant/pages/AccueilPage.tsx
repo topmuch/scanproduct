@@ -98,8 +98,7 @@ export function AccueilPage() {
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="flex flex-col gap-4 rounded-xl border border-[#E5E7EB] p-6 sm:flex-row sm:items-center sm:justify-between"
-        style={{ background: "linear-gradient(135deg, #EFF6FF 0%, #F0FDF4 100%)" }}
+        className="flex flex-col gap-4 rounded-xl border border-[#E5E7EB] bg-gradient-to-br from-[#EFF6FF] to-[#F0FDF4] p-6 sm:flex-row sm:items-center sm:justify-between dark:border-white/10 dark:from-[#1E293B] dark:to-[#1E3A8A]"
       >
         <div>
           <h1 className="font-display text-[24px] font-bold leading-tight text-[#111827]">
@@ -345,8 +344,7 @@ export function AccueilPage() {
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="rounded-xl border border-[#E5E7EB] p-6"
-        style={{ background: "linear-gradient(135deg, #F3E8FF 0%, #EFF6FF 100%)" }}
+        className="rounded-xl border border-[#E5E7EB] bg-gradient-to-br from-[#F3E8FF] to-[#EFF6FF] p-6 dark:border-white/10 dark:from-[#1E1B4B] dark:to-[#1E3A8A]"
       >
         {/* Header */}
         <div className="flex flex-wrap items-center justify-between gap-3">

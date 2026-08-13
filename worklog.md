@@ -903,3 +903,60 @@ Stage Summary:
 - Modified: `src/lib/fabricant-data.ts` (added `produitIcon?` to Lot type), `src/components/fabricant/pages/ProduitsPage.tsx`, `src/components/fabricant/pages/LotsPage.tsx` (3 sites + addLot passes produitIcon), `src/components/fabricant/pages/LotDetailPage.tsx`, `src/components/fabricant/pages/ProduitDetailPage.tsx` (also fixed store wiring), `src/components/fabricant/pages/AccueilPage.tsx`.
 - Both reported bugs fixed: products/lots created without an uploaded image now show a branded gradient + category-emoji placeholder instead of a broken-image icon, across all 7 render sites (product cards, lot rows, lot creation dropdown, lot detail, product detail hero, accueil top 5). Bonus: ProduitDetailPage now correctly reads from the Zustand store so newly created products are found (was showing "Produit introuvable").
 - ESLint clean (0 errors) on all changed files. Agent-browser verified the full create-product → create-lot → view-detail flow with placeholder rendering correctly at every step.
+
+---
+Task ID: 12
+Agent: fabricant-ui-fixer
+Task: 4 changes requested by user: (1) change QR code URL from https://verifscan.sn to https://verifscan.roomscan.pro/1/{id}; (2) fix dark/light theme toggle button that doesn't display properly; (3) remove the background of the hero image; (4) make the "Produit" menu on the hero link to the catalogue page at /produits.
+
+Work Log:
+- Read worklog.md for context (VerifScan SaaS, Next.js 16, Tailwind CSS 4, fabricant dashboard with Zustand store).
+
+**Fix 1: QR code URL change (verifscan.sn → verifscan.roomscan.pro/1/)**
+- Updated 9 files, replacing all QR-code-encoded URLs from `https://verifscan.sn/...` to `https://verifscan.roomscan.pro/1/...`:
+  - `src/lib/qr-utils.tsx` — SCAN_BASE_URL fallback from `https://verifscan.sn/scan` to `https://verifscan.roomscan.pro/1`
+  - `src/components/product/QRCodeSection.tsx` — publicUrl from `/p/${lot.id}` to `/1/${lot.id}`
+  - `src/components/product/VerificationFooter.tsx` — same
+  - `src/components/landing/Hero.tsx` — demo QR from `/p/demo-bissap` to `/1/demo-bissap`
+  - `src/components/landing/HowItWorks.tsx` — demo QR from `/p/demo-step` to `/1/demo-step`
+  - `src/components/landing/DemoSection.tsx` — demo QR from `/p/${product.id}-demo` to `/1/${product.id}-demo`
+  - `src/components/fabricant/pages/ParametresPage.tsx` — preview QR from `/p/preview` to `/1/preview`
+  - `src/components/fabricant/pages/LotDetailPage.tsx` — copy link from `/lot/${lot.numero}` to `/1/${lot.id}` (also fixed to use lot.id instead of lot.numero for consistency with the public route)
+  - `src/app/api/qr-codes/generate/route.ts` — backend baseUrl fallback from `https://verifscan.sn/p` to `https://verifscan.roomscan.pro/1`
+  - `src/components/fabricant/pages/QRCodesPage.tsx` — updated comment
+- Admin SettingsPage default values (site URL, CORS origins) left unchanged — those are admin settings, not QR code URLs.
+
+**Fix 2: Dark/light theme toggle**
+- Root cause: the toggle (in FabricantHeader/AdminHeader) correctly applied `.dark` class to `<html>`, but the page didn't visually change because:
+  (a) `body` had `@apply bg-white` which always forced a white body background
+  (b) Tailwind CSS 4's `@custom-variant dark (&:is(.dark *))` was configured, but hardcoded light-mode colors (bg-white, text-[#111827], border-[#E5E7EB], etc.) used throughout the fabricant pages had no dark: overrides
+  (c) Two inline-style gradients in AccueilPage (welcome banner + transparency score) used light colors (#EFF6FF→#F0FDF4 and #F3E8FF→#EFF6FF) that couldn't be overridden by CSS classes
+- Fix in `src/app/globals.css`:
+  - Added `html.dark body { background-color: #0F172A; color: #F3F4F6; }` to the @layer base section
+  - Added comprehensive dark-mode CSS overrides (outside @layer for higher specificity) for the most common hardcoded utility classes: `.bg-white → #1E293B`, `.bg-[#F9FAFB] → #0F172A`, `.bg-[#F3F4F6] → #334155`, `.border-[#E5E7EB] → rgba(255,255,255,0.10)`, `.border-[#F3F4F6] → rgba(255,255,255,0.08)`, `.text-[#111827] → #F3F4F6`, `.text-[#374151] → #CBD5E1`, `.text-[#6B7280] → #94A3B8`, `.text-[#9CA3AF] → #64748B`, plus hover background overrides
+  - Cleaned up duplicate/old dark mode rules at the bottom of the file
+- Fix in `src/components/fabricant/pages/AccueilPage.tsx`:
+  - Welcome banner: replaced inline `style={{ background: "linear-gradient(...)" }}` with Tailwind classes `bg-gradient-to-br from-[#EFF6FF] to-[#F0FDF4] dark:from-[#1E293B] dark:to-[#1E3A8A] dark:border-white/10`
+  - Transparency score section: same treatment, `from-[#F3E8FF] to-[#EFF6FF] dark:from-[#1E1B4B] dark:to-[#1E3A8A] dark:border-white/10`
+- Verified with agent-browser: clicking the toggle now properly switches the entire dashboard to dark mode (dark sidebar, dark header, dark content background, dark cards, dark welcome banner). Toggling back restores light mode.
+
+**Fix 3: Hero image background**
+- Original: the hero product image (jus-bissap.png) was wrapped in `<div className="border-4 border-white bg-white shadow-2xl">` creating a white card frame around the image. The image itself (a JPEG despite .png extension) also had a white studio background.
+- Step 1: Removed the `border-4 border-white bg-white` from the wrapper div — eliminated the CSS white card frame.
+- Step 2: Tried `mix-blend-mode: multiply` on the img to blend the white studio background with the page gradient — partially worked but the off-white studio background (not pure 255,255,255) still showed a faint box.
+- Step 3: Generated a new hero product image using the image-generation skill (`z-ai image` CLI) with a prompt specifying a gradient background matching the hero section (light blue #EFF6FF → light green #F0FDF4). Saved as `public/products/jus-bissap-hero.png`.
+- Updated `src/components/landing/Hero.tsx` to use the new image `/products/jus-bissap-hero.png` (no mix-blend-mode needed).
+- Verified with agent-browser + VLM: the image now blends seamlessly with the page — no visible white card, the product appears to float naturally on the page gradient.
+
+**Fix 4: "Produits" menu link to /produits**
+- In `src/components/landing/Header.tsx`, changed the NAV_LINKS "Produits" entry from `href: "#fonctionnalites"` to `href: "/produits"`.
+- Updated both desktop nav and mobile drawer rendering to conditionally use `<Link>` (Next.js) for internal routes (href starting with `/`) and `<a>` for anchor links (href starting with `#`). This ensures client-side navigation to the catalogue page.
+- Verified with agent-browser: clicking "Produits" in the header navigates to `http://localhost:3000/produits` which displays the full product catalogue page (search bar, category filters, product grid).
+
+Stage Summary:
+- 12 files modified + 1 image generated: src/lib/qr-utils.tsx, src/components/product/QRCodeSection.tsx, src/components/product/VerificationFooter.tsx, src/components/landing/Hero.tsx, src/components/landing/HowItWorks.tsx, src/components/landing/DemoSection.tsx, src/components/fabricant/pages/ParametresPage.tsx, src/components/fabricant/pages/LotDetailPage.tsx, src/app/api/qr-codes/generate/route.ts, src/components/fabricant/pages/QRCodesPage.tsx, src/components/landing/Header.tsx, src/app/globals.css, src/components/fabricant/pages/AccueilPage.tsx, public/products/jus-bissap-hero.png (new image).
+- All QR codes now encode `https://verifscan.roomscan.pro/1/{id}` URLs instead of `https://verifscan.sn/...`.
+- Dark mode toggle now fully works: body background, cards, borders, text colors, and gradient sections all switch to dark. Global CSS overrides handle the most common hardcoded light-mode utility classes; inline-style gradients in AccueilPage were converted to Tailwind classes with dark: variants.
+- Hero image no longer has a white card frame — a new AI-generated product image with a matching gradient background blends seamlessly with the hero section.
+- "Produits" nav link in the landing header now navigates to `/produits` (the catalogue page) via Next.js client-side `<Link>`.
+- ESLint: 0 errors on all changed files. Dev server compiles cleanly. Agent-browser verified all 4 fixes end-to-end.

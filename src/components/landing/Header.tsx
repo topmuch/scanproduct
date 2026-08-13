@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 
 const NAV_LINKS = [
   { label: "Accueil", href: "#accueil" },
-  { label: "Produits", href: "#fonctionnalites" },
+  { label: "Produits", href: "/produits" },
   { label: "Le concept", href: "#concept" },
   { label: "À propos", href: "#temoignages" },
   { label: "Contact", href: "#contact" },
@@ -51,24 +51,33 @@ export function Header() {
 
         {/* Desktop nav */}
         <nav className="hidden items-center gap-1 lg:flex" aria-label="Navigation principale">
-          {NAV_LINKS.map((link, i) => (
-            <a
-              key={link.href}
-              href={link.href}
-              className={cn(
-                "group relative rounded-md px-3 py-2 text-[15px] font-medium transition-colors",
-                i === 0 ? "text-[#2563EB]" : "text-[#374151] hover:text-[#2563EB]"
-              )}
-            >
-              {link.label}
-              <span
-                className={cn(
-                  "absolute bottom-1 left-3 right-3 h-0.5 rounded-full bg-[#2563EB] transition-all duration-300",
-                  i === 0 ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-                )}
-              />
-            </a>
-          ))}
+          {NAV_LINKS.map((link, i) => {
+            const isInternal = link.href.startsWith("/");
+            const className = cn(
+              "group relative rounded-md px-3 py-2 text-[15px] font-medium transition-colors",
+              i === 0 ? "text-[#2563EB]" : "text-[#374151] hover:text-[#2563EB]"
+            );
+            const content = (
+              <>
+                {link.label}
+                <span
+                  className={cn(
+                    "absolute bottom-1 left-3 right-3 h-0.5 rounded-full bg-[#2563EB] transition-all duration-300",
+                    i === 0 ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                  )}
+                />
+              </>
+            );
+            return isInternal ? (
+              <Link key={link.href} href={link.href} className={className}>
+                {content}
+              </Link>
+            ) : (
+              <a key={link.href} href={link.href} className={className}>
+                {content}
+              </a>
+            );
+          })}
         </nav>
 
         {/* Desktop CTAs */}
@@ -137,21 +146,34 @@ export function Header() {
               </div>
 
               <nav className="flex flex-col gap-1 px-5 py-6" aria-label="Navigation mobile">
-                {NAV_LINKS.map((link, i) => (
-                  <a
-                    key={link.href}
-                    href={link.href}
-                    onClick={() => setMobileOpen(false)}
-                    className={cn(
-                      "rounded-lg px-4 py-3 text-base font-medium transition-colors",
-                      i === 0
-                        ? "bg-[#EFF6FF] text-[#2563EB]"
-                        : "text-[#374151] hover:bg-[#F9FAFB]"
-                    )}
-                  >
-                    {link.label}
-                  </a>
-                ))}
+                {NAV_LINKS.map((link, i) => {
+                  const isInternal = link.href.startsWith("/");
+                  const className = cn(
+                    "rounded-lg px-4 py-3 text-base font-medium transition-colors",
+                    i === 0
+                      ? "bg-[#EFF6FF] text-[#2563EB]"
+                      : "text-[#374151] hover:bg-[#F9FAFB]"
+                  );
+                  return isInternal ? (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      onClick={() => setMobileOpen(false)}
+                      className={className}
+                    >
+                      {link.label}
+                    </Link>
+                  ) : (
+                    <a
+                      key={link.href}
+                      href={link.href}
+                      onClick={() => setMobileOpen(false)}
+                      className={className}
+                    >
+                      {link.label}
+                    </a>
+                  );
+                })}
               </nav>
 
               <div className="mt-auto flex flex-col gap-3 border-t border-[#F3F4F6] px-5 py-6">

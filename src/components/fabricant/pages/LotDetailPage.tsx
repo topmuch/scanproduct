@@ -90,7 +90,7 @@ export function LotDetailPage() {
   const scansParJour = Math.max(1, Math.round(lot.scans / 30));
 
   function copyLink() {
-    const link = `https://verifscan.sn/lot/${lot!.numero}`;
+    const link = `https://verifscan.roomscan.pro/1/${lot!.id}`;
     if (navigator.clipboard) {
       navigator.clipboard.writeText(link).catch(() => {});
     }

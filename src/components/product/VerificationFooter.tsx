@@ -14,7 +14,7 @@ type Props = {
 export function VerificationFooter({ lot }: Props) {
   const hash = lot.blockchainHash ?? null;
   const shortHash = hash ? `${hash.slice(0, 12)}…${hash.slice(-8)}` : null;
-  const publicUrl = `https://verifscan.sn/p/${lot.id}`;
+  const publicUrl = `https://verifscan.roomscan.pro/1/${lot.id}`;
   const shareText = encodeURIComponent(
     `Découvrez le passeport numérique VerifScan de ce produit : ${publicUrl}`
   );

@@ -126,7 +126,7 @@ export function DemoSection() {
                   <p className="text-sm font-semibold text-[#111827]">pour voir le passeport complet</p>
                 </div>
                 <div className="rounded-lg border-2 border-[#2563EB]/20 bg-white p-2">
-                  <QRCodeCanvas value={`https://verifscan.sn/p/${product.id}-demo`} size={64} level="M" marginSize={1} />
+                  <QRCodeCanvas value={`https://verifscan.roomscan.pro/1/${product.id}-demo`} size={64} level="M" marginSize={1} />
                 </div>
               </div>
             </motion.div>

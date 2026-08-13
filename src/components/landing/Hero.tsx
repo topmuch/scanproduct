@@ -170,12 +170,12 @@ export function Hero() {
               transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
               className="relative"
             >
-              {/* Main product image card */}
-              <div className="relative overflow-hidden rounded-3xl border-4 border-white bg-white shadow-2xl">
+              {/* Main product image — no card/frame, gradient background blends with hero */}
+              <div className="relative">
                 <img
-                  src="/products/jus-bissap.png"
+                  src="/products/jus-bissap-hero.png"
                   alt="Jus de Bissap Premium scanné avec VerifScan"
-                  className="h-[420px] w-full object-cover"
+                  className="h-[420px] w-full rounded-3xl object-cover"
                 />
                 {/* Top brand chip */}
                 <div className="absolute left-4 top-4 inline-flex items-center gap-1.5 rounded-full bg-white/90 px-3 py-1.5 text-xs font-semibold text-[#111827] shadow-sm backdrop-blur">
@@ -225,7 +225,7 @@ export function Hero() {
               >
                 <div className="rounded-lg bg-white p-1">
                   <QRCodeCanvas
-                    value="https://verifscan.sn/p/demo-bissap"
+                    value="https://verifscan.roomscan.pro/1/demo-bissap"
                     size={80}
                     level="M"
                     marginSize={1}

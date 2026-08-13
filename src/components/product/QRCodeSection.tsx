@@ -18,7 +18,7 @@ export function QRCodeSection({ lot }: Props) {
   const canvasWrapperRef = useRef<HTMLDivElement>(null);
   const [copied, setCopied] = useState(false);
 
-  const publicUrl = `https://verifscan.sn/p/${lot.id}`;
+  const publicUrl = `https://verifscan.roomscan.pro/1/${lot.id}`;
 
   function handleDownload() {
     const canvas = canvasWrapperRef.current?.querySelector("canvas");
