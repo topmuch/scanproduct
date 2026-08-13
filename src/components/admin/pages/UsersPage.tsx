@@ -12,19 +12,21 @@ import {
   Play,
   Trash2,
   MessageCircle,
+  UserPlus,
+  X,
 } from "lucide-react";
 import { PageContainer, Card, Badge, SectionTitle, Button } from "@/components/admin/ui";
 import {
-  MAKERS_TABLE,
-  ALL_MAKERS_COUNT,
   formatFCFA,
   formatDate,
   type Maker,
   type Plan,
   type UserStatus,
 } from "@/lib/admin-data";
+import { useMakers } from "@/lib/admin-data-store";
 import { useAdminNav } from "@/lib/admin-store";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 type PillColor = "blue" | "green" | "orange" | "red" | "gray" | "purple" | "yellow";
 
@@ -41,11 +43,11 @@ const STATUS_BADGE: Record<UserStatus, PillColor> = {
   Suspendu: "red",
 };
 
-const STATUS_FILTERS: { key: "Tous" | UserStatus; label: string; count: number }[] = [
-  { key: "Tous", label: "Tous", count: ALL_MAKERS_COUNT },
-  { key: "Actif", label: "Actifs", count: 245 },
-  { key: "Inactif", label: "Inactifs", count: 8 },
-  { key: "Suspendu", label: "Suspendus", count: 5 },
+const STATUS_FILTERS: { key: "Tous" | UserStatus; label: string }[] = [
+  { key: "Tous", label: "Tous" },
+  { key: "Actif", label: "Actifs" },
+  { key: "Inactif", label: "Inactifs" },
+  { key: "Suspendu", label: "Suspendus" },
 ];
 
 function downloadCSV(rows: Maker[]) {
@@ -77,11 +79,13 @@ function downloadCSV(rows: Maker[]) {
 
 export function UsersPage() {
   const { openDetail } = useAdminNav();
+  const { makers, addMaker } = useMakers();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"Tous" | UserStatus>("Tous");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [pageSize, setPageSize] = useState<20 | 50 | 100>(20);
+  const [modalOpen, setModalOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
 
   // Close the row dropdown on outside click.
@@ -96,7 +100,7 @@ export function UsersPage() {
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return MAKERS_TABLE.filter((m) => {
+    return makers.filter((m) => {
       if (statusFilter !== "Tous" && m.status !== statusFilter) return false;
       if (!q) return true;
       return (
@@ -105,7 +109,7 @@ export function UsersPage() {
         m.contactName.toLowerCase().includes(q)
       );
     });
-  }, [search, statusFilter]);
+  }, [makers, search, statusFilter]);
 
   const allChecked = filtered.length > 0 && filtered.every((m) => selectedIds.has(m.id));
   const selectedCount = selectedIds.size;
@@ -143,12 +147,18 @@ export function UsersPage() {
     <PageContainer>
       <SectionTitle
         title="Gestion des Fabricants"
-        subtitle={`${ALL_MAKERS_COUNT} fabricants inscrits`}
+        subtitle={`${makers.length} fabricants inscrits`}
         action={
-          <Button variant="outline" size="md" onClick={() => downloadCSV(filtered)}>
-            <Download className="h-4 w-4" />
-            Exporter CSV
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button variant="outline" size="md" onClick={() => downloadCSV(filtered)}>
+              <Download className="h-4 w-4" />
+              Exporter CSV
+            </Button>
+            <Button variant="gradient" size="md" onClick={() => setModalOpen(true)}>
+              <UserPlus className="h-4 w-4" />
+              Ajouter fabricant
+            </Button>
+          </div>
         }
       />
 
@@ -165,29 +175,35 @@ export function UsersPage() {
           />
         </div>
         <div className="flex flex-wrap gap-2">
-          {STATUS_FILTERS.map((f) => (
-            <button
-              key={f.key}
-              type="button"
-              onClick={() => setStatusFilter(f.key)}
-              className={cn(
-                "inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[13px] font-semibold transition-colors",
-                statusFilter === f.key
-                  ? "bg-[#2563EB] text-white"
-                  : "border border-[#E5E7EB] bg-white text-[#374151] hover:bg-[#F9FAFB]"
-              )}
-            >
-              {f.label}
-              <span
+          {STATUS_FILTERS.map((f) => {
+            const count =
+              f.key === "Tous"
+                ? makers.length
+                : makers.filter((m) => m.status === f.key).length;
+            return (
+              <button
+                key={f.key}
+                type="button"
+                onClick={() => setStatusFilter(f.key)}
                 className={cn(
-                  "ml-0.5 rounded-full px-1.5 py-0.5 text-[11px] font-semibold",
-                  statusFilter === f.key ? "bg-white/20 text-white" : "bg-[#F3F4F6] text-[#6B7280]"
+                  "inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[13px] font-semibold transition-colors",
+                  statusFilter === f.key
+                    ? "bg-[#2563EB] text-white"
+                    : "border border-[#E5E7EB] bg-white text-[#374151] hover:bg-[#F9FAFB]"
                 )}
               >
-                {f.count}
-              </span>
-            </button>
-          ))}
+                {f.label}
+                <span
+                  className={cn(
+                    "ml-0.5 rounded-full px-1.5 py-0.5 text-[11px] font-semibold",
+                    statusFilter === f.key ? "bg-white/20 text-white" : "bg-[#F3F4F6] text-[#6B7280]"
+                  )}
+                >
+                  {count}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -416,7 +432,7 @@ export function UsersPage() {
         <div className="flex flex-col gap-3 border-t border-[#F3F4F6] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="text-[13px] text-[#6B7280]">
             Affichage <span className="font-semibold text-[#111827]">1-{filtered.length}</span> sur{" "}
-            <span className="font-semibold text-[#111827]">{ALL_MAKERS_COUNT}</span>
+            <span className="font-semibold text-[#111827]">{makers.length}</span>
           </div>
           <div className="flex items-center gap-2 text-[13px]">
             <span className="text-[#6B7280]">Par page</span>
@@ -465,6 +481,236 @@ export function UsersPage() {
           </div>
         </div>
       </Card>
+
+      {/* Add fabricant modal */}
+      {modalOpen && (
+        <AddMakerModal
+          onClose={() => setModalOpen(false)}
+          onSubmit={(data) => {
+            const created = addMaker(data);
+            toast.success(`Fabricant « ${created.company} » créé avec succès`);
+            setModalOpen(false);
+          }}
+        />
+      )}
     </PageContainer>
+  );
+}
+
+// ============================================================================
+// AddMakerModal — form to create a new fabricant from the superadmin panel.
+// ============================================================================
+const LOGO_COLORS = ["#2563EB", "#10B981", "#F59E0B", "#8B5CF6", "#EC4899", "#06B6D4"];
+
+function AddMakerModal({
+  onClose,
+  onSubmit,
+}: {
+  onClose: () => void;
+  onSubmit: (data: {
+    company: string;
+    contactName: string;
+    email: string;
+    phone: string;
+    address: string;
+    plan: Plan;
+    status: UserStatus;
+    logoColor: string;
+  }) => void;
+}) {
+  const [company, setCompany] = useState("");
+  const [contactName, setContactName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("+221 ");
+  const [address, setAddress] = useState("Dakar, Sénégal");
+  const [plan, setPlan] = useState<Plan>("Starter");
+  const [status, setStatus] = useState<UserStatus>("Actif");
+  const [logoColor, setLogoColor] = useState(LOGO_COLORS[0]);
+
+  const canSubmit = Boolean(company.trim() && contactName.trim() && email.trim());
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!canSubmit) return;
+    onSubmit({
+      company: company.trim(),
+      contactName: contactName.trim(),
+      email: email.trim(),
+      phone: phone.trim(),
+      address: address.trim(),
+      plan,
+      status,
+      logoColor,
+    });
+  }
+
+  const inputCls =
+    "w-full rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-[14px] text-[#111827] placeholder:text-[#9CA3AF] focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 transition";
+  const labelCls = "mb-1.5 block text-[13px] font-medium text-[#374151]";
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <form
+        onSubmit={handleSubmit}
+        onClick={(e) => e.stopPropagation()}
+        className="max-h-[92vh] w-full max-w-[560px] overflow-hidden rounded-2xl bg-white shadow-2xl"
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-[#F3F4F6] px-6 py-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-[#2563EB] to-[#10B981] text-white">
+              <UserPlus className="h-5 w-5" />
+            </div>
+            <div>
+              <h2 className="font-display text-[18px] font-bold text-[#111827]">
+                Ajouter un fabricant
+              </h2>
+              <p className="text-[13px] text-[#6B7280]">
+                Créez un nouveau compte fabricant.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-[#6B7280] transition-colors hover:bg-[#F3F4F6] hover:text-[#111827]"
+            aria-label="Fermer"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="max-h-[calc(92vh-140px)] space-y-4 overflow-y-auto px-6 py-5">
+          <div>
+            <label className={labelCls}>
+              Entreprise <span className="text-[#EF4444]">*</span>
+            </label>
+            <input
+              type="text"
+              value={company}
+              onChange={(e) => setCompany(e.target.value)}
+              placeholder="Ex : Sarine Bio"
+              className={inputCls}
+              autoFocus
+            />
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label className={labelCls}>
+                Nom du contact <span className="text-[#EF4444]">*</span>
+              </label>
+              <input
+                type="text"
+                value={contactName}
+                onChange={(e) => setContactName(e.target.value)}
+                placeholder="Ex : Aminata Diop"
+                className={inputCls}
+              />
+            </div>
+            <div>
+              <label className={labelCls}>
+                Email <span className="text-[#EF4444]">*</span>
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="contact@entreprise.sn"
+                className={inputCls}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label className={labelCls}>Téléphone</label>
+              <input
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="+221 77 000 00 00"
+                className={inputCls}
+              />
+            </div>
+            <div>
+              <label className={labelCls}>Adresse</label>
+              <input
+                type="text"
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                placeholder="Dakar, Sénégal"
+                className={inputCls}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label className={labelCls}>Plan</label>
+              <select
+                value={plan}
+                onChange={(e) => setPlan(e.target.value as Plan)}
+                className={inputCls}
+              >
+                <option value="Essai">Essai</option>
+                <option value="Starter">Starter</option>
+                <option value="Pro">Pro</option>
+                <option value="Enterprise">Enterprise</option>
+              </select>
+            </div>
+            <div>
+              <label className={labelCls}>Statut</label>
+              <select
+                value={status}
+                onChange={(e) => setStatus(e.target.value as UserStatus)}
+                className={inputCls}
+              >
+                <option value="Actif">Actif</option>
+                <option value="Inactif">Inactif</option>
+                <option value="Suspendu">Suspendu</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Logo color picker */}
+          <div>
+            <label className={labelCls}>Couleur du logo</label>
+            <div className="flex flex-wrap gap-2">
+              {LOGO_COLORS.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setLogoColor(c)}
+                  className={cn(
+                    "h-9 w-9 rounded-lg border-2 transition-all",
+                    logoColor === c
+                      ? "border-[#111827] ring-2 ring-[#2563EB]/30"
+                      : "border-transparent hover:scale-110"
+                  )}
+                  style={{ backgroundColor: c }}
+                  aria-label={`Couleur ${c}`}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center justify-end gap-2 border-t border-[#F3F4F6] bg-[#F9FAFB] px-6 py-4">
+          <Button variant="outline" size="md" type="button" onClick={onClose}>
+            Annuler
+          </Button>
+          <Button variant="gradient" size="md" type="submit" disabled={!canSubmit}>
+            <UserPlus className="h-4 w-4" />
+            Créer le fabricant
+          </Button>
+        </div>
+      </form>
+    </div>
   );
 }

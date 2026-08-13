@@ -50,6 +50,7 @@ type FabricantDataState = {
 
   // ---- QR codes ----------------------------------------------------------
   deleteQRCode: (id: string) => void;
+  generateQRCodes: (lotId: string, quantity?: number) => QRCode[];
 };
 
 // ============================================================================
@@ -121,8 +122,22 @@ export const useFabricantData = create<FabricantDataState>((set, get) => ({
       id: `l${Date.now()}`,
       scans: 0,
     };
+    // Auto-generate a first QR code for the new lot so it immediately appears
+    // on the QR codes page and in the lot/product detail views.
+    const today = new Date().toISOString().split("T")[0];
+    const autoQR: QRCode = {
+      id: `q${Date.now()}`,
+      code: `QR-${newLot.numero}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`,
+      lotId: newLot.id,
+      lotNumero: newLot.numero,
+      produitNom: newLot.produitNom,
+      dateGeneration: today,
+      scans: 0,
+      status: "actif",
+    };
     set((s) => ({
       lots: [newLot, ...s.lots],
+      qrCodes: [autoQR, ...s.qrCodes],
       // Keep product.lots counter in sync so the ProduitsPage cards reflect
       // the new lot immediately.
       produits: s.produits.map((p) =>
@@ -156,6 +171,32 @@ export const useFabricantData = create<FabricantDataState>((set, get) => ({
   // ---- QR codes ----------------------------------------------------------
   deleteQRCode: (id) =>
     set((s) => ({ qrCodes: s.qrCodes.filter((q) => q.id !== id) })),
+
+  generateQRCodes: (lotId, quantity = 1) => {
+    const lot = get().lots.find((l) => l.id === lotId);
+    if (!lot) return [];
+    const qty = Math.min(100, Math.max(1, quantity));
+    const today = new Date().toISOString().split("T")[0];
+    const newCodes: QRCode[] = Array.from({ length: qty }).map((_, i) => ({
+      id: `q${Date.now()}-${i}`,
+      code: `QR-${lot.numero}-${Date.now().toString(36).slice(-4)}-${i}`,
+      lotId: lot.id,
+      lotNumero: lot.numero,
+      produitNom: lot.produitNom,
+      dateGeneration: today,
+      scans: 0,
+      status: "actif" as const,
+    }));
+    set((s) => ({
+      qrCodes: [...newCodes, ...s.qrCodes],
+      // Update the lot's qrCodes counter so the LotDetailPage reflects the
+      // newly generated codes immediately.
+      lots: s.lots.map((l) =>
+        l.id === lotId ? { ...l, qrCodes: l.qrCodes + qty } : l
+      ),
+    }));
+    return newCodes;
+  },
 }));
 
 // ============================================================================
@@ -193,6 +234,7 @@ export function useQRCodes() {
     useShallow((s) => ({
       qrCodes: s.qrCodes,
       deleteQRCode: s.deleteQRCode,
+      generateQRCodes: s.generateQRCodes,
     }))
   );
 }

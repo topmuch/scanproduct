@@ -1002,3 +1002,39 @@ Stage Summary:
 - Product info is now editable via the "Modifier le produit" button (inline modal with image upload).
 - All fake/decorative QR codes replaced with real `QRCodeCanvas` from `qrcode.react`.
 - `/p/[lotId]` shows a graceful fallback page instead of bare 404 for unknown lots.
+
+---
+Task ID: 12
+Agent: main
+Task: Fix QR codes not displaying in QRCodesPage/ProduitsPage/LotsPage (QR codes encoded wrong URLs and weren't generated for new lots), and add "Ajouter fabricant" button in superadmin UsersPage.
+
+Work Log:
+Issue 1 — QR codes not displaying / not generated:
+- Root cause: `QRCode` type had no `lotId` field — only `code` (e.g. "QR-00001-ABCD") and `lotNumero`. `QRCodeDisplay` called `getScanUrl(q.code)` → produced `/p/QR-00001-ABCD` which is NOT a real lot ID → QR codes resolved to 404.
+- `addLot` in the store didn't generate any QR codes, so new lots had zero QR codes.
+- `GenerationModal` in QRCodesPage showed a success toast but didn't actually create QR codes in the store.
+
+Fixes:
+1. `src/lib/fabricant-data.ts` — Added `lotId: string` field to `QRCode` type; populated `lotId: lot.id` in the mock data.
+2. `src/lib/fabricant-data-store.ts` — Added `generateQRCodes(lotId, quantity)` action that creates real QRCode entries in the store (with lotId, lotNumero, produitNom). Updated `addLot` to auto-generate a first QR code for every new lot. Exposed `generateQRCodes` in the `useQRCodes` hook.
+3. `src/components/fabricant/pages/QRCodesPage.tsx` — Changed `QRCodeDisplay` to accept `lotId` (not `code`) and call `getScanUrl(lotId)`. Updated all usages (preview, grid, bulk download, single download) to pass `q.lotId`. Wired `GenerationModal` to actually call `generateQRCodes(lotId, nombre)` and create real QR codes in the store.
+4. `src/components/fabricant/pages/LotDetailPage.tsx` — Added `useQRCodes` hook; computes `lotQrCodes` from the store (filters by `lotId`). Replaced the fake repeated QR grid with real QR codes from the store. Added "Générer 10 QR codes" button that calls `generateQRCodes(lot.id, 10)`. Shows empty state when no QR codes exist. Shows real `q.code` and `q.scans` per QR code.
+
+Issue 2 — Add "Ajouter fabricant" button in superadmin UsersPage:
+5. `src/lib/admin-data-store.ts` — NEW FILE. Zustand store wrapping `MAKERS_TABLE` with `addMaker`, `updateMaker`, `deleteMaker`, `toggleMakerStatus` actions. `addMaker` auto-fills derived fields (mrr from plan, quotas, dates, etc.).
+6. `src/components/admin/pages/UsersPage.tsx` — Switched from static `MAKERS_TABLE` to `useMakers()` store hook. Added "Ajouter fabricant" button (gradient variant) next to "Exporter CSV" in the SectionTitle action. Added `AddMakerModal` component with full form (company, contact name, email, phone, address, plan, status, logo color picker). On submit, calls `addMaker(data)` and shows a success toast. Made STATUS_FILTERS pill counts dynamic (computed from `makers` array). Updated pagination footer to use `makers.length`. Removed unused `ALL_MAKERS_COUNT` import.
+
+Verification:
+- `bun run lint`: 0 errors, 0 warnings ✅
+- Dev server running on port 3000, `/` returns HTTP 200 ✅
+- QR codes now encode `${origin}/p/<lotId>` using the real lot ID ✅
+- New lots auto-generate a QR code ✅
+- "Générer des QR codes" modal actually creates QR codes in the store ✅
+- LotDetailPage shows real QR codes from the store + "Générer 10 QR codes" button ✅
+- Superadmin UsersPage has "Ajouter fabricant" button + modal ✅
+
+Stage Summary:
+- QR codes are now fully functional: they encode real lot IDs, resolve to `/p/<lotId>`, and are auto-generated when a lot is created.
+- The "Générer des QR codes" modal in QRCodesPage now actually creates QR codes in the Zustand store (previously it was a no-op toast).
+- The LotDetailPage "QR codes générés" section now shows real QR codes from the store with a "Générer 10 QR codes" action button.
+- Superadmin UsersPage has a new "Ajouter fabricant" button with a complete creation modal (company, contact, email, phone, address, plan, status, logo color).

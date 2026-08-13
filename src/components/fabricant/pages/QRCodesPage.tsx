@@ -35,15 +35,15 @@ import { toast } from "sonner";
 // digital passport page.
 // ============================================================================
 function QRCodeDisplay({
-  code,
+  lotId,
   size = 150,
   color = "#000000",
 }: {
-  code: string;
+  lotId: string;
   size?: number;
   color?: string;
 }) {
-  const url = getScanUrl(code);
+  const url = getScanUrl(lotId);
   return (
     <QRCodeCanvas
       value={url}
@@ -101,7 +101,8 @@ function GenerationModal({
   onSuccess: (msg: string) => void;
 }) {
   const { lots } = useLots();
-  const [lot, setLot] = useState(lots[0]?.numero ?? "");
+  const { generateQRCodes } = useQRCodes();
+  const [lotId, setLotId] = useState(lots[0]?.id ?? "");
   const [nombre, setNombre] = useState(100);
   const [taille, setTaille] = useState<"petit" | "moyen" | "grand">("moyen");
   const [formats, setFormats] = useState<Record<string, boolean>>({ png: true, pdf: true, svg: false });
@@ -129,7 +130,12 @@ function GenerationModal({
   ) => set({ ...obj, [key]: !obj[key] });
 
   const handleSubmit = () => {
-    onSuccess(`✅ ${formatNombre(nombre)} QR codes générés avec succès`);
+    if (!lotId) {
+      onSuccess("⚠️ Veuillez sélectionner un lot");
+      return;
+    }
+    const created = generateQRCodes(lotId, nombre);
+    onSuccess(`✅ ${formatNombre(created.length)} QR codes générés avec succès`);
     onClose();
   };
 
@@ -169,12 +175,12 @@ function GenerationModal({
               Sélectionner un lot <span className="text-[#EF4444]">*</span>
             </label>
             <select
-              value={lot}
-              onChange={(e) => setLot(e.target.value)}
+              value={lotId}
+              onChange={(e) => setLotId(e.target.value)}
               className="h-10 w-full rounded-lg border border-[#E5E7EB] bg-white px-3 text-[13px] font-medium text-[#374151] outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/15"
             >
               {lots.slice(0, 12).map((l) => (
-                <option key={l.id} value={l.numero}>
+                <option key={l.id} value={l.id}>
                   {l.numero} — {l.produitNom}
                 </option>
               ))}
@@ -297,9 +303,9 @@ function GenerationModal({
             <div>
               <label className="mb-1.5 block text-[13px] font-semibold text-[#374151]">Aperçu</label>
               <div className="flex flex-col items-center rounded-lg border border-[#E5E7EB] bg-white p-3">
-                <QRCodeDisplay code="VERIFSCAN-PREVIEW-2026" size={120} color={couleur} />
+                <QRCodeDisplay lotId="preview" size={120} color={couleur} />
                 {options.lot && (
-                  <p className="mt-2 font-mono text-[10px] text-[#6B7280]">{lot}</p>
+                  <p className="mt-2 font-mono text-[10px] text-[#6B7280]">{lots.find((l) => l.id === lotId)?.numero ?? "—"}</p>
                 )}
                 {options.produit && (
                   <p className="mt-0.5 text-[10px] text-[#6B7280]">Jus de Bissap Premium</p>
@@ -313,7 +319,7 @@ function GenerationModal({
         {/* Footer */}
         <div className="flex items-center justify-end gap-2 border-t border-[#F3F4F6] px-6 py-4">
           <OutlineButton onClick={onClose}>Annuler</OutlineButton>
-          <GradientButton onClick={handleSubmit} disabled={!lot || selectedFormats.length === 0}>
+          <GradientButton onClick={handleSubmit} disabled={!lotId || selectedFormats.length === 0}>
             <Plus className="h-4 w-4" />
             Générer
           </GradientButton>
@@ -573,7 +579,7 @@ export function QRCodesPage() {
                 const selected = qrCodes.filter((q) => selectedIds.has(q.id));
                 for (let i = 0; i < selected.length; i++) {
                   await downloadQRCode(
-                    getScanUrl(selected[i].code),
+                    getScanUrl(selected[i].lotId),
                     `qr-${selected[i].code}.png`
                   );
                   if (i < selected.length - 1) {
@@ -676,7 +682,7 @@ export function QRCodesPage() {
                 {/* QR image */}
                 <div className="flex justify-center pt-2">
                   <div className="rounded-md border border-[#F3F4F6] p-2">
-                    <QRCodeDisplay code={q.code} size={150} />
+                    <QRCodeDisplay lotId={q.lotId} size={150} />
                   </div>
                 </div>
 
@@ -706,7 +712,7 @@ export function QRCodesPage() {
                     type="button"
                     title="Télécharger"
                     onClick={() => {
-                      downloadQRCode(getScanUrl(q.code), `qr-${q.code}.png`);
+                      downloadQRCode(getScanUrl(q.lotId), `qr-${q.code}.png`);
                       toast.success(`QR code ${q.code} téléchargé`);
                     }}
                     className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[#E5E7EB] bg-white text-[#374151] transition-colors hover:bg-[#F9FAFB]"

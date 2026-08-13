@@ -12,12 +12,13 @@ import {
   MapPin,
   BarChart3,
   Clock,
+  QrCode,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { QRCodeCanvas } from "qrcode.react";
 import { formatNombre } from "@/lib/fabricant-data";
 import { useFabricantNav } from "@/lib/fabricant-store";
-import { useLots, useProduits } from "@/lib/fabricant-data-store";
+import { useLots, useProduits, useQRCodes } from "@/lib/fabricant-data-store";
 import { downloadQRCode, getScanUrl } from "@/lib/qr-utils";
 import { ProductImage } from "@/components/fabricant/ProductImage";
 import { toast } from "sonner";
@@ -47,9 +48,13 @@ export function LotDetailPage() {
   const { selectedId, setPage, openDetail } = useFabricantNav();
   const { lots, deleteLot, markLotRecalled } = useLots();
   const { produits } = useProduits();
+  const { qrCodes, generateQRCodes } = useQRCodes();
   const [copied, setCopied] = useState(false);
 
   const lot = lots.find((l) => l.id === selectedId) || null;
+
+  // Real QR codes from the store that belong to this lot.
+  const lotQrCodes = lot ? qrCodes.filter((q) => q.lotId === lot.id) : [];
 
   // If a lot id was selected but it no longer exists in the store (e.g. it
   // was deleted), redirect back to the lots list. We render nothing while
@@ -103,6 +108,11 @@ export function LotDetailPage() {
     // Encode the real public scan URL so the downloaded QR is scannable.
     downloadQRCode(getScanUrl(lot!.id), `${lot!.numero}-qr.png`);
     toast.success(`QR code de ${lot!.numero} téléchargé`);
+  }
+
+  function handleGenerateQR() {
+    const created = generateQRCodes(lot!.id, 10);
+    toast.success(`${created.length} QR codes générés pour ${lot!.numero}`);
   }
 
   function handleMarkRecalled() {
@@ -206,37 +216,55 @@ export function LotDetailPage() {
             title="QR codes générés"
             subtitle={`${formatNombre(lot.qrCodes)} codes associés à ce lot`}
             action={
-              <GradientButton className="!py-2" onClick={handleDownloadQR}>
-                <Download className="h-4 w-4" />
-                Télécharger le QR code
+              <GradientButton className="!py-2" onClick={handleGenerateQR}>
+                <QrCode className="h-4 w-4" />
+                Générer 10 QR codes
               </GradientButton>
             }
           >
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {Array.from({ length: Math.min(8, Math.max(1, lot.qrCodes)) }).map((_, i) => (
-                <div
-                  key={i}
-                  className="flex flex-col items-center rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] p-3"
+            {lotQrCodes.length === 0 ? (
+              <div className="px-5 py-10 text-center text-[13px] text-[#6B7280]">
+                Aucun QR code généré pour ce lot. Cliquez sur{" "}
+                <span className="font-medium text-[#2563EB]">« Générer 10 QR codes »</span>{" "}
+                pour en créer.
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                {lotQrCodes.slice(0, 8).map((q) => (
+                  <div
+                    key={q.id}
+                    className="flex flex-col items-center rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] p-3"
+                  >
+                    <RealMiniQR lotId={lot.id} />
+                    <span className="mt-2 truncate font-mono text-[10px] text-[#6B7280]" title={q.code}>
+                      {q.code}
+                    </span>
+                    <span className="text-[10px] text-[#9CA3AF]">
+                      {formatNombre(q.scans)} scans
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+            {lotQrCodes.length > 8 && (
+              <p className="mt-3 text-center text-[12px] text-[#9CA3AF]">
+                Affichage de {Math.min(8, lotQrCodes.length)} QR codes sur {formatNombre(lotQrCodes.length)} —{" "}
+                <button
+                  className="font-medium text-[#2563EB] hover:underline"
+                  onClick={() => setPage("qr-codes")}
                 >
-                  <RealMiniQR lotId={lot.id} />
-                  <span className="mt-2 font-mono text-[10px] text-[#6B7280]">
-                    QR-{String(i + 1).padStart(3, "0")}
-                  </span>
-                  <span className="text-[10px] text-[#9CA3AF]">
-                    {Math.floor(Math.random() * 30) + 1} scans
-                  </span>
-                </div>
-              ))}
-            </div>
-            <p className="mt-3 text-center text-[12px] text-[#9CA3AF]">
-              Affichage de {Math.min(8, Math.max(1, lot.qrCodes))} QR codes sur {formatNombre(lot.qrCodes)} —{" "}
-              <button
-                className="font-medium text-[#2563EB] hover:underline"
-                onClick={() => setPage("qr-codes")}
-              >
-                Voir tous les QR codes →
-              </button>
-            </p>
+                  Voir tous les QR codes →
+                </button>
+              </p>
+            )}
+            {lotQrCodes.length > 0 && (
+              <div className="mt-4 flex justify-center">
+                <OutlineButton onClick={handleDownloadQR}>
+                  <Download className="h-4 w-4" />
+                  Télécharger le QR code principal
+                </OutlineButton>
+              </div>
+            )}
           </SectionCard>
 
           {/* Pays de vente */}

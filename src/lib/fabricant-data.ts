@@ -41,6 +41,8 @@ export type Lot = {
 export type QRCode = {
   id: string;
   code: string;
+  /** The lot's internal id (e.g. "l1") — used to build the scannable URL `/p/<lotId>`. */
+  lotId: string;
   lotNumero: string;
   produitNom: string;
   dateGeneration: string;
@@ -163,6 +165,7 @@ export const QR_CODES: QRCode[] = Array.from({ length: 24 }).map((_, i) => {
   return {
     id: `q${i + 1}`,
     code: `QR-${String(i + 1).padStart(5, "0")}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`,
+    lotId: lot.id,
     lotNumero: lot.numero,
     produitNom: produit.nom,
     dateGeneration: new Date(2026, 6, ((i % 25) + 1)).toISOString().split("T")[0],
