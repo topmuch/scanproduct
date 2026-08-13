@@ -15,6 +15,7 @@ import {
 import { PageContainer, Card, CardHeader, Badge, Button } from "@/components/admin/ui";
 import { TICKETS, formatDate, type Ticket } from "@/lib/admin-data";
 import { useAdminNav } from "@/lib/admin-store";
+import { useTickets } from "@/lib/admin-data-store";
 import { toast } from "sonner";
 
 const PRIORITY_COLOR: Record<Ticket["priority"], "gray" | "blue" | "orange" | "red"> = {
@@ -40,7 +41,8 @@ const PLAN_COLOR: Record<Ticket["plan"], "gray" | "blue" | "purple" | "orange"> 
 
 export function TicketDetailPage() {
   const { selectedId, goBack } = useAdminNav();
-  const ticket = TICKETS.find((t) => t.id === selectedId) ?? TICKETS[0];
+  const { tickets } = useTickets();
+  const ticket = tickets.find((t) => t.id === selectedId) ?? TICKETS[0];
 
   return (
     <PageContainer>

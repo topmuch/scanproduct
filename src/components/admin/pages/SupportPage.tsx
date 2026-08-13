@@ -1,10 +1,12 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Plus, Eye, UserPlus, XCircle } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import { Plus, Eye, UserPlus, XCircle, X, ChevronDown } from "lucide-react";
 import { PageContainer, SectionTitle, Card, Badge, Button } from "@/components/admin/ui";
-import { TICKETS, formatDate, type Ticket } from "@/lib/admin-data";
+import { formatDate, type Ticket } from "@/lib/admin-data";
 import { useAdminNav } from "@/lib/admin-store";
+import { useTickets } from "@/lib/admin-data-store";
 import { toast } from "sonner";
 
 type TabKey = "Ouverts" | "En cours" | "Résolus" | "Tous";
@@ -50,27 +52,43 @@ function statusForTab(tab: TabKey): Ticket["status"] | null {
 
 export function SupportPage() {
   const { openDetail } = useAdminNav();
+  const { tickets, addTicket } = useTickets();
   const [activeTab, setActiveTab] = useState<TabKey>("Tous");
   const [activePriority, setActivePriority] = useState<PriorityKey | null>(null);
   const [activeCategory, setActiveCategory] = useState<CategoryKey | null>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   const filtered = useMemo(() => {
     const status = statusForTab(activeTab);
-    return TICKETS.filter((t) => {
+    return tickets.filter((t) => {
       if (status && t.status !== status) return false;
       if (activePriority && t.priority !== activePriority) return false;
       if (activeCategory && t.category !== activeCategory) return false;
       return true;
     });
-  }, [activeTab, activePriority, activeCategory]);
+  }, [tickets, activeTab, activePriority, activeCategory]);
+
+  const openCount = useMemo(
+    () => tickets.filter((t) => t.status === "Ouvert").length,
+    [tickets]
+  );
+
+  const tabCounts = useMemo(() => ({
+    Ouverts: tickets.filter((t) => t.status === "Ouvert").length,
+    "En cours": tickets.filter((t) => t.status === "En cours").length,
+    Résolus: tickets.filter((t) => t.status === "Résolu").length,
+    Tous: tickets.length,
+  }), [tickets]);
+
+  const tabsWithCounts = TABS.map((tab) => ({ ...tab, count: tabCounts[tab.key] }));
 
   return (
     <PageContainer>
       <SectionTitle
         title="Support Client"
-        subtitle="12 tickets ouverts"
+        subtitle={`${openCount} tickets ouverts`}
         action={
-          <Button variant="primary" onClick={() => toast.info("Création de ticket interne — bientôt disponible")}>
+          <Button variant="primary" onClick={() => setShowCreateModal(true)}>
             <Plus className="h-4 w-4" />
             Créer un ticket interne
           </Button>
@@ -79,7 +97,7 @@ export function SupportPage() {
 
       {/* Tabs */}
       <div className="mb-4 flex flex-wrap items-center gap-2">
-        {TABS.map((tab) => {
+        {tabsWithCounts.map((tab) => {
           const active = activeTab === tab.key;
           return (
             <button
@@ -155,6 +173,20 @@ export function SupportPage() {
           </table>
         </div>
       </Card>
+
+      <AnimatePresence>
+        {showCreateModal && (
+          <CreateTicketModal
+            onClose={() => setShowCreateModal(false)}
+            onCreate={(data) => {
+              const t = addTicket(data);
+              toast.success(`Ticket ${t.id} créé avec succès`);
+              setShowCreateModal(false);
+              openDetail("ticket-detail", t.id);
+            }}
+          />
+        )}
+      </AnimatePresence>
     </PageContainer>
   );
 }
@@ -311,5 +343,208 @@ function RowIcon({
     >
       {children}
     </button>
+  );
+}
+
+// ============================================================================
+// CreateTicketModal — full form to create a new internal support ticket.
+// ============================================================================
+const AVATAR_COLORS = ["#DC2626", "#10B981", "#2563EB", "#F59E0B", "#8B5CF6", "#EC4899", "#0891B2", "#7C3AED"];
+const PLAN_OPTIONS: Ticket["plan"][] = ["Starter", "Pro", "Enterprise", "Essai"];
+
+function CreateTicketModal({
+  onClose,
+  onCreate,
+}: {
+  onClose: () => void;
+  onCreate: (data: Omit<Ticket, "id" | "createdAt" | "lastReply" | "assignedTo" | "messages" | "internalNotes" | "tags">) => void;
+}) {
+  const [subject, setSubject] = useState("");
+  const [requester, setRequester] = useState("");
+  const [company, setCompany] = useState("");
+  const [priority, setPriority] = useState<PriorityKey>("Normale");
+  const [category, setCategory] = useState<CategoryKey>("Technique");
+  const [plan, setPlan] = useState<Ticket["plan"]>("Pro");
+  const [description, setDescription] = useState("");
+
+  const canSubmit = subject.trim().length > 2 && requester.trim().length > 1 && company.trim().length > 1;
+
+  function handleSubmit() {
+    if (!canSubmit) return;
+    onCreate({
+      subject: subject.trim(),
+      requester: requester.trim(),
+      company: company.trim(),
+      avatarColor: AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)],
+      priority,
+      status: "Ouvert",
+      category,
+      plan,
+      description: description.trim() || subject.trim(),
+    });
+  }
+
+  const inputClass =
+    "w-full rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-[14px] text-[#111827] placeholder:text-[#9CA3AF] focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 transition";
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onClick={onClose}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+    >
+      <motion.div
+        initial={{ scale: 0.96, opacity: 0, y: 8 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.96, opacity: 0, y: 8 }}
+        transition={{ type: "spring", stiffness: 280, damping: 26 }}
+        onClick={(e) => e.stopPropagation()}
+        className="max-h-[92vh] w-full max-w-[600px] overflow-hidden rounded-2xl bg-white shadow-2xl"
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-[#F3F4F6] px-6 py-4">
+          <div>
+            <h2 className="font-display text-[18px] font-bold text-[#111827]">
+              Créer un ticket interne
+            </h2>
+            <p className="mt-0.5 text-[13px] text-[#6B7280]">
+              Ouvrez un nouveau ticket de support pour un fabricant.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-[#6B7280] transition-colors hover:bg-[#F9FAFB]"
+            aria-label="Fermer"
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="max-h-[calc(92vh-130px)] space-y-4 overflow-y-auto px-6 py-5">
+          <div>
+            <label className="mb-1.5 block text-[13px] font-medium text-[#374151]">
+              Sujet du ticket <span className="text-[#EF4444]">*</span>
+            </label>
+            <input
+              type="text"
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              placeholder="Ex : Problème avec la génération de QR codes"
+              className={inputClass}
+              autoFocus
+            />
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label className="mb-1.5 block text-[13px] font-medium text-[#374151]">
+                Demandeur <span className="text-[#EF4444]">*</span>
+              </label>
+              <input
+                type="text"
+                value={requester}
+                onChange={(e) => setRequester(e.target.value)}
+                placeholder="Ex : Marième Diop"
+                className={inputClass}
+              />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-[13px] font-medium text-[#374151]">
+                Entreprise <span className="text-[#EF4444]">*</span>
+              </label>
+              <input
+                type="text"
+                value={company}
+                onChange={(e) => setCompany(e.target.value)}
+                placeholder="Ex : Jus de Bissap Sénégal"
+                className={inputClass}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div>
+              <label className="mb-1.5 block text-[13px] font-medium text-[#374151]">
+                Priorité
+              </label>
+              <div className="relative">
+                <select
+                  value={priority}
+                  onChange={(e) => setPriority(e.target.value as PriorityKey)}
+                  className={`${inputClass} appearance-none pr-9`}
+                >
+                  {PRIORITIES.map((p) => (
+                    <option key={p} value={p}>{p}</option>
+                  ))}
+                </select>
+                <ChevronDown size={16} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#6B7280]" />
+              </div>
+            </div>
+            <div>
+              <label className="mb-1.5 block text-[13px] font-medium text-[#374151]">
+                Catégorie
+              </label>
+              <div className="relative">
+                <select
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value as CategoryKey)}
+                  className={`${inputClass} appearance-none pr-9`}
+                >
+                  {CATEGORIES_FILTER.map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+                <ChevronDown size={16} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#6B7280]" />
+              </div>
+            </div>
+            <div>
+              <label className="mb-1.5 block text-[13px] font-medium text-[#374151]">
+                Plan
+              </label>
+              <div className="relative">
+                <select
+                  value={plan}
+                  onChange={(e) => setPlan(e.target.value as Ticket["plan"])}
+                  className={`${inputClass} appearance-none pr-9`}
+                >
+                  {PLAN_OPTIONS.map((p) => (
+                    <option key={p} value={p}>{p}</option>
+                  ))}
+                </select>
+                <ChevronDown size={16} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#6B7280]" />
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-[13px] font-medium text-[#374151]">
+              Description initiale
+            </label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Décrivez le problème ou la demande du client..."
+              rows={4}
+              className={`${inputClass} resize-y`}
+            />
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center justify-end gap-2 border-t border-[#F3F4F6] px-6 py-4">
+          <Button variant="outline" onClick={onClose}>
+            Annuler
+          </Button>
+          <Button variant="primary" onClick={handleSubmit} disabled={!canSubmit}>
+            <Plus className="h-4 w-4" />
+            Créer le ticket
+          </Button>
+        </div>
+      </motion.div>
+    </motion.div>
   );
 }

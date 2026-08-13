@@ -9,6 +9,7 @@ import {
 import { daysUntil } from "@/lib/utils";
 import { PublicHeader } from "@/components/public/PublicHeader";
 import { PublicFooter } from "@/components/public/PublicFooter";
+import { MockProductPassport, isMockLotId } from "@/components/public/MockProductPassport";
 
 import { AuthenticityBanner } from "@/components/product/AuthenticityBanner";
 import { ProductHeader } from "@/components/product/ProductHeader";
@@ -36,6 +37,18 @@ export async function generateMetadata({
   const { lotId } = await params;
   const lot = await getLotWithDetails(lotId);
   if (!lot) {
+    // Check if it's a mock lot ID (l1, l2, p1, etc.)
+    if (isMockLotId(lotId)) {
+      return {
+        title: "Passeport numérique VerifScan",
+        description: "Produit vérifié par VerifScan — la vérité au bout du scan.",
+        openGraph: {
+          title: "Passeport numérique VerifScan",
+          description: "Produit vérifié par VerifScan — la vérité au bout du scan.",
+          type: "website",
+        },
+      };
+    }
     return { title: "Produit introuvable — VerifScan" };
   }
   return {
@@ -62,6 +75,13 @@ export default async function ProductPage({
 
   const lot = await getLotWithDetails(lotId);
   if (!lot) {
+    // Check if this is a mock lot ID (l1, l2, p1, …) from the fabricant
+    // dashboard demo data. If so, render a mock product passport so the
+    // scanned QR code actually shows product info instead of "introuvable".
+    if (isMockLotId(lotId)) {
+      return <MockProductPassport lotId={lotId} />;
+    }
+
     // Graceful fallback — a scanned QR code whose lot is not (yet) registered
     // should never show a raw server 404. Instead we render a friendly
     // "product not found" page that keeps the public header/footer and lets

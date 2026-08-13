@@ -449,6 +449,7 @@ export type Ticket = {
   category: "Technique" | "Facturation" | "Compte" | "Autre";
   plan: Plan;
   tags: string[];
+  description?: string;
   messages: { from: "client" | "admin"; author: string; content: string; timestamp: string }[];
   internalNotes: { date: string; author: string; content: string }[];
 };

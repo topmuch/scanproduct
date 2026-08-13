@@ -4,8 +4,10 @@ import { create } from "zustand";
 import { useShallow } from "zustand/react/shallow";
 import {
   MAKERS_TABLE,
+  TICKETS,
   type Maker,
   type Plan,
+  type Ticket,
   type UserStatus,
 } from "@/lib/admin-data";
 
@@ -109,4 +111,61 @@ export function useMakers() {
   );
 }
 
-export type { Maker, Plan, UserStatus };
+// ============================================================================
+// Tickets store — wraps the static TICKETS array so the superadmin can create,
+// update, and delete tickets from the Support page.
+// ============================================================================
+const initialTickets: Ticket[] = structuredClone(TICKETS);
+
+type TicketData = Omit<Ticket, "id" | "createdAt" | "lastReply" | "assignedTo" | "messages" | "internalNotes" | "tags">;
+
+export const useTicketsStore = create<{
+  tickets: Ticket[];
+  addTicket: (data: TicketData) => Ticket;
+  updateTicket: (id: string, patch: Partial<Ticket>) => void;
+  deleteTicket: (id: string) => void;
+}>((set) => ({
+  tickets: initialTickets,
+  addTicket: (data) => {
+    const now = new Date();
+    const id = `TKT-${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}-${String(Date.now()).slice(-3)}`;
+    const newTicket: Ticket = {
+      ...data,
+      id,
+      createdAt: now.toISOString(),
+      lastReply: "À l'instant",
+      assignedTo: "Admin VS",
+      tags: [],
+      messages: [
+        {
+          from: "client",
+          author: data.requester,
+          content: data.description || data.subject,
+          timestamp: "À l'instant",
+        },
+      ],
+      internalNotes: [],
+    };
+    set((s) => ({ tickets: [newTicket, ...s.tickets] }));
+    return newTicket;
+  },
+  updateTicket: (id, patch) =>
+    set((s) => ({
+      tickets: s.tickets.map((t) => (t.id === id ? { ...t, ...patch } : t)),
+    })),
+  deleteTicket: (id) =>
+    set((s) => ({ tickets: s.tickets.filter((t) => t.id !== id) })),
+}));
+
+export function useTickets() {
+  return useTicketsStore(
+    useShallow((s) => ({
+      tickets: s.tickets,
+      addTicket: s.addTicket,
+      updateTicket: s.updateTicket,
+      deleteTicket: s.deleteTicket,
+    }))
+  );
+}
+
+export type { Maker, Plan, UserStatus, Ticket };
