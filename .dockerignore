@@ -1,0 +1,75 @@
+# =============================================================================
+# .dockerignore for VerifScan (Coolify / Docker builds)
+# Keeps the Docker build context small & reproducible.
+# =============================================================================
+
+# --- Dependencies & build artifacts (regenerated inside the image) ----------
+node_modules
+.next
+.tsbuildinfo
+tsconfig.tsbuildinfo
+
+# --- Version control --------------------------------------------------------
+.git
+.gitignore
+.gitattributes
+
+# --- Logs -------------------------------------------------------------------
+*.log
+dev.log
+server.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# --- Local SQLite database & runtime data -----------------------------------
+# The DB file lives on a persistent volume at runtime; never bake it in.
+db/*.db
+db/*.db-journal
+db/*.db-wal
+db/*.db-shm
+
+# --- Tests & tooling (not needed in the production image) -------------------
+tests/
+tool-results/
+upload/
+download/
+verify-*.png
+*.png
+*.jpg
+*.jpeg
+
+# --- Local config & secrets -------------------------------------------------
+.env
+.env.*
+!.env.example
+.z-ai-config
+skills/
+
+# --- IDE / OS noise ---------------------------------------------------------
+.vscode
+.idea
+.DS_Store
+Thumbs.db
+
+# --- Misc -------------------------------------------------------------------
+README.md
+worklog.md
+COOLIFY.md
+Caddyfile
+eslint.config.mjs
+
+# --- IMPORTANT: do NOT ignore the following (explicit allow-list) -----------
+# prisma/
+# public/
+# package.json
+# package-lock.json
+# next.config.ts
+# tsconfig.json
+# tailwind.config.ts
+# postcss.config.mjs
+# components.json
+# src/
+# bun.lock
+# .dockerignore
+# Dockerfile

@@ -1,9 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -13,20 +10,105 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ============================================================================
+// VerifScan — Authentication & user management
+// ============================================================================
+// Roles (stored as String because SQLite does not support Prisma enums):
+//   - "SUPERADMIN"  → platform operator, accesses /superadmin
+//   - "FABRICANT"   → manufacturer client, accesses /dashboard
+// ============================================================================
+
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String    @id @default(cuid())
+  email        String    @unique
+  name         String?
+  // Hashed password (bcrypt). NULL only for future OAuth-only accounts.
+  password     String?
+  // "SUPERADMIN" | "FABRICANT"
+  role         String    @default("FABRICANT")
+  // Fabricant profile fields
+  companyName  String?
+  phone        String?
+  address      String?
+  city         String?
+  country      String?
+  avatarUrl    String?
+  // Account lifecycle
+  status       String    @default("ACTIVE") // "ACTIVE" | "SUSPENDED" | "PENDING"
+  emailVerified DateTime?
+  lastLoginAt  DateTime?
+  // Gamification
+  points       Int       @default(0)
+  badges       String?   // JSON-encoded array of badge ids
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([role])
+  @@index([status])
 }
 
-model Post {
+// Audit log (used by SuperAdmin panel — Logs/Audit page)
+model AuditLog {
   id        String   @id @default(cuid())
-  title     String
-  content   String?
-  published Boolean  @default(false)
-  authorId  String
+  userId    String?
+  action    String   // e.g. "LOGIN", "CREATE_PRODUCT", "DELETE_LOT"
+  entity    String?  // e.g. "User", "Product", "Lot"
+  entityId  String?
+  ip        String?
+  userAgent String?
+  metadata  String?  // JSON-encoded
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+}
+
+// Product (fabricant-owned)
+model Product {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  category    String?
+  imageUrl    String?
+  fabricantId String
+  status      String   @default("ACTIVE") // "ACTIVE" | "ARCHIVED"
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([fabricantId])
+  @@index([category])
+}
+
+// Batch (lot) of products with QR codes
+model Lot {
+  id          String   @id @default(cuid())
+  reference   String   @unique
+  productId   String
+  fabricantId String
+  quantity    Int
+  manufactureDate DateTime?
+  expiryDate  DateTime?
+  status      String   @default("ACTIVE") // "ACTIVE" | "RECALLED" | "EXPIRED"
+  qrCodeCount Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([fabricantId])
+  @@index([productId])
+  @@index([status])
+}
+
+// Individual QR code (one per unit in a lot)
+model QRCode {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  lotId     String
+  scans     Int      @default(0)
+  lastScanAt DateTime?
+  status    String   @default("ACTIVE") // "ACTIVE" | "USED" | "INVALID"
+  createdAt DateTime @default(now())
+
+  @@index([lotId])
+  @@index([status])
 }

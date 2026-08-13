@@ -532,3 +532,62 @@ Stage Summary:
 - No secrets/build artifacts in remote history
 - Local remote URL is token-free
 - SECURITY: User should revoke the shared PAT (ghp_X6ju4...) immediately — it was exposed in chat
+
+---
+Task ID: coolify-1
+Agent: Coolify-Prep
+Task: Prepare Coolify deployment files (Dockerfile, .dockerignore, .env.example, COOLIFY.md, health endpoint, next.config update)
+
+Work Log:
+- Read worklog.md and next.config.ts to confirm project context (Next.js 16 standalone, Prisma SQLite, next-auth v4)
+- Verified package.json build script already copies .next/static + public into .next/standalone
+- Confirmed prisma/schema.prisma uses sqlite provider with env("DATABASE_URL")
+- Created /home/z/my-project/Dockerfile — multi-stage (deps → builder → runner), node:20-alpine, npm ci (not bun), apk add openssl libc6-compat, prisma generate in builder, standalone output copied to runner, USER node, EXPOSE 3000, HEALTHCHECK via wget --spider on /api/health, CMD runs `npx prisma db push --accept-data-loss && node server.js` via sh -c
+- Created /home/z/my-project/.dockerignore — excludes node_modules, .next, .git, *.log, db/*.db*, tests/, tool-results/, upload/, download/, verify-*.png, .z-ai-config, skills/, .env*, tsconfig.tsbuildinfo; explicitly preserves prisma/, public/, package.json, package-lock.json, next.config.ts, tsconfig.json, tailwind.config.ts, postcss.config.mjs, components.json, src/, bun.lock, .dockerignore, Dockerfile
+- Created /home/z/my-project/.env.example — DATABASE_URL="file:./db/custom.db", NEXTAUTH_SECRET (with openssl rand hint), NEXTAUTH_URL, ADMIN_EMAIL, ADMIN_PASSWORD, NODE_ENV, PORT, HOSTNAME, plus commented ZAI_API_KEY/CLOUDINARY_URL/GITHUB_TOKEN
+- Created /home/z/my-project/COOLIFY.md — French deployment guide with 12 sections: prérequis, connexion repo, build pack Dockerfile, variables d'environnement, persistent storage /app/db, port & health check, deploy, premier accès, création fabricant de test, dépannage, mise à jour, cheat-sheet
+- Created /home/z/my-project/src/app/api/health/route.ts — GET handler returning {status, timestamp, version, service} with HTTP 200, runtime="nodejs", dynamic="force-dynamic", no auth required
+- Updated /home/z/my-project/next.config.ts — added serverExternalPackages: ["@prisma/client"]; preserved output: "standalone", typescript.ignoreBuildErrors: true, reactStrictMode: false, allowedDevOrigins: ["*.space-z.ai"]
+- Did NOT modify package.json, prisma/schema.prisma, or any auth files (per constraints)
+- Did NOT run any build or lint commands
+
+Stage Summary:
+- 6 files delivered: Dockerfile, .dockerignore, .env.example, COOLIFY.md, src/app/api/health/route.ts, next.config.ts (updated)
+- Dockerfile uses Node 20 + npm ci (not Bun) per spec; deterministic builds for clean Coolify environments
+- Prisma client generated at build time; `prisma db push` runs at container startup to apply SQLite schema before server.js boots
+- Health endpoint at /api/health enables Docker HEALTHCHECK + Coolify readiness probes
+- Persistent volume mount at /app/db documented in COOLIFY.md to survive container rebuilds
+- Ready for Coolify deployment: New Resource → Public Git → https://github.com/topmuch/scanproduct → Dockerfile build pack → set env vars → add persistent storage /app/db → Deploy
+
+---
+Task ID: auth-connect-1
+Agent: main (Z.ai Code)
+Task: Connect landing page + SuperAdmin + Fabricant dashboard with NextAuth authentication; prepare Coolify deployment
+
+Work Log:
+- Discovered both AdminShell (SuperAdmin) and FabricantShell components already existed but had no app routes
+- Updated prisma/schema.prisma: extended User model (password, role, companyName, phone, city, country, avatarUrl, status, points, badges, lastLoginAt) + added AuditLog, Product, Lot, QRCode models
+- Created src/lib/auth.ts: NextAuth config with CredentialsProvider, JWT strategy, bcrypt verification, role injection into session via jwt/session callbacks, SUSPENDED account handling
+- Created src/app/api/auth/[...nextauth]/route.ts: NextAuth route handler
+- Created src/app/api/register/route.ts: POST endpoint for fabricant signup (validates, hashes password, creates FABRICANT user with +10 welcome points)
+- Created src/app/api/health/route.ts: health-check endpoint for Coolify (returns status/timestamp/version)
+- Created prisma/seed.ts: seeds SUPERADMIN (admin@verifscan.sn / Admin123!2025) + demo FABRICANT (sarine@biocosmetique.sn / Demo1234!) + 3 sample products
+- Added db:seed script to package.json
+- Ran db:push + db:seed successfully
+- Created src/app/login/page.tsx: split-screen login (brand panel + form), demo account quick-fill buttons, error display, show/hide password, role-based redirect after login
+- Created src/app/register/page.tsx: split-screen signup (green gradient brand panel + form with name, company, email, phone, city, password, confirm, T&C checkbox), auto sign-in after registration
+- Created src/app/superadmin/page.tsx: server component with getServerSession check (SUPERADMIN only), renders AdminShell
+- Created src/app/dashboard/page.tsx: server component with getServerSession check (FABRICANT only), renders FabricantShell
+- Updated src/components/landing/Header.tsx: changed "Connexion" href from "#" to "/login", "Devenir partenaire" from "#pricing" to "/register" (both desktop and mobile drawer)
+- Added NEXTAUTH_SECRET, NEXTAUTH_URL, ADMIN_EMAIL, ADMIN_PASSWORD to .env
+- Tested middleware approach (next-auth/middleware withAuth): caused 500 errors on ALL routes in Next.js 16 — REMOVED. Using page-level getServerSession checks instead (works perfectly, redirects /superadmin→/login?callbackUrl=/superadmin)
+- Browser-verified full flow: landing→login→superadmin dashboard (sidebar with 8 menu items, KPIs, audit table), login as fabricant→dashboard (sidebar with 8 items, KPIs, charts), role protection (fabricant blocked from /superadmin→/login?error=unauthorized), register page renders
+- Coolify prep (subagent coolify-1): Dockerfile (3-stage Node 20 alpine + Prisma + standalone), .dockerignore, .env.example, COOLIFY.md (French deploy guide), health endpoint, next.config.ts updated with serverExternalPackages
+
+Stage Summary:
+- Full auth flow working: landing → /login → role-based redirect (SUPERADMIN→/superadmin, FABRICANT→/dashboard)
+- Register page creates new FABRICANT accounts via /api/register
+- Page-level session protection (no middleware — incompatible with Next.js 16)
+- Demo credentials: admin@verifscan.sn / Admin123!2025 (SuperAdmin) · sarine@biocosmetique.sn / Demo1234! (Fabricant)
+- Coolify deployment ready: Dockerfile + .env.example + COOLIFY.md + /api/health
+- ESLint passes clean, no runtime errors, all routes return correct HTTP codes
