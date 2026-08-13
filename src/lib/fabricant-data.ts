@@ -88,12 +88,12 @@ export const MARQUE = {
 // PRODUITS (24)
 // ============================================================================
 const PRODUIT_PHOTOS = [
-  "https://images.unsplash.com/photo-1622597467836-f3e6707e1191?w=400&q=80", // bissap
-  "https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=400&q=80", // épices
-  "https://images.unsplash.com/photo-1606312619070-d48b4c652a52?w=400&q=80", // chocolat
-  "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=400&q=80", // confiture
-  "https://images.unsplash.com/photo-1509722747041-616f39b57569?w=400&q=80", // pain
-  "https://images.unsplash.com/photo-1612203985729-70726954388c?w=400&q=80", // miel
+  "/products/jus-bissap.png",      // bissap
+  "/products/poudre-moringa.png",  // épices
+  "/products/savon-noir.png",      // chocolat
+  "/products/couscous-mil.png",    // confiture
+  "/products/huile-baobab.png",    // pain
+  "/products/beurre-karite.png",   // miel
 ];
 
 export const PRODUITS: Product[] = [

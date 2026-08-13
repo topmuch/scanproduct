@@ -20,13 +20,13 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  PRODUITS,
   PAYS_CEDEAO,
   formatNombre,
   type Lot,
+  type Product,
 } from "@/lib/fabricant-data";
 import { useFabricantNav } from "@/lib/fabricant-store";
-import { useLots } from "@/lib/fabricant-data-store";
+import { useLots, useProduits } from "@/lib/fabricant-data-store";
 import { downloadQRCode } from "@/lib/qr-utils";
 import { toast } from "sonner";
 import {
@@ -163,6 +163,7 @@ const SORT_OPTIONS: { value: SortFilter; label: string }[] = [
 // ============================================================================
 export function LotsPage() {
   const { openDetail } = useFabricantNav();
+  const { produits } = useProduits();
   const { lots, deleteLot, markLotRecalled } = useLots();
 
   // Filters state
@@ -355,13 +356,34 @@ export function LotsPage() {
 
   function handleRowCopyInfos(lot: Lot) {
     const text = buildLotInfoText(lot);
-    if (navigator.clipboard) {
+    // Try the modern async clipboard API first, then fall back to a
+    // temporary textarea + execCommand("copy") for non-secure contexts
+    // (HTTP) or browsers where the Clipboard API is unavailable.
+    if (navigator.clipboard && window.isSecureContext) {
       navigator.clipboard.writeText(text).then(
         () => toast.success("Infos copiées dans le presse-papier"),
-        () => toast.error("Impossible de copier les infos")
+        () => fallbackCopy(text)
       );
     } else {
-      toast.error("Presse-papier non disponible");
+      fallbackCopy(text);
+    }
+  }
+
+  function fallbackCopy(text: string) {
+    try {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      const ok = document.execCommand("copy");
+      document.body.removeChild(ta);
+      if (ok) toast.success("Infos copiées dans le presse-papier");
+      else toast.error("Impossible de copier les infos");
+    } catch {
+      toast.error("Impossible de copier les infos");
     }
   }
 
@@ -424,7 +446,7 @@ export function LotsPage() {
           className="h-10 rounded-lg border border-[#E5E7EB] bg-white px-3 text-[14px] text-[#374151] focus:border-[#2563EB] focus:outline-none"
         >
           <option value="tous">Tous les produits</option>
-          {PRODUITS.map((p) => (
+          {produits.map((p) => (
             <option key={p.id} value={p.id}>
               {p.nom}
             </option>
@@ -898,6 +920,7 @@ function CreationModal({
   onVoirLot: (id: string) => void;
 }) {
   const { addLot } = useLots();
+  const { produits } = useProduits();
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [done, setDone] = useState(false);
   const [createdLotId, setCreatedLotId] = useState<string | null>(null);
@@ -936,7 +959,7 @@ function CreationModal({
   const [etiquettesPage, setEtiquettesPage] = useState(20);
   const [qrCouleur, setQrCouleur] = useState("#000000");
 
-  const selectedProduct = PRODUITS.find((p) => p.id === selectedProductId) || null;
+  const selectedProduct = produits.find((p) => p.id === selectedProductId) || null;
   const quotaApres = Math.max(0, QUOTA_RESTANT - qrCount);
   const tailleMo = Math.round(qrCount * 0.15 * 10) / 10;
 
@@ -997,13 +1020,13 @@ function CreationModal({
 
   // Filtered products for searchable select
   const filteredProducts = useMemo(() => {
-    if (!productSearch.trim()) return PRODUITS;
+    if (!productSearch.trim()) return produits;
     const q = productSearch.toLowerCase();
-    return PRODUITS.filter(
+    return produits.filter(
       (p) =>
         p.nom.toLowerCase().includes(q) || p.marque.toLowerCase().includes(q)
     );
-  }, [productSearch]);
+  }, [productSearch, produits]);
 
   return (
     <div
@@ -1239,10 +1262,10 @@ function Step1Product({
   onSelect: (id: string) => void;
   search: string;
   onSearch: (s: string) => void;
-  filteredProducts: typeof PRODUITS;
+  filteredProducts: Product[];
 }) {
   const [open, setOpen] = useState(false);
-  const selected = PRODUITS.find((p) => p.id === selectedProductId) || null;
+  const selected = filteredProducts.find((p) => p.id === selectedProductId) || null;
 
   return (
     <div>
