@@ -28,6 +28,7 @@ import {
 import { useFabricantNav } from "@/lib/fabricant-store";
 import { useLots, useProduits } from "@/lib/fabricant-data-store";
 import { downloadQRCode } from "@/lib/qr-utils";
+import { ProductImage } from "@/components/fabricant/ProductImage";
 import { toast } from "sonner";
 import {
   PageHeader,
@@ -759,9 +760,10 @@ function LotRow({
       </td>
       <td className="px-4 py-3">
         <div className="flex items-center gap-2.5">
-          <img
+          <ProductImage
             src={lot.produitPhoto}
             alt={lot.produitNom}
+            icon={lot.produitIcon}
             className="h-10 w-10 flex-shrink-0 rounded-lg object-cover"
           />
           <span className="text-[14px] font-semibold text-[#111827]">
@@ -1159,6 +1161,7 @@ function CreationModal({
                         produitId: selectedProductId,
                         produitNom: selectedProduct.nom,
                         produitPhoto: selectedProduct.photo,
+                        produitIcon: selectedProduct.categorieIcon,
                         dateFabrication: dateFab,
                         datePeremption: datePerm,
                         status: "actif",
@@ -1280,9 +1283,10 @@ function Step1Product({
         >
           {selected ? (
             <span className="flex items-center gap-2.5">
-              <img
+              <ProductImage
                 src={selected.photo}
-                alt=""
+                alt={selected.nom}
+                icon={selected.categorieIcon}
                 className="h-8 w-8 rounded object-cover"
               />
               <span>
@@ -1341,9 +1345,10 @@ function Step1Product({
                       }}
                       className="flex w-full items-center gap-2.5 px-3 py-2 text-left hover:bg-[#F9FAFB]"
                     >
-                      <img
+                      <ProductImage
                         src={p.photo}
-                        alt=""
+                        alt={p.nom}
+                        icon={p.categorieIcon}
                         className="h-8 w-8 rounded object-cover"
                       />
                       <span className="flex-1">

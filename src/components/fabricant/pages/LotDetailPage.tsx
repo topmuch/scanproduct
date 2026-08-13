@@ -18,6 +18,7 @@ import { formatNombre } from "@/lib/fabricant-data";
 import { useFabricantNav } from "@/lib/fabricant-store";
 import { useLots, useProduits } from "@/lib/fabricant-data-store";
 import { downloadQRCode } from "@/lib/qr-utils";
+import { ProductImage } from "@/components/fabricant/ProductImage";
 import { toast } from "sonner";
 import {
   PageHeader,
@@ -325,9 +326,10 @@ export function LotDetailPage() {
               onClick={() => openDetail("produit-detail", lot.produitId)}
               className="flex w-full items-center gap-3 rounded-lg border border-[#E5E7EB] bg-white p-3 text-left transition-colors hover:bg-[#F9FAFB]"
             >
-              <img
+              <ProductImage
                 src={lot.produitPhoto}
                 alt={lot.produitNom}
+                icon={lot.produitIcon}
                 className="h-12 w-12 flex-shrink-0 rounded-lg object-cover"
               />
               <div className="min-w-0 flex-1">

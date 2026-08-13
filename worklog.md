@@ -879,3 +879,27 @@ Stage Summary:
 - Thème : hook useSyncExternalStore (évite set-state-in-effect) + bouton Sun/Moon dans les 2 headers + variants `dark:` sur les headers (bg `#0F172A`) + règles globals.css pour `html.dark`. Persistance localStorage `verifscan-theme`, fallback `prefers-color-scheme`.
 - Logo : h-12 (48px) au lieu de h-9 (36px), header landing h-20 (80px) au lieu de h-16 (64px), zone logo sidebars h-[80px].
 - ESLint 0 errors + TypeScript 0 errors sur tous les fichiers touchés.
+
+---
+Task ID: 11
+Agent: fabricant-image-fixer
+Task: Fix two bugs reported by user: (1) when creating a lot, the created product "doesn't appear in the lot" — actually the product appeared in the dropdown data but its image showed a broken-image icon because `photo` was empty, making it look broken/missing; (2) the image uploaded during product creation appeared broken (empty grey box / broken-image icon) when no photo was uploaded or the upload failed silently.
+
+Work Log:
+- Read worklog.md for context (VerifScan SaaS, fabricant dashboard uses Zustand store at src/lib/fabricant-data-store.ts).
+- Inspected the 5 affected files + found 7 `<img src={...photo}>` render sites: ProduitsPage ProductCard (200px), LotsPage LotRow (40px) + CreationModal Step1Product selected (32px) + dropdown items (32px), LotDetailPage "Produit associé" (48px), ProduitDetailPage hero (400px), AccueilPage Top 5 (40px).
+- Root cause: when a product is created without uploading an image, `product.photo = ""`. An `<img src="">` renders the browser's broken-image icon (or an empty box). Same applies to `lot.produitPhoto` which is copied from `selectedProduct.photo` at lot creation.
+- Used agent-browser to confirm: created "Test Produit Sans Image" without a photo → ProduitsPage card showed empty grey box; LotsPage lot row showed broken-image icon (mountain placeholder); product detail page showed "Produit introuvable" (separate bug: ProduitDetailPage read from static PRODUITS array instead of the Zustand store).
+- Created `src/components/fabricant/ProductImage.tsx` — reusable component that renders `<img>` when `src` is non-empty and loads successfully, and falls back to a branded gradient placeholder (indigo #1E3A8A → emerald #10B981) with the category emoji centered. Uses CSS container-query units (`cqmin`) via `container-type: size` so the emoji scales from ~16px on 32px thumbnails to ~64px on 400px hero images. Includes `onError` fallback so even a broken/404 image URL gracefully degrades to the placeholder.
+- Added optional `produitIcon?: string` field to the `Lot` type in `src/lib/fabricant-data.ts` so lots can carry the parent product's category emoji for a more informative placeholder.
+- Updated `LotsPage.tsx` CreationModal to pass `produitIcon: selectedProduct.categorieIcon` when calling `addLot`, so lot row/detail placeholders show the correct category emoji (🥤 for Boissons, etc.) instead of the generic 📦.
+- Replaced all 7 broken `<img>` usages with `<ProductImage>` across: ProduitsPage.tsx (ProductCard), LotsPage.tsx (LotRow + Step1Product selected + dropdown items), LotDetailPage.tsx (Produit associé), ProduitDetailPage.tsx (hero), AccueilPage.tsx (Top 5). Removed stray `{ }` empty JSX expressions in ProduitsPage + ProduitDetailPage.
+- Fixed `ProduitDetailPage.tsx` to read from the Zustand store (`useProduits` + `useLots`) instead of the static `PRODUITS`/`LOTS` arrays — newly created products now appear correctly in the detail view instead of showing "Produit introuvable".
+- ESLint: 0 errors across all 7 changed files. Dev server compiled cleanly.
+- Verified end-to-end with agent-browser: (a) created "Test Placeholder Demo" without image → ProduitsPage card shows gradient + 🥤 emoji (not broken); (b) opened lot creation dropdown → first item "Test Placeholder Demo" shows gradient placeholder (not broken); (c) created a lot for it → LotsPage first row shows gradient + 🥤 placeholder (not broken-image icon); (d) clicked "Voir" on "Test Detail Demo" → ProduitDetailPage finds the product (no longer "introuvable") and shows gradient hero with 🥤 emoji.
+
+Stage Summary:
+- Created: `src/components/fabricant/ProductImage.tsx` (reusable image-with-placeholder component, container-query-scaled emoji).
+- Modified: `src/lib/fabricant-data.ts` (added `produitIcon?` to Lot type), `src/components/fabricant/pages/ProduitsPage.tsx`, `src/components/fabricant/pages/LotsPage.tsx` (3 sites + addLot passes produitIcon), `src/components/fabricant/pages/LotDetailPage.tsx`, `src/components/fabricant/pages/ProduitDetailPage.tsx` (also fixed store wiring), `src/components/fabricant/pages/AccueilPage.tsx`.
+- Both reported bugs fixed: products/lots created without an uploaded image now show a branded gradient + category-emoji placeholder instead of a broken-image icon, across all 7 render sites (product cards, lot rows, lot creation dropdown, lot detail, product detail hero, accueil top 5). Bonus: ProduitDetailPage now correctly reads from the Zustand store so newly created products are found (was showing "Produit introuvable").
+- ESLint clean (0 errors) on all changed files. Agent-browser verified the full create-product → create-lot → view-detail flow with placeholder rendering correctly at every step.

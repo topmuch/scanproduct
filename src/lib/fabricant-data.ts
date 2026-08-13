@@ -27,6 +27,8 @@ export type Lot = {
   produitId: string;
   produitNom: string;
   produitPhoto: string;
+  /** Category emoji of the parent product — used as placeholder when photo is empty. */
+  produitIcon?: string;
   dateFabrication: string;
   datePeremption: string;
   status: LotStatus;

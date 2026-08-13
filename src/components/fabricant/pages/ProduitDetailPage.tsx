@@ -24,13 +24,13 @@ import {
   StatusBadge,
 } from "../ui";
 import {
-  LOTS,
-  PRODUITS,
   formatNombre,
   type Lot,
   type Product,
 } from "@/lib/fabricant-data";
 import { useFabricantNav } from "@/lib/fabricant-store";
+import { useProduits, useLots } from "@/lib/fabricant-data-store";
+import { ProductImage } from "@/components/fabricant/ProductImage";
 
 // ============================================================================
 // Finder square (extracted to top-level to avoid "component during render")
@@ -236,8 +236,10 @@ function LotRow({ lot }: { lot: Lot }) {
 // ============================================================================
 export function ProduitDetailPage() {
   const { selectedId, setPage } = useFabricantNav();
+  const { produits } = useProduits();
+  const { lots } = useLots();
 
-  const product: Product | undefined = PRODUITS.find(
+  const product: Product | undefined = produits.find(
     (p) => p.id === selectedId
   );
 
@@ -262,7 +264,7 @@ export function ProduitDetailPage() {
     );
   }
 
-  const productLots = LOTS.filter((l) => l.produitId === product.id);
+  const productLots = lots.filter((l) => l.produitId === product.id);
 
   return (
     <div>
@@ -283,10 +285,10 @@ export function ProduitDetailPage() {
         <div className="space-y-6 lg:col-span-2">
           {/* Large photo */}
           <div className="overflow-hidden rounded-xl border border-[#E5E7EB] bg-[#F3F4F6]">
-            { }
-            <img
+            <ProductImage
               src={product.photo}
               alt={product.nom}
+              icon={product.categorieIcon}
               className="h-[400px] w-full object-cover"
             />
           </div>

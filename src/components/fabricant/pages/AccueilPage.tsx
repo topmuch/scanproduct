@@ -32,6 +32,7 @@ import {
   formatNombre,
 } from "@/lib/fabricant-data";
 import { useFabricantNav } from "@/lib/fabricant-store";
+import { ProductImage } from "@/components/fabricant/ProductImage";
 
 type PeriodKey = "7j" | "30j" | "90j" | "12m";
 
@@ -305,9 +306,10 @@ export function AccueilPage() {
                   >
                     {idx + 1}
                   </div>
-                  <img
+                  <ProductImage
                     src={prod.photo}
                     alt={prod.nom}
+                    icon={prod.categorieIcon}
                     className="h-10 w-10 shrink-0 rounded-full object-cover"
                   />
                   <div className="min-w-0 flex-1">

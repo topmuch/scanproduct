@@ -37,6 +37,7 @@ import {
 } from "@/lib/fabricant-data";
 import { useFabricantNav } from "@/lib/fabricant-store";
 import { useProduits } from "@/lib/fabricant-data-store";
+import { ProductImage } from "@/components/fabricant/ProductImage";
 import { toast } from "sonner";
 
 // ============================================================================
@@ -74,10 +75,10 @@ function ProductCard({
       className="group overflow-hidden rounded-xl border border-[#E5E7EB] bg-white transition-shadow hover:shadow-lg"
     >
       <div className="relative h-[200px] w-full overflow-hidden bg-[#F3F4F6]">
-        { }
-        <img
+        <ProductImage
           src={product.photo}
           alt={product.nom}
+          icon={product.categorieIcon}
           className="h-full w-full object-cover"
         />
         <div className="absolute right-3 top-3 rounded-full bg-white/90 px-2 py-1 backdrop-blur-sm">
