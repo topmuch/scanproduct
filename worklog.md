@@ -507,3 +507,28 @@ Stage Summary:
 - Gamification: 8 badges, score transparence, classement fabricants
 - Responsive mobile-first avec menu drawer
 - ViewSwitcher en bas à droite permet de basculer entre Landing / Fabricant / SuperAdmin
+
+---
+Task ID: git-push-1
+Agent: main (Z.ai Code)
+Task: Create GitHub repo "scanproduct" under topmuch and push the VerifScan project
+
+Work Log:
+- Verified GitHub PAT authenticates as user `topmuch` (Ouz, id 252154426)
+- Created private repo `topmuch/scanproduct` via GitHub REST API (POST /user/repos)
+- Found local project already a git repo (4 commits, UUID messages) with `.env`, `db/custom.db`, `.zscripts/dev.pid`, and 10 `verify-*.png` screenshots tracked
+- Updated `.gitignore` to exclude: db/*.db, *.pid, verify-*.png, /tool-results/, /upload/, /download/, *.tsbuildinfo
+- Created orphan branch for a clean single commit (no secrets in history)
+- Explicitly `git rm --cached` removed .env, db/custom.db, .zscripts/dev.pid, 10 verify-*.png, and 32 tool-results/* files from index
+- Committed clean snapshot (132 files) as "Initial commit: VerifScan platform"
+- Replaced local `main` with the clean branch; added remote origin
+- Pushed main to origin (success, exit 0)
+- Verified via GitHub API: remote has 1 commit, .env returns 404, db/custom.db returns 404
+- Cleaned token out of local .git/config remote URL (set to plain https URL)
+
+Stage Summary:
+- Repo URL: https://github.com/topmuch/scanproduct (PRIVATE)
+- Default branch: main (1 commit: 6760a22)
+- No secrets/build artifacts in remote history
+- Local remote URL is token-free
+- SECURITY: User should revoke the shared PAT (ghp_X6ju4...) immediately — it was exposed in chat
