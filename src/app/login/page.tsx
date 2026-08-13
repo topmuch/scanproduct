@@ -245,9 +245,14 @@ export default function LoginPage() {
           <div className="absolute bottom-10 left-1/4 h-64 w-64 rounded-full bg-[#F59E0B]/20 blur-3xl" />
         </div>
         <div className="relative z-10 flex flex-col justify-between p-12 text-white">
-          <Link href="/" className="flex items-center gap-2">
-            <ShieldCheck className="h-8 w-8" />
-            <span className="font-display text-2xl font-bold">VerifScan</span>
+          <Link href="/" className="flex items-center">
+            <img
+              src="/verifscan-logo.webp"
+              alt="VerifScan"
+              className="h-10 w-auto brightness-0 invert"
+              width={256}
+              height={62}
+            />
           </Link>
 
           <div>

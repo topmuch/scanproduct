@@ -643,3 +643,127 @@ Stage Summary:
 - Parametres upload: Functional UploadZone with drag/drop + preview + error handling
 - Toggles: All notification switches work + integration connect/disconnect buttons now functional with toast feedback
 - ESLint passes clean (0 errors, 0 warnings)
+
+---
+Task ID: 5
+Agent: full-stack-developer (Product Page)
+Task: Build public Product Digital Passport page at /p/[lotId] with 13 components
+
+Work Log:
+- Read worklog.md, src/lib/public-data.ts, src/lib/utils.ts, PublicHeader.tsx, PublicFooter.tsx, Logo.tsx to understand existing data layer and design system
+- Inspected Prisma schema (Lot, Product, User, LotHistory, Certification, LotCertification, Review models) and queried a real lot ID from the DB (cmsry85e8000ksgkxq6tgfo98, "Huile de Baobab Bio 250ml" by Sarine Bio)
+- Created 13 components in src/components/product/:
+  1. AuthenticityBanner.tsx — green/red/orange gradient banner by status (ACTIVE/RECALLED/EXPIRED) with icon, title, subtitle, verification date
+  2. ProductHeader.tsx — 5-col grid hero with image or emoji placeholder (cosmétique 🧴, agro 🌾, boisson 🥤, hygiène 🧼), name, brand, weight, description, manufacturer card with verified check, star rating
+  3. QuickStats.tsx — 4 pastel cards (blue scans, green verified, purple registered-at, yellow certifications)
+  4. TransparencyScore.tsx — KEY feature: level-colored card with progress bar, 7 criterion mini-cards with sub-criteria checklists, dashed improvement box, top X% badge
+  5. TraceabilityInfo.tsx — 2-col grid of pastel info cards (lot number, dates, locations, sales countries) + gray ingredients section
+  6. LotHistory.tsx — vertical timeline with colored circles per event type (fabrication/controle/marche/actif/rappelle/expire), "ACTUEL" badge on last, expiration countdown alert
+  7. Certifications.tsx — two sections (lot + fabricant) with status badges (active/expired) and dates
+  8. AllergensInfo.tsx — allergens (green empty state or red chips), nutritional grid with emojis, yellow warning boxes
+  9. QRCodeSection.tsx — "use client" component using QRCodeCanvas, downloadable PNG via canvas.toDataURL, copy-link with "Copié !" feedback
+  10. ContactManufacturer.tsx — manufacturer card with WhatsApp/Email/Téléphone buttons (conditional), address, website, Facebook/Instagram
+  11. ReviewsSection.tsx — yellow gradient summary + review cards with author avatar, verified badge, stars, comment, date
+  12. SimilarProducts.tsx — grid of mini cards (image/emoji, name, brand, manufacturer, mini transparency bar) linking to /p/[latestLotId]
+  13. VerificationFooter.tsx — dark gradient card with blockchain hash (truncated mono), verification date, share buttons (WhatsApp/Facebook/Twitter)
+- Created src/app/p/[lotId]/page.tsx as server component with Next.js 16 Promise-based params, generateMetadata for SEO, notFound() fallback, fire-and-forget recordScan(), and the 13 components composed in the right order. Wrapper uses min-h-screen flex flex-col with PublicFooter mt-auto for sticky footer.
+- Ran bun run lint → 0 errors, 0 warnings (after removing 4 unused eslint-disable directives)
+- Started dev server (was stopped) with setsid nohup bun run dev. Verified GET /p/cmsry85e8000ksgkxq6tgfo98 → HTTP 200, 570 KB, scan recorded in DB (Prisma INSERT INTO Scan + UPDATE Lot/Product counters confirmed in dev.log)
+- Verified via agent-browser: page title "Huile de Baobab Bio 250ml — Passeport numérique VerifScan", all 13 sections present in accessibility tree (AuthenticityBanner, ProductHeader with h1 + 4.7★ (3 avis), QuickStats, TransparencyScore with 7 criterion h3s + Suggestions box, TraceabilityInfo, LotHistory, Certifications du lot + du fabricant, AllergensInfo with 3 subsections, QRCodeSection with canvas 160x160 + Télécharger/Copier buttons, ContactManufacturer with WhatsApp/Email/Téléphone/site/Facebook/Instagram, ReviewsSection, SimilarProducts with Beurre de Karité card, VerificationFooter with hash + 3 share buttons), PublicFooter at the very bottom
+- Tested QR canvas: 160x160 canvas rendered, "Copier le lien" button clicked → switches to "Copié !" (clipboard works)
+- No console errors, no page errors
+- Responsive verified at 1440x900 (desktop) and 375x812 (mobile) — full-page screenshots taken (6343px tall desktop, 9350px tall mobile)
+
+Stage Summary:
+- /p/[lotId] public Product Digital Passport page is fully functional and production-ready
+- 13 polished components in src/components/product/ (12 server + 1 client for QRCodeSection)
+- Sticky footer via min-h-screen flex flex-col + mt-auto
+- All French UI text, QRTags-inspired design with pastel cards, level-colored transparency section, vertical timeline
+- Real data verified end-to-end on Sarine Bio's Huile de Baobab lot (transparency score, 6 history events, 2 lot certs + 3 fabricant certs, 3 reviews with 4.7★ avg, 1 similar product, blockchain hash, WhatsApp/Email/Téléphone/website/Facebook/Instagram contacts)
+- Scan recording works (recordScan called fire-and-forget, Scan row created, Lot.totalScans + Product.totalScans incremented)
+- bun run lint passes clean
+
+---
+Task ID: 6
+Agent: full-stack-developer (Catalog Page)
+Task: Build public Catalog page at /produits with product grid, filters, search, pagination
+
+Work Log:
+- Read worklog.md, src/lib/public-data.ts (getAllProducts, getActiveCategories, ProductWithRelations), src/lib/utils.ts (LEVEL_CONFIG, getLevelFromScore, cn), PublicHeader.tsx, PublicFooter.tsx, ProductHeader.tsx + SimilarProducts.tsx (for design patterns), prisma schema (Product + Category models), dev.log (no errors)
+- Created src/components/catalog/use-update-url.ts — shared `useUpdateUrl()` hook used by all client components: merges updates into current URLSearchParams, deletes empty/null keys, resets `page` to 1 when a non-page param changes (so users don't end up on a non-existent page after filtering). Uses `useRouter + usePathname + useSearchParams` from `next/navigation`.
+- Created 8 catalog components in src/components/catalog/:
+  1. SearchBar.tsx (CLIENT) — full-width search input with 🔍 icon, clear (✕) button when text present, submit on Enter or button click. Updates `?search=...` preserving category+sort (page reset).
+  2. CategoryTabs.tsx (CLIENT) — horizontal scrollable row of category pill buttons. "Tous" first (🛒 emoji), then each category with its emoji + name. Active tab: blue bg (#2563EB) white text + shadow; inactive: white bg + gray border. Clicking updates `?category=slug` preserving search+sort (page reset). Exports `CategoryTabItem` type for reuse.
+  3. SortDropdown.tsx (CLIENT) — simple `<select>` styled as a pill (rounded-full, border-2). 5 options: recent, popular, transparency, name, rating. Custom chevron icon. Updates `?sort=...` on change. Visible on both mobile (lg:hidden toolbar) and desktop (right-aligned toolbar).
+  4. FilterSidebar.tsx (CLIENT) — left-column filter card with 3 collapsible sections (FilterSection sub-component with chevron toggle):
+       • Catégories — radio-like list (CategoryRadioRow sub-component) of "Tous les produits" + each category, with emoji + name + selected dot indicator. Clicking updates URL.
+       • Trier par — radio-like list of the 5 sort options. Clicking updates URL.
+       • Transparence — 4 visual-only toggle checkboxes (Bronze 0-40, Argent 41-70, Or 71-90, Platine 91-100) with colored dot + range label. Local state only (not wired to URL, per task spec). Has a "Filtres de transparence bientôt disponibles" note.
+     Wrapped in `hidden lg:block` + `sticky top-20` so it stays in view on desktop, hidden on mobile (mobile uses CategoryTabs + SortDropdown).
+  5. ProductCard.tsx (SERVER) — single product tile, a `<Link>` to `/p/[latestLot.id or product.id]`. Card with `hover:shadow-xl hover:-translate-y-1 transition-all duration-300`. Image area (h-48, gradient bg): if imageUrl use <img>, else large category emoji (from categoryRef.emoji or fallback map). Top-left: "NOUVEAU" red badge if createdAt within 30 days. Top-right: transparency level badge (🥉/🥈/🥇/💎 + capitalized level) using LEVEL_CONFIG colors. Body (p-5): category+weight (small uppercase gray), product name (font-bold, hover:text-blue-600), brand, border-top, fabricant mini-avatar (logo or initial) + name + verified check (green), scan count (🔍 + number), then mini transparency bar ("Transparence" label + score/100 + colored progress bar).
+  6. ProductGrid.tsx (SERVER) — renders results count "X produits trouvés · page N/total", empty state (📦 PackageSearch icon + "Aucun produit trouvé" + suggestion text in a dashed-border card), grid (`grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6`) of ProductCard, and CatalogPagination at bottom if totalPages > 1.
+  7. CatalogPagination.tsx (CLIENT) — URL-based pagination. Builds each href from current searchParams + target page (preserves category/search/sort). Prev (←) / page numbers / Next (→). Current page: blue bg (#2563EB) white text. Prev/Next disabled (opacity-40 + pointer-events-none) at boundaries. Page numbers show "…" gaps for large ranges. Renders null if totalPages <= 1.
+  8. LoadingSkeleton.tsx (SERVER) — 6 skeleton product cards in 3-col grid using shadcn Skeleton (animate-pulse), with results-count skeleton + image area skeleton + body skeleton (lines + bar).
+- Created src/app/produits/page.tsx — async server component. Next.js 16 Promise-based `searchParams`: awaits sp, extracts category/search/sort/page (with safe defaults + parseInt validation). Calls `getActiveCategories()` + `getAllProducts({category, search, sort, page, limit: 12})` in parallel via Promise.all. Maps DB rows to CategoryTabItem[] for client components. Renders: `<PublicHeader />` + hero section (centered, blue badge "🛒 Catalogue VerifScan", H1 "Découvrez nos produits authentiques" with "authentiques" in blue, subtitle, full-width SearchBar) + CategoryTabs section (full width, white bg, border-b) + main content (`flex flex-col gap-8 lg:grid lg:grid-cols-[256px_1fr]`): FilterSidebar (left, desktop only) + main column (mobile sort bar with `lg:hidden` showing count + SortDropdown, desktop sort row `hidden lg:flex` right-aligned with SortDropdown, then ProductGrid wrapped in Suspense with LoadingSkeleton fallback) + `<PublicFooter />`. Root wrapper `flex min-h-screen flex-col bg-gray-50` for sticky footer (PublicFooter already has `mt-auto`). Added `generateMetadata` for SEO.
+- Created src/app/produits/loading.tsx — uses LoadingSkeleton inside a full-page chrome (sticky header placeholder + hero skeleton + main + footer placeholder) so the catalog page shows a graceful loading state during initial SSR.
+- Ran `bun run lint` → 0 errors, 0 warnings.
+- Verified via curl: GET /produits → HTTP 200, 326 KB, 6 product cards rendered (Poudre de Moringa, Jus de Bissap, Couscous de Mil, Savon Noir, Beurre de Karité, Huile de Baobab), all linking to /p/[lotId]. GET /produits?search=baobab → 1 product. GET /produits?category=cosmetiques → 2 products (Beurre de Karité + Huile de Baobab). GET /produits?sort=name → 6 products sorted alphabetically (Beurre → Couscous → Huile → Jus → Poudre → Savon).
+- Verified via agent-browser at 1440x900 desktop:
+  • Page title "Catalogue — VerifScan", hero + search + 7 category tabs (Tous selected by default) + 3-section sidebar + sort dropdown + 6 product cards with NOUVEAU badges + level badges (Or/Platine) + transparency bars + fabricant info + scan counts.
+  • Search: typed "baobab" + Enter → URL became /produits?search=baobab, 1 result. Clear (✕) button → URL back to /produits, 6 results.
+  • Category tab: clicked "Cosmétiques" → URL /produits?search=baobab&category=cosmetiques, Cosmétiques tab aria-selected=true.
+  • Sort dropdown: selected "Nom A-Z" → URL /produits?sort=name, products sorted alphabetically.
+  • Sidebar sort radio: clicked "Meilleur score transparence" → URL /produits?category=cosmetiques&sort=transparency, products reordered by transparency score.
+  • Sidebar category radio: clicked "Cosmétiques" → URL /produits?category=cosmetiques, 2 results.
+  • Transparency checkbox: clicked "Platine 91-100" → checkbox checked=true (visual only, no URL change as designed).
+  • Product card click: clicked "Huile de Baobab Bio 250ml" → navigated to /p/cmsry85e8000ksgkxq6tgfo98, page title "Huile de Baobab Bio 250ml — Passeport numérique VerifScan".
+- Verified via agent-browser at 375x812 mobile viewport:
+  • FilterSidebar hidden (no "complementary Filtres" in a11y tree).
+  • CategoryTabs visible (scrollable, horizontal).
+  • Mobile sort bar visible with count "2 produits trouvés" + SortDropdown.
+  • Full-page screenshot taken.
+- Took full-page screenshots at desktop (1440x900) and mobile (375x812) viewports.
+- No errors in dev.log (only clean Prisma queries + 200 responses, fastest render 60ms after warm compile).
+
+Stage Summary:
+- /produits public Catalog page is fully functional and production-ready
+- 8 components in src/components/catalog/ (5 client: SearchBar, CategoryTabs, FilterSidebar, SortDropdown, CatalogPagination; 3 server: ProductCard, ProductGrid, LoadingSkeleton) + 1 shared client hook (use-update-url.ts)
+- Page at src/app/produits/page.tsx (async server component, Next.js 16 Promise-based searchParams, parallel data fetching, generateMetadata)
+- loading.tsx at src/app/produits/loading.tsx (graceful SSR loading state)
+- All filter state lives in URL searchParams (shareable, SSR-friendly, no React state for filters) — only transparency toggles are local (visual-only per task spec)
+- Sticky footer via `min-h-screen flex flex-col` + PublicFooter `mt-auto`
+- Responsive: mobile-first, sidebar hidden on mobile (lg:block), category tabs + sort dropdown serve as mobile filters, 1→2→3 column grid
+- All French UI text, QRTags-inspired design (pastel cards, blue #2563EB + green #10B981 brand colors, emojis for categories, hover:shadow-xl hover:-translate-y-1 on product cards)
+- bun run lint passes clean (0 errors, 0 warnings), no runtime errors in dev.log
+- Browser-verified end-to-end: search, category tabs, sidebar category radios, sidebar sort radios, sort dropdown, transparency toggles, product card navigation to /p/[lotId], mobile + desktop responsive layouts
+
+---
+Task ID: 2-4-7-9
+Agent: main (Z.ai Code)
+Task: Build backend architecture + public data layer + API routes + product images for VerifScan public pages
+
+Work Log:
+- Extended prisma/schema.prisma (SQLite-compatible): added Category, LotHistory, Scan, Certification, LotCertification, Review models; extended User (whatsapp, website, description, logoUrl, taxId, sector, yearFounded, facebook, instagram, brandColor, isVerified, verifiedAt, transparencyScore, totalScans), Product (brand, weight, categoryId, isPublic, isFeatured, totalScans, averageRating, totalReviews, transparencyScore), Lot (lotNumber, ingredients, manufacturingLocation, transformationLocation, salesCountries, allergens, nutritionalInfo, warnings, recallReason, blockchainHash, isVerified, verifiedAt, transparencyScore, totalScans), QRCode (imageUrl, size, color, logoUrl, includeLotNumber/ProductName/Logo, isDownloaded)
+- Ran db:push successfully (schema synced)
+- Rewrote prisma/seed.ts: 2 fabricants (Sarine Bio + Teranga Foods), 6 categories, 5 fabricant certifications, 6 products with full lot data (ingredients, allergens, nutritionalInfo, manufacturingLocation, salesCountries, warnings, blockchainHash, transparencyScore), 6 lots with 5-7 history events each, lot certifications, 1-3 reviews per lot, 5 QR codes per lot, 8 scan records per lot
+- Ran db:seed successfully (6 products + lots + history + certs + reviews)
+- Built src/lib/utils.ts: cn(), formatDate(), formatDateShort(), formatDistanceToNow(), daysUntil(), calculateTransparencyScore() (7 criteria: identité 15pts, origine 15pts, lot 10pts, dates 15pts, composition 20pts, certifications 15pts, contact 10pts = 100pts), LEVEL_CONFIG (bronze/argent/or/platine), getLevelFromScore(), getPercentileRank(), parseJsonArray(), parseJsonObject(), getAllergens(), getTransparencyBadgeStyle()
+- Built src/lib/public-data.ts: getLotWithDetails(lotId) — fetches lot + product + fabricant + history + lotCerts + fabricantCerts + reviews + qrCode + scanCount + computed transparency; getAllProducts(filters) — paginated catalog with category/search/sort; getActiveCategories(); getSimilarProducts(); recordScan()
+- Created src/components/public/PublicHeader.tsx (server component, sticky, Logo + nav + Connexion/Partenaire buttons)
+- Created src/components/public/PublicFooter.tsx (server component, dark bg, brand + links + contact + socials)
+- Generated 6 product images via z-ai image CLI: huile-baobab.png, beurre-karite.png, savon-noir.png, couscous-mil.png, jus-bissap.png, poudre-moringa.png (1024x1024, professional product photography style)
+- Updated seed.ts imageUrl fields to reference /products/*.png, re-ran db:seed
+- Built 3 API routes:
+  - GET/POST /api/products — public catalog with filtering (category, search, sort, page, limit) + auth-required product creation
+  - GET /api/lots/[lotId] — public lot detail with optional ?scan=true scan recording (detects deviceType, OS, browser from User-Agent)
+  - GET/POST /api/qr-codes/generate — auth-required (FABRICANT) QR code generation with ownership check; GET returns fabricant's QR codes with pagination
+
+Stage Summary:
+- Schema: 6 new models + extended User/Product/Lot/QRCode with full traceability fields (SQLite-compatible, JSON stored as strings)
+- Seed: 2 fabricants, 6 categories, 6 products with complete digital passport data, 30+ history events, 10+ reviews, 30 QR codes, 48 scan records
+- Data layer: getLotWithDetails + getAllProducts + getSimilarProducts + recordScan + transparency score calculator
+- Utils: date formatting, transparency score (7 criteria, 100pts, 4 levels), JSON parsing helpers
+- Images: 6 AI-generated product photos in /public/products/
+- API: 3 endpoints (public products, public lot detail with scan tracking, auth-protected QR generation)
+- Lint: 0 errors, 0 warnings
+- Browser-verified: catalog shows 6 products with images + transparency scores + filters; product page shows all 13 sections; search + category filter + card navigation all work; API returns correct JSON; scan recording confirmed in dev.log

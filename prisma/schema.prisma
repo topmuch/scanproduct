@@ -29,19 +29,47 @@ model User {
   // Fabricant profile fields
   companyName  String?
   phone        String?
+  whatsapp     String?
+  website      String?
+  description  String?
   address      String?
   city         String?
   country      String?
   avatarUrl    String?
+  logoUrl      String?
+  // Business info
+  taxId        String?
+  sector       String?
+  yearFounded  Int?
+  // Social media
+  facebook     String?
+  instagram    String?
+  linkedin     String?
+  // Branding
+  brandColor   String    @default("#2563EB")
   // Account lifecycle
   status       String    @default("ACTIVE") // "ACTIVE" | "SUSPENDED" | "PENDING"
   emailVerified DateTime?
   lastLoginAt  DateTime?
+  isVerified   Boolean   @default(false)
+  verifiedAt   DateTime?
   // Gamification
   points       Int       @default(0)
   badges       String?   // JSON-encoded array of badge ids
+  // Stats
+  transparencyScore Int  @default(0)
+  totalScans   Int       @default(0)
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
+
+  products        Product[]
+  lots            Lot[]
+  qrCodes         QRCode[]
+  scans           Scan[]
+  reviewsAuthored Review[]      @relation("ReviewAuthor")
+  reviewsReceived Review[]      @relation("ReviewFabricant")
+  certifications  Certification[]
+  auditLogs       AuditLog[]
 
   @@index([role])
   @@index([status])
@@ -51,6 +79,7 @@ model User {
 model AuditLog {
   id        String   @id @default(cuid())
   userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
   action    String   // e.g. "LOGIN", "CREATE_PRODUCT", "DELETE_LOT"
   entity    String?  // e.g. "User", "Product", "Lot"
   entityId  String?
@@ -64,51 +93,296 @@ model AuditLog {
   @@index([createdAt])
 }
 
-// Product (fabricant-owned)
-model Product {
+// ============================================================================
+// Categories
+// ============================================================================
+
+model Category {
   id          String   @id @default(cuid())
-  name        String
+  name        String   @unique
+  slug        String   @unique
+  icon        String?
+  emoji       String?
   description String?
-  category    String?
-  imageUrl    String?
-  fabricantId String
-  status      String   @default("ACTIVE") // "ACTIVE" | "ARCHIVED"
+  order       Int      @default(0)
+  isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  products    Product[]
+
+  @@index([slug])
+  @@index([isActive])
+}
+
+// ============================================================================
+// Products
+// ============================================================================
+
+model Product {
+  id              String   @id @default(cuid())
+  name            String
+  brand           String?
+  description     String?
+  category        String?  // legacy free-text category (kept for backward compat)
+  categoryId      String?
+  categoryRef     Category? @relation(fields: [categoryId], references: [id])
+  imageUrl        String?
+  weight          String?
+  fabricantId     String
+  fabricant       User     @relation(fields: [fabricantId], references: [id])
+  // Visibility
+  isPublic        Boolean  @default(true)
+  isFeatured      Boolean  @default(false)
+  status          String   @default("ACTIVE") // "ACTIVE" | "ARCHIVED"
+  // Stats
+  totalScans      Int      @default(0)
+  averageRating   Float    @default(0)
+  totalReviews    Int      @default(0)
+  // Transparency
+  transparencyScore Int    @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  lots            Lot[]
+  reviews         Review[]
 
   @@index([fabricantId])
   @@index([category])
+  @@index([categoryId])
+  @@index([isPublic])
+  @@index([transparencyScore])
 }
 
-// Batch (lot) of products with QR codes
+// ============================================================================
+// Lots (batches)
+// ============================================================================
+
 model Lot {
-  id          String   @id @default(cuid())
-  reference   String   @unique
-  productId   String
-  fabricantId String
-  quantity    Int
-  manufactureDate DateTime?
-  expiryDate  DateTime?
-  status      String   @default("ACTIVE") // "ACTIVE" | "RECALLED" | "EXPIRED"
-  qrCodeCount Int      @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                    String   @id @default(cuid())
+  reference             String   @unique
+  productId             String
+  product               Product  @relation(fields: [productId], references: [id])
+  fabricantId           String
+  fabricant             User     @relation(fields: [fabricantId], references: [id])
+
+  // Batch info
+  quantity              Int
+  lotNumber             String?
+  manufactureDate       DateTime?
+  expiryDate            DateTime?
+  ingredients           String?  // text or JSON
+  weight                String?
+
+  // Traceability
+  manufacturingLocation String?
+  transformationLocation String?
+  salesCountries        String?  // JSON-encoded string array
+
+  // Allergens & Nutrition (JSON-encoded)
+  allergens             String?  // JSON array
+  nutritionalInfo       String?  // JSON object
+  warnings              String?  // JSON array
+
+  // Status: "ACTIVE" | "RECALLED" | "EXPIRED" | "DRAFT"
+  status                String   @default("ACTIVE")
+  recallReason          String?
+  recalledAt            DateTime?
+
+  // Blockchain
+  blockchainHash        String?
+
+  // Verification
+  isVerified            Boolean  @default(false)
+  verifiedAt            DateTime?
+
+  // Transparency
+  transparencyScore     Int      @default(0)
+  transparencyDetails   String?  // JSON-encoded
+
+  // QR + Stats
+  qrCodeCount           Int      @default(0)
+  totalScans            Int      @default(0)
+  lastScannedAt         DateTime?
+
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  qrCodes               QRCode[]
+  scans                 Scan[]
+  historyEvents         LotHistory[]
+  certifications        LotCertification[]
+  reviews               Review[]
 
   @@index([fabricantId])
   @@index([productId])
   @@index([status])
+  @@index([expiryDate])
+  @@index([transparencyScore])
 }
 
-// Individual QR code (one per unit in a lot)
-model QRCode {
-  id        String   @id @default(cuid())
-  code      String   @unique
-  lotId     String
-  scans     Int      @default(0)
-  lastScanAt DateTime?
-  status    String   @default("ACTIVE") // "ACTIVE" | "USED" | "INVALID"
-  createdAt DateTime @default(now())
+// ============================================================================
+// Lot History (timeline events)
+// ============================================================================
+
+model LotHistory {
+  id          String   @id @default(cuid())
+  lotId       String
+  lot         Lot      @relation(fields: [lotId], references: [id], onDelete: Cascade)
+
+  // type: "fabrication" | "controle" | "marche" | "actif" | "rappelle" | "expire"
+  type        String
+  title       String
+  description String?
+  location    String?
+  date        DateTime
+  time        String?
+  metadata    String?  // JSON-encoded
+
+  createdAt   DateTime @default(now())
 
   @@index([lotId])
+  @@index([date])
+}
+
+// ============================================================================
+// QR Codes
+// ============================================================================
+
+model QRCode {
+  id            String   @id @default(cuid())
+  code          String   @unique
+  lotId         String
+  lot           Lot      @relation(fields: [lotId], references: [id], onDelete: Cascade)
+  fabricantId   String?
+  fabricant     User?    @relation(fields: [fabricantId], references: [id])
+
+  imageUrl      String?
+  size          Int      @default(300)
+  color         String   @default("#000000")
+  logoUrl       String?
+
+  includeLotNumber    Boolean @default(true)
+  includeProductName  Boolean @default(true)
+  includeLogo         Boolean @default(false)
+
+  status        String   @default("ACTIVE") // "ACTIVE" | "USED" | "INVALID"
+  isDownloaded  Boolean  @default(false)
+  downloadedAt  DateTime?
+
+  scans         Int      @default(0)
+  lastScanAt    DateTime?
+  createdAt     DateTime @default(now())
+
+  scanRecords   Scan[]
+
+  @@index([lotId])
+  @@index([fabricantId])
   @@index([status])
+}
+
+// ============================================================================
+// Scans (analytics)
+// ============================================================================
+
+model Scan {
+  id            String   @id @default(cuid())
+  qrCodeId      String?
+  qrCode        QRCode?  @relation(fields: [qrCodeId], references: [id])
+  lotId         String
+  lot           Lot      @relation(fields: [lotId], references: [id], onDelete: Cascade)
+  userId        String?
+  user          User?    @relation(fields: [userId], references: [id])
+
+  scannedAt     DateTime @default(now())
+
+  // Location
+  country       String?
+  city          String?
+  region        String?
+  latitude      Float?
+  longitude     Float?
+
+  // Device
+  deviceType    String?  // "mobile" | "desktop" | "tablet"
+  os            String?
+  browser       String?
+  userAgent     String?
+  ipAddress     String?
+
+  metadata      String?  // JSON-encoded
+
+  @@index([lotId])
+  @@index([scannedAt])
+  @@index([country])
+  @@index([userId])
+}
+
+// ============================================================================
+// Certifications
+// ============================================================================
+
+model Certification {
+  id              String   @id @default(cuid())
+  fabricantId     String
+  fabricant       User     @relation(fields: [fabricantId], references: [id], onDelete: Cascade)
+
+  name            String   // "Bio", "ISO 22000", "Halal", etc.
+  issuer          String?  // "Ecocert", "Bureau Veritas"...
+  certificateNumber String?
+  issueDate       DateTime?
+  expirationDate  DateTime?
+  documentUrl     String?
+
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([fabricantId])
+}
+
+model LotCertification {
+  id          String   @id @default(cuid())
+  lotId       String
+  lot         Lot      @relation(fields: [lotId], references: [id], onDelete: Cascade)
+
+  name        String
+  issuer      String?
+  documentUrl String?
+
+  createdAt   DateTime @default(now())
+
+  @@index([lotId])
+}
+
+// ============================================================================
+// Reviews
+// ============================================================================
+
+model Review {
+  id             String   @id @default(cuid())
+  productId      String?
+  product        Product? @relation(fields: [productId], references: [id])
+  lotId          String?
+  lot            Lot?     @relation(fields: [lotId], references: [id])
+  fabricantId    String?
+  fabricant      User?    @relation("ReviewFabricant", fields: [fabricantId], references: [id])
+  userId         String?
+  user           User?    @relation("ReviewAuthor", fields: [userId], references: [id])
+
+  authorName     String?
+  rating         Int      // 1-5
+  comment        String?
+  isApproved     Boolean  @default(false)
+  isVerified     Boolean  @default(false)
+  ipAddress      String?
+  userAgent      String?
+
+  createdAt      DateTime @default(now())
+  approvedAt     DateTime?
+
+  @@index([productId])
+  @@index([lotId])
+  @@index([fabricantId])
+  @@index([isApproved])
 }
