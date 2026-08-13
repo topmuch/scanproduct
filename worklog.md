@@ -1038,3 +1038,72 @@ Stage Summary:
 - The "Générer des QR codes" modal in QRCodesPage now actually creates QR codes in the Zustand store (previously it was a no-op toast).
 - The LotDetailPage "QR codes générés" section now shows real QR codes from the store with a "Générer 10 QR codes" action button.
 - Superadmin UsersPage has a new "Ajouter fabricant" button with a complete creation modal (company, contact, email, phone, address, plan, status, logo color).
+
+---
+Task ID: 13
+Agent: main
+Task: Diagnostiquer pourquoi les images sont cassées — tester et fournir des preuves.
+
+Work Log:
+- Vérification de l'existence des fichiers images sur disque dans /public/products/, /public/uploads/, /public/ (logo).
+- Vérification que les types de fichiers sont valides (file -b sur chaque fichier).
+- Démarrage du dev server Next.js (port 3000) — soumis à des OOM kills sur le sandbox 4GB RAM.
+- Tests curl HTTP de chaque image servie par le dev server Next.js.
+- Récupération du HTML de la page d'accueil (/) et inspection des balises <img src>.
+- Création d'une page de test statique HTML référençant les 9 images (mêmes chemins /products/).
+- Service du dossier /public via python http.server (port 8080) + ouverture avec agent-browser.
+- Screenshot de la page de test statique (proof-images.png) + analyse VLM.
+- Ouverture de la VRAIE page d'accueil Next.js (http://localhost:3000/) avec agent-browser.
+- Évaluation JS dans le navigateur : Array.from(document.querySelectorAll('img')) → vérification complete + naturalWidth pour chaque image.
+- Screenshot de la page d'accueil Next.js (proof-landing-nextjs.png) + analyse VLM.
+
+Stage Summary — DIAGNOSTIC :
+Les images NE SONT PAS cassées. Preuves fournies :
+
+1. Fichiers sur disque (7 images produit + 1 upload + logo webp + logo svg) — TOUS valides :
+   - /products/jus-bissap.png (61428 bytes, JPEG image data 1024x1024)
+   - /products/poudre-moringa.png (79373 bytes)
+   - /products/savon-noir.png (77150 bytes)
+   - /products/couscous-mil.png (111686 bytes)
+   - /products/huile-baobab.png (47749 bytes)
+   - /products/beurre-karite.png (79244 bytes)
+   - /products/jus-bissap-hero.png (50151 bytes)
+   - /uploads/6960ed53-...png (61428 bytes)
+   - /verifscan-logo.webp (7454 bytes)
+   - /logo.svg (1065 bytes)
+
+2. Dev server Next.js sert toutes les images en HTTP 200 :
+   - /products/jus-bissap.png → HTTP 200, 61428 bytes, content-type: image/png
+   - /products/poudre-moringa.png → HTTP 200, 79373 bytes
+   - /products/savon-noir.png → HTTP 200, 77150 bytes
+   - /products/couscous-mil.png → HTTP 200, 111686 bytes
+   - /products/huile-baobab.png → HTTP 200, 47749 bytes
+   - /products/beurre-karite.png → HTTP 200, 79244 bytes
+   - /products/jus-bissap-hero.png → HTTP 200, 50151 bytes
+   - /uploads/6960ed53-...png → HTTP 200, 61428 bytes
+   - /verifscan-logo.webp → HTTP 200, 7454 bytes
+   - /logo.svg → HTTP 200, 1065 bytes
+
+3. HTML de la page d'accueil référence les bons chemins :
+   - <img src="/products/jus-bissap-hero.png"> (Hero)
+   - <img src="/products/jus-bissap.png"> (HowItWorks)
+   - <img src="/products/poudre-moringa.png"> (HowItWorks)
+   - <img src="/verifscan-logo.webp"> (Logo header + footer)
+
+4. Test navigateur (agent-browser) sur la VRAIE page Next.js :
+   - 6 balises <img> chargées, TOUTES avec complete:true et naturalWidth>0
+   - "broken": 0 → AUCUNE image cassée
+   - Screenshot proof-landing-nextjs.png (861KB)
+
+5. Analyse VLM (glm-5v-turbo) du screenshot de la page Next.js :
+   - "Tout s'affiche correctement. Il n'y a aucune image cassée."
+   - Logo ✅, Hero (bouteille jus rouge) ✅, QR code ✅, icônes ✅
+
+6. Le composant ProductImage a un fallback onError → gradient bleu/vert + emoji catégorie, donc même en cas d'URL vide ou d'échec de chargement, l'utilisateur voit un placeholder de marque, JAMAIS l'icône d'image brisée du navigateur.
+
+Cause réelle des "images cassées" perçues par l'utilisateur :
+Le dev server Next.js 16 (Turbopack) subit des OOM kills sur le sandbox 4GB RAM (dmesg : "Out of memory: Killed process next-server total-vm:21995820kB"). Quand le serveur meurt en cours de requête, le navigateur affiche des images cassées parce que les requêtes échouent en plein chargement. Ce n'est pas un problème d'images — c'est un problème de capacité mémoire du sandbox.
+
+Artifacts produits :
+- /home/z/my-project/proof-images.png (screenshot page de test statique, 373KB)
+- /home/z/my-project/proof-landing-nextjs.png (screenshot VRAIE page Next.js, 861KB)
