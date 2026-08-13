@@ -26,7 +26,7 @@ export function StatsBanner() {
       <div className="pointer-events-none absolute -left-20 top-0 h-72 w-72 rounded-full bg-white/10 blur-3xl" />
       <div className="pointer-events-none absolute -right-16 bottom-0 h-72 w-72 rounded-full bg-[#10B981]/20 blur-3xl" />
 
-      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="relative mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <AnimatedSection className="mx-auto max-w-2xl text-center">
           <span className="inline-flex items-center rounded-full bg-white/20 px-4 py-1.5 text-[13px] font-semibold uppercase tracking-[1px] text-white backdrop-blur">

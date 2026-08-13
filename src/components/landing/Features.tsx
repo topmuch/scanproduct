@@ -46,7 +46,7 @@ const FEATURES: Feature[] = [
 export function Features() {
   return (
     <section id="fonctionnalites" className="bg-white py-16 sm:py-20 lg:py-24">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <AnimatedSection className="mx-auto max-w-2xl text-center">
           <SectionBadge>Pourquoi VerifScan ?</SectionBadge>

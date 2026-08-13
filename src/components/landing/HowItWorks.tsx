@@ -46,7 +46,7 @@ const STEPS: Step[] = [
 export function HowItWorks() {
   return (
     <section id="concept" className="bg-[#F9FAFB] py-16 sm:py-20 lg:py-24">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <AnimatedSection className="mx-auto max-w-2xl text-center">
           <SectionBadge bg="bg-[#FEF3C7]" color="text-[#D97706]">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ComponentType, type ReactNode } from "react";
+import { useState, useRef, useCallback, type ComponentType, type ReactNode } from "react";
 import {
   Building2,
   Image as ImageIcon,
@@ -19,6 +19,10 @@ import {
   Smartphone,
   Globe,
   ChevronDown,
+  Upload,
+  Loader2,
+  AlertCircle,
+  Camera,
 } from "lucide-react";
 import {
   PageHeader,
@@ -156,15 +160,146 @@ function Badge({
 // Upload + color helpers
 // ============================================================================
 
-function UploadZone() {
+function UploadZone({
+  onUploaded,
+  currentUrl,
+  label = "votre logo",
+}: {
+  onUploaded?: (url: string) => void;
+  currentUrl?: string;
+  label?: string;
+}) {
+  const [imageUrl, setImageUrl] = useState<string>(currentUrl ?? "");
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [dragActive, setDragActive] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFile = useCallback(async (file: File) => {
+    setError(null);
+    if (!file.type.startsWith("image/")) {
+      setError("Veuillez sélectionner un fichier image.");
+      return;
+    }
+    if (!["image/jpeg", "image/png", "image/webp", "image/gif", "image/svg+xml"].includes(file.type)) {
+      setError("Format non supporté. Utilisez PNG, JPG, SVG ou WebP.");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setError("Le fichier dépasse 5 MB.");
+      return;
+    }
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/upload", { method: "POST", body: formData });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "Échec de l'upload.");
+        return;
+      }
+      setImageUrl(data.url);
+      onUploaded?.(data.url);
+    } catch {
+      setError("Erreur réseau lors de l'upload.");
+    } finally {
+      setUploading(false);
+    }
+  }, [onUploaded]);
+
+  const onDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      setDragActive(false);
+      const file = e.dataTransfer.files?.[0];
+      if (file) handleFile(file);
+    },
+    [handleFile]
+  );
+
   return (
-    <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-[#D1D5DB] bg-[#F9FAFB] p-8 text-center">
-      <div className="mb-3 text-[48px] leading-none">📷</div>
-      <p className="text-[14px] font-medium text-[#374151]">
-        Glissez-déposez votre logo ici
-      </p>
-      <p className="mt-1 text-[12px] text-[#6B7280]">PNG, JPG, SVG (max 2MB)</p>
-      <OutlineButton className="mt-4">Parcourir les fichiers</OutlineButton>
+    <div>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp,image/gif,image/svg+xml"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) handleFile(file);
+        }}
+        className="hidden"
+      />
+      {imageUrl ? (
+        <div className="relative overflow-hidden rounded-xl border border-[#E5E7EB] bg-white">
+          { }
+          <img
+            src={imageUrl}
+            alt="Logo"
+            className="mx-auto h-[160px] w-full max-w-[300px] object-contain bg-[#F9FAFB]"
+          />
+          <div className="absolute right-2 top-2 flex gap-1.5">
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              className="inline-flex items-center gap-1 rounded-md bg-white/95 px-2.5 py-1.5 text-[12px] font-medium text-[#374151] shadow-sm hover:bg-white disabled:opacity-60"
+            >
+              <Camera className="h-3.5 w-3.5" /> Changer
+            </button>
+            <button
+              type="button"
+              onClick={() => { setImageUrl(""); setError(null); }}
+              className="inline-flex items-center gap-1 rounded-md bg-white/95 px-2.5 py-1.5 text-[12px] font-medium text-[#EF4444] shadow-sm hover:bg-white"
+            >
+              <X className="h-3.5 w-3.5" /> Retirer
+            </button>
+          </div>
+          {uploading && (
+            <div className="absolute inset-0 flex items-center justify-center bg-white/70">
+              <Loader2 className="h-6 w-6 animate-spin text-[#2563EB]" />
+            </div>
+          )}
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
+          onDragLeave={() => setDragActive(false)}
+          onDrop={onDrop}
+          disabled={uploading}
+          className={`flex w-full flex-col items-center justify-center rounded-xl border-2 border-dashed p-8 text-center transition-colors disabled:cursor-not-allowed ${
+            dragActive
+              ? "border-[#2563EB] bg-[#EFF6FF]"
+              : "border-[#D1D5DB] bg-[#F9FAFB] hover:border-[#2563EB] hover:bg-[#EFF6FF]/50"
+          }`}
+        >
+          {uploading ? (
+            <>
+              <Loader2 className="mb-3 h-8 w-8 animate-spin text-[#2563EB]" />
+              <p className="text-[14px] font-medium text-[#2563EB]">Upload en cours…</p>
+            </>
+          ) : (
+            <>
+              <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-white text-[#2563EB] shadow-sm">
+                <Upload className="h-5 w-5" />
+              </div>
+              <p className="text-[14px] font-medium text-[#374151]">
+                Glissez-déposez {label} ici
+              </p>
+              <p className="mt-1 text-[12px] text-[#6B7280]">ou cliquez pour parcourir</p>
+              <p className="mt-3 text-[11px] text-[#9CA3AF]">PNG, JPG, SVG, WebP (max 5MB)</p>
+            </>
+          )}
+        </button>
+      )}
+      {error && (
+        <div className="mt-2 flex items-start gap-1.5 rounded-md border border-[#FECACA] bg-[#FEF2F2] px-2.5 py-2 text-[12px] text-[#B91C1C]">
+          <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+          <span>{error}</span>
+        </div>
+      )}
     </div>
   );
 }
@@ -383,7 +518,7 @@ function LogoSection() {
 
       <SectionCard title="Logo entreprise">
         <div className="grid items-center gap-6 sm:grid-cols-[1fr_auto]">
-          <UploadZone />
+          <UploadZone label="votre logo entreprise" />
           <LogoPreview initials={MARQUE.logo} />
         </div>
         <ul className="mt-5 space-y-1.5 border-t border-[#F3F4F6] pt-4 text-[12px] text-[#6B7280]">
@@ -394,7 +529,7 @@ function LogoSection() {
       </SectionCard>
 
       <SectionCard title="Logo pour QR codes">
-        <UploadZone />
+        <UploadZone label="votre logo QR codes" />
         <p className="mt-3 text-[13px] text-[#6B7280]">
           Ce logo apparaîtra au centre de vos QR codes.
         </p>
@@ -814,6 +949,7 @@ function NotificationsSection() {
     paiement: true,
     securite: false,
   });
+  const [toast, setToast] = useState<string | null>(null);
 
   const toggleEmail = (id: string) =>
     setNotifs((prev) => prev.map((n) => (n.id === id ? { ...n, email: !n.email } : n)));
@@ -823,6 +959,14 @@ function NotificationsSection() {
   return (
     <div className="space-y-6">
       <SectionTitle>Notifications</SectionTitle>
+
+      {toast && (
+        <div className="fixed left-1/2 top-5 z-[60] -translate-x-1/2">
+          <div className="flex items-center gap-2 rounded-xl border border-[#10B981]/30 bg-white px-4 py-2.5 text-[13px] font-semibold text-[#065F46] shadow-lg">
+            {toast}
+          </div>
+        </div>
+      )}
 
       {/* Email */}
       <SectionCard title="Notifications par email">
@@ -903,7 +1047,7 @@ function NotificationsSection() {
       </SectionCard>
 
       <SaveRow>
-        <GradientButton>Enregistrer les préférences</GradientButton>
+        <GradientButton onClick={() => { setToast("✅ Paramètres de notifications enregistrés"); setTimeout(() => setToast(null), 3000); }}>Enregistrer les préférences</GradientButton>
       </SaveRow>
     </div>
   );
@@ -958,12 +1102,41 @@ const INTEGRATIONS: Integration[] = [
 ];
 
 function IntegrationsSection() {
+  const [integrations, setIntegrations] = useState<Integration[]>(INTEGRATIONS);
+  const [toast, setToast] = useState<string | null>(null);
+
+  const toggleConnection = (id: string) => {
+    setIntegrations((prev) => {
+      const updated = prev.map((it) =>
+        it.id === id ? { ...it, connected: !it.connected } : it
+      );
+      const it = updated.find((i) => i.id === id);
+      if (it) {
+        setToast(
+          it.connected
+            ? `✅ ${it.name} connecté avec succès`
+            : `⚠️ ${it.name} déconnecté`
+        );
+      }
+      return updated;
+    });
+    setTimeout(() => setToast(null), 3000);
+  };
+
   return (
     <div className="space-y-6">
       <SectionTitle>Intégrations</SectionTitle>
 
+      {toast && (
+        <div className="fixed left-1/2 top-5 z-[60] -translate-x-1/2">
+          <div className="flex items-center gap-2 rounded-xl border border-[#10B981]/30 bg-white px-4 py-2.5 text-[13px] font-semibold text-[#065F46] shadow-lg">
+            {toast}
+          </div>
+        </div>
+      )}
+
       <div className="grid gap-4 sm:grid-cols-2">
-        {INTEGRATIONS.map((it) => (
+        {integrations.map((it) => (
           <SectionCard key={it.id}>
             <div className="space-y-3">
               <div className="flex items-start justify-between">
@@ -983,9 +1156,13 @@ function IntegrationsSection() {
               <p className="text-[13px] text-[#6B7280]">{it.description}</p>
               <div className="pt-1">
                 {it.connected ? (
-                  <OutlineButton className="w-full">Configurer</OutlineButton>
+                  <OutlineButton className="w-full" onClick={() => toggleConnection(it.id)}>
+                    Déconnecter
+                  </OutlineButton>
                 ) : (
-                  <GradientButton className="w-full">Connecter</GradientButton>
+                  <GradientButton className="w-full" onClick={() => toggleConnection(it.id)}>
+                    Connecter
+                  </GradientButton>
                 )}
               </div>
             </div>

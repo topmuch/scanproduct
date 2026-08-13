@@ -618,3 +618,28 @@ Stage Summary:
 - Image upload: full flow (file input + drag/drop + API endpoint + preview + error handling) — POST /api/upload returns 201 with { url }
 - ESLint passes clean (0 errors, 0 warnings)
 - Both fixes browser-verified end-to-end
+
+---
+Task ID: bugfix-logo-qr-wide-upload-toggles-1
+Agent: main (Z.ai Code)
+Task: Fix 5 bugs: (1) QR codes not functional, (2) change logo, (3) landing page wide format, (4) logo/QR logo upload in Parametres, (5) notification toggle buttons
+
+Work Log:
+- Bug 1 — QR codes not functional: The QRPattern component was a fake decorative SVG pattern (random dots + finder squares), NOT a real scannable QR code. Installed `qrcode.react` package, created QRCodeDisplay component using QRCodeCanvas that encodes real scannable URLs (https://verifscan.sn/scan/<code>). Replaced all 3 QRPattern usages (modal preview + card grid). Added downloadQRAsPNG function that renders a 512px high-res QR off-screen and triggers a PNG download. Replaced the fake download button (was just setToast) with real downloadQRAsPNG call.
+- Bug 2 — Change logo: Copied uploaded logo (1).webp to public/verifscan-logo.webp. Rewrote Logo.tsx to use <img src="/verifscan-logo.webp"> instead of the old SVG QR-like icon. Logo now displays the official brand image everywhere (header, footer, login pages, sidebar).
+- Bug 3 — Landing page wide format: All 8 landing section components used max-w-7xl (1280px). Replaced all with max-w-[1400px] in: Hero, Features, HowItWorks, Testimonials, StatsBanner, Pricing, Footer, Header. Verified at 1920px viewport: content width is now 1400px (was 1280px).
+- Bug 4 — Logo upload in Parametres: The UploadZone component was a static placeholder (no file input, no handlers). Rebuilt it as a fully functional component with: hidden file input, drag & drop support, click-to-browse, client-side validation (type + size), POST to /api/upload, image preview with Changer/Retirer buttons, loading spinner, error display. Used in both "Logo entreprise" and "Logo pour QR codes" sections. Browser-verified: uploaded test PNG → preview shows, file saved to public/uploads/.
+- Bug 5 — Notification toggles + integration buttons: 
+  - Notification toggles (email/in-app/SMS) were already wired to state — verified they work (15 switches found, all toggle correctly).
+  - Integration buttons ("Connecter"/"Configurer") had NO onClick — were purely decorative. Made them functional: added integrations state, toggleConnection function, clicking "Connecter" toggles to "Déconnecter" (and vice versa), shows toast feedback.
+  - Added toast feedback to "Enregistrer les préférences" button in Notifications section.
+- Browser-verified all 5 fixes: logo image loaded ✅, 12 real QR canvas elements ✅, 1400px wide landing ✅, logo upload preview shows ✅, integration toggle works with toast ✅
+- Auto-fixed 2 unused eslint-disable warnings
+
+Stage Summary:
+- Logo: Official webp image replaces SVG placeholder
+- QR codes: Real scannable QRCodeCanvas (encodes https://verifscan.sn/scan/<code>) + working PNG download
+- Landing: Wide format (1400px max-width, up from 1280px)
+- Parametres upload: Functional UploadZone with drag/drop + preview + error handling
+- Toggles: All notification switches work + integration connect/disconnect buttons now functional with toast feedback
+- ESLint passes clean (0 errors, 0 warnings)

@@ -50,7 +50,7 @@ const FOOTER_STATS = [
 export function Testimonials() {
   return (
     <section id="temoignages" className="bg-white py-16 sm:py-20 lg:py-24">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <AnimatedSection className="mx-auto max-w-2xl text-center">
           <SectionBadge bg="bg-[#FEE2E2]" color="text-[#DC2626]">

@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef, useCallback } from "react";
+import { QRCodeCanvas } from "qrcode.react";
 import {
   Plus,
   Search,
@@ -25,104 +26,87 @@ import {
 import { QR_CODES, LOTS, KPIS, formatNombre } from "@/lib/fabricant-data";
 
 // ============================================================================
-// QRPattern — deterministic QR-code-like SVG visual.
-// 21x21 grid (QR version 1) with 3 finder squares in corners + seeded dots.
+// QRCodeDisplay — real scannable QR code using qrcode.react.
+// Encodes a URL like https://verifscan.sn/scan/<code> so the QR is functional.
 // ============================================================================
-const GRID = 21;
-const FINDER = 7;
+const SCAN_BASE_URL =
+  process.env.NEXT_PUBLIC_SCAN_URL || "https://verifscan.sn/scan";
 
-function hashString(s: string): number {
-  let h = 5381;
-  for (let i = 0; i < s.length; i++) {
-    h = ((h << 5) + h + s.charCodeAt(i)) >>> 0;
-  }
-  return h;
+function getScanUrl(code: string): string {
+  return `${SCAN_BASE_URL}/${code}`;
 }
 
-function mulberry32(seed: number) {
-  let a = seed >>> 0;
-  return () => {
-    a = (a + 0x6d2b79f5) >>> 0;
-    let t = a;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-// Returns the black/white value (true=black) for cells inside a finder square,
-// or null if (r, c) is outside all three finder squares.
-function finderDot(r: number, c: number): boolean | null {
-  const inFinder = (or: number, oc: number): boolean | null => {
-    const rr = r - or;
-    const cc = c - oc;
-    if (rr < 0 || rr >= FINDER || cc < 0 || cc >= FINDER) return null;
-    // Outer 7x7 ring (black)
-    if (rr === 0 || rr === 6 || cc === 0 || cc === 6) return true;
-    // White separator ring
-    if (rr === 1 || rr === 5 || cc === 1 || cc === 5) return false;
-    // Inner 3x3 (black)
-    return true;
-  };
-  const tl = inFinder(0, 0);
-  if (tl !== null) return tl;
-  const tr = inFinder(0, GRID - FINDER);
-  if (tr !== null) return tr;
-  const bl = inFinder(GRID - FINDER, 0);
-  if (bl !== null) return bl;
-  return null;
-}
-
-function QRPattern({ code, size = 150, color = "#000000" }: { code: string; size?: number; color?: string }) {
-  const cells = useMemo(() => {
-    const seed = hashString(code);
-    const rng = mulberry32(seed);
-    const out: boolean[] = [];
-    for (let r = 0; r < GRID; r++) {
-      for (let c = 0; c < GRID; c++) {
-        // White separator around finders (1px border) per QR spec
-        const nearFinder =
-          (r < FINDER + 1 && c < FINDER + 1) ||
-          (r < FINDER + 1 && c >= GRID - FINDER - 1) ||
-          (r >= GRID - FINDER - 1 && c < FINDER + 1);
-        const fd = finderDot(r, c);
-        if (fd !== null) out.push(fd);
-        else if (nearFinder) out.push(false); // separator
-        else out.push(rng() > 0.5);
-      }
-    }
-    return out;
-  }, [code]);
-
-  const cell = size / GRID;
+function QRCodeDisplay({
+  code,
+  size = 150,
+  color = "#000000",
+}: {
+  code: string;
+  size?: number;
+  color?: string;
+}) {
+  const url = getScanUrl(code);
   return (
-    <svg
-      width={size}
-      height={size}
-      viewBox={`0 0 ${size} ${size}`}
-      className="block bg-white"
-      role="img"
-      aria-label={`QR code ${code}`}
-      shapeRendering="crispEdges"
-    >
-      <rect x={0} y={0} width={size} height={size} fill="#FFFFFF" />
-      {cells.map((on, i) => {
-        if (!on) return null;
-        const r = Math.floor(i / GRID);
-        const c = i % GRID;
-        return (
-          <rect
-            key={i}
-            x={c * cell}
-            y={r * cell}
-            width={cell + 0.5}
-            height={cell + 0.5}
-            fill={color}
-          />
-        );
-      })}
-    </svg>
+    <QRCodeCanvas
+      value={url}
+      size={size}
+      fgColor={color}
+      bgColor="#FFFFFF"
+      level="M"
+      marginSize={1}
+      style={{ width: size, height: size }}
+    />
   );
+}
+
+/**
+ * Downloads a QR code as a high-res PNG (512x512) by rendering it
+ * off-screen, extracting the canvas data URL, and triggering a download.
+ */
+function downloadQRAsPNG(code: string, color = "#000000") {
+  const url = getScanUrl(code);
+  const size = 512;
+  const container = document.createElement("div");
+  container.style.position = "fixed";
+  container.style.left = "-9999px";
+  container.style.top = "0";
+  document.body.appendChild(container);
+
+  // Create a canvas and draw the QR code directly on it using the qrcode
+  // library's internal canvas rendering (via QRCodeCanvas's canvas output).
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+  container.appendChild(canvas);
+
+  // Render QRCodeCanvas into the container using React
+  import("react-dom/client").then(({ createRoot }) => {
+    const root = createRoot(container);
+    root.render(
+      <QRCodeCanvas
+        value={url}
+        size={size}
+        fgColor={color}
+        bgColor="#FFFFFF"
+        level="M"
+        marginSize={1}
+      />
+    );
+    setTimeout(() => {
+      const rendered = container.querySelector("canvas");
+      if (rendered) {
+        const dataUrl = rendered.toDataURL("image/png");
+        const link = document.createElement("a");
+        link.href = dataUrl;
+        link.download = `qr-${code}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+      root.unmount();
+      document.body.removeChild(container);
+    }, 300);
+  });
 }
 
 // ============================================================================
@@ -364,7 +348,7 @@ function GenerationModal({
             <div>
               <label className="mb-1.5 block text-[13px] font-semibold text-[#374151]">Aperçu</label>
               <div className="flex flex-col items-center rounded-lg border border-[#E5E7EB] bg-white p-3">
-                <QRPattern code="VERIFSCAN-PREVIEW-2026" size={120} color={couleur} />
+                <QRCodeDisplay code="VERIFSCAN-PREVIEW-2026" size={120} color={couleur} />
                 {options.lot && (
                   <p className="mt-2 font-mono text-[10px] text-[#6B7280]">{lot}</p>
                 )}
@@ -710,7 +694,7 @@ export function QRCodesPage() {
                 {/* QR image */}
                 <div className="flex justify-center pt-2">
                   <div className="rounded-md border border-[#F3F4F6] p-2">
-                    <QRPattern code={q.code} size={150} />
+                    <QRCodeDisplay code={q.code} size={150} />
                   </div>
                 </div>
 
@@ -739,7 +723,7 @@ export function QRCodesPage() {
                   <button
                     type="button"
                     title="Télécharger"
-                    onClick={() => setToast(`📥 ${q.code} téléchargé`)}
+                    onClick={() => downloadQRAsPNG(q.code)}
                     className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[#E5E7EB] bg-white text-[#374151] transition-colors hover:bg-[#F9FAFB]"
                   >
                     <Download className="h-4 w-4" />

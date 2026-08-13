@@ -41,7 +41,7 @@ export function Hero() {
         }}
       />
 
-      <div className="relative mx-auto grid max-w-7xl grid-cols-1 items-center gap-12 px-4 sm:px-6 lg:grid-cols-2 lg:gap-8 lg:px-8">
+      <div className="relative mx-auto grid max-w-[1400px] grid-cols-1 items-center gap-12 px-4 sm:px-6 lg:grid-cols-2 lg:gap-8 lg:px-8">
         {/* LEFT column */}
         <div className="text-center lg:text-left">
           <motion.span
@@ -163,7 +163,7 @@ export function Hero() {
       </div>
 
       {/* tiny trust ribbon */}
-      <div className="relative mx-auto mt-14 max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="relative mx-auto mt-14 max-w-[1400px] px-4 sm:px-6 lg:px-8">
         <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-sm text-[#6B7280]">
           <span className="flex items-center gap-2">
             <ShieldCheck className="h-4 w-4 text-[#10B981]" /> Anti-contrefaçon certifié
