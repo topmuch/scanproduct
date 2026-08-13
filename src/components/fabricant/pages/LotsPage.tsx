@@ -20,13 +20,15 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  LOTS,
   PRODUITS,
   PAYS_CEDEAO,
   formatNombre,
   type Lot,
 } from "@/lib/fabricant-data";
 import { useFabricantNav } from "@/lib/fabricant-store";
+import { useLots } from "@/lib/fabricant-data-store";
+import { downloadQRCode } from "@/lib/qr-utils";
+import { toast } from "sonner";
 import {
   PageHeader,
   SectionCard,
@@ -63,6 +65,73 @@ function isExpiringSoon(iso: string, days = 7): boolean {
 const PAGE_SIZE = 20;
 const QUOTA_RESTANT = 2660; // QR codes restants (mock)
 
+// ============================================================================
+// CSV export helper — builds a UTF-8 CSV (with BOM for Excel) from a list of
+// lots and triggers a browser download.
+// ============================================================================
+function exportLotsCSV(lotsToExport: Lot[]): void {
+  if (lotsToExport.length === 0) {
+    toast.info("Aucun lot à exporter");
+    return;
+  }
+  const headers = [
+    "Numero",
+    "Produit",
+    "Date Fabrication",
+    "Date Peremption",
+    "Statut",
+    "Scans",
+    "QR Codes",
+    "Ingredients",
+    "Lieu Fabrication",
+  ];
+  const escape = (value: string | number) =>
+    `"${String(value).replace(/"/g, '""')}"`;
+  const rows = lotsToExport.map((l) =>
+    [
+      l.numero,
+      l.produitNom,
+      l.dateFabrication,
+      l.datePeremption,
+      l.status,
+      l.scans,
+      l.qrCodes,
+      l.ingredients,
+      l.lieuFabrication,
+    ]
+      .map(escape)
+      .join(",")
+  );
+  const csv = [headers.map(escape).join(","), ...rows].join("\n");
+  // Prepend BOM so Excel detects UTF-8 correctly.
+  const blob = new Blob(["\uFEFF" + csv], {
+    type: "text/csv;charset=utf-8;",
+  });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "lots-export.csv";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+// ============================================================================
+// Copy-to-clipboard helper — builds a readable text summary of a lot.
+// ============================================================================
+function buildLotInfoText(lot: Lot): string {
+  return [
+    `Lot : ${lot.numero}`,
+    `Produit : ${lot.produitNom}`,
+    `Date de fabrication : ${formatDateFR(lot.dateFabrication)}`,
+    `Date de péremption : ${formatDateFR(lot.datePeremption)}`,
+    `Statut : ${lot.status}`,
+    `Ingrédients : ${lot.ingredients}`,
+    `Lieu de fabrication : ${lot.lieuFabrication}`,
+  ].join("\n");
+}
+
 type StatusFilter = "tous" | "actif" | "rappelle" | "expire";
 type DateFilter = "toutes" | "7j" | "30j" | "90j" | "perso";
 type SortFilter = "recent" | "ancien" | "scans" | "peremption";
@@ -94,6 +163,7 @@ const SORT_OPTIONS: { value: SortFilter; label: string }[] = [
 // ============================================================================
 export function LotsPage() {
   const { openDetail } = useFabricantNav();
+  const { lots, deleteLot, markLotRecalled } = useLots();
 
   // Filters state
   const [search, setSearch] = useState("");
@@ -127,7 +197,7 @@ export function LotsPage() {
 
   // Filtered + sorted lots
   const filteredLots = useMemo(() => {
-    let result = [...LOTS];
+    let result = [...lots];
 
     // Search
     if (search.trim()) {
@@ -181,7 +251,7 @@ export function LotsPage() {
     }
 
     return result;
-  }, [search, productFilter, statusFilter, dateFilter, dateFrom, dateTo, sortFilter]);
+  }, [lots, search, productFilter, statusFilter, dateFilter, dateFrom, dateTo, sortFilter]);
 
   // Reset to page 1 when filters change — adjust state during render
   // (recommended React pattern, see https://react.dev/learn/you-might-not-need-an-effect)
@@ -228,6 +298,89 @@ export function LotsPage() {
     setSelectedIds(new Set());
   }
 
+  // ---- Bulk action handlers ------------------------------------------------
+  async function handleBulkDownloadQR() {
+    const selectedLots = lots.filter((l) => selectedIds.has(l.id));
+    if (selectedLots.length === 0) return;
+    toast.info(
+      `Téléchargement de ${selectedLots.length} QR codes en cours…`
+    );
+    for (let i = 0; i < selectedLots.length; i++) {
+      const l = selectedLots[i];
+      await downloadQRCode(l.numero, `${l.numero}-qr.png`);
+      if (i < selectedLots.length - 1) {
+        await new Promise((r) => setTimeout(r, 200));
+      }
+    }
+    toast.success(`${selectedLots.length} QR codes téléchargés`);
+    clearSelection();
+  }
+
+  function handleBulkMarkRecalled() {
+    const count = selectedIds.size;
+    if (count === 0) return;
+    selectedIds.forEach((id) => markLotRecalled(id));
+    toast.warning(`${count} lot${count > 1 ? "s" : ""} marqué${count > 1 ? "s" : ""} comme rappelé${count > 1 ? "s" : ""}`);
+    clearSelection();
+  }
+
+  function handleBulkExportCSV() {
+    const selectedLots = lots.filter((l) => selectedIds.has(l.id));
+    const list = selectedLots.length > 0 ? selectedLots : filteredLots;
+    exportLotsCSV(list);
+    if (list.length > 0) {
+      toast.success(`${list.length} lots exportés en CSV`);
+    }
+  }
+
+  function handleBulkDelete() {
+    const count = selectedIds.size;
+    if (count === 0) return;
+    if (
+      !window.confirm(
+        `Supprimer ${count} lot${count > 1 ? "s" : ""} ? Cette action est irréversible.`
+      )
+    )
+      return;
+    selectedIds.forEach((id) => deleteLot(id));
+    toast.success(`${count} lot${count > 1 ? "s" : ""} supprimé${count > 1 ? "s" : ""}`);
+    clearSelection();
+  }
+
+  // ---- Single-row action handlers -----------------------------------------
+  function handleRowDownloadQR(lot: Lot) {
+    downloadQRCode(lot.numero, `${lot.numero}-qr.png`);
+    toast.success(`QR code de ${lot.numero} téléchargé`);
+  }
+
+  function handleRowCopyInfos(lot: Lot) {
+    const text = buildLotInfoText(lot);
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(
+        () => toast.success("Infos copiées dans le presse-papier"),
+        () => toast.error("Impossible de copier les infos")
+      );
+    } else {
+      toast.error("Presse-papier non disponible");
+    }
+  }
+
+  function handleRowMarkRecalled(lot: Lot) {
+    markLotRecalled(lot.id);
+    toast.warning(`Lot ${lot.numero} marqué comme rappelé`);
+  }
+
+  function handleRowDelete(lot: Lot) {
+    if (
+      !window.confirm(
+        `Supprimer le lot ${lot.numero} ? Cette action est irréversible.`
+      )
+    )
+      return;
+    deleteLot(lot.id);
+    toast.success(`Lot ${lot.numero} supprimé`);
+  }
+
   // Pagination buttons
   function getPageNumbers(): (number | "...")[] {
     if (totalPages <= 7) {
@@ -245,7 +398,7 @@ export function LotsPage() {
 
   return (
     <div className="relative">
-      <PageHeader title="Gestion des Lots" subtitle={`${LOTS.length} lots créés`}>
+      <PageHeader title="Gestion des Lots" subtitle={`${lots.length} lots créés`}>
         <GradientButton onClick={() => setModalOpen(true)}>
           <Plus className="h-4 w-4" />
           Nouveau lot
@@ -353,19 +506,31 @@ export function LotsPage() {
               </button>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <button className="inline-flex items-center gap-1.5 rounded-lg border border-[#E5E7EB] bg-white px-3 py-1.5 text-[13px] font-medium text-[#374151] hover:bg-[#F9FAFB]">
+              <button
+                onClick={handleBulkDownloadQR}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-[#E5E7EB] bg-white px-3 py-1.5 text-[13px] font-medium text-[#374151] hover:bg-[#F9FAFB]"
+              >
                 <Download className="h-4 w-4" />
                 Télécharger QR codes
               </button>
-              <button className="inline-flex items-center gap-1.5 rounded-lg border border-[#E5E7EB] bg-white px-3 py-1.5 text-[13px] font-medium text-[#374151] hover:bg-[#F9FAFB]">
+              <button
+                onClick={handleBulkMarkRecalled}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-[#E5E7EB] bg-white px-3 py-1.5 text-[13px] font-medium text-[#374151] hover:bg-[#F9FAFB]"
+              >
                 <AlertTriangle className="h-4 w-4" />
                 Marquer comme rappelés
               </button>
-              <button className="inline-flex items-center gap-1.5 rounded-lg border border-[#E5E7EB] bg-white px-3 py-1.5 text-[13px] font-medium text-[#374151] hover:bg-[#F9FAFB]">
+              <button
+                onClick={handleBulkExportCSV}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-[#E5E7EB] bg-white px-3 py-1.5 text-[13px] font-medium text-[#374151] hover:bg-[#F9FAFB]"
+              >
                 <Download className="h-4 w-4" />
                 Exporter CSV
               </button>
-              <button className="inline-flex items-center gap-1.5 rounded-lg border border-[#FEE2E2] bg-[#FEE2E2] px-3 py-1.5 text-[13px] font-medium text-[#991B1B] hover:bg-[#FECACA]">
+              <button
+                onClick={handleBulkDelete}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-[#FEE2E2] bg-[#FEE2E2] px-3 py-1.5 text-[13px] font-medium text-[#991B1B] hover:bg-[#FECACA]"
+              >
                 <Trash2 className="h-4 w-4" />
                 Supprimer
               </button>
@@ -420,6 +585,10 @@ export function LotsPage() {
                       setOpenMenuId(openMenuId === lot.id ? null : lot.id)
                     }
                     onVoirDetail={() => openDetail("lot-detail", lot.id)}
+                    onDownloadQR={() => handleRowDownloadQR(lot)}
+                    onCopyInfos={() => handleRowCopyInfos(lot)}
+                    onMarkRecalled={() => handleRowMarkRecalled(lot)}
+                    onDelete={() => handleRowDelete(lot)}
                   />
                 ))
               )}
@@ -525,6 +694,10 @@ function LotRow({
   menuOpen,
   onToggleMenu,
   onVoirDetail,
+  onDownloadQR,
+  onCopyInfos,
+  onMarkRecalled,
+  onDelete,
 }: {
   lot: Lot;
   selected: boolean;
@@ -532,6 +705,10 @@ function LotRow({
   menuOpen: boolean;
   onToggleMenu: () => void;
   onVoirDetail: () => void;
+  onDownloadQR: () => void;
+  onCopyInfos: () => void;
+  onMarkRecalled: () => void;
+  onDelete: () => void;
 }) {
   const expiringSoon = isExpiringSoon(lot.datePeremption);
   const borderLeftColor = lot.status === "rappelle"
@@ -616,11 +793,40 @@ function LotRow({
                   onVoirDetail();
                 }}
               />
-              <MenuItem icon={Download} label="Télécharger QR" onClick={onToggleMenu} />
-              <MenuItem icon={Copy} label="Copier infos" onClick={onToggleMenu} />
-              <MenuItem icon={AlertTriangle} label="Marquer comme rappelé" onClick={onToggleMenu} />
+              <MenuItem
+                icon={Download}
+                label="Télécharger QR"
+                onClick={() => {
+                  onToggleMenu();
+                  onDownloadQR();
+                }}
+              />
+              <MenuItem
+                icon={Copy}
+                label="Copier infos"
+                onClick={() => {
+                  onToggleMenu();
+                  onCopyInfos();
+                }}
+              />
+              <MenuItem
+                icon={AlertTriangle}
+                label="Marquer comme rappelé"
+                onClick={() => {
+                  onToggleMenu();
+                  onMarkRecalled();
+                }}
+              />
               <div className="my-1 border-t border-[#F3F4F6]" />
-              <MenuItem icon={Trash2} label="Supprimer" danger onClick={onToggleMenu} />
+              <MenuItem
+                icon={Trash2}
+                label="Supprimer"
+                danger
+                onClick={() => {
+                  onToggleMenu();
+                  onDelete();
+                }}
+              />
             </motion.div>
           )}
         </AnimatePresence>
@@ -691,8 +897,10 @@ function CreationModal({
   onClose: () => void;
   onVoirLot: (id: string) => void;
 }) {
+  const { addLot } = useLots();
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [done, setDone] = useState(false);
+  const [createdLotId, setCreatedLotId] = useState<string | null>(null);
 
   // Step 1 — product
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
@@ -919,7 +1127,27 @@ function CreationModal({
                   </GradientButton>
                 )}
                 {step === 3 && (
-                  <GradientButton disabled={!step3Valid} onClick={() => setDone(true)}>
+                  <GradientButton
+                    disabled={!step3Valid}
+                    onClick={() => {
+                      if (!selectedProductId || !selectedProduct) return;
+                      const newLot = addLot({
+                        numero,
+                        produitId: selectedProductId,
+                        produitNom: selectedProduct.nom,
+                        produitPhoto: selectedProduct.photo,
+                        dateFabrication: dateFab,
+                        datePeremption: datePerm,
+                        status: "actif",
+                        qrCodes: qrCount,
+                        ingredients,
+                        lieuFabrication: lieuFab,
+                      });
+                      setCreatedLotId(newLot.id);
+                      toast.success(`Lot ${newLot.numero} créé avec succès`);
+                      setDone(true);
+                    }}
+                  >
                     <Tag className="h-4 w-4" />
                     Créer le lot et générer QR codes
                   </GradientButton>
@@ -932,7 +1160,9 @@ function CreationModal({
             numero={numero}
             productName={selectedProduct?.nom || "Produit"}
             qrCount={qrCount}
-            onVoirLot={() => onVoirLot("l88")}
+            onVoirLot={() => {
+              if (createdLotId) onVoirLot(createdLotId);
+            }}
             onAutre={() => reset()}
             onClose={onClose}
           />

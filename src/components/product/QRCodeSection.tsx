@@ -64,7 +64,7 @@ export function QRCodeSection({ lot }: Props) {
               value={publicUrl}
               size={160}
               level="H"
-              includeMargin={false}
+              marginSize={0}
               fgColor="#0F172A"
               bgColor="#FFFFFF"
             />

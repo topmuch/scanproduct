@@ -1,6 +1,7 @@
 "use client";
 
 import { FileText, QrCode, TrendingUp, ArrowRight } from "lucide-react";
+import { QRCodeCanvas } from "qrcode.react";
 import { AnimatedSection } from "./AnimatedSection";
 import { SectionBadge } from "./SectionBadge";
 
@@ -16,7 +17,13 @@ type Step = {
 const STEPS: Step[] = [
   {
     number: 1,
-    icon: <FileText className="h-7 w-7" />,
+    icon: (
+      <img
+        src="/products/jus-bissap.png"
+        alt="Création d'un produit VerifScan"
+        className="h-full w-full object-cover rounded-xl"
+      />
+    ),
     title: "Créez votre produit",
     description:
       "Ajoutez les détails de vos produits : nom, ingrédients, dates de fabrication et péremption, logo, certifications. Tout est centralisé sur une fiche propre et professionnelle.",
@@ -25,7 +32,15 @@ const STEPS: Step[] = [
   },
   {
     number: 2,
-    icon: <QrCode className="h-7 w-7" />,
+    icon: (
+      <QRCodeCanvas
+        value="https://verifscan.sn/p/demo-step"
+        size={96}
+        fgColor="#10B981"
+        level="M"
+        marginSize={1}
+      />
+    ),
     title: "Générez le QR code",
     description:
       "Un QR code unique est créé pour chaque lot, prêt à imprimer sur vos étiquettes. Chaque code est sécurisé et infalsifiable, lié à votre compte fabricant.",
@@ -34,7 +49,13 @@ const STEPS: Step[] = [
   },
   {
     number: 3,
-    icon: <TrendingUp className="h-7 w-7" />,
+    icon: (
+      <img
+        src="/products/poudre-moringa.png"
+        alt="Produit scanné et partagé avec VerifScan"
+        className="h-full w-full object-cover rounded-xl"
+      />
+    ),
     title: "Partagez et suivez",
     description:
       "Vos clients scannent et accèdent à la fiche authentique. Vous suivez en temps réel les scans, retours clients et zones de consommation.",
@@ -86,7 +107,7 @@ export function HowItWorks() {
 
                 {/* icon bubble */}
                 <div className="mt-6 flex justify-center">
-                  <span className="flex h-12 w-12 items-center justify-center rounded-xl border border-[#E5E7EB] bg-white text-[#374151] shadow-sm">
+                  <span className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-xl border border-[#E5E7EB] bg-white text-[#374151] shadow-sm">
                     {step.icon}
                   </span>
                 </div>

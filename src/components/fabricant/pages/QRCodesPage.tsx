@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useRef, useCallback } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { QRCodeCanvas } from "qrcode.react";
 import {
   Plus,
@@ -23,19 +23,16 @@ import {
   ProgressBar,
   PillFilter,
 } from "@/components/fabricant/ui";
-import { QR_CODES, LOTS, KPIS, formatNombre } from "@/lib/fabricant-data";
+import { QR_CODES, KPIS, formatNombre } from "@/lib/fabricant-data";
+import { useQRCodes, useLots } from "@/lib/fabricant-data-store";
+import { downloadQRCode, getScanUrl } from "@/lib/qr-utils";
+import { toast } from "sonner";
 
 // ============================================================================
 // QRCodeDisplay — real scannable QR code using qrcode.react.
 // Encodes a URL like https://verifscan.sn/scan/<code> so the QR is functional.
+// (getScanUrl is imported from @/lib/qr-utils.)
 // ============================================================================
-const SCAN_BASE_URL =
-  process.env.NEXT_PUBLIC_SCAN_URL || "https://verifscan.sn/scan";
-
-function getScanUrl(code: string): string {
-  return `${SCAN_BASE_URL}/${code}`;
-}
-
 function QRCodeDisplay({
   code,
   size = 150,
@@ -57,56 +54,6 @@ function QRCodeDisplay({
       style={{ width: size, height: size }}
     />
   );
-}
-
-/**
- * Downloads a QR code as a high-res PNG (512x512) by rendering it
- * off-screen, extracting the canvas data URL, and triggering a download.
- */
-function downloadQRAsPNG(code: string, color = "#000000") {
-  const url = getScanUrl(code);
-  const size = 512;
-  const container = document.createElement("div");
-  container.style.position = "fixed";
-  container.style.left = "-9999px";
-  container.style.top = "0";
-  document.body.appendChild(container);
-
-  // Create a canvas and draw the QR code directly on it using the qrcode
-  // library's internal canvas rendering (via QRCodeCanvas's canvas output).
-  const canvas = document.createElement("canvas");
-  canvas.width = size;
-  canvas.height = size;
-  container.appendChild(canvas);
-
-  // Render QRCodeCanvas into the container using React
-  import("react-dom/client").then(({ createRoot }) => {
-    const root = createRoot(container);
-    root.render(
-      <QRCodeCanvas
-        value={url}
-        size={size}
-        fgColor={color}
-        bgColor="#FFFFFF"
-        level="M"
-        marginSize={1}
-      />
-    );
-    setTimeout(() => {
-      const rendered = container.querySelector("canvas");
-      if (rendered) {
-        const dataUrl = rendered.toDataURL("image/png");
-        const link = document.createElement("a");
-        link.href = dataUrl;
-        link.download = `qr-${code}.png`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      }
-      root.unmount();
-      document.body.removeChild(container);
-    }, 300);
-  });
 }
 
 // ============================================================================
@@ -152,7 +99,8 @@ function GenerationModal({
   onClose: () => void;
   onSuccess: (msg: string) => void;
 }) {
-  const [lot, setLot] = useState(LOTS[0]?.numero ?? "");
+  const { lots } = useLots();
+  const [lot, setLot] = useState(lots[0]?.numero ?? "");
   const [nombre, setNombre] = useState(100);
   const [taille, setTaille] = useState<"petit" | "moyen" | "grand">("moyen");
   const [formats, setFormats] = useState<Record<string, boolean>>({ png: true, pdf: true, svg: false });
@@ -224,7 +172,7 @@ function GenerationModal({
               onChange={(e) => setLot(e.target.value)}
               className="h-10 w-full rounded-lg border border-[#E5E7EB] bg-white px-3 text-[13px] font-medium text-[#374151] outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/15"
             >
-              {LOTS.slice(0, 12).map((l) => (
+              {lots.slice(0, 12).map((l) => (
                 <option key={l.id} value={l.numero}>
                   {l.numero} — {l.produitNom}
                 </option>
@@ -389,6 +337,7 @@ function formatDate(iso: string): string {
 }
 
 export function QRCodesPage() {
+  const { qrCodes, deleteQRCode } = useQRCodes();
   const [search, setSearch] = useState("");
   const [productFilter, setProductFilter] = useState<string>("Tous");
   const [lotFilter, setLotFilter] = useState<string>("Tous");
@@ -399,7 +348,7 @@ export function QRCodesPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
-  const [toast, setToast] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   // Reset to page 1 whenever filters change — using the "adjust during render"
   // pattern recommended by React instead of setState-in-effect.
@@ -410,24 +359,24 @@ export function QRCodesPage() {
     setPage(1);
   }
 
-  // Auto-dismiss toast
+  // Auto-dismiss notice
   useEffect(() => {
-    if (!toast) return;
-    const t = setTimeout(() => setToast(null), 3500);
+    if (!notice) return;
+    const t = setTimeout(() => setNotice(null), 3500);
     return () => clearTimeout(t);
-  }, [toast]);
+  }, [notice]);
 
   const uniqueProduits = useMemo(() => {
-    const set = new Set(QR_CODES.map((q) => q.produitNom));
+    const set = new Set(qrCodes.map((q) => q.produitNom));
     return Array.from(set);
-  }, []);
+  }, [qrCodes]);
   const uniqueLots = useMemo(() => {
-    const set = new Set(QR_CODES.map((q) => q.lotNumero));
+    const set = new Set(qrCodes.map((q) => q.lotNumero));
     return Array.from(set);
-  }, []);
+  }, [qrCodes]);
 
   const filtered = useMemo(() => {
-    let list = QR_CODES.filter((q) => {
+    let list = qrCodes.filter((q) => {
       if (search) {
         const s = search.toLowerCase();
         if (
@@ -451,7 +400,7 @@ export function QRCodesPage() {
       return 0;
     });
     return list;
-  }, [search, productFilter, lotFilter, statusFilter, sortFilter]);
+  }, [qrCodes, search, productFilter, lotFilter, statusFilter, sortFilter]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
   const currentPage = Math.min(page, totalPages);
@@ -478,26 +427,31 @@ export function QRCodesPage() {
   const clearSelection = () => setSelectedIds(new Set());
 
   const totalQuota = KPIS.qrCodes.quota;
-  const usedQuota = KPIS.qrCodes.total;
+  // Adjust the lifetime KPI baseline by the delta between the current store
+  // and the initial mock count, so deletions are reflected in the UI.
+  const usedQuota = Math.max(
+    0,
+    KPIS.qrCodes.total + qrCodes.length - QR_CODES.length
+  );
   const remaining = totalQuota - usedQuota;
 
   const allVisibleSelected = paged.length > 0 && paged.every((q) => selectedIds.has(q.id));
 
   return (
     <div className="relative mx-auto max-w-[1280px] px-4 py-6 sm:px-6 lg:px-8">
-      {/* Toast */}
-      {toast && (
+      {/* Notice */}
+      {notice && (
         <div className="fixed left-1/2 top-5 z-[60] -translate-x-1/2">
           <div className="flex items-center gap-2 rounded-xl border border-[#10B981]/30 bg-white px-4 py-2.5 text-[13px] font-semibold text-[#065F46] shadow-lg">
             <Check className="h-4 w-4 text-[#10B981]" />
-            {toast}
+            {notice}
           </div>
         </div>
       )}
 
       {/* Header */}
-      <PageHeader title="Mes QR Codes" subtitle="1 250 QR codes générés">
-        <OutlineButton onClick={() => setToast("📦 Export ZIP en cours de préparation…")}>
+      <PageHeader title="Mes QR Codes" subtitle={`${formatNombre(usedQuota)} QR codes générés`}>
+        <OutlineButton onClick={() => setNotice("📦 Export ZIP en cours de préparation…")}>
           <Download className="h-4 w-4" />
           Exporter tout
         </OutlineButton>
@@ -611,7 +565,23 @@ export function QRCodesPage() {
           <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
-              onClick={() => setToast(`📥 Téléchargement de ${selectedIds.size} QR codes…`)}
+              onClick={async () => {
+                const count = selectedIds.size;
+                if (count === 0) return;
+                toast.info(`Téléchargement de ${count} QR codes…`);
+                const selected = qrCodes.filter((q) => selectedIds.has(q.id));
+                for (let i = 0; i < selected.length; i++) {
+                  await downloadQRCode(
+                    getScanUrl(selected[i].code),
+                    `qr-${selected[i].code}.png`
+                  );
+                  if (i < selected.length - 1) {
+                    await new Promise((r) => setTimeout(r, 200));
+                  }
+                }
+                toast.success(`${count} QR codes téléchargés`);
+                clearSelection();
+              }}
               className="inline-flex items-center gap-1.5 rounded-lg border border-[#E5E7EB] bg-white px-3 py-1.5 text-[12px] font-semibold text-[#374151] transition-colors hover:bg-[#F9FAFB]"
             >
               <Download className="h-3.5 w-3.5" />
@@ -620,7 +590,7 @@ export function QRCodesPage() {
             <button
               type="button"
               onClick={() => {
-                setToast(`🔵 ${selectedIds.size} QR codes désactivés`);
+                setNotice(`🔵 ${selectedIds.size} QR codes désactivés`);
                 clearSelection();
               }}
               className="inline-flex items-center gap-1.5 rounded-lg border border-[#E5E7EB] bg-white px-3 py-1.5 text-[12px] font-semibold text-[#374151] transition-colors hover:bg-[#F9FAFB]"
@@ -629,7 +599,7 @@ export function QRCodesPage() {
             </button>
             <button
               type="button"
-              onClick={() => setToast(`📦 Export ZIP de ${selectedIds.size} QR codes…`)}
+              onClick={() => setNotice(`📦 Export ZIP de ${selectedIds.size} QR codes…`)}
               className="inline-flex items-center gap-1.5 rounded-lg border border-[#E5E7EB] bg-white px-3 py-1.5 text-[12px] font-semibold text-[#374151] transition-colors hover:bg-[#F9FAFB]"
             >
               Exporter ZIP
@@ -637,7 +607,18 @@ export function QRCodesPage() {
             <button
               type="button"
               onClick={() => {
-                setToast(`🗑️ ${selectedIds.size} QR codes supprimés`);
+                const count = selectedIds.size;
+                if (count === 0) return;
+                if (
+                  !window.confirm(
+                    `Supprimer ${count} QR code${count > 1 ? "s" : ""} ? Cette action est irréversible.`
+                  )
+                )
+                  return;
+                selectedIds.forEach((id) => deleteQRCode(id));
+                toast.success(
+                  `${count} QR code${count > 1 ? "s" : ""} supprimé${count > 1 ? "s" : ""}`
+                );
                 clearSelection();
               }}
               className="inline-flex items-center gap-1.5 rounded-lg border border-[#FEE2E2] bg-[#FEF2F2] px-3 py-1.5 text-[12px] font-semibold text-[#991B1B] transition-colors hover:bg-[#FEE2E2]"
@@ -723,7 +704,10 @@ export function QRCodesPage() {
                   <button
                     type="button"
                     title="Télécharger"
-                    onClick={() => downloadQRAsPNG(q.code)}
+                    onClick={() => {
+                      downloadQRCode(getScanUrl(q.code), `qr-${q.code}.png`);
+                      toast.success(`QR code ${q.code} téléchargé`);
+                    }}
                     className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[#E5E7EB] bg-white text-[#374151] transition-colors hover:bg-[#F9FAFB]"
                   >
                     <Download className="h-4 w-4" />
@@ -731,7 +715,7 @@ export function QRCodesPage() {
                   <button
                     type="button"
                     title="Voir"
-                    onClick={() => setToast(`👁️ Aperçu de ${q.code}`)}
+                    onClick={() => setNotice(`👁️ Aperçu de ${q.code}`)}
                     className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[#E5E7EB] bg-white text-[#374151] transition-colors hover:bg-[#F9FAFB]"
                   >
                     <Eye className="h-4 w-4" />
@@ -755,18 +739,25 @@ export function QRCodesPage() {
                           <button
                             type="button"
                             onClick={() => {
-                              setToast(`🔗 Lien copié : ${q.code}`);
+                              if (navigator.clipboard) {
+                                navigator.clipboard.writeText(q.code).then(
+                                  () => toast.success("Code copié dans le presse-papier"),
+                                  () => toast.error("Impossible de copier le code")
+                                );
+                              } else {
+                                toast.error("Presse-papier non disponible");
+                              }
                               setOpenMenuId(null);
                             }}
                             className="flex w-full items-center gap-2 px-3 py-2 text-left text-[13px] text-[#374151] hover:bg-[#F9FAFB]"
                           >
                             <Copy className="h-3.5 w-3.5" />
-                            Copier le lien
+                            Copier le code
                           </button>
                           <button
                             type="button"
                             onClick={() => {
-                              setToast(`🔵 ${q.code} désactivé`);
+                              setNotice(`🔵 ${q.code} désactivé`);
                               setOpenMenuId(null);
                             }}
                             className="flex w-full items-center gap-2 px-3 py-2 text-left text-[13px] text-[#374151] hover:bg-[#F9FAFB]"
@@ -776,8 +767,15 @@ export function QRCodesPage() {
                           <button
                             type="button"
                             onClick={() => {
-                              setToast(`🗑️ ${q.code} supprimé`);
                               setOpenMenuId(null);
+                              if (
+                                !window.confirm(
+                                  `Supprimer le QR code ${q.code} ? Cette action est irréversible.`
+                                )
+                              )
+                                return;
+                              deleteQRCode(q.id);
+                              toast.success(`QR code ${q.code} supprimé`);
                             }}
                             className="flex w-full items-center gap-2 px-3 py-2 text-left text-[13px] font-semibold text-[#991B1B] hover:bg-[#FEF2F2]"
                           >
@@ -846,7 +844,7 @@ export function QRCodesPage() {
       <GenerationModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
-        onSuccess={(msg) => setToast(msg)}
+        onSuccess={(msg) => setNotice(msg)}
       />
     </div>
   );

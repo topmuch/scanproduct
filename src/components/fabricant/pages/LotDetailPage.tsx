@@ -13,9 +13,12 @@ import {
   BarChart3,
   Clock,
 } from "lucide-react";
-import { useState } from "react";
-import { LOTS, PRODUITS, formatNombre } from "@/lib/fabricant-data";
+import { useEffect, useState } from "react";
+import { formatNombre } from "@/lib/fabricant-data";
 import { useFabricantNav } from "@/lib/fabricant-store";
+import { useLots, useProduits } from "@/lib/fabricant-data-store";
+import { downloadQRCode } from "@/lib/qr-utils";
+import { toast } from "sonner";
 import {
   PageHeader,
   SectionCard,
@@ -40,11 +43,26 @@ const PAYS_VENTE = ["Sénégal", "Mali", "Côte d'Ivoire"];
 // ============================================================================
 export function LotDetailPage() {
   const { selectedId, setPage, openDetail } = useFabricantNav();
+  const { lots, deleteLot, markLotRecalled } = useLots();
+  const { produits } = useProduits();
   const [copied, setCopied] = useState(false);
 
-  const lot = LOTS.find((l) => l.id === selectedId) || null;
+  const lot = lots.find((l) => l.id === selectedId) || null;
+
+  // If a lot id was selected but it no longer exists in the store (e.g. it
+  // was deleted), redirect back to the lots list. We render nothing while
+  // the navigation is pending to avoid flashing the "introuvable" state.
+  useEffect(() => {
+    if (selectedId && !lot) {
+      setPage("lots");
+    }
+  }, [selectedId, lot, setPage]);
 
   if (!lot) {
+    if (selectedId) {
+      // Redirect in progress — render nothing.
+      return null;
+    }
     return (
       <div>
         <PageHeader title="Lot introuvable" subtitle="Le lot demandé n'existe pas." />
@@ -77,6 +95,28 @@ export function LotDetailPage() {
     }
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  }
+
+  function handleDownloadQR() {
+    downloadQRCode(lot!.numero, `${lot!.numero}-qr.png`);
+    toast.success(`QR code de ${lot!.numero} téléchargé`);
+  }
+
+  function handleMarkRecalled() {
+    markLotRecalled(lot!.id);
+    toast.warning(`Lot ${lot!.numero} marqué comme rappelé`);
+  }
+
+  function handleDelete() {
+    if (
+      !window.confirm(
+        `Supprimer le lot ${lot!.numero} ? Cette action est irréversible.`
+      )
+    )
+      return;
+    deleteLot(lot!.id);
+    toast.success(`Lot ${lot!.numero} supprimé`);
+    setPage("lots");
   }
 
   return (
@@ -253,7 +293,11 @@ export function LotDetailPage() {
           {/* Actions */}
           <SectionCard title="Actions" subtitle="Gérer ce lot">
             <div className="space-y-2">
-              <ActionButton icon={Download} label="Télécharger QR" />
+              <ActionButton
+                icon={Download}
+                label="Télécharger QR"
+                onClick={handleDownloadQR}
+              />
               <ActionButton
                 icon={Copy}
                 label={copied ? "Lien copié ✓" : "Copier le lien"}
@@ -264,8 +308,14 @@ export function LotDetailPage() {
                 icon={AlertTriangle}
                 label="Marquer comme rappelé"
                 variant="orange"
+                onClick={handleMarkRecalled}
               />
-              <ActionButton icon={Trash2} label="Supprimer" variant="red" />
+              <ActionButton
+                icon={Trash2}
+                label="Supprimer"
+                variant="red"
+                onClick={handleDelete}
+              />
             </div>
           </SectionCard>
 
@@ -285,8 +335,8 @@ export function LotDetailPage() {
                   {lot.produitNom}
                 </p>
                 <p className="truncate text-[12px] text-[#6B7280]">
-                  {PRODUITS.find((p) => p.id === lot.produitId)?.marque || "Sarine Bio"} ·{" "}
-                  {PRODUITS.find((p) => p.id === lot.produitId)?.categorie}
+                  {produits.find((p) => p.id === lot.produitId)?.marque || "Sarine Bio"} ·{" "}
+                  {produits.find((p) => p.id === lot.produitId)?.categorie}
                 </p>
               </div>
               <ArrowLeft className="h-4 w-4 rotate-180 text-[#9CA3AF]" />

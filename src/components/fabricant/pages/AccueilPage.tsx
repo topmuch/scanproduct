@@ -151,6 +151,7 @@ export function AccueilPage() {
           tendance="↑ +3 ce mois"
           subText={`${KPIS.produits.actifs} actifs · ${KPIS.produits.brouillons} brouillons`}
           onClick={() => setPage("produits")}
+          gradient="from-[#2563EB] to-[#3B82F6]"
         />
         <KpiCard
           icon="🏷️"
@@ -160,6 +161,7 @@ export function AccueilPage() {
           tendance="↑ +15 ce mois"
           subText={`${KPIS.lots.actifs} actifs · ${KPIS.lots.rappelles} rappelés`}
           onClick={() => setPage("lots")}
+          gradient="from-[#10B981] to-[#34D399]"
         />
         <KpiCard
           icon="📱"
@@ -169,6 +171,7 @@ export function AccueilPage() {
           tendance="↑ +180 ce mois"
           subText="Quota : 2 340 / 5 000"
           onClick={() => setPage("qr-codes")}
+          gradient="from-[#F59E0B] to-[#FBBF24]"
         />
         <KpiCard
           icon="📈"
@@ -178,6 +181,7 @@ export function AccueilPage() {
           tendance="↑ +12% cette semaine"
           subText={`Moyenne : ${KPIS.scans.moyenneJour} scans/jour`}
           onClick={() => setPage("statistiques")}
+          gradient="from-[#8B5CF6] to-[#A78BFA]"
         />
       </div>
 

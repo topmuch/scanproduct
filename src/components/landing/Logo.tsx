@@ -16,9 +16,9 @@ export function Logo({ className, variant = "default" }: LogoProps) {
       <img
         src="/verifscan-logo.webp"
         alt="VerifScan"
-        className={cn("h-9 w-auto", variant === "light" && "brightness-0 invert")}
-        width={36}
-        height={9}
+        className={cn("h-12 w-auto", variant === "light" && "brightness-0 invert")}
+        width={48}
+        height={12}
       />
     </span>
   );

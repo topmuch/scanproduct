@@ -83,11 +83,11 @@ export function AdminSidebar() {
   const activeKey = PAGE_TO_KEY[page];
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-40 hidden w-[260px] flex-col border-r border-[#E5E7EB] bg-white lg:flex">
+    <aside className="fixed inset-y-0 left-0 z-40 hidden w-[260px] flex-col border-r border-white/10 bg-gradient-to-b from-[#1E3A8A] to-[#1E40AF] lg:flex">
       {/* Logo */}
-      <div className="flex h-[70px] items-center gap-2 border-b border-[#F3F4F6] px-6">
+      <div className="flex h-[80px] items-center gap-2 border-b border-white/10 px-6">
         <Logo />
-        <span className="ml-1 rounded-md bg-[#EFF6FF] px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-[#2563EB]">
+        <span className="ml-1 rounded-md bg-white/15 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-white">
           Admin
         </span>
       </div>
@@ -96,7 +96,7 @@ export function AdminSidebar() {
       <nav className="flex-1 overflow-y-auto py-4 scrollbar-thin">
         {NAV_SECTIONS.map((section) => (
           <div key={section.title} className="mb-4">
-            <p className="px-6 pb-1.5 text-[11px] font-semibold uppercase tracking-[1px] text-[#9CA3AF]">
+            <p className="px-6 pb-1.5 text-[11px] font-semibold uppercase tracking-[1px] text-white/60">
               {section.title}
             </p>
             <ul className="space-y-0.5 px-3">
@@ -110,12 +110,12 @@ export function AdminSidebar() {
                       className={cn(
                         "group relative flex h-11 w-full items-center gap-3 rounded-lg px-4 text-[14px] font-medium transition-colors",
                         isActive
-                          ? "bg-[#DBEAFE] text-[#2563EB]"
-                          : "text-[#6B7280] hover:bg-[#EFF6FF] hover:text-[#2563EB]"
+                          ? "bg-white/15 font-semibold text-white"
+                          : "text-white/70 hover:bg-white/10 hover:text-white"
                       )}
                     >
                       {isActive && (
-                        <span className="absolute left-0 top-1/2 h-6 w-[3px] -translate-y-1/2 rounded-r bg-[#2563EB]" />
+                        <span className="absolute left-0 top-1/2 h-6 w-[3px] -translate-y-1/2 rounded-r bg-white" />
                       )}
                       <item.icon className="h-5 w-5 flex-shrink-0" />
                       <span className="flex-1 text-left">{item.label}</span>
@@ -137,26 +137,26 @@ export function AdminSidebar() {
       </nav>
 
       {/* Admin profile */}
-      <div className="border-t border-[#F3F4F6] p-4">
-        <div className="flex items-center gap-3 rounded-lg p-2 hover:bg-[#F9FAFB]">
+      <div className="border-t border-white/10 p-4">
+        <div className="flex items-center gap-3 rounded-lg p-2 hover:bg-white/10">
           <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-[#2563EB] to-[#10B981] font-display text-sm font-bold text-white">
             AV
           </span>
           <div className="min-w-0 flex-1 leading-tight">
-            <p className="truncate text-[14px] font-semibold text-[#111827]">Admin VerifScan</p>
-            <p className="truncate text-[12px] text-[#6B7280]">admin@verifscan.sn</p>
+            <p className="truncate text-[14px] font-semibold text-white">Admin VerifScan</p>
+            <p className="truncate text-[12px] text-white/60">admin@verifscan.sn</p>
           </div>
           <button
             type="button"
             onClick={() => signOut({ callbackUrl: "/login" })}
-            className="flex h-8 w-8 items-center justify-center rounded-md text-[#6B7280] transition-colors hover:bg-[#FEE2E2] hover:text-[#EF4444]"
+            className="flex h-8 w-8 items-center justify-center rounded-md text-white/70 transition-colors hover:bg-white/10 hover:text-white"
             aria-label="Déconnexion"
             title="Déconnexion"
           >
             <LogOut className="h-4 w-4" />
           </button>
         </div>
-        <div className="mt-2 flex items-center gap-1.5 px-2 text-[11px] text-[#9CA3AF]">
+        <div className="mt-2 flex items-center gap-1.5 px-2 text-[11px] text-white/60">
           <ShieldCheck className="h-3.5 w-3.5 text-[#10B981]" />
           SuperAdmin · 2FA actif
         </div>

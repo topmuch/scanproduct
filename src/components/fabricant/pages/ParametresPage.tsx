@@ -31,6 +31,7 @@ import {
   OutlineButton,
   PillFilter,
 } from "@/components/fabricant/ui";
+import { QRCodeCanvas } from "qrcode.react";
 import { MARQUE, SESSIONS, JOURNAL_CONNEXION } from "@/lib/fabricant-data";
 import { useFabricantNav, type SettingsSection } from "@/lib/fabricant-store";
 import { cn } from "@/lib/utils";
@@ -232,7 +233,6 @@ function UploadZone({
       />
       {imageUrl ? (
         <div className="relative overflow-hidden rounded-xl border border-[#E5E7EB] bg-white">
-          { }
           <img
             src={imageUrl}
             alt="Logo"
@@ -249,7 +249,11 @@ function UploadZone({
             </button>
             <button
               type="button"
-              onClick={() => { setImageUrl(""); setError(null); }}
+              onClick={() => {
+                setImageUrl("");
+                setError(null);
+                onUploaded?.("");
+              }}
               className="inline-flex items-center gap-1 rounded-md bg-white/95 px-2.5 py-1.5 text-[12px] font-medium text-[#EF4444] shadow-sm hover:bg-white"
             >
               <X className="h-3.5 w-3.5" /> Retirer
@@ -511,6 +515,11 @@ function EntrepriseSection() {
 function LogoSection() {
   const [primary, setPrimary] = useState(MARQUE.couleurPrimaire);
   const [secondary, setSecondary] = useState(MARQUE.couleurSecondaire);
+  // Lifted state so the preview alongside the upload zone stays in sync with
+  // what the user just uploaded (the /api/upload endpoint returns
+  // { url: "/uploads/<uuid>.<ext>" }).
+  const [logoUrl, setLogoUrl] = useState("");
+  const [qrLogoUrl, setQrLogoUrl] = useState("");
 
   return (
     <div className="space-y-6">
@@ -518,8 +527,23 @@ function LogoSection() {
 
       <SectionCard title="Logo entreprise">
         <div className="grid items-center gap-6 sm:grid-cols-[1fr_auto]">
-          <UploadZone label="votre logo entreprise" />
-          <LogoPreview initials={MARQUE.logo} />
+          <UploadZone
+            label="votre logo entreprise"
+            currentUrl={logoUrl}
+            onUploaded={setLogoUrl}
+          />
+          {logoUrl ? (
+            <div className="flex flex-col items-center gap-2">
+              <img
+                src={logoUrl}
+                alt="Logo entreprise"
+                className="h-[120px] w-[120px] rounded-full border-2 border-[#E5E7EB] bg-[#F9FAFB] object-contain"
+              />
+              <p className="text-[12px] text-[#6B7280]">Logo actuel</p>
+            </div>
+          ) : (
+            <LogoPreview initials={MARQUE.logo} />
+          )}
         </div>
         <ul className="mt-5 space-y-1.5 border-t border-[#F3F4F6] pt-4 text-[12px] text-[#6B7280]">
           <li className="flex items-center gap-2"><span className="text-[#9CA3AF]">•</span> Dimensions recommandées : 400×400px</li>
@@ -529,10 +553,47 @@ function LogoSection() {
       </SectionCard>
 
       <SectionCard title="Logo pour QR codes">
-        <UploadZone label="votre logo QR codes" />
-        <p className="mt-3 text-[13px] text-[#6B7280]">
-          Ce logo apparaîtra au centre de vos QR codes.
-        </p>
+        <div className="grid items-start gap-6 sm:grid-cols-2">
+          <div>
+            <UploadZone
+              label="votre logo QR codes"
+              currentUrl={qrLogoUrl}
+              onUploaded={setQrLogoUrl}
+            />
+            <p className="mt-3 text-[13px] text-[#6B7280]">
+              Ce logo apparaîtra au centre de vos QR codes.
+            </p>
+          </div>
+
+          {/* Live QR code preview — shows the uploaded logo embedded in the
+              center via qrcode.react's imageSettings. When no logo is set,
+              the QR code is shown plain so the user can still preview it. */}
+          <div className="flex flex-col items-center gap-2">
+            <div className="rounded-xl border border-[#E5E7EB] bg-white p-3 shadow-sm">
+              <QRCodeCanvas
+                value="https://verifscan.sn/p/preview"
+                size={160}
+                level="H"
+                marginSize={1}
+                fgColor="#0F172A"
+                bgColor="#FFFFFF"
+                imageSettings={
+                  qrLogoUrl
+                    ? {
+                        src: qrLogoUrl,
+                        height: 24,
+                        width: 24,
+                        excavate: true,
+                      }
+                    : undefined
+                }
+              />
+            </div>
+            <p className="text-[12px] text-[#6B7280]">
+              {qrLogoUrl ? "Aperçu QR avec logo" : "Aperçu QR (sans logo)"}
+            </p>
+          </div>
+        </div>
       </SectionCard>
 
       <SectionCard title="Couleurs de marque">

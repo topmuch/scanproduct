@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Search, Bell, ChevronRight, Menu, X, User, Settings as SettingsIcon, LogOut } from "lucide-react";
+import { Search, Bell, ChevronRight, Menu, X, User, Settings as SettingsIcon, LogOut, Moon, Sun } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { useAdminNav, type AdminPage } from "@/lib/admin-store";
 import { ACTIVITY_LOGS } from "@/lib/admin-data";
+import { useTheme } from "@/hooks/use-theme";
 import { cn } from "@/lib/utils";
 
 const PAGE_TITLES: Record<AdminPage, { breadcrumb: string; title: string }> = {
@@ -36,6 +37,7 @@ export function AdminHeader() {
   const notifRef = useRef<HTMLDivElement>(null);
   const avatarRef = useRef<HTMLDivElement>(null);
   const meta = PAGE_TITLES[page];
+  const { theme, toggle, mounted } = useTheme();
 
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
@@ -47,24 +49,24 @@ export function AdminHeader() {
   }, []);
 
   return (
-    <header className="sticky top-0 z-30 flex h-[70px] items-center justify-between border-b border-[#E5E7EB] bg-white px-4 lg:px-8">
+    <header className="sticky top-0 z-30 flex h-[70px] items-center justify-between border-b border-[#E5E7EB] bg-white px-4 lg:px-8 dark:border-white/10 dark:bg-[#0F172A]">
       {/* Left: breadcrumb + title */}
       <div className="flex items-center gap-3">
         <button
           type="button"
           onClick={() => setMobileNavOpen(true)}
-          className="flex h-9 w-9 items-center justify-center rounded-md text-[#374151] hover:bg-[#F3F4F6] lg:hidden"
+          className="flex h-9 w-9 items-center justify-center rounded-md text-[#374151] hover:bg-[#F3F4F6] lg:hidden dark:text-white/70 dark:hover:bg-white/10"
           aria-label="Menu"
         >
           <Menu className="h-5 w-5" />
         </button>
         <div>
-          <div className="flex items-center gap-1.5 text-[13px] text-[#6B7280]">
+          <div className="flex items-center gap-1.5 text-[13px] text-[#6B7280] dark:text-white/60">
             <span>Admin</span>
             <ChevronRight className="h-3.5 w-3.5" />
-            <span className="text-[#111827]">{meta.breadcrumb}</span>
+            <span className="text-[#111827] dark:text-white">{meta.breadcrumb}</span>
           </div>
-          <h1 className="font-display text-[20px] font-semibold leading-tight text-[#111827]">
+          <h1 className="font-display text-[20px] font-semibold leading-tight text-[#111827] dark:text-white">
             {meta.title}
           </h1>
         </div>
@@ -74,27 +76,38 @@ export function AdminHeader() {
       <div className="flex items-center gap-2 sm:gap-3">
         {/* Global search */}
         <div className="relative hidden md:block">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9CA3AF]" />
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9CA3AF] dark:text-white/40" />
           <input
             type="text"
             placeholder="Rechercher utilisateur, produit, lot..."
-            className="h-10 w-[280px] rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] pl-9 pr-14 text-sm text-[#111827] placeholder:text-[#9CA3AF] focus:border-[#2563EB] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 lg:w-[320px]"
+            className="h-10 w-[280px] rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] pl-9 pr-14 text-sm text-[#111827] placeholder:text-[#9CA3AF] focus:border-[#2563EB] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 lg:w-[320px] dark:border-white/10 dark:bg-white/10 dark:text-white dark:placeholder:text-white/40 dark:focus:bg-white/15"
           />
-          <kbd className="absolute right-3 top-1/2 -translate-y-1/2 rounded border border-[#E5E7EB] bg-white px-1.5 py-0.5 text-[10px] font-semibold text-[#9CA3AF]">
+          <kbd className="absolute right-3 top-1/2 -translate-y-1/2 rounded border border-[#E5E7EB] bg-white px-1.5 py-0.5 text-[10px] font-semibold text-[#9CA3AF] dark:border-white/10 dark:bg-white/10 dark:text-white/50">
             ⌘K
           </kbd>
         </div>
+
+        {/* Theme toggle */}
+        <button
+          type="button"
+          onClick={toggle}
+          className="flex h-10 w-10 items-center justify-center rounded-lg text-[#374151] transition-colors hover:bg-[#F3F4F6] dark:text-white/70 dark:hover:bg-white/10"
+          aria-label={theme === "light" ? "Activer le mode sombre" : "Activer le mode clair"}
+          title={theme === "light" ? "Mode sombre" : "Mode clair"}
+        >
+          {mounted && theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+        </button>
 
         {/* Notifications */}
         <div className="relative" ref={notifRef}>
           <button
             type="button"
             onClick={() => setNotifOpen((v) => !v)}
-            className="relative flex h-10 w-10 items-center justify-center rounded-lg text-[#374151] transition-colors hover:bg-[#F3F4F6]"
+            className="relative flex h-10 w-10 items-center justify-center rounded-lg text-[#374151] transition-colors hover:bg-[#F3F4F6] dark:text-white/70 dark:hover:bg-white/10"
             aria-label="Notifications"
           >
             <Bell className="h-5 w-5" />
-            <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-[#EF4444] ring-2 ring-white" />
+            <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-[#EF4444] ring-2 ring-white dark:ring-[#0F172A]" />
           </button>
           {notifOpen && (
             <div className="absolute right-0 top-12 w-80 overflow-hidden rounded-xl border border-[#E5E7EB] bg-white shadow-xl">
@@ -129,7 +142,7 @@ export function AdminHeader() {
           <button
             type="button"
             onClick={() => setAvatarOpen((v) => !v)}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[#2563EB] to-[#10B981] font-display text-sm font-bold text-white ring-2 ring-white transition hover:ring-[#DBEAFE]"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[#2563EB] to-[#10B981] font-display text-sm font-bold text-white ring-2 ring-white transition hover:ring-[#DBEAFE] dark:ring-[#0F172A] dark:hover:ring-white/30"
             aria-label="Menu profil"
           >
             AV

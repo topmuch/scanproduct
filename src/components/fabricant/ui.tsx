@@ -152,6 +152,7 @@ export function KpiCard({
   subText,
   onClick,
   decimals = 0,
+  gradient,
 }: {
   icon: string;
   iconBg: string;
@@ -163,20 +164,30 @@ export function KpiCard({
   subText?: string;
   onClick?: () => void;
   decimals?: number;
+  /** Optional Tailwind gradient classes (e.g. "from-[#2563EB] to-[#3B82F6]"). When set, the card uses a colored gradient background with white text. */
+  gradient?: string;
 }) {
+  const hasGradient = Boolean(gradient);
   return (
     <motion.div
-      whileHover={onClick ? { y: -2 } : undefined}
+      whileHover={onClick ? { y: -4 } : undefined}
       onClick={onClick}
       className={cn(
-        "rounded-xl border border-[#E5E7EB] bg-white p-5 transition-shadow",
-        onClick && "cursor-pointer hover:shadow-md"
+        "rounded-xl border p-5 transition-all",
+        hasGradient
+          ? cn("border-white/20 bg-gradient-to-br text-white shadow-md hover:shadow-xl", gradient)
+          : "border-[#E5E7EB] bg-white transition-shadow",
+        onClick && "cursor-pointer",
+        !hasGradient && onClick && "hover:shadow-md"
       )}
     >
       <div className="flex items-start justify-between">
         <div
-          className="flex h-12 w-12 items-center justify-center rounded-full text-[22px]"
-          style={{ backgroundColor: iconBg }}
+          className={cn(
+            "flex h-12 w-12 items-center justify-center rounded-full text-[22px]",
+            hasGradient ? "bg-white/20 text-white" : "text-[#111827]"
+          )}
+          style={hasGradient ? undefined : { backgroundColor: iconBg }}
         >
           {icon}
         </div>
@@ -184,18 +195,33 @@ export function KpiCard({
           <span
             className={cn(
               "rounded-full px-2 py-0.5 text-[12px] font-semibold",
-              tendancePositif ? "bg-[#D1FAE5] text-[#065F46]" : "bg-[#FEE2E2] text-[#991B1B]"
+              hasGradient
+                ? "bg-white/20 text-white"
+                : tendancePositif
+                  ? "bg-[#D1FAE5] text-[#065F46]"
+                  : "bg-[#FEE2E2] text-[#991B1B]"
             )}
           >
             {tendance}
           </span>
         )}
       </div>
-      <p className="mt-3 text-[14px] font-medium text-[#6B7280]">{label}</p>
-      <p className="mt-1 font-display text-[32px] font-bold leading-none text-[#111827]">
+      <p className={cn("mt-3 text-[14px] font-medium", hasGradient ? "text-white/90" : "text-[#6B7280]")}>
+        {label}
+      </p>
+      <p
+        className={cn(
+          "mt-1 font-display text-[32px] font-bold leading-none",
+          hasGradient ? "text-white" : "text-[#111827]"
+        )}
+      >
         <CountUpNumber end={value} suffix={valueSuffix} decimals={decimals} />
       </p>
-      {subText && <p className="mt-1.5 text-[12px] text-[#9CA3AF]">{subText}</p>}
+      {subText && (
+        <p className={cn("mt-1.5 text-[12px]", hasGradient ? "text-white/80" : "text-[#9CA3AF]")}>
+          {subText}
+        </p>
+      )}
     </motion.div>
   );
 }

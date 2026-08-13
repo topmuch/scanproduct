@@ -31,12 +31,13 @@ import {
 import {
   CATEGORIES,
   MARQUE,
-  PRODUITS,
   formatNombre,
   type Product,
   type ProductStatus,
 } from "@/lib/fabricant-data";
 import { useFabricantNav } from "@/lib/fabricant-store";
+import { useProduits } from "@/lib/fabricant-data-store";
+import { toast } from "sonner";
 
 // ============================================================================
 // Types
@@ -52,11 +53,17 @@ function ProductCard({
   onVoir,
   onModifier,
   onLots,
+  onDuplicate,
+  onToggleStatus,
+  onDelete,
 }: {
   product: Product;
   onVoir: () => void;
   onModifier: () => void;
   onLots: () => void;
+  onDuplicate: () => void;
+  onToggleStatus: () => void;
+  onDelete: () => void;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -158,7 +165,10 @@ function ProductCard({
                 >
                   <button
                     type="button"
-                    onClick={() => setMenuOpen(false)}
+                    onClick={() => {
+                      setMenuOpen(false);
+                      onDuplicate();
+                    }}
                     className="flex w-full items-center gap-2 px-3 py-2 text-left text-[13px] text-[#374151] hover:bg-[#F9FAFB]"
                   >
                     <Copy size={14} className="text-[#6B7280]" />
@@ -166,14 +176,20 @@ function ProductCard({
                   </button>
                   <button
                     type="button"
-                    onClick={() => setMenuOpen(false)}
+                    onClick={() => {
+                      setMenuOpen(false);
+                      onToggleStatus();
+                    }}
                     className="flex w-full items-center gap-2 px-3 py-2 text-left text-[13px] text-[#374151] hover:bg-[#F9FAFB]"
                   >
                     {product.status === "masque" ? "Afficher" : "Masquer"}
                   </button>
                   <button
                     type="button"
-                    onClick={() => setMenuOpen(false)}
+                    onClick={() => {
+                      setMenuOpen(false);
+                      onDelete();
+                    }}
                     className="flex w-full items-center gap-2 px-3 py-2 text-left text-[13px] text-[#EF4444] hover:bg-[#FEE2E2]"
                   >
                     <Trash2 size={14} />
@@ -277,6 +293,7 @@ function ProductModal({
   product?: Product;
   onClose: () => void;
 }) {
+  const { addProduct, updateProduct } = useProduits();
   const isEdit = !!product;
   const [nom, setNom] = useState(product?.nom ?? "");
   const [marque, setMarque] = useState(product?.marque ?? MARQUE.nom);
@@ -348,6 +365,32 @@ function ProductModal({
 
   const cat = CATEGORIES.find((c) => c.nom === categorie);
   const catIcon = cat?.icon ?? "📦";
+
+  const canSubmit = nom.trim().length > 0;
+
+  function handleSubmit() {
+    if (!canSubmit) return;
+    const payload = {
+      nom: nom.trim(),
+      marque: marque.trim() || MARQUE.nom,
+      categorie,
+      categorieIcon: catIcon,
+      poids: poids.trim(),
+      description: description.trim(),
+      status,
+      photo: imageUrl,
+    };
+    // `visible` is intentionally omitted: the Product type doesn't expose a
+    // visibility flag, the toggle only controls a UI preview for now.
+    if (isEdit && product) {
+      updateProduct(product.id, payload);
+      toast.success("Produit mis à jour avec succès");
+    } else {
+      addProduct(payload);
+      toast.success("Produit créé avec succès");
+    }
+    onClose();
+  }
 
   return (
     <motion.div
@@ -655,10 +698,13 @@ function ProductModal({
         {/* Footer */}
         <div className="flex flex-wrap items-center justify-end gap-2 border-t border-[#F3F4F6] bg-[#F9FAFB] px-6 py-4">
           <OutlineButton onClick={onClose}>Annuler</OutlineButton>
-          <OutlineButton onClick={onClose}>
+          <OutlineButton
+            onClick={onClose}
+            disabled={!canSubmit}
+          >
             {isEdit ? "Enregistrer en brouillon" : "Enregistrer en brouillon"}
           </OutlineButton>
-          <GradientButton onClick={onClose}>
+          <GradientButton onClick={handleSubmit} disabled={!canSubmit}>
             {isEdit ? "Enregistrer les modifications" : "Créer le produit"}
           </GradientButton>
         </div>
@@ -672,6 +718,8 @@ function ProductModal({
 // ============================================================================
 export function ProduitsPage() {
   const { openDetail, setPage } = useFabricantNav();
+  const { produits, deleteProduct, duplicateProduct, toggleProductStatus } =
+    useProduits();
 
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("toutes");
@@ -683,7 +731,7 @@ export function ProduitsPage() {
   );
 
   const filtered = useMemo(() => {
-    let list = PRODUITS.filter((p) => {
+    let list = produits.filter((p) => {
       const matchSearch =
         !search ||
         p.nom.toLowerCase().includes(search.toLowerCase()) ||
@@ -714,7 +762,7 @@ export function ProduitsPage() {
     });
 
     return list;
-  }, [search, categoryFilter, statusFilter, sortFilter]);
+  }, [produits, search, categoryFilter, statusFilter, sortFilter]);
 
   const resetFilters = () => {
     setSearch("");
@@ -738,7 +786,7 @@ export function ProduitsPage() {
 
   return (
     <div>
-      <PageHeader title="Mes Produits" subtitle="24 produits créés">
+      <PageHeader title="Mes Produits" subtitle={`${produits.length} produits créés`}>
         <GradientButton onClick={openCreate}>
           <Plus size={16} />
           Nouveau produit
@@ -837,6 +885,26 @@ export function ProduitsPage() {
               onVoir={() => openDetail("produit-detail", p.id)}
               onModifier={() => openEdit(p)}
               onLots={() => setPage("lots")}
+              onDuplicate={() => {
+                duplicateProduct(p.id);
+                toast.success(`"${p.nom}" dupliqué`);
+              }}
+              onToggleStatus={() => {
+                toggleProductStatus(p.id);
+                toast.success(
+                  p.status === "masque" ? "Produit affiché" : "Produit masqué"
+                );
+              }}
+              onDelete={() => {
+                if (
+                  window.confirm(
+                    `Supprimer le produit "${p.nom}" ? Cette action est irréversible.`
+                  )
+                ) {
+                  deleteProduct(p.id);
+                  toast.success("Produit supprimé");
+                }
+              }}
             />
           ))}
         </div>

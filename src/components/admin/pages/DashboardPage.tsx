@@ -23,6 +23,7 @@ import {
 import { CountUp } from "@/components/landing/CountUp";
 import { PageContainer, Card, CardHeader, Badge, Button } from "@/components/admin/ui";
 import { AreaTrend, Donut, BarH, BarV } from "@/components/admin/charts";
+import { cn } from "@/lib/utils";
 
 /* ---------- KPI cards ---------- */
 
@@ -34,35 +35,66 @@ type KpiCardProps = {
   trend: string;
   trendPositive: boolean;
   subtext: string;
+  /** Optional Tailwind gradient classes (e.g. "from-[#2563EB] to-[#3B82F6]"). When set, the card uses a colored gradient background with white text. */
+  gradient?: string;
 };
 
-function KpiCard({ icon, iconBg, title, value, trend, trendPositive, subtext }: KpiCardProps) {
+function KpiCard({ icon, iconBg, title, value, trend, trendPositive, subtext, gradient }: KpiCardProps) {
   const TrendIcon = trendPositive ? ArrowUpRight : ArrowDownRight;
   const trendColor = trendPositive ? "#10B981" : "#EF4444";
+  const hasGradient = Boolean(gradient);
   return (
-    <Card className="group p-6 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-[#2563EB]/5">
+    <Card
+      className={cn(
+        "group p-6 transition-all duration-200 hover:-translate-y-1",
+        hasGradient
+          ? cn("border-white/20 bg-gradient-to-br text-white shadow-md hover:shadow-xl", gradient)
+          : "hover:shadow-lg hover:shadow-[#2563EB]/5"
+      )}
+    >
       <div className="flex items-center gap-3">
         <div
-          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full"
-          style={{ backgroundColor: iconBg }}
+          className={cn(
+            "flex h-12 w-12 shrink-0 items-center justify-center rounded-full",
+            hasGradient ? "bg-white/20 [&>svg]:text-white" : ""
+          )}
+          style={hasGradient ? undefined : { backgroundColor: iconBg }}
         >
           {icon}
         </div>
-        <p className="text-[13px] font-semibold uppercase tracking-wide text-[#6B7280]">
+        <p
+          className={cn(
+            "text-[13px] font-semibold uppercase tracking-wide",
+            hasGradient ? "text-white/90" : "text-[#6B7280]"
+          )}
+        >
           {title}
         </p>
       </div>
 
-      <div className="mt-4 text-[32px] font-bold leading-tight text-[#111827]">
+      <div
+        className={cn(
+          "mt-4 text-[32px] font-bold leading-tight",
+          hasGradient ? "text-white" : "text-[#111827]"
+        )}
+      >
         {value}
       </div>
 
-      <div className="mt-2 flex items-center gap-1 text-[13px] font-semibold" style={{ color: trendColor }}>
+      <div
+        className={cn(
+          "mt-2 flex items-center gap-1 text-[13px] font-semibold",
+          hasGradient ? "text-white" : ""
+        )}
+        style={hasGradient ? undefined : { color: trendColor }}
+      >
         <TrendIcon className="h-4 w-4" />
         <span>{trend}</span>
       </div>
 
-      <p className="mt-2 text-[13px] text-[#6B7280]">{subtext}</p>
+      <p className={cn("mt-2 text-[13px]", hasGradient ? "text-white/80" : "text-[#6B7280]")}>
+        {subtext}
+      </p>
     </Card>
   );
 }
@@ -127,6 +159,7 @@ export function DashboardPage() {
           trend="+12 ce mois"
           trendPositive
           subtext={`${GLOBAL_KPI.activeMakers} actifs · ${GLOBAL_KPI.inactiveMakers} inactifs`}
+          gradient="from-[#2563EB] to-[#3B82F6]"
         />
         <KpiCard
           icon={<CreditCard className="h-6 w-6 text-[#10B981]" />}
@@ -136,6 +169,7 @@ export function DashboardPage() {
           trend="+8.5% vs mois dernier"
           trendPositive
           subtext="180 Pro · 65 Starter · 3 Enterprise"
+          gradient="from-[#10B981] to-[#34D399]"
         />
         <KpiCard
           icon={<TrendingUp className="h-6 w-6 text-[#F59E0B]" />}
@@ -145,6 +179,7 @@ export function DashboardPage() {
           trend="+23% cette semaine"
           trendPositive
           subtext={`Moyenne : ${formatFCFA(GLOBAL_KPI.scansAvgPerDay)} scans/jour`}
+          gradient="from-[#F59E0B] to-[#FBBF24]"
         />
         <KpiCard
           icon={<LifeBuoy className="h-6 w-6 text-[#EF4444]" />}
@@ -154,6 +189,7 @@ export function DashboardPage() {
           trend="-3 vs hier"
           trendPositive={false}
           subtext={`${GLOBAL_KPI.urgentTickets} urgents · ${GLOBAL_KPI.normalTickets} normaux`}
+          gradient="from-[#8B5CF6] to-[#A78BFA]"
         />
       </div>
 

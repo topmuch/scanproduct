@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { ArrowRight, Check, ShieldCheck, Lock, TrendingUp } from "lucide-react";
-import { PhoneMockup } from "./PhoneMockup";
+import { QRCodeCanvas } from "qrcode.react";
 import { CountUp } from "./CountUp";
 
 const fadeUp = {
@@ -151,14 +151,114 @@ export function Hero() {
           </motion.div>
         </div>
 
-        {/* RIGHT column: phone mockup */}
+        {/* RIGHT column: real product scan visualization */}
         <motion.div
           initial={{ opacity: 0, scale: 0.92 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.8, delay: 0.3, ease: [0.4, 0, 0.2, 1] }}
           className="relative flex justify-center py-6 lg:py-0"
         >
-          <PhoneMockup />
+          <div className="relative w-full max-w-[440px]">
+            {/* Decorative blurred circles */}
+            <div className="pointer-events-none absolute -left-12 -top-12 h-48 w-48 rounded-full bg-[#2563EB]/10 blur-3xl" />
+            <div className="pointer-events-none absolute -bottom-12 -right-12 h-56 w-56 rounded-full bg-[#10B981]/10 blur-3xl" />
+            <div className="pointer-events-none absolute right-1/4 top-1/3 h-40 w-40 rounded-full bg-[#F59E0B]/10 blur-3xl" />
+
+            {/* Main floating composition */}
+            <motion.div
+              animate={{ y: [0, -10, 0] }}
+              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+              className="relative"
+            >
+              {/* Main product image card */}
+              <div className="relative overflow-hidden rounded-3xl border-4 border-white bg-white shadow-2xl">
+                <img
+                  src="/products/jus-bissap.png"
+                  alt="Jus de Bissap Premium scanné avec VerifScan"
+                  className="h-[420px] w-full object-cover"
+                />
+                {/* Top brand chip */}
+                <div className="absolute left-4 top-4 inline-flex items-center gap-1.5 rounded-full bg-white/90 px-3 py-1.5 text-xs font-semibold text-[#111827] shadow-sm backdrop-blur">
+                  <span className="h-2 w-2 rounded-full bg-[#10B981]" />
+                  VerifScan · Passeport numérique
+                </div>
+              </div>
+
+              {/* Scan UI card overlapping the product (bottom-left) */}
+              <motion.div
+                initial={{ opacity: 0, y: 14 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.6, duration: 0.5 }}
+                className="absolute -bottom-6 left-2 z-20 w-[270px] rounded-2xl border border-[#E5E7EB] bg-white/95 p-4 shadow-xl backdrop-blur sm:-left-6"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[#D1FAE5]">
+                    <ShieldCheck className="h-5 w-5 text-[#10B981]" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[10px] font-bold uppercase tracking-wide text-[#10B981]">
+                      Produit authentique
+                    </p>
+                    <p className="truncate text-sm font-bold text-[#111827]">
+                      Jus de Bissap Premium
+                    </p>
+                    <p className="mt-0.5 font-mono text-[11px] text-[#2563EB]">
+                      LOT-2026-07-001
+                    </p>
+                  </div>
+                  <span className="flex-shrink-0 rounded-full bg-[#10B981] px-2 py-1 text-[10px] font-bold leading-none text-white">
+                    95/100
+                  </span>
+                </div>
+                <div className="mt-3 flex items-center gap-1.5 border-t border-[#F3F4F6] pt-2 text-[10px] text-[#6B7280]">
+                  <Check className="h-3 w-3 text-[#10B981]" />
+                  Vérifié le 26 juil. 2026
+                </div>
+              </motion.div>
+
+              {/* QR code badge (top-right) */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.85 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.9, duration: 0.5 }}
+                className="absolute -right-3 top-6 z-20 rounded-2xl border border-[#E5E7EB] bg-white p-2 shadow-xl sm:-right-6"
+              >
+                <div className="rounded-lg bg-white p-1">
+                  <QRCodeCanvas
+                    value="https://verifscan.sn/p/demo-bissap"
+                    size={80}
+                    level="M"
+                    marginSize={1}
+                  />
+                </div>
+                <p className="mt-1 text-center text-[9px] font-semibold uppercase tracking-wide text-[#2563EB]">
+                  Scannez
+                </p>
+              </motion.div>
+            </motion.div>
+
+            {/* Floating decorative badge: Blockchain (top-left) */}
+            <motion.div
+              initial={{ opacity: 0, x: -12 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 1.1, duration: 0.5 }}
+              className="absolute -left-2 top-16 z-30 flex items-center gap-1.5 rounded-full border border-[#BFDBFE] bg-white/95 px-3 py-1.5 text-xs font-semibold text-[#2563EB] shadow-lg backdrop-blur sm:-left-6"
+            >
+              <Lock className="h-3.5 w-3.5" />
+              ✓ Blockchain
+            </motion.div>
+
+            {/* Floating decorative badge: +35% ventes (bottom-right) */}
+            <motion.div
+              initial={{ opacity: 0, x: 12 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 1.25, duration: 0.5 }}
+              className="absolute -right-2 bottom-24 z-30 flex items-center gap-1.5 rounded-full border border-[#FDE68A] bg-white/95 px-3 py-1.5 text-xs font-semibold text-[#D97706] shadow-lg backdrop-blur sm:-right-4"
+            >
+              <TrendingUp className="h-3.5 w-3.5" />
+              +35% ventes
+            </motion.div>
+          </div>
         </motion.div>
       </div>
 
