@@ -41,23 +41,41 @@ export function ProductImage({
   }
 
   // ---- Placeholder ----
-  // Branded gradient (indigo → emerald) with the category emoji centered.
-  // Uses container-query units (cqmin) so the emoji scales with the slot:
-  //   • 32px dropdown thumbnail → ~16px emoji
-  //   • 48px row thumbnail      → ~24px emoji
-  //   • 200px product card      → ~64px emoji
-  //   • 400px hero image        → ~64px emoji (capped)
-  // `container-type: size` on the wrapper makes cqmin available.
+  // Soft, light placeholder with the category emoji centered.
+  //
+  // ── Why not a colorful gradient? ────────────────────────────────
+  // A previous version used `from-[#1E3A8A] to-[#10B981]` (navy → emerald)
+  // which, when rendered on a small thumbnail, looked like a solid
+  // "purple rectangle" to users — especially after an uploaded image
+  // was lost post-deployment and the fallback kicked in. Users reported
+  // "il affiche un carré violet" (it shows a purple square).
+  //
+  // The new design uses a light gray background with a subtle image icon
+  // + the category emoji, making it immediately obvious that this is a
+  // "no image" placeholder — not a real product photo or a branding
+  // element. Uses container-query units (cqmin) so the emoji scales with
+  // the slot size (dropdown thumb → product card → hero).
   const emoji = icon || "📦";
 
   return (
     <div
-      className={`flex items-center justify-center overflow-hidden bg-gradient-to-br from-[#1E3A8A] to-[#10B981] ${className}`}
+      className={`relative flex items-center justify-center overflow-hidden bg-[#F3F4F6] ${className}`}
       style={{ containerType: "size" }}
       role="img"
       aria-label={alt}
     >
-      <span style={{ fontSize: "min(50cqmin, 64px)", lineHeight: 1 }}>
+      {/* Subtle diagonal pattern so it's clearly a placeholder, not content */}
+      <div
+        className="absolute inset-0 opacity-40"
+        style={{
+          backgroundImage:
+            "repeating-linear-gradient(45deg, transparent 0, transparent 8px, rgba(0,0,0,0.03) 8px, rgba(0,0,0,0.03) 16px)",
+        }}
+      />
+      <span
+        className="relative"
+        style={{ fontSize: "min(50cqmin, 64px)", lineHeight: 1 }}
+      >
         {emoji}
       </span>
     </div>

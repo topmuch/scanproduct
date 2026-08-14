@@ -261,6 +261,11 @@ export function formatFCFA(n: number): string {
   return new Intl.NumberFormat("fr-FR").format(n) + " FCFA";
 }
 
-export function formatNombre(n: number): string {
+export function formatNombre(n: number | null | undefined): string {
+  // Guard against undefined/null/NaN — Intl.NumberFormat.format() throws a
+  // RangeError on these values, which would crash the entire React tree
+  // ("Application error: a client-side exception has occurred"). Falling
+  // back to "0" keeps the UI rendering even when a upstream prop is missing.
+  if (n === null || n === undefined || Number.isNaN(n)) return "0";
   return new Intl.NumberFormat("fr-FR").format(n);
 }

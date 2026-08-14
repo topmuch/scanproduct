@@ -2250,3 +2250,23 @@ Stage Summary:
 - Fix : 1 ligne (ajout de `id: true` au select)
 - Le crash frontend "Application error: a client-side exception" était une conséquence du refresh() après l'échec 500
 - Commit poussé : d8d10a4 sur origin/main
+
+---
+Task ID: bugfix-lot-creation
+Agent: main (Z.ai Code)
+Task: Fix "impossible de créer un lot" + "Application error: a client-side exception" + "carré violet" placeholder issue reported by user on verifscan.roomscan.pro
+
+Work Log:
+- Reproduced the client-side crash using agent-browser: navigating the lot creation modal to Step 3 (QR Codes) threw "Application error: a client-side exception has occurred".
+- Root cause: `Step3QR` component in `src/components/fabricant/pages/LotsPage.tsx` referenced `quotaRestant` on line 1704 (`hint={\`Quota restant : ${formatNombre(quotaRestant)} QR codes\`}`), but `quotaRestant` was only defined in the parent `CreationModal` closure scope — NOT passed as a prop to `Step3QR`. So `quotaRestant` was `undefined` inside `Step3QR`, and `formatNombre(undefined)` called `new Intl.NumberFormat("fr-FR").format(undefined)` which throws a `RangeError: The number provided is undefined`, crashing the entire React tree.
+- Fix 1 (LotsPage.tsx): Added `quotaRestant: number` to the `Step3QR` props type, changed the reference from `quotaRestant` to `props.quotaRestant`, and passed `quotaRestant={quotaRestant}` from `CreationModal` to `<Step3QR>`.
+- Fix 2 (fabricant-types.ts): Hardened `formatNombre()` to accept `number | null | undefined` and return `"0"` for nullish/NaN values instead of throwing a RangeError. This prevents any future similar prop-drilling bug from crashing the page.
+- Fix 3 (ProductImage.tsx): The "carré violet" (purple rectangle) was the fallback gradient placeholder `from-[#1E3A8A] to-[#10B981]` (navy → emerald) that showed whenever an uploaded image was lost post-deployment (uploads/ is gitignored + non-persistent in standalone Docker builds). Replaced the colorful gradient with a light gray (`bg-[#F3F4F6]`) placeholder + subtle diagonal stripe pattern + category emoji, making it immediately obvious this is a "no image" state rather than a branding element.
+- Verified end-to-end with agent-browser: opened dashboard → Lots page → "Nouveau lot" modal → selected product → filled info → reached Step 3 (no crash) → clicked "Créer le lot et générer QR codes" → POST /api/lots 201 + POST /api/qr-codes/generate 200 → success screen → "Voir le lot" → lot detail page rendered correctly. Lot count went from 4 → 5, QR code count from 20 → 120.
+- Lint passes clean (`bun run lint` — no errors).
+
+Stage Summary:
+- Critical bug fixed: lot creation modal Step 3 no longer crashes with a client-side exception. The `quotaRestant` variable was referenced outside its closure scope.
+- Defensive hardening: `formatNombre()` now gracefully handles undefined/null/NaN instead of throwing.
+- UX improvement: image placeholder changed from a "purple rectangle" gradient to a clean light-gray placeholder with diagonal stripes, clearly indicating a missing image.
+- Files changed: `src/components/fabricant/pages/LotsPage.tsx`, `src/lib/fabricant-types.ts`, `src/components/fabricant/ProductImage.tsx`.

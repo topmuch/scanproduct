@@ -1181,6 +1181,7 @@ function CreationModal({
                   productName={selectedProduct?.nom || "Produit"}
                   lotNumero={numero}
                   quotaApres={quotaApres}
+                  quotaRestant={quotaRestant}
                   tailleMo={tailleMo}
                 />
               )}
@@ -1694,6 +1695,7 @@ function Step3QR(props: {
   productName: string;
   lotNumero: string;
   quotaApres: number;
+  quotaRestant: number;
   tailleMo: number;
 }) {
   return (
@@ -1701,7 +1703,7 @@ function Step3QR(props: {
       <Field
         label="Nombre de QR codes"
         required
-        hint={`Quota restant : ${formatNombre(quotaRestant)} QR codes`}
+        hint={`Quota restant : ${formatNombre(props.quotaRestant)} QR codes`}
       >
         <input
           type="number"
