@@ -77,6 +77,10 @@ verify-*.png
 *.tsbuildinfo
 tsconfig.tsbuildinfo
 
+# User-uploaded images (runtime data — keep the .gitkeep only)
+public/uploads/products/*
+!public/uploads/products/.gitkeep
+
 # OS / editor
 Thumbs.db
 .idea/

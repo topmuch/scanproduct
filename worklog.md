@@ -2112,3 +2112,41 @@ Stage Summary:
 - 100% data réelle : pas de mock, fetch Prisma via getAllProducts({sort:'popular', limit:12})
 - Graceful degradation : si 0 produits en DB, le slider n'est pas rendu (pas de section vide)
 - Lint clean, 0 erreur, navigation et interactions vérifiées end-to-end avec agent-browser
+
+---
+Task ID: 4
+Agent: main
+Task: Correction du bug d'upload d'image (PNG → spinner infini "Upload en cours", JPEG → "Échec de l'upload")
+
+Work Log:
+- Diagnostic : Le frontend (ImageUploadWithPreview.tsx + ParametresPage.tsx) appelle `fetch("/api/upload", ...)` mais AUCUNE route `/api/upload` n'existait dans `src/app/api/`. La route a été supprimée pendant la migration Prisma (Task 2-a). Next.js répondait donc 404 HTML, que le frontend ne pouvait pas parser en JSON → comportement erratique (blob preview qui reste + spinner infini pour PNG, "Échec de l'upload" pour JPEG).
+- Confirmation : `ls src/app/api/` montrait 18 routes mais PAS de `upload/`. Le dossier `public/uploads/products/` contenait 7 fichiers d'uploads précédents (preuve que la route fonctionnait avant d'être supprimée).
+- Création de `src/app/api/upload/route.ts` :
+  - POST /api/upload — auth FABRICANT requise (getToken + check role via db.user)
+  - Accepte multipart/form-data avec champ "file"
+  - Validate MIME type via allow-list (jpeg, jpg, png, webp, gif, svg+xml) → extension safe (jpg/png/webp/gif/svg)
+  - Validate taille (5 MB max, non-vide)
+  - IGNORE le nom original → fichier sauvé sous `{uuid}.{ext}` dans `public/uploads/products/` (prévient path traversal, unicode, collisions)
+  - Retourne JSON `{ url, filename, size, mimeType }` (url = "/uploads/products/{uuid}.{ext}")
+  - GET → 405 (distingue "endpoint existe, mauvaise méthode" de "endpoint n'existe pas")
+  - runtime = "nodejs" pour fs/crypto
+- Vérifications API (curl avec session FABRICANT sarine@biocosmetique.sn) :
+  - GET /api/upload → 405 JSON ✅
+  - POST sans auth → 401 JSON ✅
+  - POST avec PNG valide (70 bytes) → 200, url=/uploads/products/6e0ad47c-...png ✅
+  - POST avec JPEG valide (566 bytes) → 200, url=/uploads/products/4c955243-...jpg ✅
+  - POST avec .txt → 400 "Format non supporté" ✅
+  - Fichiers sauvés sur disque + servis via HTTP (image/png, image/jpeg, bonne taille) ✅
+- Vérification E2E UI (agent-browser, login → dashboard → Produits → Nouveau produit → upload) :
+  - PNG (1x1 valide) : upload → POST /api/upload 200 → preview affiche l'URL serveur /uploads/products/9b1787d3-...png → PAS de spinner infini, PAS d'erreur → boutons "Changer"/"Retirer la photo" visibles ✅
+  - JPEG (100x100 valide via sharp) : upload → POST /api/upload 200 → preview décodé 100x100 depuis /uploads/products/100db691-...jpg → PAS d'erreur, PAS de spinner, PAS de "Image non disponible" ✅
+  - Découvert en chemin : mon premier JPEG de test (base64 minimaliste) était corrompu ("VipsJpeg: Corrupt JPEG data: 23 extraneous bytes before marker 0x10") → l'<img> déclenchait onError → "Image non disponible". Ce n'était PAS un bug de l'upload mais un artefact de test. Avec un JPEG valide (sharp), tout fonctionne.
+- Lint : clean (0 erreur, 0 warning)
+- Serveur : actif sur port 3000, aucun error/exception/warning dans dev.log
+
+Stage Summary:
+- Root cause : route /api/upload manquante (supprimée pendant la migration Prisma Task 2-a)
+- Fix : création de src/app/api/upload/route.ts (auth FABRICANT, validation type+taille, save uuid.ext, retour JSON)
+- Les DEUX problèmes utilisateur sont résolus : PNG ne tourne plus en boucle, JPEG n'affiche plus "Échec de l'upload"
+- Vérifié end-to-end via curl (API) + agent-browser (UI réelle avec login FABRICANT)
+- Aucune régression : lint clean, 0 erreur runtime, serveur stable
