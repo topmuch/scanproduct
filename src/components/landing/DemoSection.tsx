@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { RefreshCw, ShieldCheck, QrCode, Eye } from "lucide-react";
 import { QRCodeCanvas } from "qrcode.react";
-import { getScanUrl } from "@/lib/qr-utils";
+import { getScanOrigin } from "@/lib/qr-utils";
 import { AnimatedSection } from "./AnimatedSection";
 import { SectionBadge } from "./SectionBadge";
 
@@ -124,10 +124,10 @@ export function DemoSection() {
               <div className="flex items-center justify-between border-t border-[#F3F4F6] bg-[#F9FAFB] px-6 py-4">
                 <div>
                   <p className="text-xs font-medium text-[#9CA3AF]">Scannez ce QR code</p>
-                  <p className="text-sm font-semibold text-[#111827]">pour voir le passeport complet</p>
+                  <p className="text-sm font-semibold text-[#111827]">pour voir le catalogue VerifScan</p>
                 </div>
                 <div className="rounded-lg border-2 border-[#2563EB]/20 bg-white p-2">
-                  <QRCodeCanvas value={getScanUrl(`${product.id}-demo`)} size={64} level="M" marginSize={1} />
+                  <QRCodeCanvas value={`${getScanOrigin()}/produits`} size={64} level="M" marginSize={1} />
                 </div>
               </div>
             </motion.div>

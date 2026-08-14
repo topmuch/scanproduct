@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
 /**
@@ -54,16 +55,20 @@ export function Hero() {
           protège votre marque contre la contrefaçon.
         </motion.p>
 
-        <motion.a
-          href="#pricing"
+        <motion.div
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.45, ease: [0.4, 0, 0.2, 1] }}
-          className="group mt-8 inline-flex items-center justify-center gap-2 rounded-[10px] bg-[#2563EB] px-7 py-3.5 text-base font-semibold text-white shadow-lg shadow-[#2563EB]/25 transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#1D4ED8] hover:shadow-xl hover:shadow-[#2563EB]/40"
+          className="mt-8"
         >
-          Créer votre compte gratuit
-          <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-        </motion.a>
+          <Link
+            href="/register"
+            className="group inline-flex items-center justify-center gap-2 rounded-[10px] bg-[#2563EB] px-7 py-3.5 text-base font-semibold text-white shadow-lg shadow-[#2563EB]/25 transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#1D4ED8] hover:shadow-xl hover:shadow-[#2563EB]/40"
+          >
+            Créer votre compte gratuit
+            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+          </Link>
+        </motion.div>
       </div>
     </section>
   );

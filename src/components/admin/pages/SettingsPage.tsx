@@ -914,22 +914,15 @@ function SecuritySection() {
  * Section: API & Integrations
  * ========================================================== */
 
-const WEBHOOKS = [
-  {
-    id: "wh_1",
-    url: "https://erp.example.com/hooks/verifscan",
-    events: "product.created, product.updated",
-  },
-  {
-    id: "wh_2",
-    url: "https://billing.example.com/verifscan",
-    events: "payment.received, subscription.expired",
-  },
-];
+const WEBHOOKS: { id: string; url: string; events: string }[] = [];
 
 function ApiSection() {
-  const [apiKey] = useState("sk_live_4f2c8d9a1b7e3f6c5d8a2b9e4f7c1d8a");
-  const maskedKey = `${apiKey.slice(0, 12)}${"•".repeat(16)}`;
+  // API key is loaded from the backend in a real deployment — here we just
+  // show a masked placeholder until the SuperAdmin can fetch the real key.
+  const [apiKey] = useState("");
+  const maskedKey = apiKey
+    ? `${apiKey.slice(0, 12)}${"•".repeat(16)}`
+    : "sk_live_•••••••••••••••• (non générée)";
 
   return (
     <Card>
@@ -982,40 +975,51 @@ function ApiSection() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#F3F4F6]">
-                {WEBHOOKS.map((w) => (
-                  <tr key={w.id} className="hover:bg-[#F9FAFB]">
-                    <td className="px-4 py-3">
-                      <span className="block max-w-[280px] truncate font-mono text-[13px] text-[#111827]">
-                        {w.url}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="text-[13px] text-[#6B7280]">
-                        {w.events}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <div className="inline-flex gap-1">
-                        <button
-                          type="button"
-                          onClick={() => toast.info("Édition du webhook")}
-                          className="flex h-8 w-8 items-center justify-center rounded-md text-[#6B7280] hover:bg-[#EFF6FF] hover:text-[#2563EB]"
-                          aria-label="Éditer"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => toast.error("Webhook supprimé")}
-                          className="flex h-8 w-8 items-center justify-center rounded-md text-[#6B7280] hover:bg-[#FEE2E2] hover:text-[#EF4444]"
-                          aria-label="Supprimer"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
+                {WEBHOOKS.length === 0 ? (
+                  <tr>
+                    <td colSpan={3} className="px-4 py-8 text-center">
+                      <p className="text-[13px] text-[#6B7280]">
+                        Aucun webhook configuré. Cliquez sur « Ajouter un webhook »
+                        pour recevoir des notifications sur votre système.
+                      </p>
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  WEBHOOKS.map((w) => (
+                    <tr key={w.id} className="hover:bg-[#F9FAFB]">
+                      <td className="px-4 py-3">
+                        <span className="block max-w-[280px] truncate font-mono text-[13px] text-[#111827]">
+                          {w.url}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="text-[13px] text-[#6B7280]">
+                          {w.events}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <div className="inline-flex gap-1">
+                          <button
+                            type="button"
+                            onClick={() => toast.info("Édition du webhook")}
+                            className="flex h-8 w-8 items-center justify-center rounded-md text-[#6B7280] hover:bg-[#EFF6FF] hover:text-[#2563EB]"
+                            aria-label="Éditer"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => toast.error("Webhook supprimé")}
+                            className="flex h-8 w-8 items-center justify-center rounded-md text-[#6B7280] hover:bg-[#FEE2E2] hover:text-[#EF4444]"
+                            aria-label="Supprimer"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

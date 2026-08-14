@@ -389,6 +389,23 @@ export async function getSimilarProducts(categoryId: string | null, currentProdu
 }
 
 // ---------------------------------------------------------------------------
+// Bot/crawler detection — used to avoid inflating scan counters when a
+// search-engine crawler or uptime monitor hits a lot passport URL.
+// ---------------------------------------------------------------------------
+
+const BOT_USER_AGENT_RE =
+  /(bot|crawl|spider|slurp|baidu|bingbot|yandex|facebookexternalhit|twitterbot|linkedinbot|semrush|ahrefs|rogerbot|applebot|petalbot|duckduckbot|headless|lighthouse|wget|curl|python-requests|node-fetch|uptime|pingdom|googlestructureddata|google-hoteladsverifier|imagesift|archive\.org_bot|ia_archiver|seokicks|siteauditbot|dataparksearch|fast-webcrawler|convera|seekbot|gnam|postrank|netseer|nutch)/i;
+
+/**
+ * Returns true if the given User-Agent string looks like a bot/crawler.
+ * Conservative: false positives only skip scan recording (no user-facing
+ * impact). False negatives let a few bots through (acceptable).
+ */
+export function isBotUserAgent(userAgent: string): boolean {
+  return BOT_USER_AGENT_RE.test(userAgent);
+}
+
+// ---------------------------------------------------------------------------
 // Record a scan (called when a user opens /p/[lotId])
 // ---------------------------------------------------------------------------
 

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { ArrowRight, Phone, Check } from "lucide-react";
 import { AnimatedSection } from "./AnimatedSection";
 
@@ -25,13 +26,13 @@ export function FinalCTA() {
         </p>
 
         <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-          <a
-            href="#"
+          <Link
+            href="/register"
             className="group inline-flex w-full items-center justify-center gap-2 rounded-[10px] bg-gradient-to-r from-[#2563EB] to-[#10B981] px-7 py-3.5 text-base font-semibold text-white shadow-lg shadow-[#2563EB]/25 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-[#2563EB]/40 sm:w-auto"
           >
             Créer votre compte gratuit
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-          </a>
+          </Link>
           <a
             href="#contact"
             className="inline-flex w-full items-center justify-center gap-2 rounded-[10px] border border-[#2563EB] bg-white px-7 py-3.5 text-base font-semibold text-[#2563EB] transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#EFF6FF] sm:w-auto"

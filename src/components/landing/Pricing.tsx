@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
+import Link from "next/link";
 import { Check, Star, Sparkles, ArrowRight } from "lucide-react";
 import { AnimatedSection } from "./AnimatedSection";
 import { SectionBadge } from "./SectionBadge";
@@ -190,8 +191,8 @@ export function Pricing() {
                   )}
                 </div>
 
-                <a
-                  href="#"
+                <Link
+                  href={`/register?plan=${plan.name.toLowerCase()}`}
                   className={cn(
                     "mt-6 inline-flex items-center justify-center gap-1.5 rounded-[10px] px-5 py-3 text-sm font-semibold transition-all duration-300",
                     plan.buttonClass
@@ -199,7 +200,7 @@ export function Pricing() {
                 >
                   {plan.cta}
                   <ArrowRight className="h-4 w-4" />
-                </a>
+                </Link>
 
                 <ul className="mt-6 space-y-3 border-t border-[#E5E7EB] pt-6">
                   {plan.features.map((f) => (

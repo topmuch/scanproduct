@@ -1,20 +1,42 @@
 "use client";
 
 import { Lock, Facebook, Twitter, Linkedin, Instagram, Mail, Phone, MapPin } from "lucide-react";
+import Link from "next/link";
 import { Logo } from "./Logo";
 
-const COLUMNS = [
+// Each footer link maps to a real target:
+//   - Real pages use absolute paths ("/produits", "/register", "/login")
+//   - Sections on the landing page use "/#anchor"
+//   - Pages not yet implemented (Blog, Carrières, legal…) fall back to the
+//     contact section so the user always lands somewhere useful instead of
+//     a dead "#" anchor that just scrolls to the top.
+const COLUMNS: { title: string; links: { label: string; href: string }[] }[] = [
   {
     title: "Produit",
-    links: ["Produits", "Fonctionnalités", "Tarifs", "Marketplace B2B"],
+    links: [
+      { label: "Produits", href: "/produits" },
+      { label: "Fonctionnalités", href: "/#fonctionnalites" },
+      { label: "Tarifs", href: "/#pricing" },
+      { label: "Marketplace B2B", href: "/#contact" },
+    ],
   },
   {
     title: "Entreprise",
-    links: ["À propos", "Contact", "Blog", "Carrières"],
+    links: [
+      { label: "À propos", href: "/#temoignages" },
+      { label: "Contact", href: "/#contact" },
+      { label: "Blog", href: "/#contact" },
+      { label: "Carrières", href: "/#contact" },
+    ],
   },
   {
     title: "Légal",
-    links: ["Mentions légales", "CGU", "Politique de confidentialité", "Cookies"],
+    links: [
+      { label: "Mentions légales", href: "/#contact" },
+      { label: "CGU", href: "/#contact" },
+      { label: "Politique de confidentialité", href: "/#contact" },
+      { label: "Cookies", href: "/#contact" },
+    ],
   },
 ];
 
@@ -44,7 +66,7 @@ export function Footer() {
               {SOCIALS.map((s) => (
                 <a
                   key={s.label}
-                  href="#"
+                  href="/#contact"
                   aria-label={s.label}
                   className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/10 text-white/80 transition-all duration-300 hover:bg-white/20 hover:text-white"
                 >
@@ -59,16 +81,28 @@ export function Footer() {
             <div key={col.title}>
               <h3 className="font-display text-base font-semibold text-white">{col.title}</h3>
               <ul className="mt-4 space-y-2.5">
-                {col.links.map((link) => (
-                  <li key={link}>
-                    <a
-                      href="#"
-                      className="text-sm text-white/70 transition-colors hover:text-white"
-                    >
-                      {link}
-                    </a>
-                  </li>
-                ))}
+                {col.links.map((link) => {
+                  const isInternal = link.href.startsWith("/#") || link.href === "/produits" || link.href === "/register" || link.href === "/login";
+                  return (
+                    <li key={link.label}>
+                      {isInternal ? (
+                        <Link
+                          href={link.href}
+                          className="text-sm text-white/70 transition-colors hover:text-white"
+                        >
+                          {link.label}
+                        </Link>
+                      ) : (
+                        <a
+                          href={link.href}
+                          className="text-sm text-white/70 transition-colors hover:text-white"
+                        >
+                          {link.label}
+                        </a>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           ))}

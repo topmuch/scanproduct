@@ -1,10 +1,12 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 
 import {
   getLotWithDetails,
   getSimilarProducts,
   recordScan,
+  isBotUserAgent,
 } from "@/lib/public-data";
 import { PublicHeader } from "@/components/public/PublicHeader";
 import { PublicFooter } from "@/components/public/PublicFooter";
@@ -127,10 +129,20 @@ export default async function ProductPage({
     );
   }
 
-  // Fire and forget — don't block the page render on scan recording
-  void recordScan(lot.id).catch((e) =>
-    console.error("[ProductPage] recordScan failed:", e),
-  );
+  // Fire and forget — don't block the page render on scan recording.
+  // Skip bots/crawlers so analytics counters aren't inflated by search
+  // engines or uptime monitors hitting the page.
+  try {
+    const h = await headers();
+    const ua = h.get("user-agent") || "";
+    if (ua && !isBotUserAgent(ua)) {
+      void recordScan(lot.id, { userAgent: ua || undefined }).catch((e) =>
+        console.error("[ProductPage] recordScan failed:", e),
+      );
+    }
+  } catch (e) {
+    console.error("[ProductPage] headers() failed:", e);
+  }
 
   // Similar products (same category, excluding current product).
   // Wrapped in try/catch so a failure here doesn't crash the whole page —
