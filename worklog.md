@@ -2066,3 +2066,49 @@ Stage Summary:
 - Sécurité renforcée : middleware proxy, audit logs, Zod validation, bot gate, JWT revocation
 - ~1900 lignes de mock data supprimées (fabricant-data 742 + admin-data 881 + MockProductPassport 280)
 - Dette technique restante : 0 issue critique ou haute, 0 issue moyenne non traitée
+
+---
+Task ID: 3
+Agent: main
+Task: Régénérer les 6 images des cards de la page d'accueil en images réelles + créer un slider de produits catalogue en dessous du CTA "Démarrer maintenant"
+
+Work Log:
+- Identification des 6 cards : 3 dans Features.tsx (Traçabilité, Export, Statistiques — aspect 16:10) + 3 dans HowItWorks.tsx (Créez votre produit, Générez le QR, Partagez et suivez — aspect 4:3)
+- Génération des 6 images via z-ai CLI en parallèle :
+  - /public/features/feature-tracabilite.png (1344x768) — scan QR + passeport produit à l'écran
+  - /public/features/feature-export.png (1344x768) — documents de conformité CEDEAO/UE/USA + world map
+  - /public/features/feature-statistiques.png (1344x768) — dashboard analytics avec heatmap scans
+  - /public/features/step-create-product.png (1152x864) — fabricant crée un produit sur tablette
+  - /public/features/step-generate-qr.png (1152x864) — génération QR codes prêts à imprimer
+  - /public/features/step-share-track.png (1152x864) — client scan + map pins de tracking
+- Installation du package embla-carousel-autoplay (plugin d'auto-scroll pour le slider)
+- Création de CatalogSlider.tsx (Server Component) :
+  - Fetch 12 produits triés par popularité (totalScans DESC) via getAllProducts()
+  - Sérialisation minimal shape pour le client (id, name, brand, imageUrl, transparencyScore, fabricant, latestLotId, etc.)
+  - Return null si DB unreachable ou 0 produits (pas de slider vide)
+- Création de CatalogSliderClient.tsx (Client Component) :
+  - Carousel shadcn/ui + plugin Autoplay (delay 4000ms, stopOnMouseEnter, stopOnInteraction: false)
+  - Responsive : 1 slide mobile / 2 sm / 3 lg / 4 xl
+  - Loop activé si > 4 produits
+  - Cartes compactes : image/emoji 4:3, badge transparence, nom, marque, fabricant (logo + verified), rating, scans, barre transparence
+  - Flèches prev/next custom (hidden on mobile, swipe natif)
+  - Dot indicators (max 8, active = wider blue)
+  - CTA "Voir tout le catalogue" → /produits
+- Intégration dans page.tsx : <CatalogSlider /> placé juste après <HowItWorks /> (qui contient le CTA "Démarrer maintenant" en fin de section)
+- Vérification visuelle (lint clean + agent-browser) :
+  - HTTP 200, 0 erreur runtime, 0 erreur console
+  - 6 images générées chargées à la bonne taille (1344x768 et 1152x864)
+  - Slider trouvé avec 6 cartes produits visibles
+  - Produits réels rendus : Huile de Baobab Bio 250ml (Platine 92/100), Beurre de Karité Brut 200g (Or 85/100), Savon Noir Africain 150g, etc.
+  - CTA "Démarrer maintenant" confirmé AU-DESSUS du slider (positions vérifiées via getBoundingClientRect)
+  - Click sur carte navigue vers /p/{lotId} (ex: /p/cmstcvy9r000msqjiim02o1r3)
+  - Flèches prev/next + 6 dots indicators présents et fonctionnels
+  - Click sur "Suivant" fait avancer le carousel
+
+Stage Summary:
+- 6 images réelles régénérées via IA (z-ai CLI) — tailles optimisées pour chaque ratio de card
+- Nouveau composant CatalogSlider (server + client) affichant un carousel auto-scroll de produits réels du catalogue
+- Slider placé juste en dessous du CTA "Démarrer maintenant" comme demandé
+- 100% data réelle : pas de mock, fetch Prisma via getAllProducts({sort:'popular', limit:12})
+- Graceful degradation : si 0 produits en DB, le slider n'est pas rendu (pas de section vide)
+- Lint clean, 0 erreur, navigation et interactions vérifiées end-to-end avec agent-browser

@@ -2,6 +2,7 @@ import { Header } from "@/components/landing/Header";
 import { Hero } from "@/components/landing/Hero";
 import { Features } from "@/components/landing/Features";
 import { HowItWorks } from "@/components/landing/HowItWorks";
+import { CatalogSlider } from "@/components/landing/CatalogSlider";
 import { DemoSection } from "@/components/landing/DemoSection";
 import { Testimonials } from "@/components/landing/Testimonials";
 import { StatsBanner } from "@/components/landing/StatsBanner";
@@ -17,6 +18,7 @@ export default function Home() {
         <Hero />
         <Features />
         <HowItWorks />
+        <CatalogSlider />
         <DemoSection />
         <Testimonials />
         <StatsBanner />
