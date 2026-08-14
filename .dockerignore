@@ -32,12 +32,16 @@ db/*.db-shm
 # --- Tests & tooling (not needed in the production image) -------------------
 tests/
 tool-results/
+# Only ignore the stray top-level /upload dir (sandbox artefact),
+# NOT public/uploads/ — that's where user-uploaded product images live.
 upload/
 download/
 verify-*.png
-*.png
-*.jpg
-*.jpeg
+# Ignore stray *.png at the repo root (proof screenshots etc.), but
+# KEEP images inside public/ (product catalogue + uploads + logo).
+/*.png
+/*.jpg
+/*.jpeg
 
 # --- Local config & secrets -------------------------------------------------
 .env
@@ -61,7 +65,7 @@ eslint.config.mjs
 
 # --- IMPORTANT: do NOT ignore the following (explicit allow-list) -----------
 # prisma/
-# public/
+# public/                 ← includes public/uploads/ AND public/products/
 # package.json
 # package-lock.json
 # next.config.ts
