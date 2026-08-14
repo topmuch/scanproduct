@@ -102,9 +102,20 @@ RUN bun run build
 # the persistent data directory with permissive permissions so the Node
 # process can write SQLite + uploaded files regardless of the user
 # Coolify runs the container as.
-RUN mkdir -p /app/data \
-            /app/.next/standalone/public/uploads/products && \
-    chmod -R 777 /app/.next/standalone/public/uploads /app/data
+#
+# CRITICAL: replace the standalone's copied public/uploads/ directory
+# with a SYMLINK to /app/public/uploads/ (where the Coolify volume is
+# mounted). Without this, /api/upload writes to /app/public/uploads/
+# (the volume) but the standalone server.js serves static files from
+# /app/.next/standalone/public/ — two different directories — so newly
+# uploaded images 404 and appear broken in the UI.
+# The symlink makes /app/.next/standalone/public/uploads → /app/public/uploads
+# so writes and reads hit the SAME location (the persistent volume).
+RUN mkdir -p /app/data /app/public/uploads/products && \
+    chmod -R 777 /app/public/uploads /app/data && \
+    rm -rf /app/.next/standalone/public/uploads && \
+    ln -sf /app/public/uploads /app/.next/standalone/public/uploads && \
+    ls -la /app/.next/standalone/public/uploads
 
 EXPOSE 3000
 
@@ -112,7 +123,8 @@ ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 ENV DATABASE_URL=file:/app/data/scanproduct.db
 
-# At runtime: re-ensure the uploads dir exists (in case a fresh empty
-# volume is mounted over it), run DB migrations + seed, then start the
-# standalone Next.js server.
-CMD ["sh", "-c", "mkdir -p /app/data /app/.next/standalone/public/uploads/products && chmod -R 777 /app/.next/standalone/public/uploads /app/data && export DATABASE_URL=file:/app/data/scanproduct.db && bunx prisma db push --skip-generate 2>/dev/null || true && bun run prisma/seed.ts 2>/dev/null || true && exec node .next/standalone/server.js"]
+# At runtime: re-ensure the uploads dir + symlink exist (in case a fresh
+# empty volume is mounted over /app/public/uploads, which would break the
+# symlink target), run DB migrations + seed, then start the standalone
+# Next.js server.
+CMD ["sh", "-c", "mkdir -p /app/data /app/public/uploads/products && chmod -R 777 /app/public/uploads /app/data && rm -rf /app/.next/standalone/public/uploads && ln -sf /app/public/uploads /app/.next/standalone/public/uploads && export DATABASE_URL=file:/app/data/scanproduct.db && bunx prisma db push --skip-generate 2>/dev/null || true && bun run prisma/seed.ts 2>/dev/null || true && exec node .next/standalone/server.js"]

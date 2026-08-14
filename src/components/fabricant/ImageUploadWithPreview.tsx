@@ -56,6 +56,9 @@ export function ImageUploadWithPreview({
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [dragActive, setDragActive] = useState(false);
+  // Track whether the current <img> failed to load — when true, we show
+  // a clean placeholder instead of the browser's broken-image icon.
+  const [imgFailed, setImgFailed] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Keep a ref to the current blob URL so we can revoke it later.
@@ -68,9 +71,15 @@ export function ImageUploadWithPreview({
       // Don't override a blob: preview that's still being uploaded
       if (!preview || !preview.startsWith("blob:")) {
         setPreview(value);
+        setImgFailed(false);
       }
     }
   }, [value, preview]);
+
+  // Reset imgFailed whenever preview changes (new image being loaded).
+  useEffect(() => {
+    setImgFailed(false);
+  }, [preview]);
 
   // ── CRITICAL FIX ─────────────────────────────────────────────────
   // Revoke the Blob URL ONLY AFTER `preview` has been committed to a
@@ -113,6 +122,7 @@ export function ImageUploadWithPreview({
   const handleFile = useCallback(
     async (file: File) => {
       setError(null);
+      setImgFailed(false);
 
       // ---- Client-side validation ----
       if (!file.type.startsWith("image/")) {
@@ -210,6 +220,7 @@ export function ImageUploadWithPreview({
     }
     setPreview(null);
     setError(null);
+    setImgFailed(false);
     onChange("");
   }, [onChange]);
 
@@ -245,7 +256,7 @@ export function ImageUploadWithPreview({
               : "border-dashed border-[#E5E7EB] bg-[#F9FAFB]"
         }`}
       >
-        {preview ? (
+        {preview && !imgFailed ? (
           <>
             {/* Plain <img> tag — NOT next/image — so dynamically uploaded
                 local files don't go through the Next.js image optimizer.
@@ -259,10 +270,15 @@ export function ImageUploadWithPreview({
               alt="Aperçu"
               className="h-full w-full object-cover"
               onError={() => {
-                // If even the preview fails (shouldn't happen with blob
-                // URLs, but defensive), surface an error instead of a
-                // broken icon.
-                setError("Impossible de charger l'aperçu de l'image.");
+                // Mark the image as failed so we show a clean
+                // placeholder instead of the browser's broken-image
+                // icon. This can happen in production when the file
+                // was uploaded but the static-file path isn't aligned
+                // with the standalone server's public/ directory.
+                setImgFailed(true);
+                setError(
+                  "Image non disponible — téléversez à nouveau l'image.",
+                );
               }}
             />
 
