@@ -88,10 +88,23 @@ RUN bunx prisma generate
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV DATABASE_URL=file:/app/data/scanproduct.db
 ENV NODE_OPTIONS="--max-old-space-size=4096"
+
+# IMPORTANT: create the uploads directory BEFORE `next build` so it is
+# included when the build script copies public/ → .next/standalone/public/.
+# /app/public/uploads/products is where /api/upload writes user-uploaded
+# product images at runtime; it MUST exist in the standalone output or
+# uploads will 404/EACCES in production.
+RUN mkdir -p /app/public/uploads/products && \
+    chmod -R 777 /app/public/uploads
 RUN bun run build
 
-# Create data directory
-RUN mkdir -p /app/data
+# Ensure the uploads dir made it into the standalone output, and create
+# the persistent data directory with permissive permissions so the Node
+# process can write SQLite + uploaded files regardless of the user
+# Coolify runs the container as.
+RUN mkdir -p /app/data \
+            /app/.next/standalone/public/uploads/products && \
+    chmod -R 777 /app/.next/standalone/public/uploads /app/data
 
 EXPOSE 3000
 
@@ -99,4 +112,7 @@ ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 ENV DATABASE_URL=file:/app/data/scanproduct.db
 
-CMD ["sh", "-c", "mkdir -p /app/data && export DATABASE_URL=file:/app/data/scanproduct.db && bunx prisma db push --skip-generate 2>/dev/null || true && bun run prisma/seed.ts 2>/dev/null || true && exec node .next/standalone/server.js"]
+# At runtime: re-ensure the uploads dir exists (in case a fresh empty
+# volume is mounted over it), run DB migrations + seed, then start the
+# standalone Next.js server.
+CMD ["sh", "-c", "mkdir -p /app/data /app/.next/standalone/public/uploads/products && chmod -R 777 /app/.next/standalone/public/uploads /app/data && export DATABASE_URL=file:/app/data/scanproduct.db && bunx prisma db push --skip-generate 2>/dev/null || true && bun run prisma/seed.ts 2>/dev/null || true && exec node .next/standalone/server.js"]
