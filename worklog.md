@@ -2180,3 +2180,50 @@ Stage Summary:
 - Migration : 5 fichiers legacy mismatched renommés + fonction de migration auto pour futurs déploiements
 - Le bug "Image non disponible" est résolu pour TOUS les types de mismatch (JPEG→.png, PNG→.jpg, etc.)
 - Commit poussé : 53682ad sur origin/main
+
+---
+Task ID: 6
+Agent: main
+Task: Correction "Image non disponible" après changement du volume vers /app/uploads
+
+Work Log:
+- Contexte : l'utilisateur a monté le volume persistant Coolify sur /app/uploads (au lieu de /app/public/uploads). Le serveur standalone Next.js ne sert que les fichiers sous public/, donc /app/uploads (hors public) n'était pas accessible → les images uploadées retournaient 404 → "Image non disponible — téléversez à nouveau l'image."
+- Solution : découpler le stockage physique de l'URL publique via une route API dédiée.
+- Nouveaux fichiers :
+  - src/lib/upload-config.ts : config centralisée
+    - UPLOAD_DIR configurable via env var (défaut: public/uploads/products en dev)
+    - buildUploadUrl(filename) → "/api/uploads/<filename>"
+    - resolveUploadPathFromUrl(url) → chemin absolu avec garde anti path-traversal (reject ../etc/passwd)
+  - src/app/api/uploads/[...path]/route.ts : route de servage GET
+    - Lit le fichier depuis UPLOAD_DIR (où qu'il soit physiquement)
+    - Détecte le Content-Type par magic bytes (FF D8 FF = jpeg, 89 50 4E 47 = png, etc.) — pas par extension
+    - Headers: Content-Type correct, Content-Length, Cache-Control immutable (1 an), Last-Modified, X-Content-Type-Options: nosniff
+    - Garde path-traversal : resolveUploadPathFromUrl reject tout chemin qui sort de UPLOAD_DIR
+    - 404 si fichier inexistant
+- Modifications :
+  - src/app/api/upload/route.ts : utilise upload-config, écrit dans UPLOAD_DIR, retourne URL /api/uploads/<filename> au lieu de /uploads/products/<filename>
+  - Dockerfile :
+    - ENV UPLOAD_DIR=/app/uploads/products
+    - Crée /app/uploads/products avec chmod 777
+    - Supprime le hack du symlink /app/.next/standalone/public/uploads → /app/public/uploads (n'est plus nécessaire)
+    - CMD exporte UPLOAD_DIR=/app/uploads/products au runtime
+- Vérification API (curl avec session FABRICANT) :
+  - Upload JPEG → URL /api/uploads/c9361e63-...jpg ✅
+  - GET /api/uploads/c9361e63-...jpg → 200, Content-Type: image/jpeg, 343 bytes, identique au fichier source ✅
+  - Cache-Control: public, max-age=31536000, immutable ✅
+  - /api/uploads/../../etc/passwd → 404 (path-traversal blocked) ✅
+  - /api/uploads/nonexistent.jpg → 404 ✅
+- Vérification E2E (agent-browser, login → dashboard → Nouveau produit → upload) :
+  - Upload JPEG 100x100 → POST /api/upload 200 → image décodée 100x100 depuis /api/uploads/e760b2f3-...jpg → AUCUNE erreur "Image non disponible" → boutons Changer/Retirer visibles ✅
+  - 0 erreur console
+- Lint : clean (0 erreur, 0 warning)
+- Push : commit cd0283b poussé sur origin/main (sync 0 0). Tag V.1 créé automatiquement sur le remote.
+
+Stage Summary:
+- Root cause : volume monté sur /app/uploads (hors public/) → standalone server ne peut pas servir les fichiers statiquement
+- Fix : route API dédiée /api/uploads/[...path] qui lit depuis UPLOAD_DIR (configurable) et sert avec Content-Type par magic bytes
+- Le hack du symlink dans le Dockerfile est supprimé (n'est plus nécessaire)
+- Fonctionne quelle que soit la position du volume (/app/uploads, /app/public/uploads, /var/uploads, etc.)
+- Content-Type toujours correct → fini les "Image non disponible" même avec extension mismatched
+- Cache immutable (UUID-based filenames) + sécurité path-traversal + nosniff
+- Commit poussé : cd0283b sur origin/main
