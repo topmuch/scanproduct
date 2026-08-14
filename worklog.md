@@ -1271,3 +1271,34 @@ Stage Summary:
 - Fix: added `persist` middleware (localStorage, versioned, partialized to data only) to `src/lib/fabricant-data-store.ts`. Uploaded image URLs now survive page reloads.
 - Verified end-to-end: upload → save → reload → image persists and renders. Lint clean, dev server healthy.
 - Note: this is client-side localStorage persistence (appropriate for the current mock/demo architecture). If multi-device or server-side persistence is later required, the store should be rewired to read/write the Prisma `Product` table instead.
+
+---
+Task ID: 20
+Agent: main (continuation)
+Task: User reports "Image non disponible — téléversez à nouveau l'image." error — uploaded images don't display at all.
+
+Work Log:
+- Investigated current state: all 5 uploaded files in public/uploads/products/ exist and return HTTP 200 (valid JPEG data with .png extension, no nosniff header). Hardcoded /products/*.png files have identical headers and display fine.
+- Reproduced in browser: opened Produits edit modal, uploaded a fresh JPEG. The upload POST returned **404** — `POST /api/upload 404 in 969ms`. The ImageUploadWithPreview component's fetch failed, and the `<img>` onError fired → "Image non disponible" error.
+- Root cause: `src/app/api/upload/route.ts` had been **deleted** from the working tree. `git status` showed `deleted: src/app/api/upload/route.ts`. The entire `src/app/api/upload/` directory was missing. With the route gone, every upload attempt 404'd, so no new image could ever be saved — and any product whose `photo` pointed to a never-actually-uploaded /uploads/ URL would show "Image non disponible".
+- ALSO found: `.env` was missing `NEXTAUTH_SECRET` and `NEXTAUTH_URL` (only had DATABASE_URL). This caused `[next-auth][warn][NO_SECRET]` and login 401s. Re-seeded the DB and added both env vars to `.env`.
+- Fix applied:
+  1. Restored `src/app/api/upload/route.ts` from git HEAD via `git checkout HEAD -- src/app/api/upload/route.ts`.
+  2. Added `NEXTAUTH_SECRET` and `NEXTAUTH_URL=http://localhost:3000` to `.env`.
+  3. Ran `bun run db:seed` to restore the demo fabricant user (password hash).
+- Verified the upload route is registered: `curl -X POST /api/upload` now returns 401 "Non authentifié." (auth required) instead of 404.
+- End-to-end verification with agent-browser:
+  1. Logged in as sarine@biocosmetique.sn / Demo1234!.
+  2. Opened Produits → edit modal for "Lait de Cajou".
+  3. Uploaded /tmp/fresh-test.jpg (210KB real JPEG, 800×1200).
+  4. `POST /api/upload 201 in 30ms` — upload succeeded.
+  5. Preview showed `/uploads/products/aca1c9ae-77ae-43d7-8993-8fda5210130a.jpg`, complete=true, naturalWidth=800. NO error text.
+  6. Saved the form → "Lait de Cajou" card now shows the uploaded image.
+  7. RELOADED the page → "Lait de Cajou" card STILL shows `/uploads/products/aca1c9ae...jpg`, loaded=true. (Persistence from Task 19's fix still works.)
+- VLM analysis of the dashboard screenshot confirmed: all product card images display as real photos, including the "Lait de Cajou" card with the uploaded image.
+- `bun run lint`: 0 errors, 0 warnings. No page errors, no console errors.
+
+Stage Summary:
+- The "Image non disponible — téléversez à nouveau l'image." error was caused by the upload API route (`src/app/api/upload/route.ts`) being deleted from the working tree. Every upload attempt 404'd, so the `<img>` could never load the (non-existent) uploaded file.
+- Fix: restored the route from git, added missing NEXTAUTH_SECRET/URL env vars, re-seeded the DB.
+- Verified: upload → 201, preview loads, save persists, reload preserves the uploaded image. Combined with the Zustand `persist` middleware from Task 19, uploaded images now both save AND survive page reloads.
