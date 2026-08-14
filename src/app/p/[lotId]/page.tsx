@@ -10,7 +10,6 @@ import {
 } from "@/lib/public-data";
 import { PublicHeader } from "@/components/public/PublicHeader";
 import { PublicFooter } from "@/components/public/PublicFooter";
-import { MockProductPassport, isMockLotId } from "@/components/public/MockProductPassport";
 
 import { SimilarProducts } from "@/components/product/SimilarProducts";
 
@@ -44,19 +43,17 @@ export async function generateMetadata({
     console.error("[generateMetadata /p/[lotId]] getLotWithDetails threw:", e);
   }
   if (!lot) {
-    // Check if it's a mock lot ID (l1, l2, p1, etc.)
-    if (isMockLotId(lotId)) {
-      return {
-        title: "Passeport numérique VerifScan",
-        description: "Produit vérifié par VerifScan — la vérité au bout du scan.",
-        openGraph: {
-          title: "Passeport numérique VerifScan",
-          description: "Produit vérifié par VerifScan — la vérité au bout du scan.",
-          type: "website",
-        },
-      };
-    }
-    return { title: "Produit introuvable — VerifScan" };
+    return {
+      title: "Produit introuvable — VerifScan",
+      description:
+        "Ce QR code ne correspond à aucun produit enregistré. Vérifiez le catalogue VerifScan.",
+      openGraph: {
+        title: "Produit introuvable — VerifScan",
+        description:
+          "Ce QR code ne correspond à aucun produit enregistré. Vérifiez le catalogue VerifScan.",
+        type: "website",
+      },
+    };
   }
   return {
     title: `${lot.product.name} — Passeport numérique VerifScan`,
@@ -75,10 +72,13 @@ export async function generateMetadata({
 
 export default async function ProductPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ lotId: string }>;
+  searchParams: Promise<{ code?: string }>;
 }) {
   const { lotId } = await params;
+  const { code: qrCodeId } = await searchParams;
 
   let lot: Awaited<ReturnType<typeof getLotWithDetails>> = null;
   try {
@@ -90,13 +90,6 @@ export default async function ProductPage({
   }
 
   if (!lot) {
-    // Check if this is a mock lot ID (l1, l2, p1, …) from the fabricant
-    // dashboard demo data. If so, render a mock product passport so the
-    // scanned QR code actually shows product info instead of "introuvable".
-    if (isMockLotId(lotId)) {
-      return <MockProductPassport lotId={lotId} />;
-    }
-
     // Graceful fallback — a scanned QR code whose lot is not (yet) registered
     // should never show a raw server 404. Instead we render a friendly
     // "product not found" page that keeps the public header/footer and lets
@@ -132,11 +125,16 @@ export default async function ProductPage({
   // Fire and forget — don't block the page render on scan recording.
   // Skip bots/crawlers so analytics counters aren't inflated by search
   // engines or uptime monitors hitting the page.
+  // If the QR code ID is in the ?code= param, record it so we can track
+  // which specific QR code was scanned (useful for attribution analytics).
   try {
     const h = await headers();
     const ua = h.get("user-agent") || "";
     if (ua && !isBotUserAgent(ua)) {
-      void recordScan(lot.id, { userAgent: ua || undefined }).catch((e) =>
+      void recordScan(lot.id, {
+        userAgent: ua || undefined,
+        qrCodeId: qrCodeId || undefined,
+      }).catch((e) =>
         console.error("[ProductPage] recordScan failed:", e),
       );
     }

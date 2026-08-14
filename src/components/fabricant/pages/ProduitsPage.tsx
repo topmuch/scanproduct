@@ -28,13 +28,12 @@ import {
 } from "../ui";
 import {
   CATEGORIES,
-  MARQUE,
   formatNombre,
   type Product,
   type ProductStatus,
-} from "@/lib/fabricant-data";
+} from "@/lib/fabricant-types";
 import { useFabricantNav } from "@/lib/fabricant-store";
-import { useProduits } from "@/lib/fabricant-data-store";
+import { useFabricantData } from "../FabricantDataProvider";
 import { ProductImage } from "@/components/fabricant/ProductImage";
 import { toast } from "sonner";
 
@@ -292,15 +291,16 @@ function ProductModal({
   product?: Product;
   onClose: () => void;
 }) {
-  const { addProduct, updateProduct } = useProduits();
+  const { data, refresh } = useFabricantData();
   const isEdit = !!product;
   const [nom, setNom] = useState(product?.nom ?? "");
-  const [marque, setMarque] = useState(product?.marque ?? MARQUE.nom);
+  const [marque, setMarque] = useState(product?.marque ?? data.profile.companyName);
   const [categorie, setCategorie] = useState(product?.categorie ?? CATEGORIES[0].nom);
   const [poids, setPoids] = useState(product?.poids ?? "");
   const [description, setDescription] = useState(product?.description ?? "");
   const [visible, setVisible] = useState(true);
   const [status, setStatus] = useState<ProductStatus>(product?.status ?? "actif");
+  const [submitting, setSubmitting] = useState(false);
 
   // ---- Image upload state ----
   // The ImageUploadWithPreview component manages its own uploading/error/
@@ -311,30 +311,43 @@ function ProductModal({
   const cat = CATEGORIES.find((c) => c.nom === categorie);
   const catIcon = cat?.icon ?? "📦";
 
-  const canSubmit = nom.trim().length > 0;
+  const canSubmit = nom.trim().length > 0 && !submitting;
 
-  function handleSubmit() {
+  async function handleSubmit() {
     if (!canSubmit) return;
+    setSubmitting(true);
     const payload = {
-      nom: nom.trim(),
-      marque: marque.trim() || MARQUE.nom,
-      categorie,
-      categorieIcon: catIcon,
-      poids: poids.trim(),
+      name: nom.trim(),
+      brand: marque.trim() || data.profile.companyName,
+      category: categorie,
+      weight: poids.trim(),
       description: description.trim(),
-      status,
-      photo: imageUrl,
+      imageUrl,
+      // status mapping: actif/brouillon/masque → isPublic + status
+      isPublic: status !== "masque",
+      status: status === "brouillon" ? "ARCHIVED" : "ACTIVE",
     };
-    // `visible` is intentionally omitted: the Product type doesn't expose a
-    // visibility flag, the toggle only controls a UI preview for now.
-    if (isEdit && product) {
-      updateProduct(product.id, payload);
-      toast.success("Produit mis à jour avec succès");
-    } else {
-      addProduct(payload);
-      toast.success("Produit créé avec succès");
+    try {
+      const res = await fetch(
+        isEdit && product ? `/api/products/${product.id}` : "/api/products",
+        {
+          method: isEdit && product ? "PATCH" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        },
+      );
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "Échec de la requête");
+      }
+      toast.success(isEdit ? "Produit mis à jour avec succès" : "Produit créé avec succès");
+      refresh();
+      onClose();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erreur inattendue");
+    } finally {
+      setSubmitting(false);
     }
-    onClose();
   }
 
   return (
@@ -574,7 +587,7 @@ function ProductModal({
             {isEdit ? "Enregistrer en brouillon" : "Enregistrer en brouillon"}
           </OutlineButton>
           <GradientButton onClick={handleSubmit} disabled={!canSubmit}>
-            {isEdit ? "Enregistrer les modifications" : "Créer le produit"}
+            {submitting ? "Enregistrement…" : isEdit ? "Enregistrer les modifications" : "Créer le produit"}
           </GradientButton>
         </div>
       </motion.div>
@@ -587,8 +600,8 @@ function ProductModal({
 // ============================================================================
 export function ProduitsPage() {
   const { openDetail, setPage } = useFabricantNav();
-  const { produits, deleteProduct, duplicateProduct, toggleProductStatus } =
-    useProduits();
+  const { data, refresh } = useFabricantData();
+  const produits = data.products;
 
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("toutes");
@@ -598,6 +611,63 @@ export function ProduitsPage() {
   const [editingProduct, setEditingProduct] = useState<Product | undefined>(
     undefined
   );
+
+  async function handleDelete(id: string, nom: string) {
+    try {
+      const res = await fetch(`/api/products/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "Échec de la suppression");
+      }
+      toast.success(`Produit « ${nom} » supprimé`);
+      refresh();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erreur inattendue");
+    }
+  }
+
+  async function handleDuplicate(p: Product) {
+    try {
+      const res = await fetch("/api/products", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: `${p.nom} (copie)`,
+          brand: p.marque,
+          category: p.categorie,
+          weight: p.poids,
+          description: p.description,
+          imageUrl: p.photo,
+          isPublic: p.status !== "masque",
+          status: p.status === "brouillon" ? "ARCHIVED" : "ACTIVE",
+        }),
+      });
+      if (!res.ok) throw new Error("Échec de la duplication");
+      toast.success(`« ${p.nom} » dupliqué`);
+      refresh();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erreur inattendue");
+    }
+  }
+
+  async function handleToggleStatus(p: Product) {
+    const newStatus = p.status === "masque" ? "actif" : "masque";
+    try {
+      const res = await fetch(`/api/products/${p.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          isPublic: newStatus !== "masque",
+          status: newStatus === "brouillon" ? "ARCHIVED" : "ACTIVE",
+        }),
+      });
+      if (!res.ok) throw new Error("Échec de la mise à jour");
+      toast.success(newStatus === "masque" ? "Produit masqué" : "Produit affiché");
+      refresh();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erreur inattendue");
+    }
+  }
 
   const filtered = useMemo(() => {
     let list = produits.filter((p) => {
@@ -754,24 +824,15 @@ export function ProduitsPage() {
               onVoir={() => openDetail("produit-detail", p.id)}
               onModifier={() => openEdit(p)}
               onLots={() => setPage("lots")}
-              onDuplicate={() => {
-                duplicateProduct(p.id);
-                toast.success(`"${p.nom}" dupliqué`);
-              }}
-              onToggleStatus={() => {
-                toggleProductStatus(p.id);
-                toast.success(
-                  p.status === "masque" ? "Produit affiché" : "Produit masqué"
-                );
-              }}
+              onDuplicate={() => handleDuplicate(p)}
+              onToggleStatus={() => handleToggleStatus(p)}
               onDelete={() => {
                 if (
                   window.confirm(
                     `Supprimer le produit "${p.nom}" ? Cette action est irréversible.`
                   )
                 ) {
-                  deleteProduct(p.id);
-                  toast.success("Produit supprimé");
+                  handleDelete(p.id, p.nom);
                 }
               }}
             />

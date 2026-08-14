@@ -24,9 +24,9 @@ import {
   formatNombre,
   type Lot,
   type Product,
-} from "@/lib/fabricant-data";
+} from "@/lib/fabricant-types";
 import { useFabricantNav } from "@/lib/fabricant-store";
-import { useLots, useProduits } from "@/lib/fabricant-data-store";
+import { useFabricantData } from "../FabricantDataProvider";
 import { downloadQRCode } from "@/lib/qr-utils";
 import { ProductImage } from "@/components/fabricant/ProductImage";
 import { toast } from "sonner";
@@ -64,7 +64,6 @@ function isExpiringSoon(iso: string, days = 7): boolean {
 // Constants
 // ============================================================================
 const PAGE_SIZE = 20;
-const QUOTA_RESTANT = 2660; // QR codes restants (mock)
 
 // ============================================================================
 // CSV export helper — builds a UTF-8 CSV (with BOM for Excel) from a list of
@@ -164,8 +163,13 @@ const SORT_OPTIONS: { value: SortFilter; label: string }[] = [
 // ============================================================================
 export function LotsPage() {
   const { openDetail } = useFabricantNav();
-  const { produits } = useProduits();
-  const { lots, deleteLot, markLotRecalled } = useLots();
+  const { data, refresh } = useFabricantData();
+  const produits = data.products;
+  const lots = data.lots;
+  const quotaRestant = Math.max(
+    0,
+    data.abonnement.quota.qrCodes.limite - data.abonnement.quota.qrCodes.utilise,
+  );
 
   // Filters state
   const [search, setSearch] = useState("");
@@ -321,9 +325,25 @@ export function LotsPage() {
   function handleBulkMarkRecalled() {
     const count = selectedIds.size;
     if (count === 0) return;
-    selectedIds.forEach((id) => markLotRecalled(id));
-    toast.warning(`${count} lot${count > 1 ? "s" : ""} marqué${count > 1 ? "s" : ""} comme rappelé${count > 1 ? "s" : ""}`);
-    clearSelection();
+    Promise.all(
+      Array.from(selectedIds).map((id) =>
+        fetch(`/api/lots/${id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: "RECALLED" }),
+        }).catch(() => null),
+      ),
+    ).then((results) => {
+      const ok = results.filter((r) => r && r.ok).length;
+      if (ok > 0) {
+        toast.warning(`${ok} lot${ok > 1 ? "s" : ""} marqué${ok > 1 ? "s" : ""} comme rappelé${ok > 1 ? "s" : ""}`);
+        refresh();
+      }
+      if (ok < count) {
+        toast.error(`${count - ok} lot(s) n'ont pas pu être mis à jour`);
+      }
+      clearSelection();
+    });
   }
 
   function handleBulkExportCSV() {
@@ -344,9 +364,21 @@ export function LotsPage() {
       )
     )
       return;
-    selectedIds.forEach((id) => deleteLot(id));
-    toast.success(`${count} lot${count > 1 ? "s" : ""} supprimé${count > 1 ? "s" : ""}`);
-    clearSelection();
+    Promise.all(
+      Array.from(selectedIds).map((id) =>
+        fetch(`/api/lots/${id}`, { method: "DELETE" }).catch(() => null),
+      ),
+    ).then((results) => {
+      const ok = results.filter((r) => r && r.ok).length;
+      if (ok > 0) {
+        toast.success(`${ok} lot${ok > 1 ? "s" : ""} supprimé${ok > 1 ? "s" : ""}`);
+        refresh();
+      }
+      if (ok < count) {
+        toast.error(`${count - ok} lot(s) n'ont pas pu être supprimés`);
+      }
+      clearSelection();
+    });
   }
 
   // ---- Single-row action handlers -----------------------------------------
@@ -388,20 +420,39 @@ export function LotsPage() {
     }
   }
 
-  function handleRowMarkRecalled(lot: Lot) {
-    markLotRecalled(lot.id);
-    toast.warning(`Lot ${lot.numero} marqué comme rappelé`);
+  async function handleRowMarkRecalled(lot: Lot) {
+    try {
+      const res = await fetch(`/api/lots/${lot.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "RECALLED" }),
+      });
+      if (!res.ok) throw new Error("Échec de la mise à jour");
+      toast.warning(`Lot ${lot.numero} marqué comme rappelé`);
+      refresh();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erreur inattendue");
+    }
   }
 
-  function handleRowDelete(lot: Lot) {
+  async function handleRowDelete(lot: Lot) {
     if (
       !window.confirm(
         `Supprimer le lot ${lot.numero} ? Cette action est irréversible.`
       )
     )
       return;
-    deleteLot(lot.id);
-    toast.success(`Lot ${lot.numero} supprimé`);
+    try {
+      const res = await fetch(`/api/lots/${lot.id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "Échec de la suppression");
+      }
+      toast.success(`Lot ${lot.numero} supprimé`);
+      refresh();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erreur inattendue");
+    }
   }
 
   // Pagination buttons
@@ -921,11 +972,16 @@ function CreationModal({
   onClose: () => void;
   onVoirLot: (id: string) => void;
 }) {
-  const { addLot } = useLots();
-  const { produits } = useProduits();
+  const { data, refresh } = useFabricantData();
+  const produits = data.products;
+  const quotaRestant = Math.max(
+    0,
+    data.abonnement.quota.qrCodes.limite - data.abonnement.quota.qrCodes.utilise,
+  );
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [done, setDone] = useState(false);
   const [createdLotId, setCreatedLotId] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   // Step 1 — product
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
@@ -962,7 +1018,7 @@ function CreationModal({
   const [qrCouleur, setQrCouleur] = useState("#000000");
 
   const selectedProduct = produits.find((p) => p.id === selectedProductId) || null;
-  const quotaApres = Math.max(0, QUOTA_RESTANT - qrCount);
+  const quotaApres = Math.max(0, quotaRestant - qrCount);
   const tailleMo = Math.round(qrCount * 0.15 * 10) / 10;
 
   function toggleFormat(f: string) {
@@ -1153,29 +1209,64 @@ function CreationModal({
                 )}
                 {step === 3 && (
                   <GradientButton
-                    disabled={!step3Valid}
-                    onClick={() => {
+                    disabled={!step3Valid || submitting}
+                    onClick={async () => {
                       if (!selectedProductId || !selectedProduct) return;
-                      const newLot = addLot({
-                        numero,
-                        produitId: selectedProductId,
-                        produitNom: selectedProduct.nom,
-                        produitPhoto: selectedProduct.photo,
-                        produitIcon: selectedProduct.categorieIcon,
-                        dateFabrication: dateFab,
-                        datePeremption: datePerm,
-                        status: "actif",
-                        qrCodes: qrCount,
-                        ingredients,
-                        lieuFabrication: lieuFab,
-                      });
-                      setCreatedLotId(newLot.id);
-                      toast.success(`Lot ${newLot.numero} créé avec succès`);
-                      setDone(true);
+                      setSubmitting(true);
+                      try {
+                        // 1. Create the lot via the API.
+                        const res = await fetch("/api/lots", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            productId: selectedProductId,
+                            lotNumber: numero,
+                            manufactureDate: dateFab,
+                            expiryDate: datePerm,
+                            ingredients,
+                            weight: poids,
+                            manufacturingLocation: lieuFab,
+                            transformationLocation: lieuTrans,
+                            salesCountries: Array.from(paysVente),
+                            quantity: qrCount,
+                          }),
+                        });
+                        if (!res.ok) {
+                          const err = await res.json().catch(() => ({}));
+                          throw new Error(err.error || "Échec de la création du lot");
+                        }
+                        const created = await res.json();
+                        setCreatedLotId(created.id);
+
+                        // 2. Generate the QR codes for this lot (best-effort).
+                        if (qrCount > 0) {
+                          try {
+                            await fetch("/api/qr-codes/generate", {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({
+                                lotId: created.id,
+                                quantity: Math.min(100, qrCount),
+                                options: { includeLotNumber: optLot, includeProductName: optNom },
+                              }),
+                            });
+                          } catch (qrErr) {
+                            console.error("[LotsPage] QR generation failed:", qrErr);
+                          }
+                        }
+
+                        toast.success(`Lot ${numero} créé avec succès`);
+                        refresh();
+                        setDone(true);
+                      } catch (e) {
+                        toast.error(e instanceof Error ? e.message : "Erreur inattendue");
+                      } finally {
+                        setSubmitting(false);
+                      }
                     }}
                   >
                     <Tag className="h-4 w-4" />
-                    Créer le lot et générer QR codes
+                    {submitting ? "Création en cours…" : "Créer le lot et générer QR codes"}
                   </GradientButton>
                 )}
               </div>
@@ -1610,7 +1701,7 @@ function Step3QR(props: {
       <Field
         label="Nombre de QR codes"
         required
-        hint={`Quota restant : ${formatNombre(QUOTA_RESTANT)} QR codes`}
+        hint={`Quota restant : ${formatNombre(quotaRestant)} QR codes`}
       >
         <input
           type="number"

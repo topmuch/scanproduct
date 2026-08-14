@@ -301,6 +301,14 @@ export async function getAllProducts(filters: CatalogFilters = {}) {
 // Categories
 // ---------------------------------------------------------------------------
 
+/**
+ * Returns all active categories, ordered by display order.
+ *
+ * Note: for the catalog UI prefer `getCategoriesWithCounts()` which also
+ * returns the product count per category. This function is kept for
+ * callers that only need the raw category list (e.g. admin selectors,
+ * seed scripts, future API routes).
+ */
 export async function getActiveCategories() {
   return db.category.findMany({
     where: { isActive: true },

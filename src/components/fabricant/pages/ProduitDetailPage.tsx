@@ -31,14 +31,13 @@ import {
 } from "../ui";
 import {
   CATEGORIES,
-  MARQUE,
   formatNombre,
   type Lot,
   type Product,
   type ProductStatus,
-} from "@/lib/fabricant-data";
+} from "@/lib/fabricant-types";
 import { useFabricantNav } from "@/lib/fabricant-store";
-import { useProduits, useLots } from "@/lib/fabricant-data-store";
+import { useFabricantData } from "../FabricantDataProvider";
 import { ProductImage } from "@/components/fabricant/ProductImage";
 import { getScanUrl, downloadQRCode } from "@/lib/qr-utils";
 import { toast } from "sonner";
@@ -174,7 +173,7 @@ function EditProductModal({
   product: Product;
   onClose: () => void;
 }) {
-  const { updateProduct } = useProduits();
+  const { data, refresh } = useFabricantData();
   const [nom, setNom] = useState(product.nom);
   const [marque, setMarque] = useState(product.marque);
   const [categorie, setCategorie] = useState(product.categorie);
@@ -182,24 +181,41 @@ function EditProductModal({
   const [description, setDescription] = useState(product.description);
   const [status, setStatus] = useState<ProductStatus>(product.status);
   const [imageUrl, setImageUrl] = useState(product.photo);
+  const [submitting, setSubmitting] = useState(false);
   const cat = CATEGORIES.find((c) => c.nom === categorie);
   const catIcon = cat?.icon ?? "📦";
-  const canSubmit = nom.trim().length > 0;
+  const canSubmit = nom.trim().length > 0 && !submitting;
 
-  function handleSubmit() {
+  async function handleSubmit() {
     if (!canSubmit) return;
-    updateProduct(product.id, {
-      nom: nom.trim(),
-      marque: marque.trim() || MARQUE.nom,
-      categorie,
-      categorieIcon: catIcon,
-      poids: poids.trim(),
-      description: description.trim(),
-      status,
-      photo: imageUrl,
-    });
-    toast.success("Produit mis à jour avec succès");
-    onClose();
+    setSubmitting(true);
+    try {
+      const res = await fetch(`/api/products/${product.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: nom.trim(),
+          brand: marque.trim() || data.profile.companyName,
+          category: categorie,
+          weight: poids.trim(),
+          description: description.trim(),
+          imageUrl,
+          isPublic: status !== "masque",
+          status: status === "brouillon" ? "ARCHIVED" : "ACTIVE",
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "Échec de la mise à jour");
+      }
+      toast.success("Produit mis à jour avec succès");
+      refresh();
+      onClose();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erreur inattendue");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -351,7 +367,7 @@ function EditProductModal({
         <div className="flex flex-wrap items-center justify-end gap-2 border-t border-[#F3F4F6] bg-[#F9FAFB] px-6 py-4">
           <OutlineButton onClick={onClose}>Annuler</OutlineButton>
           <GradientButton onClick={handleSubmit} disabled={!canSubmit}>
-            Enregistrer les modifications
+            {submitting ? "Enregistrement…" : "Enregistrer les modifications"}
           </GradientButton>
         </div>
       </motion.div>
@@ -364,8 +380,9 @@ function EditProductModal({
 // ============================================================================
 export function ProduitDetailPage() {
   const { selectedId, setPage } = useFabricantNav();
-  const { produits, deleteProduct, toggleProductStatus } = useProduits();
-  const { lots } = useLots();
+  const { data, refresh } = useFabricantData();
+  const produits = data.products;
+  const lots = data.lots;
   const [editOpen, setEditOpen] = useState(false);
 
   const product: Product | undefined = produits.find(
@@ -407,23 +424,46 @@ export function ProduitDetailPage() {
     toast.success("QR code téléchargé");
   }
 
-  function handleToggleStatus() {
-    toggleProductStatus(product!.id);
-    toast.success(
-      product!.status === "masque" ? "Produit affiché" : "Produit masqué"
-    );
+  async function handleToggleStatus() {
+    if (!product) return;
+    const newStatus = product.status === "masque" ? "actif" : "masque";
+    try {
+      const res = await fetch(`/api/products/${product.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          isPublic: newStatus !== "masque",
+          status: newStatus === "brouillon" ? "ARCHIVED" : "ACTIVE",
+        }),
+      });
+      if (!res.ok) throw new Error("Échec de la mise à jour");
+      toast.success(newStatus === "masque" ? "Produit masqué" : "Produit affiché");
+      refresh();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erreur inattendue");
+    }
   }
 
-  function handleDelete() {
+  async function handleDelete() {
+    if (!product) return;
     if (
       !window.confirm(
-        `Supprimer le produit "${product!.nom}" ? Cette action est irréversible.`
+        `Supprimer le produit "${product.nom}" ? Cette action est irréversible.`
       )
     )
       return;
-    deleteProduct(product!.id);
-    toast.success("Produit supprimé");
-    setPage("produits");
+    try {
+      const res = await fetch(`/api/products/${product.id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "Échec de la suppression");
+      }
+      toast.success("Produit supprimé");
+      refresh();
+      setPage("produits");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erreur inattendue");
+    }
   }
 
   return (

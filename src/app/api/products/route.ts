@@ -85,6 +85,19 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // Audit log — record product creation
+    db.auditLog
+      .create({
+        data: {
+          userId: user.id,
+          action: "CREATE_PRODUCT",
+          entity: "Product",
+          entityId: product.id,
+          metadata: JSON.stringify({ name: product.name }),
+        },
+      })
+      .catch(() => undefined);
+
     return NextResponse.json(product, { status: 201 });
   } catch (error) {
     console.error("[POST /api/products] Error:", error);

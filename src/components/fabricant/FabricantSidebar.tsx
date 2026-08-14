@@ -17,7 +17,7 @@ import {
 import { signOut } from "next-auth/react";
 import { Logo } from "@/components/landing/Logo";
 import { useFabricantNav, type FabricantPage } from "@/lib/fabricant-store";
-import { MARQUE } from "@/lib/fabricant-data";
+import { useFabricantData } from "./FabricantDataProvider";
 import { cn } from "@/lib/utils";
 
 type NavItem = {
@@ -38,16 +38,18 @@ const NAV_SECTIONS: NavSection[] = [
     title: "PRINCIPAL",
     items: [
       { key: "accueil", page: "accueil", label: "Accueil", icon: Home },
-      { key: "produits", page: "produits", label: "Produits", icon: Package, badge: { text: "24", color: "#EF4444" } },
-      { key: "lots", page: "lots", label: "Lots", icon: Tag, badge: { text: "87", color: "#EF4444" } },
-      { key: "qr-codes", page: "qr-codes", label: "QR Codes", icon: QrCode, badge: { text: "1250", color: "#EF4444" } },
+      // Dynamic counts are injected at render time below — these `badge`
+      // values are overwritten via the `<SidebarNav />` helper.
+      { key: "produits", page: "produits", label: "Produits", icon: Package, badge: { text: "0", color: "#EF4444" } },
+      { key: "lots", page: "lots", label: "Lots", icon: Tag, badge: { text: "0", color: "#EF4444" } },
+      { key: "qr-codes", page: "qr-codes", label: "QR Codes", icon: QrCode, badge: { text: "0", color: "#EF4444" } },
     ],
   },
   {
     title: "ANALYTIQUE",
     items: [
       { key: "statistiques", page: "statistiques", label: "Statistiques", icon: BarChart3 },
-      { key: "score", page: "score", label: "Score Transparence", icon: Gem, badge: { text: "95/100", color: "#8B5CF6" } },
+      { key: "score", page: "score", label: "Score Transparence", icon: Gem, badge: { text: "0/100", color: "#8B5CF6" } },
     ],
   },
   {
@@ -74,7 +76,16 @@ const PAGE_TO_KEY: Record<FabricantPage, string> = {
 
 export function FabricantSidebar() {
   const { page, setPage, mobileSidebarOpen, setMobileSidebarOpen } = useFabricantNav();
+  const { data } = useFabricantData();
   const activeKey = PAGE_TO_KEY[page];
+
+  // Compute real badge counts from the dashboard data.
+  const badgesByPage: Record<string, string> = {
+    produits: String(data.products.length),
+    lots: String(data.lots.length),
+    "qr-codes": String(data.qrCodes.length),
+    score: `${data.score.global}/100`,
+  };
 
   const sidebarContent = (
     <>
@@ -104,6 +115,10 @@ export function FabricantSidebar() {
             <ul className="space-y-0.5 px-3">
               {section.items.map((item) => {
                 const isActive = activeKey === item.key;
+                const dynamicText = badgesByPage[item.key];
+                const badge = dynamicText
+                  ? { text: dynamicText, color: item.badge?.color ?? "#EF4444" }
+                  : item.badge;
                 return (
                   <li key={item.key}>
                     <button
@@ -121,12 +136,12 @@ export function FabricantSidebar() {
                       )}
                       <item.icon className="h-5 w-5 flex-shrink-0" />
                       <span className="flex-1 text-left">{item.label}</span>
-                      {item.badge && (
+                      {badge && (
                         <span
                           className="flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1 text-[10px] font-bold text-white"
-                          style={{ backgroundColor: item.badge.color }}
+                          style={{ backgroundColor: badge.color }}
                         >
-                          {item.badge.text}
+                          {badge.text}
                         </span>
                       )}
                     </button>
@@ -162,13 +177,13 @@ export function FabricantSidebar() {
       <div className="border-t border-white/10 p-4">
         <div className="flex items-center gap-3 rounded-lg p-2 hover:bg-white/10">
           <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-[#2563EB] to-[#10B981] font-display text-sm font-bold text-white">
-            {MARQUE.logo}
+            {data.profile.logo}
           </span>
           <div className="min-w-0 flex-1 leading-tight">
-            <p className="truncate text-[14px] font-semibold text-white">{MARQUE.nom}</p>
+            <p className="truncate text-[14px] font-semibold text-white">{data.profile.companyName}</p>
             <span className="inline-flex items-center gap-1 text-[12px]">
               <span className="rounded bg-[#D1FAE5] px-1.5 py-0.5 text-[10px] font-bold text-[#065F46]">
-                {MARQUE.plan}
+                {data.profile.plan}
               </span>
             </span>
           </div>

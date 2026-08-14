@@ -20,19 +20,7 @@ import { cn } from "@/lib/utils";
 import { Card, CardHeader, Button, Badge, SectionTitle, PageContainer } from "@/components/admin/ui";
 import { AreaTrend, LineTrend, BarV } from "@/components/admin/charts";
 import { CountUp } from "@/components/landing/CountUp";
-import {
-  GLOBAL_KPI,
-  SIGNUPS_DATA,
-  REVENUE_DATA,
-  SCANS_DAILY,
-  SCANS_BY_HOUR,
-  SCANS_BY_WEEKDAY,
-  RETENTION_DATA,
-  CHURN_DATA,
-  TOP_CITIES,
-  TOP_MAKERS,
-  PERF_DATA,
-} from "@/lib/admin-data";
+import { useAdminData } from "@/components/admin/AdminDataProvider";
 
 const PERIODS = ["7j", "30j", "90j", "12m", "Personnalisé"] as const;
 type Period = (typeof PERIODS)[number];
@@ -45,22 +33,33 @@ type KpiCard = {
   bg: string;
 };
 
-const KPI_CARDS: KpiCard[] = [
-  { label: "Total fabricants", value: GLOBAL_KPI.totalMakers, Icon: Users, color: "#2563EB", bg: "#DBEAFE" },
-  { label: "Fabricants actifs", value: GLOBAL_KPI.activeMakers, Icon: UserCheck, color: "#10B981", bg: "#D1FAE5" },
-  { label: "Total produits", value: GLOBAL_KPI.totalProducts, Icon: Package, color: "#F59E0B", bg: "#FFEDD5" },
-  { label: "Total lots", value: GLOBAL_KPI.totalLots, Icon: Layers, color: "#8B5CF6", bg: "#EDE9FE" },
-  { label: "Total QR codes", value: GLOBAL_KPI.totalQrCodes, Icon: QrCode, color: "#2563EB", bg: "#DBEAFE" },
-  { label: "Total scans", value: GLOBAL_KPI.totalScans, Icon: ScanLine, color: "#10B981", bg: "#D1FAE5" },
-];
+function buildKpiCards(GLOBAL_KPI: {
+  totalMakers: number;
+  activeMakers: number;
+  totalProducts: number;
+  totalLots: number;
+  totalQrCodes: number;
+  totalScans: number;
+}): KpiCard[] {
+  return [
+    { label: "Total fabricants", value: GLOBAL_KPI.totalMakers, Icon: Users, color: "#2563EB", bg: "#DBEAFE" },
+    { label: "Fabricants actifs", value: GLOBAL_KPI.activeMakers, Icon: UserCheck, color: "#10B981", bg: "#D1FAE5" },
+    { label: "Total produits", value: GLOBAL_KPI.totalProducts, Icon: Package, color: "#F59E0B", bg: "#FFEDD5" },
+    { label: "Total lots", value: GLOBAL_KPI.totalLots, Icon: Layers, color: "#8B5CF6", bg: "#EDE9FE" },
+    { label: "Total QR codes", value: GLOBAL_KPI.totalQrCodes, Icon: QrCode, color: "#2563EB", bg: "#DBEAFE" },
+    { label: "Total scans", value: GLOBAL_KPI.totalScans, Icon: ScanLine, color: "#10B981", bg: "#D1FAE5" },
+  ];
+}
 
 // Top 5 cities rendered as dots on the stylized Senegal map.
-const CITY_DOTS = [
-  { city: "Dakar", scans: 456_789, x: "20%", y: "32%", size: 32, color: "#2563EB" },
-  { city: "Thiès", scans: 123_456, x: "30%", y: "40%", size: 22, color: "#10B981" },
-  { city: "Saint-Louis", scans: 89_012, x: "34%", y: "12%", size: 18, color: "#F59E0B" },
-  { city: "Mbour", scans: 76_340, x: "17%", y: "56%", size: 16, color: "#8B5CF6" },
-  { city: "Touba", scans: 68_920, x: "42%", y: "32%", size: 16, color: "#EF4444" },
+// Coordinates are stylized positions on the placeholder map; values are
+// derived from real scan aggregates (topCities[0..4]).
+const CITY_DOTS_TEMPLATE = [
+  { x: "20%", y: "32%", size: 32, color: "#2563EB" },
+  { x: "30%", y: "40%", size: 22, color: "#10B981" },
+  { x: "34%", y: "12%", size: 18, color: "#F59E0B" },
+  { x: "17%", y: "56%", size: 16, color: "#8B5CF6" },
+  { x: "42%", y: "32%", size: 16, color: "#EF4444" },
 ];
 
 const RANK_COLORS = [
@@ -87,6 +86,27 @@ function SectionHeading({ title, subtitle }: { title: string; subtitle?: string 
 
 export function StatsPage() {
   const [period, setPeriod] = useState<Period>("30j");
+  const {
+    stats: GLOBAL_KPI,
+    signups: SIGNUPS_DATA,
+    revenue: REVENUE_DATA,
+    scansDaily: SCANS_DAILY,
+    scansByHour: SCANS_BY_HOUR,
+    scansByWeekday: SCANS_BY_WEEKDAY,
+    retention: RETENTION_DATA,
+    churn: CHURN_DATA,
+    topCities: TOP_CITIES,
+    topMakers: TOP_MAKERS,
+    perf: PERF_DATA,
+  } = useAdminData();
+
+  const KPI_CARDS = buildKpiCards(GLOBAL_KPI);
+  const CITY_DOTS = CITY_DOTS_TEMPLATE.map((tpl, i) => ({
+    city: TOP_CITIES[i]?.city ?? `Ville ${i + 1}`,
+    scans: TOP_CITIES[i]?.scans ?? 0,
+    ...tpl,
+  }));
+  const maxScans = TOP_MAKERS[0]?.scans ?? 1;
 
   const handleExport = () => {
     toast.success("Rapport PDF en cours de génération", {
@@ -119,8 +139,6 @@ export function StatsPage() {
       </Button>
     </div>
   );
-
-  const maxScans = TOP_MAKERS[0]?.scans ?? 1;
 
   return (
     <PageContainer>
@@ -159,7 +177,7 @@ export function StatsPage() {
             <CardHeader title="Inscriptions par mois" subtitle="Nouveaux fabricants inscrits" />
             <div className="p-4">
               <BarV
-                data={SIGNUPS_DATA.map((d) => ({ label: d.month, value: d.value }))}
+                data={SIGNUPS_DATA.map((d) => ({ label: d.label, value: d.value }))}
                 color="#2563EB"
                 height={260}
               />
@@ -170,7 +188,7 @@ export function StatsPage() {
             <CardHeader title="Revenus MRR" subtitle="Revenu mensuel récurrent (FCFA)" />
             <div className="p-4">
               <AreaTrend
-                data={REVENUE_DATA.map((d) => ({ label: d.month, value: d.value }))}
+                data={REVENUE_DATA.map((d) => ({ label: d.label, value: d.value }))}
                 color="#10B981"
                 height={260}
               />
@@ -181,7 +199,7 @@ export function StatsPage() {
             <CardHeader title="Taux de rétention" subtitle="Fabricants conservés mois après mois (%)" />
             <div className="p-4">
               <LineTrend
-                data={RETENTION_DATA.map((d) => ({ label: d.month, value: d.value }))}
+                data={RETENTION_DATA.map((d) => ({ label: d.label, value: d.value }))}
                 color="#8B5CF6"
                 height={260}
               />
@@ -192,7 +210,7 @@ export function StatsPage() {
             <CardHeader title="Churn rate" subtitle="Taux d'attrition mensuel (%)" />
             <div className="p-4">
               <LineTrend
-                data={CHURN_DATA.map((d) => ({ label: d.month, value: d.value }))}
+                data={CHURN_DATA.map((d) => ({ label: d.label, value: d.value }))}
                 color="#EF4444"
                 height={260}
               />
@@ -209,7 +227,7 @@ export function StatsPage() {
             <CardHeader title="Scans par jour" subtitle="30 derniers jours" />
             <div className="p-4">
               <AreaTrend
-                data={SCANS_DAILY.map((d) => ({ label: d.day, value: d.value }))}
+                data={SCANS_DAILY.map((d) => ({ label: d.label, value: d.value }))}
                 color="#2563EB"
                 height={260}
               />
@@ -220,7 +238,7 @@ export function StatsPage() {
             <CardHeader title="Scans par heure" subtitle="Distribution sur 24h" />
             <div className="p-4">
               <BarV
-                data={SCANS_BY_HOUR.map((d) => ({ label: d.hour, value: d.value }))}
+                data={SCANS_BY_HOUR.map((d) => ({ label: d.label, value: d.value }))}
                 color="#F59E0B"
                 height={260}
               />
@@ -231,7 +249,7 @@ export function StatsPage() {
             <CardHeader title="Scans par jour de la semaine" subtitle="Moyenne par jour de la semaine" />
             <div className="p-4">
               <BarV
-                data={SCANS_BY_WEEKDAY.map((d) => ({ label: d.day, value: d.value }))}
+                data={SCANS_BY_WEEKDAY.map((d) => ({ label: d.label, value: d.value }))}
                 color="#10B981"
                 height={260}
               />
@@ -406,7 +424,7 @@ export function StatsPage() {
             />
             <div className="p-4">
               <LineTrend
-                data={PERF_DATA.latency.map((d) => ({ label: d.day, value: d.value }))}
+                data={PERF_DATA.latency.map((d) => ({ label: d.label, value: d.value }))}
                 color="#2563EB"
                 height={220}
               />
@@ -435,7 +453,7 @@ export function StatsPage() {
             />
             <div className="p-4">
               <LineTrend
-                data={PERF_DATA.errorRate.map((d) => ({ label: d.day, value: d.value }))}
+                data={PERF_DATA.errorRate.map((d) => ({ label: d.label, value: d.value }))}
                 color="#EF4444"
                 height={220}
               />
@@ -464,7 +482,7 @@ export function StatsPage() {
             />
             <div className="p-4">
               <BarV
-                data={PERF_DATA.uptime.map((d) => ({ label: d.day, value: d.value }))}
+                data={PERF_DATA.uptime.map((d) => ({ label: d.label, value: d.value }))}
                 color="#10B981"
                 height={220}
               />

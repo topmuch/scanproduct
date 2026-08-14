@@ -16,13 +16,12 @@ import {
 } from "lucide-react";
 import { PageContainer, Card, Badge, SectionTitle, Button } from "@/components/admin/ui";
 import {
-  MAKERS_TABLE,
-  GLOBAL_KPI,
   formatFCFA,
   formatDate,
   type Maker,
   type Plan,
-} from "@/lib/admin-data";
+} from "@/lib/admin-server-data";
+import { useAdminData } from "@/components/admin/AdminDataProvider";
 import { useAdminNav } from "@/lib/admin-store";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -146,11 +145,11 @@ function FilterPills<T extends string>({
   );
 }
 
-const SUMMARY_CARDS = [
+const SUMMARY_CARDS_FN = (mrr: number, arr: number, retentionRate: number, churnRate: number) => [
   {
     label: "Total MRR",
-    value: `${formatFCFA(GLOBAL_KPI.mrr)} FCFA`,
-    trend: "↑ +8.5%",
+    value: `${formatFCFA(mrr)} FCFA`,
+    trend: "MRR réel",
     trendClass: "text-[#059669]",
     icon: CreditCard,
     iconBg: "bg-[#D1FAE5]",
@@ -158,7 +157,7 @@ const SUMMARY_CARDS = [
   },
   {
     label: "ARR projeté",
-    value: `${formatFCFA(GLOBAL_KPI.arr)} FCFA`,
+    value: `${formatFCFA(arr)} FCFA`,
     trend: "Sur 12 mois",
     trendClass: "text-[#2563EB]",
     icon: TrendingUp,
@@ -167,8 +166,8 @@ const SUMMARY_CARDS = [
   },
   {
     label: "Taux de rétention",
-    value: `${GLOBAL_KPI.retentionRate}%`,
-    trend: "Objectif 90%",
+    value: `${retentionRate}%`,
+    trend: "Actifs / total",
     trendClass: "text-[#9A3412]",
     icon: Heart,
     iconBg: "bg-[#FFEDD5]",
@@ -176,8 +175,8 @@ const SUMMARY_CARDS = [
   },
   {
     label: "Churn rate",
-    value: `${GLOBAL_KPI.churnRate}%`,
-    trend: "↓ -0.5pts",
+    value: `${churnRate}%`,
+    trend: "Inactifs / total",
     trendClass: "text-[#991B1B]",
     icon: TrendingDown,
     iconBg: "bg-[#FEE2E2]",
@@ -187,6 +186,7 @@ const SUMMARY_CARDS = [
 
 export function SubscriptionsPage() {
   const { openDetail, setPage } = useAdminNav();
+  const { subscriptions: MAKERS_TABLE, stats: GLOBAL_KPI } = useAdminData();
   const [activeTab, setActiveTab] = useState<TabKey>("Tous");
   const [planFilter, setPlanFilter] = useState<PlanFilter | "Tous">("Tous");
   const [paymentFilter, setPaymentFilter] = useState<PaymentFilter | "Tous">("Tous");
@@ -200,7 +200,7 @@ export function SubscriptionsPage() {
       if (!matchesDate(m, dateFilter)) return false;
       return true;
     });
-  }, [activeTab, planFilter, paymentFilter, dateFilter]);
+  }, [MAKERS_TABLE, activeTab, planFilter, paymentFilter, dateFilter]);
 
   function handleExport() {
     toast.success("Rapport des abonnements généré (CSV).");
@@ -393,7 +393,7 @@ export function SubscriptionsPage() {
 
       {/* Summary cards */}
       <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
-        {SUMMARY_CARDS.map((card) => {
+        {SUMMARY_CARDS_FN(GLOBAL_KPI.mrr, GLOBAL_KPI.arr, GLOBAL_KPI.retentionRate, GLOBAL_KPI.churnRate).map((card) => {
           const Icon = card.icon;
           return (
             <Card key={card.label} className="p-5">

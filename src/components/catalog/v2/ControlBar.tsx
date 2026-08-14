@@ -1,6 +1,6 @@
 "use client";
 
-import { LayoutGrid, List, Flame, Clock, Star, ShieldCheck } from "lucide-react";
+import { LayoutGrid, List, Flame, Clock, Star, ShieldCheck, ArrowDownAZ } from "lucide-react";
 import { useUpdateUrl } from "../use-update-url";
 import type { TransparencyLevel } from "@/lib/public-data";
 
@@ -21,6 +21,7 @@ const SORT_OPTIONS: Array<{
 }> = [
   { value: "popular", label: "Populaire", icon: <Flame className="h-4 w-4" /> },
   { value: "recent", label: "Récent", icon: <Clock className="h-4 w-4" /> },
+  { value: "name", label: "A-Z", icon: <ArrowDownAZ className="h-4 w-4" /> },
   { value: "rating", label: "Mieux notés", icon: <Star className="h-4 w-4" /> },
   { value: "transparency", label: "Transparence", icon: <ShieldCheck className="h-4 w-4" /> },
 ];

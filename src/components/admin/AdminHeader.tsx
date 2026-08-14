@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { Search, Bell, ChevronRight, Menu, X, User, Settings as SettingsIcon, LogOut, Moon, Sun } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { useAdminNav, type AdminPage } from "@/lib/admin-store";
-import { ACTIVITY_LOGS } from "@/lib/admin-data";
+import { useAdminData } from "@/components/admin/AdminDataProvider";
 import { useTheme } from "@/hooks/use-theme";
 import { cn } from "@/lib/utils";
 
@@ -31,6 +31,7 @@ const TYPE_BADGE: Record<string, string> = {
 
 export function AdminHeader() {
   const { page, setPage, goBack } = useAdminNav();
+  const { auditLogs: ACTIVITY_LOGS } = useAdminData();
   const [notifOpen, setNotifOpen] = useState(false);
   const [avatarOpen, setAvatarOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -38,6 +39,7 @@ export function AdminHeader() {
   const avatarRef = useRef<HTMLDivElement>(null);
   const meta = PAGE_TITLES[page];
   const { theme, toggle, mounted } = useTheme();
+  void goBack;
 
   useEffect(() => {
     const onClick = (e: MouseEvent) => {

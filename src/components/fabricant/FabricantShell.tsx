@@ -1,6 +1,8 @@
 "use client";
 
 import { useFabricantNav } from "@/lib/fabricant-store";
+import type { FabricantData } from "@/lib/fabricant-types";
+import { FabricantDataProvider } from "./FabricantDataProvider";
 import { FabricantSidebar } from "./FabricantSidebar";
 import { FabricantHeader } from "./FabricantHeader";
 import { AccueilPage } from "./pages/AccueilPage";
@@ -41,17 +43,19 @@ function renderPage(page: string) {
   }
 }
 
-export function FabricantShell() {
+export function FabricantShell({ initialData }: { initialData: FabricantData }) {
   const { page } = useFabricantNav();
   return (
-    <div className="min-h-screen bg-[#F9FAFB]">
-      <FabricantSidebar />
-      <div className="lg:pl-[260px]">
-        <FabricantHeader />
-        <main className="min-h-[calc(100vh-70px)] px-4 py-6 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-[1400px]">{renderPage(page)}</div>
-        </main>
+    <FabricantDataProvider initialData={initialData}>
+      <div className="min-h-screen bg-[#F9FAFB]">
+        <FabricantSidebar />
+        <div className="lg:pl-[260px]">
+          <FabricantHeader />
+          <main className="min-h-[calc(100vh-70px)] px-4 py-6 sm:px-6 lg:px-8">
+            <div className="mx-auto max-w-[1400px]">{renderPage(page)}</div>
+          </main>
+        </div>
       </div>
-    </div>
+    </FabricantDataProvider>
   );
 }

@@ -16,9 +16,9 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { QRCodeCanvas } from "qrcode.react";
-import { formatNombre } from "@/lib/fabricant-data";
+import { formatNombre } from "@/lib/fabricant-types";
 import { useFabricantNav } from "@/lib/fabricant-store";
-import { useLots, useProduits, useQRCodes } from "@/lib/fabricant-data-store";
+import { useFabricantData } from "../FabricantDataProvider";
 import { downloadQRCode, getScanUrl } from "@/lib/qr-utils";
 import { ProductImage } from "@/components/fabricant/ProductImage";
 import { toast } from "sonner";
@@ -46,10 +46,12 @@ const PAYS_VENTE = ["Sénégal", "Mali", "Côte d'Ivoire"];
 // ============================================================================
 export function LotDetailPage() {
   const { selectedId, setPage, openDetail } = useFabricantNav();
-  const { lots, deleteLot, markLotRecalled } = useLots();
-  const { produits } = useProduits();
-  const { qrCodes, generateQRCodes } = useQRCodes();
+  const { data, refresh } = useFabricantData();
+  const lots = data.lots;
+  const produits = data.products;
+  const qrCodes = data.qrCodes;
   const [copied, setCopied] = useState(false);
+  const [generating, setGenerating] = useState(false);
 
   const lot = lots.find((l) => l.id === selectedId) || null;
 
@@ -110,26 +112,65 @@ export function LotDetailPage() {
     toast.success(`QR code de ${lot!.numero} téléchargé`);
   }
 
-  function handleGenerateQR() {
-    const created = generateQRCodes(lot!.id, 10);
-    toast.success(`${created.length} QR codes générés pour ${lot!.numero}`);
+  async function handleGenerateQR() {
+    if (!lot) return;
+    setGenerating(true);
+    try {
+      const res = await fetch("/api/qr-codes/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lotId: lot.id, quantity: 10 }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "Échec de la génération");
+      }
+      const json = await res.json();
+      toast.success(`${json.count ?? 10} QR codes générés pour ${lot.numero}`);
+      refresh();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erreur inattendue");
+    } finally {
+      setGenerating(false);
+    }
   }
 
-  function handleMarkRecalled() {
-    markLotRecalled(lot!.id);
-    toast.warning(`Lot ${lot!.numero} marqué comme rappelé`);
+  async function handleMarkRecalled() {
+    if (!lot) return;
+    try {
+      const res = await fetch(`/api/lots/${lot.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "RECALLED" }),
+      });
+      if (!res.ok) throw new Error("Échec de la mise à jour");
+      toast.warning(`Lot ${lot.numero} marqué comme rappelé`);
+      refresh();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erreur inattendue");
+    }
   }
 
-  function handleDelete() {
+  async function handleDelete() {
+    if (!lot) return;
     if (
       !window.confirm(
-        `Supprimer le lot ${lot!.numero} ? Cette action est irréversible.`
+        `Supprimer le lot ${lot.numero} ? Cette action est irréversible.`
       )
     )
       return;
-    deleteLot(lot!.id);
-    toast.success(`Lot ${lot!.numero} supprimé`);
-    setPage("lots");
+    try {
+      const res = await fetch(`/api/lots/${lot.id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "Échec de la suppression");
+      }
+      toast.success(`Lot ${lot.numero} supprimé`);
+      refresh();
+      setPage("lots");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erreur inattendue");
+    }
   }
 
   return (
@@ -216,9 +257,9 @@ export function LotDetailPage() {
             title="QR codes générés"
             subtitle={`${formatNombre(lot.qrCodes)} codes associés à ce lot`}
             action={
-              <GradientButton className="!py-2" onClick={handleGenerateQR}>
+              <GradientButton className="!py-2" onClick={handleGenerateQR} disabled={generating}>
                 <QrCode className="h-4 w-4" />
-                Générer 10 QR codes
+                {generating ? "Génération…" : "Générer 10 QR codes"}
               </GradientButton>
             }
           >

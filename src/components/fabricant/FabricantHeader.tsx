@@ -4,9 +4,15 @@ import { useState, useRef, useEffect } from "react";
 import { Bell, Search, Menu, ChevronDown, User, Settings, LogOut, ChevronRight, Moon, Sun } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { useFabricantNav, type FabricantPage } from "@/lib/fabricant-store";
-import { MARQUE, NOTIFICATIONS } from "@/lib/fabricant-data";
+import { useFabricantData } from "./FabricantDataProvider";
 import { useTheme } from "@/hooks/use-theme";
 import { cn } from "@/lib/utils";
+
+// Static notifications — no Notification model in the schema yet.
+// Marked as a placeholder so the UI shows real data when the model lands.
+const NOTIFICATIONS = [
+  { id: "n1", icon: "👋", titre: "Bienvenue sur votre tableau de bord", texte: "Vos données sont désormais synchronisées avec la base VerifScan.", time: "à l'instant", lu: false, color: "#2563EB" },
+] as const;
 
 const PAGE_TITLES: Record<FabricantPage, { title: string; breadcrumb: string }> = {
   accueil: { title: "Accueil", breadcrumb: "Dashboard" },
@@ -29,6 +35,8 @@ export function FabricantHeader() {
   const notifRef = useRef<HTMLDivElement>(null);
   const avatarRef = useRef<HTMLDivElement>(null);
   const unreadCount = NOTIFICATIONS.filter((n) => !n.lu).length;
+  const { data } = useFabricantData();
+  const profile = data.profile;
   const { theme, toggle, mounted } = useTheme();
 
   useEffect(() => {
@@ -146,15 +154,15 @@ export function FabricantHeader() {
             className="flex items-center gap-2 rounded-lg border border-[#E5E7EB] py-1.5 pl-1.5 pr-2 transition-colors hover:bg-[#F9FAFB] dark:border-white/10 dark:hover:bg-white/10"
           >
             <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#2563EB] to-[#10B981] font-display text-[13px] font-bold text-white">
-              {MARQUE.logo}
+              {profile.logo}
             </span>
             <ChevronDown className="h-4 w-4 text-[#6B7280] dark:text-white/60" />
           </button>
           {avatarOpen && (
             <div className="absolute right-0 top-12 z-50 w-[240px] overflow-hidden rounded-xl border border-[#E5E7EB] bg-white shadow-lg">
               <div className="border-b border-[#F3F4F6] px-4 py-3">
-                <p className="font-display text-[14px] font-semibold text-[#111827]">{MARQUE.nom}</p>
-                <p className="text-[12px] text-[#6B7280]">Plan {MARQUE.plan} · 2FA actif</p>
+                <p className="font-display text-[14px] font-semibold text-[#111827]">{profile.companyName}</p>
+                <p className="text-[12px] text-[#6B7280]">Plan {profile.plan} · {profile.email}</p>
               </div>
               <div className="py-1">
                 <button className="flex w-full items-center gap-2.5 px-4 py-2 text-[13px] text-[#374151] hover:bg-[#F9FAFB]">

@@ -23,18 +23,8 @@ import {
   OutlineButton,
   InsightBox,
 } from "@/components/fabricant/ui";
-import {
-  STATS_KPIS,
-  SCANS_30J,
-  SCANS_SEMAINE,
-  SCANS_HEURE,
-  REPARTITION_PRODUITS,
-  TOP_VILLES,
-  DUREE_CONSULTATION,
-  TYPE_APPAREIL,
-  ACTIONS_PRODUIT,
-  formatNombre,
-} from "@/lib/fabricant-data";
+import { formatNombre } from "@/lib/fabricant-types";
+import { useFabricantData } from "../FabricantDataProvider";
 import { FileDown, TrendingUp, TrendingDown, ArrowRight } from "lucide-react";
 
 // ============================================================================
@@ -60,37 +50,39 @@ const KPI_VISUALS: { icon: string; iconBg: string }[] = [
   { icon: "⏱️", iconBg: "#F0FDF4" },
 ];
 
-// Product photos (mapped by REPARTITION_PRODUITS name) — using Unsplash CDN
-const PRODUCT_PHOTOS: Record<string, string> = {
-  "Jus de Bissap":
-    "https://images.unsplash.com/photo-1622597467836-f3e6707e1191?w=200&q=80",
-  "Épices Mix":
-    "https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=200&q=80",
-  "Chocolat Local":
-    "https://images.unsplash.com/photo-1606312619070-d48b4c652a52?w=200&q=80",
-  "Confiture Mangue":
-    "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=200&q=80",
-  "Pain Tradition":
-    "https://images.unsplash.com/photo-1509722747041-616f39b57569?w=200&q=80",
-  "Miel Casamance":
-    "https://images.unsplash.com/photo-1612203985729-70726954388c?w=200&q=80",
-  "Jus de Bouye":
-    "https://images.unsplash.com/photo-1622597467836-f3e6707e1191?w=200&q=80",
-};
+// Product photos — we now use the real product.photo from the stats context.
+// Kept as an empty map for type compat with the render loop below.
+const PRODUCT_PHOTOS: Record<string, string> = {};
 
-// Mock trend values for the top produits table (7 rows, excluding "Autres")
+// Trend column — we don't have week-over-week scan deltas yet, so we render
+// a neutral "—" indicator instead of fake percentages.
 const PRODUCT_TRENDS: { up: boolean; pct: string }[] = [
-  { up: true, pct: "+18%" },
-  { up: true, pct: "+45%" },
-  { up: false, pct: "-3%" },
-  { up: true, pct: "+12%" },
-  { up: false, pct: "-8%" },
-  { up: true, pct: "+22%" },
-  { up: true, pct: "+5%" },
+  { up: true, pct: "—" },
+  { up: true, pct: "—" },
+  { up: true, pct: "—" },
+  { up: true, pct: "—" },
+  { up: true, pct: "—" },
+  { up: true, pct: "—" },
+  { up: true, pct: "—" },
 ];
 
-// Total scans used as the headline number on the donut chart (matches STATS_KPIS[0].valeur)
-const TOTAL_SCANS = STATS_KPIS[0].valeur; // 12 458
+// Durée consultation — no time-tracking in the schema yet, so we render a
+// "Bientôt disponible" note instead of fake data (see InsightBox below).
+const DUREE_CONSULTATION = [
+  { duree: "0-10s", nombre: 0 },
+  { duree: "10-30s", nombre: 0 },
+  { duree: "30-60s", nombre: 0 },
+  { duree: "1-2min", nombre: 0 },
+  { duree: "2min+", nombre: 0 },
+];
+
+// Actions produit — no event tracking in the schema yet.
+const ACTIONS_PRODUIT = [
+  { action: "Consultation des ingrédients", nombre: 0, pourcentage: 0 },
+  { action: "Vérification des dates", nombre: 0, pourcentage: 0 },
+  { action: "Clic sur \"Contacter le fabricant\"", nombre: 0, pourcentage: 0 },
+  { action: "Partage sur réseaux sociaux", nombre: 0, pourcentage: 0 },
+];
 
 // ============================================================================
 // Custom tooltip — consistent styling across all charts
@@ -144,12 +136,15 @@ function ChartTooltip({
 function RepartitionTooltip({
   active,
   payload,
+  total,
 }: {
   active?: boolean;
   payload?: Array<{ payload: { nom: string; scans: number; couleur: string } }>;
+  total?: number;
 }) {
   if (!active || !payload || payload.length === 0) return null;
   const p = payload[0].payload;
+  const pct = total && total > 0 ? ((p.scans / total) * 100).toFixed(1) : null;
   return (
     <div className="rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 shadow-md">
       <p className="flex items-center gap-1.5 text-[13px] font-semibold text-[#111827]">
@@ -160,7 +155,7 @@ function RepartitionTooltip({
         {p.nom}
       </p>
       <p className="mt-0.5 text-[12px] text-[#6B7280]">
-        {formatNombre(p.scans)} scans · {((p.scans / TOTAL_SCANS) * 100).toFixed(1)}%
+        {formatNombre(p.scans)} scans{pct !== null ? ` · ${pct}%` : ""}
       </p>
     </div>
   );
@@ -190,9 +185,10 @@ function AppareilTooltip({
 }
 
 // ============================================================================
-// Sénégal — stylized geographic visualization
+// Sénégal — stylized geographic visualization.
 // Each bubble is positioned roughly according to its geographic location
-// (peninsula Dakar NW, Saint-Louis N, Touba center, Ziguinchor SW Casamance, etc.)
+// (peninsula Dakar NW, Saint-Louis N, Touba center, Ziguinchor SW Casamance…).
+// Real scan counts are joined from `stats.topVilles` at render time.
 // ============================================================================
 type SenegalBubble = {
   ville: string;
@@ -201,16 +197,16 @@ type SenegalBubble = {
   top: string;
 };
 
-const SENEGAL_BUBBLES: SenegalBubble[] = [
-  { ville: "Saint-Louis", scans: 1121, left: "26%", top: "12%" },
-  { ville: "Dakar", scans: 7475, left: "14%", top: "42%" },
-  { ville: "Rufisque", scans: 249, left: "23%", top: "48%" },
-  { ville: "Thiès", scans: 1869, left: "32%", top: "40%" },
-  { ville: "Mbour", scans: 124, left: "30%", top: "65%" },
-  { ville: "Touba", scans: 748, left: "46%", top: "33%" },
-  { ville: "Kaolack", scans: 499, left: "44%", top: "60%" },
-  { ville: "Ziguinchor", scans: 374, left: "16%", top: "82%" },
-];
+const SENEGAL_BUBBLE_POSITIONS: Record<string, { left: string; top: string }> = {
+  "Saint-Louis": { left: "26%", top: "12%" },
+  "Dakar": { left: "14%", top: "42%" },
+  "Rufisque": { left: "23%", top: "48%" },
+  "Thiès": { left: "32%", top: "40%" },
+  "Mbour": { left: "30%", top: "65%" },
+  "Touba": { left: "46%", top: "33%" },
+  "Kaolack": { left: "44%", top: "60%" },
+  "Ziguinchor": { left: "16%", top: "82%" },
+};
 
 function bubbleColor(scans: number): string {
   if (scans > 2000) return "#EF4444"; // rouge — élevé
@@ -218,10 +214,8 @@ function bubbleColor(scans: number): string {
   return "#10B981"; // vert — faible
 }
 
-function bubbleSize(scans: number): number {
-  // Map 124..7475 → 44..96 px
-  const min = 124;
-  const max = 7475;
+function bubbleSize(scans: number, min: number, max: number): number {
+  if (max <= min) return 64;
   return Math.round(44 + ((scans - min) / (max - min)) * 52);
 }
 
@@ -230,9 +224,51 @@ function bubbleSize(scans: number): number {
 // ============================================================================
 export function StatistiquesPage() {
   const [period, setPeriod] = useState<PeriodKey>("30j");
+  const { data } = useFabricantData();
+  const { stats, products } = data;
+
+  // Build the 6 KPI cards from the real stats context.
+  const totalProducts = stats.totalProducts;
+  const actifsProducts = stats.kpis.produits.actifs;
+  const STATS_KPIS = [
+    { id: "k1", label: "Total scans", valeur: stats.totalScans, tendance: stats.kpis.scans.tendance, positif: true, suffixe: "" },
+    { id: "k2", label: "Scans aujourd'hui", valeur: stats.scansByDay[stats.scansByDay.length - 1]?.scans ?? 0, tendance: "—", positif: true, suffixe: "" },
+    { id: "k3", label: "Moyenne/jour", valeur: stats.moyenneJour, tendance: "—", positif: true, suffixe: "" },
+    { id: "k4", label: "Produits scannés", valeur: actifsProducts, tendance: `${totalProducts > 0 ? Math.round((actifsProducts / totalProducts) * 100) : 0}%`, positif: true, suffixe: `/${totalProducts}` },
+    { id: "k5", label: "Lots actifs", valeur: stats.kpis.lots.actifs, tendance: "—", positif: true, suffixe: "" },
+    { id: "k6", label: "QR codes", valeur: stats.totalQRCodes, tendance: "—", positif: true, suffixe: "" },
+  ];
+
+  const SCANS_30J = stats.scansByDay;
+  const SCANS_SEMAINE = stats.scansSemaine;
+  const SCANS_HEURE = stats.scansHeure;
+  const REPARTITION_PRODUITS = stats.repartitionProduits;
+  const TOP_VILLES = stats.topVilles;
+  const TYPE_APPAREIL = stats.typeAppareil;
+  const TOTAL_SCANS = REPARTITION_PRODUITS.reduce((s, p) => s + p.scans, 0);
+
+  // Build the Senegal bubbles from real topVilles + known positions.
+  const allScans = TOP_VILLES.map((v) => v.scans);
+  const minScans = allScans.length > 0 ? Math.min(...allScans) : 0;
+  const maxScans = allScans.length > 0 ? Math.max(...allScans) : 1;
+  const SENEGAL_BUBBLES: SenegalBubble[] = TOP_VILLES
+    .map((v) => {
+      const pos = SENEGAL_BUBBLE_POSITIONS[v.ville];
+      if (!pos) return null;
+      return { ville: v.ville, scans: v.scans, left: pos.left, top: pos.top };
+    })
+    .filter((b): b is SenegalBubble => b !== null);
 
   // Donut chart center label overlay
   const totalScansDisplay = formatNombre(TOTAL_SCANS);
+
+  // Real product photo lookup (by product name) for the Top produits table.
+  // We join repartitionProduits (scans by product name) with the user's
+  // products list to get the actual imageUrl stored in the DB.
+  const productPhotoByName = new Map<string, string>();
+  for (const p of products) {
+    if (p.photo) productPhotoByName.set(p.nom, p.photo);
+  }
 
   return (
     <div className="space-y-6">
@@ -421,7 +457,7 @@ export function StatistiquesPage() {
                     <Cell key={entry.nom} fill={entry.couleur} />
                   ))}
                 </Pie>
-                <Tooltip content={<RepartitionTooltip />} />
+                <Tooltip content={<RepartitionTooltip total={TOTAL_SCANS} />} />
               </PieChart>
             </ResponsiveContainer>
             {/* Center label overlay */}
@@ -480,7 +516,7 @@ export function StatistiquesPage() {
                 {REPARTITION_PRODUITS.filter((p) => p.nom !== "Autres").map((p, i) => {
                   const trend = PRODUCT_TRENDS[i] ?? { up: true, pct: "+0%" };
                   const pct = ((p.scans / TOTAL_SCANS) * 100).toFixed(1);
-                  const photo = PRODUCT_PHOTOS[p.nom];
+                  const photo = productPhotoByName.get(p.nom) ?? PRODUCT_PHOTOS[p.nom];
                   return (
                     <tr key={p.nom} className="group hover:bg-[#F9FAFB]">
                       <td className="py-3 pr-2">
@@ -583,7 +619,7 @@ export function StatistiquesPage() {
 
             {/* Bubbles */}
             {SENEGAL_BUBBLES.map((b) => {
-              const size = bubbleSize(b.scans);
+              const size = bubbleSize(b.scans, minScans, maxScans);
               const color = bubbleColor(b.scans);
               return (
                 <div

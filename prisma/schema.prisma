@@ -70,6 +70,7 @@ model User {
   reviewsReceived Review[]      @relation("ReviewFabricant")
   certifications  Certification[]
   auditLogs       AuditLog[]
+  ticketsAuthored Ticket[]      @relation("TicketAuthor")
 
   @@index([role])
   @@index([status])
@@ -385,4 +386,53 @@ model Review {
   @@index([lotId])
   @@index([fabricantId])
   @@index([isApproved])
+}
+
+// ============================================================================
+// Support tickets — used by the SuperAdmin Support page (real CRUD-backed
+// support system, replacing the previous mock TICKETS array).
+// ============================================================================
+
+model Ticket {
+  id         String   @id @default(cuid())
+  reference  String   @unique // human-readable, e.g. "TKT-2026-0145"
+
+  subject    String
+  description String?
+
+  // "Ouvert" | "En cours" | "En attente" | "Résolu" | "Fermé"
+  status     String   @default("Ouvert")
+  // "Basse" | "Normale" | "Haute" | "Urgente"
+  priority   String   @default("Normale")
+  // "Technique" | "Facturation" | "Compte" | "Autre"
+  category   String   @default("Technique")
+
+  // Requester (fabricant user). Nullable so admins can create internal tickets
+  // not tied to a specific user account.
+  userId     String?
+  user       User?    @relation("TicketAuthor", fields: [userId], references: [id])
+
+  // Requester display fields (denormalized so we can render even if user is null)
+  requesterName    String?
+  requesterCompany String?
+
+  // Assignment
+  assignedTo String? // admin display name
+
+  // JSON-encoded arrays/objects (SQLite limitation):
+  //   tags        → string[]
+  //   messages    → { from: "client"|"admin", author: string, content: string, timestamp: string }[]
+  //   internalNotes → { date: string, author: string, content: string }[]
+  tags           String?
+  messages       String?
+  internalNotes  String?
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([status])
+  @@index([priority])
+  @@index([category])
+  @@index([userId])
+  @@index([createdAt])
 }

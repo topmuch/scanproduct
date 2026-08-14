@@ -18,7 +18,8 @@ import {
 } from "lucide-react";
 import { PageContainer, Card, CardHeader, Badge, Button } from "@/components/admin/ui";
 import { AreaTrend } from "@/components/admin/charts";
-import { MAKERS_TABLE, formatFCFA, formatDate, type Plan } from "@/lib/admin-data";
+import { formatFCFA, formatDate, type Plan } from "@/lib/admin-server-data";
+import { useAdminData } from "@/components/admin/AdminDataProvider";
 import { useAdminNav } from "@/lib/admin-store";
 
 type PillColor = "blue" | "green" | "orange" | "red" | "gray" | "purple" | "yellow";
@@ -92,7 +93,8 @@ function QuotaBox({
 
 export function UserDetailPage() {
   const { selectedId, goBack } = useAdminNav();
-  const maker = MAKERS_TABLE.find((m) => m.id === selectedId) ?? MAKERS_TABLE[0];
+  const { users } = useAdminData();
+  const maker = users.find((m) => m.id === selectedId) ?? users[0];
   const [noteInput, setNoteInput] = useState("");
 
   const scansData = maker.scans30d.map((v, i) => ({ label: `J${i + 1}`, value: v }));

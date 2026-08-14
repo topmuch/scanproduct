@@ -22,13 +22,12 @@ import {
   ProgressBar,
 } from "@/components/fabricant/ui";
 import {
-  ABONNEMENT,
-  PAIEMENTS,
   PLANS,
   QR_PACKS,
   formatFCFA,
   formatNombre,
-} from "@/lib/fabricant-data";
+} from "@/lib/fabricant-types";
+import { useFabricantData } from "../FabricantDataProvider";
 
 // ----------------------------------------------------------------------------
 // Types
@@ -70,6 +69,12 @@ function FeatureRow({ label, value }: { label: string; value: string }) {
 // Main page
 // ----------------------------------------------------------------------------
 export function AbonnementPage() {
+  const { data } = useFabricantData();
+  const ABONNEMENT = data.abonnement;
+  // No Payment model in the schema yet — show an empty state instead of
+  // fake payment history.
+  const PAIEMENTS: import("@/lib/fabricant-types").Payment[] = [];
+
   const [billing, setBilling] = useState<BillingCycle>("mensuel");
   const [paymentFilter, setPaymentFilter] = useState<PaymentFilter>("tous");
   const [period, setPeriod] = useState<PeriodFilter>("30j");
@@ -347,7 +352,7 @@ export function AbonnementPage() {
                     colSpan={6}
                     className="px-5 py-10 text-center text-[13px] text-[#6B7280]"
                   >
-                    Aucun paiement ne correspond à ce filtre.
+                    Historique des paiements bientôt disponible.
                   </td>
                 </tr>
               )}

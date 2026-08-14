@@ -23,8 +23,8 @@ import {
   ProgressBar,
   PillFilter,
 } from "@/components/fabricant/ui";
-import { QR_CODES, KPIS, formatNombre } from "@/lib/fabricant-data";
-import { useQRCodes, useLots } from "@/lib/fabricant-data-store";
+import { formatNombre } from "@/lib/fabricant-types";
+import { useFabricantData } from "../FabricantDataProvider";
 import { downloadQRCode, getScanUrl } from "@/lib/qr-utils";
 import { toast } from "sonner";
 
@@ -100,8 +100,8 @@ function GenerationModal({
   onClose: () => void;
   onSuccess: (msg: string) => void;
 }) {
-  const { lots } = useLots();
-  const { generateQRCodes } = useQRCodes();
+  const { data, refresh } = useFabricantData();
+  const lots = data.lots;
   const [lotId, setLotId] = useState(lots[0]?.id ?? "");
   const [nombre, setNombre] = useState(100);
   const [taille, setTaille] = useState<"petit" | "moyen" | "grand">("moyen");
@@ -113,6 +113,12 @@ function GenerationModal({
     marges: false,
   });
   const [couleur, setCouleur] = useState("#000000");
+  const [submitting, setSubmitting] = useState(false);
+
+  const quotaRestant = Math.max(
+    0,
+    data.abonnement.quota.qrCodes.limite - data.abonnement.quota.qrCodes.utilise,
+  );
 
   if (!open) return null;
 
@@ -129,14 +135,44 @@ function GenerationModal({
     key: string
   ) => set({ ...obj, [key]: !obj[key] });
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!lotId) {
       onSuccess("⚠️ Veuillez sélectionner un lot");
       return;
     }
-    const created = generateQRCodes(lotId, nombre);
-    onSuccess(`✅ ${formatNombre(created.length)} QR codes générés avec succès`);
-    onClose();
+    if (nombre > quotaRestant) {
+      onSuccess(`⚠️ Quota insuffisant — restant : ${formatNombre(quotaRestant)}`);
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/qr-codes/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          lotId,
+          quantity: Math.min(100, nombre),
+          options: {
+            color: couleur,
+            includeLotNumber: options.lot,
+            includeProductName: options.produit,
+            includeLogo: options.logo,
+          },
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "Échec de la génération");
+      }
+      const json = await res.json();
+      onSuccess(`✅ ${formatNombre(json.count ?? nombre)} QR codes générés avec succès`);
+      refresh();
+      onClose();
+    } catch (e) {
+      onSuccess(e instanceof Error ? `⚠️ ${e.message}` : "⚠️ Erreur inattendue");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const labelRow = "flex items-center gap-2 text-[13px] text-[#374151]";
@@ -195,12 +231,12 @@ function GenerationModal({
             <input
               type="number"
               min={1}
-              max={2660}
+              max={quotaRestant}
               value={nombre}
-              onChange={(e) => setNombre(Math.max(1, Math.min(2660, Number(e.target.value) || 0)))}
+              onChange={(e) => setNombre(Math.max(1, Math.min(quotaRestant || 1, Number(e.target.value) || 0)))}
               className="h-10 w-full rounded-lg border border-[#E5E7EB] bg-white px-3 text-[14px] font-medium text-[#111827] outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/15"
             />
-            <p className="mt-1 text-[12px] text-[#9CA3AF]">Quota restant : 2 660</p>
+            <p className="mt-1 text-[12px] text-[#9CA3AF]">Quota restant : {formatNombre(quotaRestant)}</p>
           </div>
 
           {/* Taille */}
@@ -319,9 +355,9 @@ function GenerationModal({
         {/* Footer */}
         <div className="flex items-center justify-end gap-2 border-t border-[#F3F4F6] px-6 py-4">
           <OutlineButton onClick={onClose}>Annuler</OutlineButton>
-          <GradientButton onClick={handleSubmit} disabled={!lotId || selectedFormats.length === 0}>
+          <GradientButton onClick={handleSubmit} disabled={!lotId || selectedFormats.length === 0 || submitting}>
             <Plus className="h-4 w-4" />
-            Générer
+            {submitting ? "Génération…" : "Générer"}
           </GradientButton>
         </div>
       </div>
@@ -344,7 +380,10 @@ function formatDate(iso: string): string {
 }
 
 export function QRCodesPage() {
-  const { qrCodes, deleteQRCode } = useQRCodes();
+  const { data, refresh } = useFabricantData();
+  const qrCodes = data.qrCodes;
+  const stats = data.stats;
+  const abonnement = data.abonnement;
   const [search, setSearch] = useState("");
   const [productFilter, setProductFilter] = useState<string>("Tous");
   const [lotFilter, setLotFilter] = useState<string>("Tous");
@@ -433,13 +472,10 @@ export function QRCodesPage() {
   };
   const clearSelection = () => setSelectedIds(new Set());
 
-  const totalQuota = KPIS.qrCodes.quota;
-  // Adjust the lifetime KPI baseline by the delta between the current store
-  // and the initial mock count, so deletions are reflected in the UI.
-  const usedQuota = Math.max(
-    0,
-    KPIS.qrCodes.total + qrCodes.length - QR_CODES.length
-  );
+  const totalQuota = abonnement.quota.qrCodes.limite;
+  // Real usage from the abonnement context — reflects the actual QR code
+  // count from the database.
+  const usedQuota = abonnement.quota.qrCodes.utilise;
   const remaining = totalQuota - usedQuota;
 
   const allVisibleSelected = paged.length > 0 && paged.every((q) => selectedIds.has(q.id));
@@ -484,7 +520,7 @@ export function QRCodesPage() {
             <p className="text-[13px] font-medium text-[#111827]">
               {formatNombre(remaining)} restants
             </p>
-            <p className="text-[12px] text-[#9CA3AF]">Réinitialise le 15 août</p>
+            <p className="text-[12px] text-[#9CA3AF]">Quota mensuel — Plan {abonnement.plan}</p>
           </div>
         </div>
       </div>
@@ -613,7 +649,7 @@ export function QRCodesPage() {
             </button>
             <button
               type="button"
-              onClick={() => {
+              onClick={async () => {
                 const count = selectedIds.size;
                 if (count === 0) return;
                 if (
@@ -622,10 +658,21 @@ export function QRCodesPage() {
                   )
                 )
                   return;
-                selectedIds.forEach((id) => deleteQRCode(id));
-                toast.success(
-                  `${count} QR code${count > 1 ? "s" : ""} supprimé${count > 1 ? "s" : ""}`
+                const results = await Promise.all(
+                  Array.from(selectedIds).map((id) =>
+                    fetch(`/api/qr-codes/${id}`, { method: "DELETE" }).catch(() => null),
+                  ),
                 );
+                const ok = results.filter((r) => r && r.ok).length;
+                if (ok > 0) {
+                  toast.success(
+                    `${ok} QR code${ok > 1 ? "s" : ""} supprimé${ok > 1 ? "s" : ""}`
+                  );
+                  refresh();
+                }
+                if (ok < count) {
+                  toast.error(`${count - ok} suppression(s) échouée(s)`);
+                }
                 clearSelection();
               }}
               className="inline-flex items-center gap-1.5 rounded-lg border border-[#FEE2E2] bg-[#FEF2F2] px-3 py-1.5 text-[12px] font-semibold text-[#991B1B] transition-colors hover:bg-[#FEE2E2]"
@@ -773,7 +820,7 @@ export function QRCodesPage() {
                           </button>
                           <button
                             type="button"
-                            onClick={() => {
+                            onClick={async () => {
                               setOpenMenuId(null);
                               if (
                                 !window.confirm(
@@ -781,8 +828,17 @@ export function QRCodesPage() {
                                 )
                               )
                                 return;
-                              deleteQRCode(q.id);
-                              toast.success(`QR code ${q.code} supprimé`);
+                              try {
+                                const res = await fetch(`/api/qr-codes/${q.id}`, { method: "DELETE" });
+                                if (!res.ok) {
+                                  const err = await res.json().catch(() => ({}));
+                                  throw new Error(err.error || "Échec de la suppression");
+                                }
+                                toast.success(`QR code ${q.code} supprimé`);
+                                refresh();
+                              } catch (e) {
+                                toast.error(e instanceof Error ? e.message : "Erreur inattendue");
+                              }
                             }}
                             className="flex w-full items-center gap-2 px-3 py-2 text-left text-[13px] font-semibold text-[#991B1B] hover:bg-[#FEF2F2]"
                           >

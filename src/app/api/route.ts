@@ -16,7 +16,7 @@ export async function GET() {
       public: [
         { method: "GET", path: "/api/health", description: "Health check (DB + uptime)" },
         { method: "GET", path: "/api/products", description: "Catalogue public paginé + filtrable" },
-        { method: "GET", path: "/api/lots/{lotId}?scan=true", description: "Passeport numérique d'un lot" },
+        { method: "GET", path: "/api/lots/{id}?scan=true", description: "Passeport numérique d'un lot" },
         { method: "POST", path: "/api/register", description: "Création de compte FABRICANT" },
       ],
       auth: [

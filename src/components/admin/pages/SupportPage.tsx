@@ -4,9 +4,9 @@ import { useState, useMemo } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Plus, Eye, UserPlus, XCircle, X, ChevronDown } from "lucide-react";
 import { PageContainer, SectionTitle, Card, Badge, Button } from "@/components/admin/ui";
-import { formatDate, type Ticket } from "@/lib/admin-data";
+import { formatDate, type Ticket } from "@/lib/admin-server-data";
 import { useAdminNav } from "@/lib/admin-store";
-import { useTickets } from "@/lib/admin-data-store";
+import { useAdminData, useAdminMutations } from "@/components/admin/AdminDataProvider";
 import { toast } from "sonner";
 
 type TabKey = "Ouverts" | "En cours" | "Résolus" | "Tous";
@@ -52,7 +52,8 @@ function statusForTab(tab: TabKey): Ticket["status"] | null {
 
 export function SupportPage() {
   const { openDetail } = useAdminNav();
-  const { tickets, addTicket } = useTickets();
+  const { tickets } = useAdminData();
+  const { addTicket, updateTicket } = useAdminMutations();
   const [activeTab, setActiveTab] = useState<TabKey>("Tous");
   const [activePriority, setActivePriority] = useState<PriorityKey | null>(null);
   const [activeCategory, setActiveCategory] = useState<CategoryKey | null>(null);
@@ -178,11 +179,29 @@ export function SupportPage() {
         {showCreateModal && (
           <CreateTicketModal
             onClose={() => setShowCreateModal(false)}
-            onCreate={(data) => {
-              const t = addTicket(data);
-              toast.success(`Ticket ${t.id} créé avec succès`);
-              setShowCreateModal(false);
-              openDetail("ticket-detail", t.id);
+            onCreate={async (data) => {
+              try {
+                const res = await fetch("/api/admin/tickets", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    subject: data.subject,
+                    description: data.description,
+                    priority: data.priority,
+                    category: data.category,
+                    requesterName: data.requester,
+                    requesterCompany: data.company,
+                  }),
+                });
+                if (!res.ok) throw new Error("Échec de la création");
+                const created = (await res.json()) as Ticket;
+                addTicket(created);
+                toast.success(`Ticket ${created.id} créé avec succès`);
+                setShowCreateModal(false);
+                openDetail("ticket-detail", created.id);
+              } catch (e) {
+                toast.error((e as Error).message);
+              }
             }}
           />
         )}
@@ -306,7 +325,10 @@ function TicketRow({ ticket, onView }: { ticket: Ticket; onView: () => void }) {
           <RowIcon
             label="Fermer"
             tone="danger"
-            onClick={() => toast.success(`Ticket ${ticket.id} fermé`)}
+            onClick={() => {
+              updateTicket(ticket.id, { status: "Résolu" });
+              toast.success(`Ticket ${ticket.id} fermé`);
+            }}
           >
             <XCircle className="h-4 w-4" />
           </RowIcon>

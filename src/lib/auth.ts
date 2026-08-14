@@ -60,6 +60,19 @@ export const authOptions: NextAuthOptions = {
           })
           .catch(() => undefined);
 
+        // Audit log — record the login event for the SuperAdmin audit trail.
+        // Non-blocking: if it fails, the user still signs in.
+        db.auditLog
+          .create({
+            data: {
+              userId: user.id,
+              action: "LOGIN",
+              entity: "User",
+              entityId: user.id,
+            },
+          })
+          .catch(() => undefined);
+
         return {
           id: user.id,
           email: user.email,

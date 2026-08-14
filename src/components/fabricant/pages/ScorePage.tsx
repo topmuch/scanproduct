@@ -17,7 +17,7 @@ import {
   ProgressBar,
   CountUpNumber,
 } from "@/components/fabricant/ui";
-import { SCORE_TRANSPARENCE, CLASSEMENT_FABRICANTS } from "@/lib/fabricant-data";
+import { useFabricantData } from "../FabricantDataProvider";
 
 // ----------------------------------------------------------------------------
 // Helpers — niveau badge (Platine / Or / Argent)
@@ -98,7 +98,7 @@ function DetailCard({
   detail,
   index,
 }: {
-  detail: (typeof SCORE_TRANSPARENCE.details)[number];
+  detail: import("@/lib/fabricant-types").ScoreDetailItem;
   index: number;
 }) {
   const isFull = detail.score === detail.max;
@@ -187,11 +187,12 @@ function DetailCard({
 function RecoCard({
   reco,
   index,
+  isLast,
 }: {
-  reco: (typeof SCORE_TRANSPARENCE.recommandations)[number];
+  reco: import("@/lib/fabricant-types").ScoreRecommandation;
   index: number;
+  isLast: boolean;
 }) {
-  const isLast = index === SCORE_TRANSPARENCE.recommandations.length - 1;
 
   return (
     <motion.div
@@ -247,7 +248,9 @@ function RecoCard({
 // ScorePage — full implementation
 // ----------------------------------------------------------------------------
 export function ScorePage() {
-  const s = SCORE_TRANSPARENCE;
+  const { data } = useFabricantData();
+  const s = data.score;
+  const CLASSEMENT_FABRICANTS = data.classement;
   const scorePct = (s.global / 100) * 100;
 
   return (
@@ -333,9 +336,15 @@ export function ScorePage() {
           Détail par critère
         </h2>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {s.details.map((d, i) => (
-            <DetailCard key={d.id} detail={d} index={i} />
-          ))}
+          {s.details.length === 0 ? (
+            <p className="col-span-full rounded-xl border border-dashed border-[#E5E7EB] bg-[#F9FAFB] p-6 text-center text-[13px] text-[#6B7280]">
+              Aucun détail disponible — créez un lot pour calculer votre score de transparence.
+            </p>
+          ) : (
+            s.details.map((d, i) => (
+              <DetailCard key={d.id} detail={d} index={i} />
+            ))
+          )}
         </div>
       </section>
 
@@ -346,11 +355,17 @@ export function ScorePage() {
         <h2 className="mb-4 text-[18px] font-semibold text-[#111827]">
           💡 Comment atteindre 100% ?
         </h2>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          {s.recommandations.map((r, i) => (
-            <RecoCard key={r.id} reco={r} index={i} />
-          ))}
-        </div>
+        {s.recommandations.length === 0 ? (
+          <p className="rounded-xl border border-dashed border-[#E5E7EB] bg-[#F9FAFB] p-6 text-center text-[13px] text-[#6B7280]">
+            Félicitations — votre profil est complet ! Aucune recommandation d’amélioration pour le moment.
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            {s.recommandations.map((r, i) => (
+              <RecoCard key={r.id} reco={r} index={i} isLast={i === s.recommandations.length - 1} />
+            ))}
+          </div>
+        )}
       </section>
 
       {/* ============================================================ */}
@@ -389,65 +404,73 @@ export function ScorePage() {
                 </tr>
               </thead>
               <tbody>
-                {CLASSEMENT_FABRICANTS.map((row) => {
-                  const isVous = row.vous;
-                  return (
-                    <tr
-                      key={`${row.rang}-${row.nom}`}
-                      className="border-b border-[#F3F4F6] transition-colors hover:bg-[#F9FAFB]"
-                      style={
-                        isVous
-                          ? { backgroundColor: "#F3E8FF" }
-                          : undefined
-                      }
-                    >
-                      <td className="px-5 py-3.5">
-                        <span
-                          className={`text-[14px] font-bold ${
-                            isVous ? "text-[#8B5CF6]" : "text-[#111827]"
-                          }`}
-                        >
-                          #{row.rang}
-                        </span>
-                      </td>
-                      <td className="px-5 py-3.5">
-                        <div className="flex items-center gap-1.5">
+                {CLASSEMENT_FABRICANTS.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="px-5 py-8 text-center text-[13px] text-[#6B7280]">
+                      Aucun fabricant dans le classement pour le moment.
+                    </td>
+                  </tr>
+                ) : (
+                  CLASSEMENT_FABRICANTS.map((row) => {
+                    const isVous = row.vous;
+                    return (
+                      <tr
+                        key={`${row.rang}-${row.nom}`}
+                        className="border-b border-[#F3F4F6] transition-colors hover:bg-[#F9FAFB]"
+                        style={
+                          isVous
+                            ? { backgroundColor: "#F3E8FF" }
+                            : undefined
+                        }
+                      >
+                        <td className="px-5 py-3.5">
                           <span
-                            className={`text-[14px] ${
-                              isVous
-                                ? "font-bold text-[#111827]"
-                                : "font-medium text-[#374151]"
+                            className={`text-[14px] font-bold ${
+                              isVous ? "text-[#8B5CF6]" : "text-[#111827]"
                             }`}
                           >
-                            {row.nom}
+                            #{row.rang}
                           </span>
-                          {isVous && <span className="text-[14px]">👈</span>}
-                        </div>
-                      </td>
-                      <td className="px-5 py-3.5">
-                        <span
-                          className={`font-display text-[16px] font-bold ${
-                            isVous ? "text-[#8B5CF6]" : "text-[#111827]"
-                          }`}
-                        >
-                          {row.score}
-                          <span className="text-[12px] font-medium text-[#9CA3AF]">
-                            /100
+                        </td>
+                        <td className="px-5 py-3.5">
+                          <div className="flex items-center gap-1.5">
+                            <span
+                              className={`text-[14px] ${
+                                isVous
+                                  ? "font-bold text-[#111827]"
+                                  : "font-medium text-[#374151]"
+                              }`}
+                            >
+                              {row.nom}
+                            </span>
+                            {isVous && <span className="text-[14px]">👈</span>}
+                          </div>
+                        </td>
+                        <td className="px-5 py-3.5">
+                          <span
+                            className={`font-display text-[16px] font-bold ${
+                              isVous ? "text-[#8B5CF6]" : "text-[#111827]"
+                            }`}
+                          >
+                            {row.score}
+                            <span className="text-[12px] font-medium text-[#9CA3AF]">
+                              /100
+                            </span>
                           </span>
-                        </span>
-                      </td>
-                      <td className="px-5 py-3.5">
-                        <NiveauBadge niveau={row.niveau} />
-                      </td>
-                      <td className="px-5 py-3.5">
-                        <TendanceCell
-                          tendance={row.tendance}
-                          delta={row.delta}
-                        />
-                      </td>
-                    </tr>
-                  );
-                })}
+                        </td>
+                        <td className="px-5 py-3.5">
+                          <NiveauBadge niveau={row.niveau} />
+                        </td>
+                        <td className="px-5 py-3.5">
+                          <TendanceCell
+                            tendance={row.tendance}
+                            delta={row.delta}
+                          />
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
               </tbody>
             </table>
           </div>

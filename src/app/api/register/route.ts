@@ -103,7 +103,7 @@ export async function POST(req: NextRequest) {
 
     const hashed = await bcrypt.hash(password, 10);
 
-    await db.user.create({
+    const newUser = await db.user.create({
       data: {
         name,
         email: normalizedEmail,
@@ -117,6 +117,19 @@ export async function POST(req: NextRequest) {
         points: 10, // Welcome bonus
       },
     });
+
+    // Audit log — record account creation
+    db.auditLog
+      .create({
+        data: {
+          userId: newUser.id,
+          action: "REGISTER",
+          entity: "User",
+          entityId: newUser.id,
+          metadata: JSON.stringify({ role: "FABRICANT", companyName }),
+        },
+      })
+      .catch(() => undefined);
 
     return NextResponse.json(
       { success: true, message: "Compte créé avec succès." },

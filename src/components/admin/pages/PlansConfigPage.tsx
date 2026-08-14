@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { PLANS_CONFIG } from "@/lib/admin-data";
+import { useAdminData } from "@/components/admin/AdminDataProvider";
 import { useAdminNav } from "@/lib/admin-store";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -70,8 +70,12 @@ const ENTERPRISE_FEATURES: { key: FeatureKey; label: string }[] = [
 
 const STATS_OPTIONS: StatsLevel[] = ["Basiques", "Avancées", "BI"];
 
-function buildInitialPlans(): Record<PlanKey, PlanState> {
-  const cfg = PLANS_CONFIG;
+function buildInitialPlans(adminPlans: {
+  Starter: { badge: string; monthly: number; yearly: number; limits: { products: number; qrCodes: number; users: number; stats: string }; features: { createProducts: boolean; qrGeneration: boolean; publicPage: boolean; advancedStats: boolean; marketplace: boolean; api: boolean } };
+  Pro: { badge: string; monthly: number; yearly: number; limits: { products: number; qrCodes: number; users: number; stats: string }; features: { createProducts: boolean; qrGeneration: boolean; publicPage: boolean; advancedStats: boolean; marketplace: boolean; api: boolean } };
+  Enterprise: { badge: string; monthly: number; yearly: number; limits: { products: number; qrCodes: number; users: number; stats: string }; features: { createProducts: boolean; qrGeneration: boolean; publicPage: boolean; advancedStats: boolean; marketplace: boolean; api: boolean } };
+}): Record<PlanKey, PlanState> {
+  const cfg = adminPlans;
   const fromConfig = (key: PlanKey, ent: boolean): PlanState => {
     const c = cfg[key];
     return {
@@ -197,11 +201,13 @@ function LimitField({
 function PlanCard({
   planKey,
   state,
+  subscriberCount,
   onChange,
   onSave,
 }: {
   planKey: PlanKey;
   state: PlanState;
+  subscriberCount: number;
   onChange: (updater: (p: PlanState) => PlanState) => void;
   onSave: () => void;
 }) {
@@ -223,7 +229,7 @@ function PlanCard({
       <div className="mb-5 flex items-start justify-between gap-3">
         <div>
           <h3 className="font-display text-xl font-bold text-[#111827]">{planKey}</h3>
-          <div className="mt-2">
+          <div className="mt-2 flex items-center gap-2">
             {isPro ? (
               <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-[#F59E0B] to-[#F97316] px-3 py-1 text-[12px] font-semibold text-white shadow-sm">
                 <Star className="h-3.5 w-3.5 fill-white" />
@@ -232,6 +238,7 @@ function PlanCard({
             ) : (
               <Badge color="gray">{state.badge}</Badge>
             )}
+            <Badge color="blue">{subscriberCount} abonnés</Badge>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -367,7 +374,8 @@ function PlanCard({
 
 export function PlansConfigPage() {
   const { setPage } = useAdminNav();
-  const [plans, setPlans] = useState<Record<PlanKey, PlanState>>(() => buildInitialPlans());
+  const { plans: adminPlans } = useAdminData();
+  const [plans, setPlans] = useState<Record<PlanKey, PlanState>>(() => buildInitialPlans(adminPlans));
   const [global, setGlobal] = useState<GlobalState>(INITIAL_GLOBAL);
 
   const updatePlan = (key: PlanKey, updater: (p: PlanState) => PlanState) => {
@@ -399,9 +407,14 @@ export function PlansConfigPage() {
         title="Configuration des Plans"
         subtitle="Définissez les prix, limites et fonctionnalités de chaque formule"
         action={
-          <Badge color="blue">
-            {totalActive}/{PLAN_ORDER.length} plans actifs
-          </Badge>
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge color="gray">Starter : {adminPlans.Starter.subscribers}</Badge>
+            <Badge color="blue">Pro : {adminPlans.Pro.subscribers}</Badge>
+            <Badge color="orange">Enterprise : {adminPlans.Enterprise.subscribers}</Badge>
+            <Badge color="green">
+              {totalActive}/{PLAN_ORDER.length} plans actifs
+            </Badge>
+          </div>
         }
       />
 
@@ -412,6 +425,7 @@ export function PlansConfigPage() {
             key={key}
             planKey={key}
             state={plans[key]}
+            subscriberCount={adminPlans[key].subscribers}
             onChange={(updater) => updatePlan(key, updater)}
             onSave={() => handleSavePlan(key)}
           />

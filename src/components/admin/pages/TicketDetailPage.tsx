@@ -13,9 +13,9 @@ import {
   Plus,
 } from "lucide-react";
 import { PageContainer, Card, CardHeader, Badge, Button } from "@/components/admin/ui";
-import { TICKETS, formatDate, type Ticket } from "@/lib/admin-data";
+import { formatDate, type Ticket } from "@/lib/admin-server-data";
 import { useAdminNav } from "@/lib/admin-store";
-import { useTickets } from "@/lib/admin-data-store";
+import { useAdminData, useAdminMutations } from "@/components/admin/AdminDataProvider";
 import { toast } from "sonner";
 
 const PRIORITY_COLOR: Record<Ticket["priority"], "gray" | "blue" | "orange" | "red"> = {
@@ -41,8 +41,9 @@ const PLAN_COLOR: Record<Ticket["plan"], "gray" | "blue" | "purple" | "orange"> 
 
 export function TicketDetailPage() {
   const { selectedId, goBack } = useAdminNav();
-  const { tickets } = useTickets();
-  const ticket = tickets.find((t) => t.id === selectedId) ?? TICKETS[0];
+  const { tickets } = useAdminData();
+  const { updateTicket } = useAdminMutations();
+  const ticket = tickets.find((t) => t.id === selectedId) ?? tickets[0];
 
   return (
     <PageContainer>
@@ -366,10 +367,13 @@ function ActionsCard({ ticket }: { ticket: Ticket }) {
           Fusionner avec...
         </Button>
         <div className="my-1 border-t border-[#F3F4F6]" />
-        <Button variant="success" onClick={() => toast.success(`Ticket ${ticket.id} fermé`)}>
+        <Button variant="success" onClick={() => {
+          updateTicket(ticket.id, { status: "Résolu" });
+          toast.success(`Ticket ${ticket.id} fermé`);
+        }}>
           Fermer le ticket
         </Button>
-        <Button variant="danger" onClick={() => toast.error(`Ticket ${ticket.id} supprimé`)}>
+        <Button variant="danger" onClick={() => toast.error(`Suppression du ticket ${ticket.id} — non implémentée`)}>
           Supprimer
         </Button>
       </div>

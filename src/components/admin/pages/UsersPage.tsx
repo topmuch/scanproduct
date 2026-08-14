@@ -22,8 +22,8 @@ import {
   type Maker,
   type Plan,
   type UserStatus,
-} from "@/lib/admin-data";
-import { useMakers } from "@/lib/admin-data-store";
+} from "@/lib/admin-server-data";
+import { useAdminData, useAdminMutations } from "@/components/admin/AdminDataProvider";
 import { useAdminNav } from "@/lib/admin-store";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -79,7 +79,8 @@ function downloadCSV(rows: Maker[]) {
 
 export function UsersPage() {
   const { openDetail } = useAdminNav();
-  const { makers, addMaker } = useMakers();
+  const { users: makers } = useAdminData();
+  const { updateUser } = useAdminMutations();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"Tous" | UserStatus>("Tous");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -367,7 +368,17 @@ export function UsersPage() {
                             </button>
                             <button
                               type="button"
-                              onClick={() => setOpenMenuId(null)}
+                              onClick={() => {
+                                setOpenMenuId(null);
+                                const nextStatus = m.status === "Suspendu" ? "Actif" : "Suspendu";
+                                updateUser(m.id, { status: nextStatus }).then(() => {
+                                  toast.success(
+                                    nextStatus === "Suspendu"
+                                      ? `Fabricant « ${m.company} » suspendu`
+                                      : `Fabricant « ${m.company} » réactivé`
+                                  );
+                                });
+                              }}
                               className="flex w-full items-center gap-2.5 px-4 py-2 text-[13px] font-medium text-[#374151] hover:bg-[#F9FAFB]"
                             >
                               {m.status === "Suspendu" ? (
@@ -486,10 +497,24 @@ export function UsersPage() {
       {modalOpen && (
         <AddMakerModal
           onClose={() => setModalOpen(false)}
-          onSubmit={(data) => {
-            const created = addMaker(data);
-            toast.success(`Fabricant « ${created.company} » créé avec succès`);
-            setModalOpen(false);
+          onSubmit={async (data) => {
+            try {
+              const res = await fetch("/api/admin/users", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data),
+              });
+              if (!res.ok) {
+                const err = (await res.json().catch(() => ({}))) as { error?: string };
+                throw new Error(err.error || "Échec de la création");
+              }
+              toast.success(`Fabricant « ${data.company} » créé avec succès`);
+              setModalOpen(false);
+              // Refresh server data so the new fabricant shows up
+              if (typeof window !== "undefined") window.location.reload();
+            } catch (e) {
+              toast.error((e as Error).message);
+            }
           }}
         />
       )}

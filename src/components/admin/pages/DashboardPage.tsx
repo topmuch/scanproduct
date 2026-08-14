@@ -10,16 +10,8 @@ import {
   Eye,
 } from "lucide-react";
 import { useAdminNav } from "@/lib/admin-store";
-import {
-  formatFCFA,
-  GLOBAL_KPI,
-  SIGNUPS_DATA,
-  PLAN_DISTRIBUTION,
-  TOP_MAKERS,
-  REVENUE_DATA,
-  ACTIVITY_LOGS,
-  type ActivityLog,
-} from "@/lib/admin-data";
+import { useAdminData } from "@/components/admin/AdminDataProvider";
+import { formatFCFA, type ActivityLog } from "@/lib/admin-server-data";
 import { CountUp } from "@/components/landing/CountUp";
 import { PageContainer, Card, CardHeader, Badge, Button } from "@/components/admin/ui";
 import { AreaTrend, Donut, BarH, BarV } from "@/components/admin/charts";
@@ -134,16 +126,17 @@ function ActivityAvatar({ name }: { name: string }) {
 
 export function DashboardPage() {
   const setPage = useAdminNav((s) => s.setPage);
+  const { stats: GLOBAL_KPI, auditLogs: ACTIVITY_LOGS, signups, planDistribution, topMakers, revenue } = useAdminData();
   const recentLogs = ACTIVITY_LOGS.slice(0, 8);
 
-  const signupsChartData = SIGNUPS_DATA.map((d) => ({ label: d.month, value: d.value }));
-  const planTotal = PLAN_DISTRIBUTION.reduce((sum, d) => sum + d.value, 0);
-  const topMakersChartData = TOP_MAKERS.map((d) => ({
+  const signupsChartData = signups.map((d) => ({ label: d.label, value: d.value }));
+  const planTotal = planDistribution.reduce((sum, d) => sum + d.value, 0);
+  const topMakersChartData = topMakers.map((d) => ({
     label: truncate(d.name, 22),
     value: d.scans,
   }));
-  const revenueChartData = REVENUE_DATA.map((d) => ({
-    label: d.month,
+  const revenueChartData = revenue.map((d) => ({
+    label: d.label,
     value: Math.round(d.value / 1000),
   }));
 
@@ -205,7 +198,7 @@ export function DashboardPage() {
         <Card>
           <CardHeader title="Répartition des plans" />
           <div className="p-5">
-            <Donut data={PLAN_DISTRIBUTION} centerLabel={String(planTotal)} height={300} />
+            <Donut data={planDistribution} centerLabel={String(planTotal)} height={300} />
           </div>
         </Card>
 

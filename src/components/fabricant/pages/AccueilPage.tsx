@@ -21,31 +21,15 @@ import {
   ProgressBar,
   InsightBox,
 } from "@/components/fabricant/ui";
-import {
-  KPIS,
-  SCANS_30J,
-  ACTIVITES,
-  TOP_PRODUITS,
-  SCORE_TRANSPARENCE,
-  BADGES,
-  MARQUE,
-  formatNombre,
-} from "@/lib/fabricant-data";
+import { formatNombre } from "@/lib/fabricant-types";
 import { useFabricantNav } from "@/lib/fabricant-store";
+import { useFabricantData } from "../FabricantDataProvider";
 import { ProductImage } from "@/components/fabricant/ProductImage";
 
 type PeriodKey = "7j" | "30j" | "90j" | "12m";
 
 // Rank colors for the Top 5 Produits list
 const RANK_COLORS = ["#2563EB", "#10B981", "#F59E0B", "#8B5CF6", "#EC4899"];
-
-// 4 mini transparency chips as specified (hard-coded per design spec)
-const TRANSPARENCY_CHIPS = [
-  { icon: "✅", label: "Identité", score: "15/15", color: "#10B981" },
-  { icon: "✅", label: "Origine", score: "15/15", color: "#10B981" },
-  { icon: "✅", label: "Composition", score: "20/20", color: "#10B981" },
-  { icon: "⚠️", label: "Certifications", score: "10/15", color: "#F59E0B" },
-];
 
 // ----------------------------------------------------------------------------
 // Custom tooltip for the scans AreaChart
@@ -75,19 +59,19 @@ function ScanTooltip({
 export function AccueilPage() {
   const setPage = useFabricantNav((s) => s.setPage);
   const [period, setPeriod] = useState<PeriodKey>("30j");
+  const { data } = useFabricantData();
+  const { profile, stats, score, badges } = data;
 
-  // Period selector — we only have SCANS_30J (30 days) of mock data,
-  // so for 7j we slice the last 7 days, for other periods we keep the full set.
+  // Period selector — we only have 30 days of real scan data, so 7j slices
+  // the last 7 entries and other periods keep the full set.
   const chartData =
     period === "7j"
-      ? SCANS_30J.slice(-7)
-      : period === "90j"
-        ? SCANS_30J
-        : period === "12m"
-          ? SCANS_30J
-          : SCANS_30J;
+      ? stats.scansByDay.slice(-7)
+      : stats.scansByDay;
 
-  const maxScans = Math.max(...TOP_PRODUITS.map((p) => p.scans));
+  const maxScans = stats.topProducts.length > 0
+    ? Math.max(...stats.topProducts.map((p) => p.scans), 1)
+    : 1;
 
   return (
     <div className="space-y-6">
@@ -102,12 +86,14 @@ export function AccueilPage() {
       >
         <div>
           <h1 className="font-display text-[24px] font-bold leading-tight text-[#111827]">
-            Bonjour, {MARQUE.nom} 👋
+            Bonjour, {profile.companyName} 👋
           </h1>
           <p className="mt-1 text-[14px] text-[#6B7280]">
             Voici un aperçu de votre activité aujourd&apos;hui
           </p>
-          <p className="mt-1 text-[13px] text-[#9CA3AF]">Dimanche 26 juillet 2026</p>
+          <p className="mt-1 text-[13px] text-[#9CA3AF]">
+            {new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+          </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <GradientButton onClick={() => setPage("lots")}>+ Créer un nouveau lot</GradientButton>
@@ -147,9 +133,9 @@ export function AccueilPage() {
           icon="📦"
           iconBg="#EFF6FF"
           label="Total Produits"
-          value={KPIS.produits.total}
-          tendance="↑ +3 ce mois"
-          subText={`${KPIS.produits.actifs} actifs · ${KPIS.produits.brouillons} brouillons`}
+          value={stats.kpis.produits.total}
+          tendance={stats.kpis.produits.tendance}
+          subText={`${stats.kpis.produits.actifs} actifs · ${stats.kpis.produits.brouillons} brouillons`}
           onClick={() => setPage("produits")}
           gradient="from-[#2563EB] to-[#3B82F6]"
         />
@@ -157,9 +143,9 @@ export function AccueilPage() {
           icon="🏷️"
           iconBg="#F0FDF4"
           label="Total Lots"
-          value={KPIS.lots.total}
-          tendance="↑ +15 ce mois"
-          subText={`${KPIS.lots.actifs} actifs · ${KPIS.lots.rappelles} rappelés`}
+          value={stats.kpis.lots.total}
+          tendance={stats.kpis.lots.tendance}
+          subText={`${stats.kpis.lots.actifs} actifs · ${stats.kpis.lots.rappelles} rappelés`}
           onClick={() => setPage("lots")}
           gradient="from-[#10B981] to-[#34D399]"
         />
@@ -167,9 +153,9 @@ export function AccueilPage() {
           icon="📱"
           iconBg="#FFFBEB"
           label="QR Codes Générés"
-          value={KPIS.qrCodes.total}
-          tendance="↑ +180 ce mois"
-          subText="Quota : 2 340 / 5 000"
+          value={stats.kpis.qrCodes.total}
+          tendance={stats.kpis.qrCodes.tendance}
+          subText={`Quota : ${formatNombre(stats.kpis.qrCodes.total)} / ${formatNombre(stats.kpis.qrCodes.quota)}`}
           onClick={() => setPage("qr-codes")}
           gradient="from-[#F59E0B] to-[#FBBF24]"
         />
@@ -177,9 +163,9 @@ export function AccueilPage() {
           icon="📈"
           iconBg="#F3E8FF"
           label="Total Scans"
-          value={KPIS.scans.total}
-          tendance="↑ +12% cette semaine"
-          subText={`Moyenne : ${KPIS.scans.moyenneJour} scans/jour`}
+          value={stats.kpis.scans.total}
+          tendance={stats.kpis.scans.tendance}
+          subText={`Moyenne : ${stats.kpis.scans.moyenneJour} scans/jour`}
           onClick={() => setPage("statistiques")}
           gradient="from-[#8B5CF6] to-[#A78BFA]"
         />
@@ -262,21 +248,27 @@ export function AccueilPage() {
           bodyClassName="p-0"
         >
           <ul className="divide-y divide-[#F3F4F6]">
-            {ACTIVITES.map((act) => (
-              <li
-                key={act.id}
-                className="flex items-center gap-3 px-5 py-3.5 transition-colors hover:bg-[#F9FAFB]"
-              >
-                <div
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[16px]"
-                  style={{ backgroundColor: `${act.color}1A` }}
-                >
-                  <span>{act.icon}</span>
-                </div>
-                <p className="flex-1 text-[14px] text-[#374151]">{act.text}</p>
-                <span className="text-[12px] text-[#6B7280]">{act.time}</span>
+            {stats.recentActivity.length === 0 ? (
+              <li className="px-5 py-6 text-center text-[13px] text-[#6B7280]">
+                Aucune activité récente à afficher.
               </li>
-            ))}
+            ) : (
+              stats.recentActivity.map((act) => (
+                <li
+                  key={act.id}
+                  className="flex items-center gap-3 px-5 py-3.5 transition-colors hover:bg-[#F9FAFB]"
+                >
+                  <div
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[16px]"
+                    style={{ backgroundColor: `${act.color}1A` }}
+                  >
+                    <span>{act.icon}</span>
+                  </div>
+                  <p className="flex-1 text-[14px] text-[#374151]">{act.text}</p>
+                  <span className="text-[12px] text-[#6B7280]">{act.time}</span>
+                </li>
+              ))
+            )}
           </ul>
           <div className="border-t border-[#F3F4F6] px-5 py-3">
             <button
@@ -296,34 +288,40 @@ export function AccueilPage() {
           bodyClassName="p-0"
         >
           <ul className="divide-y divide-[#F3F4F6]">
-            {TOP_PRODUITS.map((prod, idx) => (
-              <li key={prod.id} className="px-5 py-3.5">
-                <div className="flex items-center gap-3">
-                  <div
-                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[12px] font-bold text-white"
-                    style={{ backgroundColor: RANK_COLORS[idx] }}
-                  >
-                    {idx + 1}
-                  </div>
-                  <ProductImage
-                    src={prod.photo}
-                    alt={prod.nom}
-                    icon={prod.categorieIcon}
-                    className="h-10 w-10 shrink-0 rounded-full object-cover"
-                  />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-[14px] font-semibold text-[#111827]">{prod.nom}</p>
-                    <p className="text-[13px] text-[#6B7280]">{formatNombre(prod.scans)} scans</p>
-                  </div>
-                </div>
-                <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-[#F3F4F6] pl-7">
-                  <div
-                    className="h-full rounded-full bg-[#2563EB]"
-                    style={{ width: `${(prod.scans / maxScans) * 100}%` }}
-                  />
-                </div>
+            {stats.topProducts.length === 0 ? (
+              <li className="px-5 py-6 text-center text-[13px] text-[#6B7280]">
+                Aucun scan pour le moment.
               </li>
-            ))}
+            ) : (
+              stats.topProducts.map((prod, idx) => (
+                <li key={prod.id} className="px-5 py-3.5">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[12px] font-bold text-white"
+                      style={{ backgroundColor: RANK_COLORS[idx] }}
+                    >
+                      {idx + 1}
+                    </div>
+                    <ProductImage
+                      src={prod.photo}
+                      alt={prod.nom}
+                      icon={prod.categorieIcon}
+                      className="h-10 w-10 shrink-0 rounded-full object-cover"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-[14px] font-semibold text-[#111827]">{prod.nom}</p>
+                      <p className="text-[13px] text-[#6B7280]">{formatNombre(prod.scans)} scans</p>
+                    </div>
+                  </div>
+                  <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-[#F3F4F6] pl-7">
+                    <div
+                      className="h-full rounded-full bg-[#2563EB]"
+                      style={{ width: `${(prod.scans / maxScans) * 100}%` }}
+                    />
+                  </div>
+                </li>
+              ))
+            )}
           </ul>
           <div className="border-t border-[#F3F4F6] px-5 py-3">
             <button
@@ -355,7 +353,7 @@ export function AccueilPage() {
             className="inline-flex items-center rounded-full px-2.5 py-1 text-[12px] font-semibold"
             style={{ backgroundColor: "#F3E8FF", color: "#8B5CF6" }}
           >
-            Top {SCORE_TRANSPARENCE.topPourcent}% des fabricants
+            Top {score.topPourcent}% des fabricants
           </span>
         </div>
 
@@ -363,39 +361,47 @@ export function AccueilPage() {
         <div className="mt-5 grid grid-cols-1 gap-6 lg:grid-cols-[260px_1fr]">
           <div>
             <p className="font-display text-[48px] font-bold leading-none text-[#8B5CF6]">
-              {SCORE_TRANSPARENCE.global}
+              {score.global}
               <span className="text-[24px] font-semibold text-[#9CA3AF]">/100</span>
             </p>
             <p className="mt-1 text-[16px] font-medium text-[#374151]">
-              {SCORE_TRANSPARENCE.niveau}
+              {score.niveau}
             </p>
           </div>
 
           <div className="flex flex-col justify-center gap-4">
             <ProgressBar
-              value={SCORE_TRANSPARENCE.global}
+              value={score.global}
               gradient="from-[#8B5CF6] to-[#2563EB]"
               height="h-3"
             />
             {/* 4 mini detail chips */}
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-              {TRANSPARENCY_CHIPS.map((chip) => (
-                <div
-                  key={chip.label}
-                  className="flex flex-col items-start rounded-lg border border-[#E5E7EB] bg-white/70 px-3 py-2"
-                >
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[14px]">{chip.icon}</span>
-                    <span className="text-[12px] font-medium text-[#374151]">{chip.label}</span>
-                  </div>
-                  <span
-                    className="mt-0.5 text-[13px] font-semibold"
-                    style={{ color: chip.color }}
+              {score.details.slice(0, 4).map((d) => {
+                const isFull = d.score === d.max;
+                return (
+                  <div
+                    key={d.id}
+                    className="flex flex-col items-start rounded-lg border border-[#E5E7EB] bg-white/70 px-3 py-2"
                   >
-                    {chip.score}
-                  </span>
-                </div>
-              ))}
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[14px]">{isFull ? "✅" : "⚠️"}</span>
+                      <span className="text-[12px] font-medium text-[#374151]">{d.titre}</span>
+                    </div>
+                    <span
+                      className="mt-0.5 text-[13px] font-semibold"
+                      style={{ color: isFull ? "#10B981" : "#F59E0B" }}
+                    >
+                      {d.score}/{d.max}
+                    </span>
+                  </div>
+                );
+              })}
+              {score.details.length === 0 && (
+                <p className="col-span-4 px-3 py-2 text-[12px] text-[#9CA3AF]">
+                  Détail non disponible — créez un lot pour calculer votre score.
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -403,7 +409,7 @@ export function AccueilPage() {
         {/* Recommendation callout */}
         <div className="mt-5">
           <InsightBox color="#8B5CF6">
-            Ajoutez la certification Halal pour atteindre 100%
+            {score.recommandations[0]?.titre ?? "Complétez vos informations produit pour améliorer votre score"}
           </InsightBox>
         </div>
 
@@ -434,7 +440,7 @@ export function AccueilPage() {
         </div>
 
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-          {BADGES.map((badge, idx) => (
+          {badges.map((badge, idx) => (
             <motion.div
               key={badge.id}
               initial={{ opacity: 0, y: 8 }}

@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import { Plus, Pencil, Pause, Play, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { PageContainer, SectionTitle, Card, Badge, Button } from "@/components/admin/ui";
-import { CATEGORIES, type Category } from "@/lib/admin-data";
+import { useAdminData, useAdminMutations } from "@/components/admin/AdminDataProvider";
+import type { AdminCategory } from "@/lib/admin-server-data";
 
 type FormState = {
   name: string;
@@ -23,13 +24,20 @@ const EMPTY_FORM: FormState = {
 };
 
 export function CategoriesPage() {
-  const [categories, setCategories] = useState<Category[]>(() => CATEGORIES.map((c) => ({ ...c })));
+  const { categories: initialCategories } = useAdminData();
+  const { setCategories: setCategoriesCtx } = useAdminMutations();
+  const [categories, setCategories] = useState<AdminCategory[]>(initialCategories);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [errors, setErrors] = useState<{ name?: string; emoji?: string }>({});
 
   const activeCount = categories.filter((c) => c.active).length;
+
+  function syncState(next: AdminCategory[]) {
+    setCategories(next);
+    setCategoriesCtx(next);
+  }
 
   function openCreate() {
     setEditingId(null);
@@ -38,7 +46,7 @@ export function CategoriesPage() {
     setModalOpen(true);
   }
 
-  function openEdit(cat: Category) {
+  function openEdit(cat: AdminCategory) {
     setEditingId(cat.id);
     setForm({
       name: cat.name,
@@ -69,40 +77,89 @@ export function CategoriesPage() {
     return Object.keys(next).length === 0;
   }
 
-  function handleSave() {
+  async function handleSave() {
     if (!validate()) return;
     const palette = ["#3B82F6", "#F59E0B", "#EF4444", "#10B981", "#8B5CF6", "#EAB308", "#84CC16", "#EC4899", "#6B7280"];
     if (editingId) {
-      setCategories((prev) =>
-        prev.map((c) => (c.id === editingId ? { ...c, ...form, name: form.name.trim() } : c))
-      );
-      toast.success("Catégorie enregistrée");
+      // PATCH existing category
+      try {
+        const res = await fetch(`/api/admin/categories/${editingId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: form.name.trim(),
+            emoji: form.emoji.trim(),
+            description: form.description.trim(),
+            order: form.order,
+            isActive: form.active,
+          }),
+        });
+        if (!res.ok) throw new Error("Échec de l'enregistrement");
+        const updated = (await res.json()) as AdminCategory;
+        syncState(categories.map((c) => (c.id === editingId ? { ...c, ...updated, color: c.color } : c)));
+        toast.success("Catégorie enregistrée");
+      } catch (e) {
+        toast.error((e as Error).message);
+      }
     } else {
-      const newCat: Category = {
-        id: `C${Date.now()}`,
-        name: form.name.trim(),
-        emoji: form.emoji.trim(),
-        description: form.description.trim(),
-        order: form.order,
-        active: form.active,
-        products: 0,
-        color: palette[categories.length % palette.length],
-      };
-      setCategories((prev) => [...prev, newCat]);
-      toast.success("Catégorie enregistrée");
+      // POST new category
+      try {
+        const res = await fetch("/api/admin/categories", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: form.name.trim(),
+            emoji: form.emoji.trim(),
+            description: form.description.trim(),
+            order: form.order,
+            isActive: form.active,
+          }),
+        });
+        if (!res.ok) throw new Error("Échec de la création");
+        const created = (await res.json()) as AdminCategory;
+        const newCat: AdminCategory = {
+          ...created,
+          color: palette[categories.length % palette.length],
+        };
+        syncState([...categories, newCat]);
+        toast.success("Catégorie enregistrée");
+      } catch (e) {
+        toast.error((e as Error).message);
+      }
     }
     closeModal();
   }
 
-  function handleToggle(cat: Category) {
-    setCategories((prev) => prev.map((c) => (c.id === cat.id ? { ...c, active: !c.active } : c)));
-    toast.success(cat.active ? "Catégorie désactivée" : "Catégorie activée");
+  async function handleToggle(cat: AdminCategory) {
+    const nextActive = !cat.active;
+    // Optimistic update
+    syncState(categories.map((c) => (c.id === cat.id ? { ...c, active: nextActive } : c)));
+    try {
+      await fetch(`/api/admin/categories/${cat.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isActive: nextActive }),
+      });
+      toast.success(nextActive ? "Catégorie activée" : "Catégorie désactivée");
+    } catch {
+      toast.error("Échec de la mise à jour");
+      // revert
+      syncState(categories);
+    }
   }
 
-  function handleDelete(cat: Category) {
+  async function handleDelete(cat: AdminCategory) {
     if (cat.products > 0) return;
-    setCategories((prev) => prev.filter((c) => c.id !== cat.id));
-    toast.success("Catégorie supprimée");
+    // Optimistic
+    syncState(categories.filter((c) => c.id !== cat.id));
+    try {
+      const res = await fetch(`/api/admin/categories/${cat.id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Échec de la suppression");
+      toast.success("Catégorie supprimée");
+    } catch (e) {
+      toast.error((e as Error).message);
+      syncState(categories); // revert
+    }
   }
 
   return (
@@ -153,7 +210,7 @@ function CategoryCard({
   onToggle,
   onDelete,
 }: {
-  category: Category;
+  category: AdminCategory;
   onEdit: () => void;
   onToggle: () => void;
   onDelete: () => void;

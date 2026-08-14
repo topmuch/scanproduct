@@ -32,10 +32,30 @@ import {
   PillFilter,
 } from "@/components/fabricant/ui";
 import { QRCodeCanvas } from "qrcode.react";
-import { MARQUE, SESSIONS, JOURNAL_CONNEXION } from "@/lib/fabricant-data";
+import { useFabricantData } from "../FabricantDataProvider";
 import { useFabricantNav, type SettingsSection } from "@/lib/fabricant-store";
 import { getScanUrl } from "@/lib/qr-utils";
 import { cn } from "@/lib/utils";
+
+// Sessions & login journal — no model in the schema yet. We render a
+// "Bientôt disponible" note where they were shown.
+const SESSIONS: {
+  id: string;
+  appareil: string;
+  localisation: string;
+  ip: string;
+  derniereActivite: string;
+  actuelle: boolean;
+}[] = [];
+
+const JOURNAL_CONNEXION: {
+  id: string;
+  date: string;
+  appareil: string;
+  localisation: string;
+  ip: string;
+  status: string;
+}[] = [];
 
 // ============================================================================
 // Shared constants
@@ -437,7 +457,9 @@ const SOCIALS = [
 ];
 
 function EntrepriseSection() {
-  const [description, setDescription] = useState("");
+  const { data } = useFabricantData();
+  const profile = data.profile;
+  const [description, setDescription] = useState(profile.description ?? "");
   return (
     <div className="space-y-6">
       <SectionTitle>Informations entreprise</SectionTitle>
@@ -446,10 +468,10 @@ function EntrepriseSection() {
         <div className="space-y-5">
           <div className="grid gap-5 sm:grid-cols-2">
             <Field label="Nom de l'entreprise" required>
-              <input className={inputClass} defaultValue={MARQUE.nom} />
+              <input className={inputClass} defaultValue={profile.companyName} />
             </Field>
             <Field label="Secteur d'activité">
-              <SelectInput defaultValue="Agroalimentaire">
+              <SelectInput defaultValue={profile.sector ?? "Agroalimentaire"}>
                 {SECTEURS.map((s) => (
                   <option key={s}>{s}</option>
                 ))}
@@ -469,10 +491,10 @@ function EntrepriseSection() {
 
           <div className="grid gap-5 sm:grid-cols-2">
             <Field label="Année de création">
-              <input className={inputClass} type="number" placeholder="2015" />
+              <input className={inputClass} type="number" placeholder="2015" defaultValue={profile.yearFounded ?? ""} />
             </Field>
             <Field label="Site web">
-              <input className={inputClass} placeholder="https://www.monentreprise.sn" />
+              <input className={inputClass} placeholder="https://www.monentreprise.sn" defaultValue={profile.website ?? ""} />
             </Field>
           </div>
 
@@ -489,6 +511,12 @@ function EntrepriseSection() {
                   <input
                     className={cn(inputClass, "pl-10")}
                     placeholder={s.placeholder}
+                    defaultValue={
+                      s.id === "fb" ? profile.facebook ?? "" :
+                      s.id === "ig" ? profile.instagram ?? "" :
+                      s.id === "li" ? profile.linkedin ?? "" :
+                      ""
+                    }
                     aria-label={s.label}
                   />
                 </div>
@@ -497,7 +525,7 @@ function EntrepriseSection() {
           </Field>
 
           <Field label="Numéro d'identification fiscale">
-            <input className={inputClass} placeholder="SN123456789" />
+            <input className={inputClass} placeholder="SN123456789" defaultValue={profile.taxId ?? ""} />
           </Field>
         </div>
       </SectionCard>
@@ -514,12 +542,14 @@ function EntrepriseSection() {
 // ============================================================================
 
 function LogoSection() {
-  const [primary, setPrimary] = useState(MARQUE.couleurPrimaire);
-  const [secondary, setSecondary] = useState(MARQUE.couleurSecondaire);
+  const { data } = useFabricantData();
+  const profile = data.profile;
+  const [primary, setPrimary] = useState(profile.brandColor);
+  const [secondary, setSecondary] = useState("#10B981");
   // Lifted state so the preview alongside the upload zone stays in sync with
   // what the user just uploaded (the /api/upload endpoint returns
   // { url: "/uploads/<uuid>.<ext>" }).
-  const [logoUrl, setLogoUrl] = useState("");
+  const [logoUrl, setLogoUrl] = useState(profile.logoUrl ?? "");
   const [qrLogoUrl, setQrLogoUrl] = useState("");
 
   return (
@@ -543,7 +573,7 @@ function LogoSection() {
               <p className="text-[12px] text-[#6B7280]">Logo actuel</p>
             </div>
           ) : (
-            <LogoPreview initials={MARQUE.logo} />
+            <LogoPreview initials={profile.logo} />
           )}
         </div>
         <ul className="mt-5 space-y-1.5 border-t border-[#F3F4F6] pt-4 text-[12px] text-[#6B7280]">
@@ -609,7 +639,7 @@ function LogoSection() {
           label="Nom de la marque"
           helper="Utilisé sur vos pages produits et QR codes."
         >
-          <input className={inputClass} defaultValue={MARQUE.nom} />
+          <input className={inputClass} defaultValue={profile.companyName} />
         </Field>
       </SectionCard>
 
@@ -846,7 +876,12 @@ function SecuriteSection() {
         }
       >
         <div className="space-y-3">
-          {SESSIONS.map((s) => (
+          {SESSIONS.length === 0 ? (
+            <p className="rounded-lg border border-dashed border-[#E5E7EB] bg-[#F9FAFB] px-4 py-8 text-center text-[13px] text-[#6B7280]">
+              Sessions actives — bientôt disponible.
+            </p>
+          ) : (
+            SESSIONS.map((s) => (
             <div
               key={s.id}
               className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#E5E7EB] p-4"
@@ -870,7 +905,8 @@ function SecuriteSection() {
                 </OutlineButton>
               )}
             </div>
-          ))}
+            ))
+          )}
         </div>
       </SectionCard>
 
@@ -901,25 +937,33 @@ function SecuriteSection() {
               </tr>
             </thead>
             <tbody>
-              {JOURNAL_CONNEXION.map((j) => (
-                <tr key={j.id} className="border-b border-[#F3F4F6] last:border-0">
-                  <td className="py-3 pr-3 text-[#374151]">{j.date}</td>
-                  <td className="py-3 pr-3 text-[#374151]">{j.appareil}</td>
-                  <td className="py-3 pr-3 text-[#6B7280]">{j.localisation}</td>
-                  <td className="py-3 pr-3 font-mono text-[12px] text-[#6B7280]">{j.ip}</td>
-                  <td className="py-3">
-                    {j.status === "reussi" ? (
-                      <span className="inline-flex items-center gap-1 text-[#065F46]">
-                        <Check className="h-3.5 w-3.5" /> Réussi
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 text-[#991B1B]">
-                        <X className="h-3.5 w-3.5" /> Échoué
-                      </span>
-                    )}
+              {JOURNAL_CONNEXION.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="py-8 text-center text-[13px] text-[#6B7280]">
+                    Journal de connexion — bientôt disponible.
                   </td>
                 </tr>
-              ))}
+              ) : (
+                JOURNAL_CONNEXION.map((j) => (
+                  <tr key={j.id} className="border-b border-[#F3F4F6] last:border-0">
+                    <td className="py-3 pr-3 text-[#374151]">{j.date}</td>
+                    <td className="py-3 pr-3 text-[#374151]">{j.appareil}</td>
+                    <td className="py-3 pr-3 text-[#6B7280]">{j.localisation}</td>
+                    <td className="py-3 pr-3 font-mono text-[12px] text-[#6B7280]">{j.ip}</td>
+                    <td className="py-3">
+                      {j.status === "reussi" ? (
+                        <span className="inline-flex items-center gap-1 text-[#065F46]">
+                          <Check className="h-3.5 w-3.5" /> Réussi
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-[#991B1B]">
+                          <X className="h-3.5 w-3.5" /> Échoué
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
