@@ -20,6 +20,8 @@ import {
 
 const ERROR_MESSAGES: Record<string, string> = {
   unauthorized: "Vous n'êtes pas autorisé à accéder à cette page.",
+  // "suspended" is used both as a URL query param (from middleware) and as
+  // the res.error value when authorize() throws new Error("suspended").
   suspended: "Votre compte a été suspendu. Contactez le support.",
   CredentialsSignin: "Email ou mot de passe incorrect.",
   default: "Une erreur est survenue. Veuillez réessayer.",

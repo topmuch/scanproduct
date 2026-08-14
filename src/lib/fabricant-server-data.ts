@@ -549,7 +549,7 @@ export async function getFabricantStats(userId: string): Promise<FabricantStats>
     getTypeAppareil(userId),
     getTopProducts(userId, 5),
     getRecentActivity(userId),
-    db.scan.aggregate({ _sum: { _all: true }, where: { lot: { fabricantId: userId } } }),
+    db.scan.count({ where: { lot: { fabricantId: userId } } }),
   ]);
 
   const totalProducts = products.length;
@@ -560,7 +560,7 @@ export async function getFabricantStats(userId: string): Promise<FabricantStats>
   const actifsLots = lots.filter((l) => mapLotStatus(l.status) === "actif").length;
   const rappellesLots = lots.filter((l) => mapLotStatus(l.status) === "rappelle").length;
 
-  const totalScans = totalScansRow._count ?? products.reduce((s, p) => s + p.totalScans, 0) + lots.reduce((s, l) => s + l.totalScans, 0);
+  const totalScans = totalScansRow || products.reduce((s, p) => s + p.totalScans, 0) + lots.reduce((s, l) => s + l.totalScans, 0);
   // Use sum of product.totalScans as the canonical "scans" counter (matches
   // what the public catalog & scan-recording pipeline increments).
   const totalProductScans = products.reduce((s, p) => s + p.totalScans, 0);
@@ -734,7 +734,7 @@ export async function getFabricantScore(userId: string): Promise<FabricantScore>
     db.lot.findMany({
       where: { fabricantId: userId },
       include: {
-        lotCerts: true,
+        certifications: true,
       },
       orderBy: { transparencyScore: "desc" },
       take: 1,
@@ -770,7 +770,7 @@ export async function getFabricantScore(userId: string): Promise<FabricantScore>
         salesCountries: lot.salesCountries,
         allergens: lot.allergens,
         nutritionalInfo: lot.nutritionalInfo,
-        certifications: lot.lotCerts,
+        certifications: lot.certifications,
         fabricant: {
           name: fabricant.name,
           companyName: fabricant.companyName,

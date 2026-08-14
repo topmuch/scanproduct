@@ -13,6 +13,12 @@ import { db } from "@/lib/db";
  * - Status check: SUSPENDED accounts cannot sign in
  */
 export const authOptions: NextAuthOptions = {
+  // Trust the incoming request's Host header. Required when running behind a
+  // reverse proxy / gateway (e.g. the preview panel) so NextAuth uses the
+  // public URL the browser sees, not the internal `localhost:3000`.
+  // Without this, the session cookie's domain/SameSite check fails and the
+  // user sees "Une erreur est survenue. Veuillez réessayer." on every login.
+  trustHost: true,
   session: {
     strategy: "jwt",
     maxAge: 60 * 60 * 24 * 7, // 7 days
@@ -30,7 +36,9 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          throw new Error("Email et mot de passe requis");
+          // Returning null makes NextAuth return the "CredentialsSignin"
+          // error code, which the login page maps to a user-friendly message.
+          return null;
         }
 
         const email = credentials.email.toLowerCase().trim();
@@ -40,16 +48,17 @@ export const authOptions: NextAuthOptions = {
         });
 
         if (!user || !user.password) {
-          throw new Error("Identifiants invalides");
+          return null;
         }
 
         if (user.status === "SUSPENDED") {
-          throw new Error("Votre compte est suspendu. Contactez le support.");
+          // Throw with a recognizable error code so the login page can map it.
+          throw new Error("suspended");
         }
 
         const valid = await bcrypt.compare(credentials.password, user.password);
         if (!valid) {
-          throw new Error("Identifiants invalides");
+          return null;
         }
 
         // Update last login timestamp (non-blocking)
