@@ -1330,3 +1330,29 @@ Stage Summary:
 - Banner is served from /hero-banner.png (copied from the uploaded file).
 - Verified full-width edge-to-edge rendering on desktop (1440px) and correct responsive scaling on mobile (390px), with a clean transition to the Features section (no gap/overlap).
 - Lint clean, no runtime errors.
+
+---
+Task ID: 22
+Agent: main (continuation)
+Task: Add the marketing texts ("Garantissez l'authenticité de vos produits en un scan" + "Le passeport numérique qui renforce la confiance...") right below the hero banner image so visitors understand what the site is for.
+
+Work Log:
+- Edited src/components/landing/Hero.tsx to add a centered text block directly below the full-width banner image.
+- The text block contains:
+  - <h1>: "Garantissez l'authenticité de vos produits en un scan" (responsive sizes: 28px / 36px / 44px).
+  - <p>: "Le passeport numérique qui renforce la confiance de vos clients et protège votre marque contre la contrefaçon." (16px / 18px).
+  - A primary CTA button "Créer votre compte gratuit" linking to #pricing (blue #2563EB, hover lift + shadow) — added to make the value proposition actionable.
+- Each element animates in with a staggered fade-up (framer-motion, delays 0.15s / 0.3s / 0.45s).
+- Constrained to max-w-3xl and centered with px-4 sm:px-6 + py-12 sm:py-14 lg:py-16 so it stays readable on every screen size without being too wide on desktop.
+- Ran `bun run lint` → 0 errors, 0 warnings.
+- Verified with agent-browser at 1440×900 desktop:
+  - Banner bottom=672, headline top=736 → 64px gap (the inner top padding) — clean, content sits right under the banner.
+  - h1 text, p text, and CTA button all present and centered.
+- Verified at 390×844 mobile: h1 visible (width 358px), paragraph and CTA present and properly laid out.
+- VLM desktop assessment confirmed: full-width banner at top, centered headline + paragraph + blue CTA below, readable, clean professional layout.
+- VLM mobile assessment confirmed: headline, paragraph, and CTA properly spaced and readable on the narrow screen.
+
+Stage Summary:
+- The two marketing texts (headline + value-proposition paragraph) now appear directly below the hero banner, centered and responsive, along with the primary CTA button.
+- The hero now communicates clearly what VerifScan is for, even though the banner itself was image-only.
+- Lint clean, no runtime errors, verified on desktop and mobile.
