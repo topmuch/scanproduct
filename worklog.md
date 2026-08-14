@@ -1482,3 +1482,61 @@ Stage Summary:
 - Consolidated ProductHeader + QuickStats + QRCodeSection into the new hero (their key info is now in the sidebar / image cards). The full detailed sections (TransparencyScore breakdown, Certifications list, ContactManufacturer, etc.) remain rendered below the hero so no data is lost.
 - Brand colors kept consistent with the rest of the site (blue #2563EB, green #10B981, amber #F59E0B) instead of the reference's lime green.
 - Responsive: 3 columns on desktop (lg+), stacks vertically on mobile. Lint clean, no runtime errors, verified on desktop + mobile + mock passport.
+
+---
+Task ID: 26
+Agent: main (continuation)
+Task: Refonte de la page produit — version compacte & premium "5 secondes pour l'essentiel". Le consommateur qui scanne un QR code doit voir l'authenticité, la fraîcheur, les ingrédients et le contact en un coup d'œil, sans 5 minutes de scroll. Le reste (score, historique, certifications) devient des sections repliables.
+
+Work Log:
+- Philosophy: the previous product page was ~3000px of scroll with every section deployed. The new page shows the essential info (authenticity + product + freshness + contact) above the fold, and collapses technical details (traceability, history, score, certifications, reviews) into accordions.
+- Created 11 new compact components in src/components/product/compact/:
+  1. AccordionSection.tsx (client) — collapsible card using the modern CSS grid `grid-template-rows: 0fr → 1fr` animation technique (no max-height guessing). Header has a gradient icon badge, title, optional badge count, and animated chevron. Accessible (aria-expanded, aria-controls, generated panel ID).
+  2. AuthenticityHero.tsx — compact hero: green/red authenticity banner + product card (photo 112×112, name, brand, manufacturer, rating) + 3 key badges (Lot | DLC | Scans). DLC badge turns red+pulses if <30 days.
+  3. FreshnessBar.tsx — visual freshness indicator: "Encore X jours" + colored progress bar (emerald >90d, blue >30d, amber >7d, red >0d, gray expired) with a position indicator dot. Shows manufacture date and % elapsed.
+  4. QuickContact.tsx — prominent contact buttons (WhatsApp green, Phone blue, Email purple). Grid adapts to available methods (1-3 columns). Fallback message if no contact info.
+  5. CompactIngredients.tsx — ingredients + allergens + nutrition + warnings for the accordion (no outer card wrapper). Reuses parseJsonArray/parseJsonObject/getAllergens utilities.
+  6. CompactTraceability.tsx — lot number, dates, locations, sales countries in compact rows.
+  7. CompactHistory.tsx — simplified vertical timeline (emoji + title + date + location in small cards). No large colored event cards.
+  8. TransparencyLite.tsx — light transparency score: big score/100, single progress bar, level label, Top X% badge, max 3 improvement tips. Much shorter than the full TransparencyScore with its 7-criterion breakdown.
+  9. CompactCertifications.tsx — lot + fabricant certifications in compact list with active/expired status.
+  10. CompactReviews.tsx — rating summary + reviews list, compact.
+  11. CompactVerificationFooter.tsx — single-row dark footer: "Vérifié par VerifScan" + blockchain hash + 3 share buttons (WhatsApp/Facebook/X).
+- Rewrote src/app/p/[lotId]/page.tsx:
+  - Removed imports: AuthenticityBanner, ProductHero3Col, TransparencyScore, TraceabilityInfo, LotHistory, Certifications, AllergensInfo, QRCodeSection, ContactManufacturer, ReviewsSection, VerificationFooter, daysUntil.
+  - Added imports for all 11 compact components.
+  - Changed main container from max-w-6xl to max-w-2xl (compact, mobile-first, centered on desktop).
+  - Changed page background from bg-[#F9FAFB] to bg-gradient-to-b from-gray-50 to-white.
+  - New page architecture:
+    1. AuthenticityHero (always visible)
+    2. FreshnessBar (always visible)
+    3. QuickContact (always visible — the key missing feature from the old design)
+    4. 6 AccordionSection components:
+       - Ingrédients & Allergènes (defaultOpen=true, green) — essential info visible immediately
+       - Traçabilité complète (closed, blue)
+       - Historique du lot (closed, purple, badge=count)
+       - Score de transparence (closed, amber, badge="87/100")
+       - Certifications (closed, emerald, badge=count)
+       - Avis consommateurs (closed, yellow, badge=count)
+    5. SimilarProducts (kept as-is, outside accordions)
+    6. CompactVerificationFooter
+  - Removed unused `daysToExpiry` variable and `daysUntil` import.
+- Ran `bun run lint` → 0 errors, 0 warnings.
+- Verified with agent-browser:
+  - Mobile (390×844): VLM confirmed all 5 above-the-fold elements visible (authenticity banner, product card with 3 badges, freshness bar "Encore 345 jours", 3 contact buttons, open Ingredients accordion). "5-second rule effectively met."
+  - Accordion interactivity: clicked "Score de transparence" (was collapsed) → opened and displayed score 87/100, progress bar, "Transparence élevée", Top 15%, improvement suggestions.
+  - Desktop (1440×900): VLM confirmed layout is centered and compact (max-w-2xl), all sections well-proportioned, premium/modern aesthetic with gradient icons and soft shadows.
+  - Full page: VLM confirmed complete architecture (banner → product → freshness → contact → accordions → similar products → dark footer). "Significantly more compact than typical long-form product page."
+  - Accordion badges working: History shows "5", Score shows "87/100", Certifications shows "5", Reviews shows "2".
+  - `agent-browser errors` → no errors. No console warnings.
+  - Mock passport (/p/l1) still works (separate component, unaffected).
+
+Stage Summary:
+- The product page (/p/[lotId]) has been completely redesigned for the "5 seconds for the essential" philosophy.
+- Above the fold (no scroll): authenticity banner + product card (photo, name, brand, manufacturer, rating, 3 badges Lot/DLC/Scans) + freshness bar (days remaining + colored progress) + 3 prominent contact buttons (WhatsApp/Phone/Email).
+- Below: 6 accordion sections — Ingrédients & Allergènes is open by default (essential), the other 5 (Traçabilité, Historique, Score, Certifications, Avis) are collapsed with count badges.
+- Page is ~4× shorter than before (estimated ~800px vs ~3000px when all accordions closed).
+- max-w-2xl container = mobile-first, centered on desktop (premium, focused reading experience).
+- The QuickContact section fixes the crucial missing feature — consumers can now contact the manufacturer in 1 tap.
+- 11 new compact components in src/components/product/compact/. The old components (ProductHero3Col, TransparencyScore, etc.) are kept but no longer imported by page.tsx.
+- Lint clean, no runtime errors, verified on mobile + desktop + accordion interactivity.

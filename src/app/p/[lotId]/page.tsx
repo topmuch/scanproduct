@@ -6,22 +6,24 @@ import {
   getSimilarProducts,
   recordScan,
 } from "@/lib/public-data";
-import { daysUntil } from "@/lib/utils";
 import { PublicHeader } from "@/components/public/PublicHeader";
 import { PublicFooter } from "@/components/public/PublicFooter";
 import { MockProductPassport, isMockLotId } from "@/components/public/MockProductPassport";
 
-import { AuthenticityBanner } from "@/components/product/AuthenticityBanner";
-import { ProductHero3Col } from "@/components/product/ProductHero3Col";
-import { TransparencyScore } from "@/components/product/TransparencyScore";
-import { TraceabilityInfo } from "@/components/product/TraceabilityInfo";
-import { LotHistory } from "@/components/product/LotHistory";
-import { Certifications } from "@/components/product/Certifications";
-import { AllergensInfo } from "@/components/product/AllergensInfo";
-import { ContactManufacturer } from "@/components/product/ContactManufacturer";
-import { ReviewsSection } from "@/components/product/ReviewsSection";
 import { SimilarProducts } from "@/components/product/SimilarProducts";
-import { VerificationFooter } from "@/components/product/VerificationFooter";
+
+// Compact v2 components
+import { AuthenticityHero } from "@/components/product/compact/AuthenticityHero";
+import { FreshnessBar } from "@/components/product/compact/FreshnessBar";
+import { QuickContact } from "@/components/product/compact/QuickContact";
+import { AccordionSection } from "@/components/product/compact/AccordionSection";
+import { CompactIngredients } from "@/components/product/compact/CompactIngredients";
+import { CompactTraceability } from "@/components/product/compact/CompactTraceability";
+import { CompactHistory } from "@/components/product/compact/CompactHistory";
+import { TransparencyLite } from "@/components/product/compact/TransparencyLite";
+import { CompactCertifications } from "@/components/product/compact/CompactCertifications";
+import { CompactReviews } from "@/components/product/compact/CompactReviews";
+import { CompactVerificationFooter } from "@/components/product/compact/CompactVerificationFooter";
 
 // ---------------------------------------------------------------------------
 // Metadata (SEO)
@@ -144,60 +146,119 @@ export default async function ProductPage({
     console.error("[ProductPage] getSimilarProducts failed:", e);
   }
 
-  const daysToExpiry = daysUntil(lot.expiryDate);
   const totalCerts =
     (lot.lotCerts?.length ?? 0) + (lot.fabricantCerts?.length ?? 0);
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#F9FAFB]">
+    <div className="flex min-h-screen flex-col bg-gradient-to-b from-gray-50 to-white">
       <PublicHeader />
 
-      <main className="mx-auto w-full max-w-6xl flex-1 space-y-6 px-4 py-8">
-        <AuthenticityBanner
-          status={lot.status}
-          manufacturerName={lot.fabricant.companyName ?? lot.fabricant.name}
-          verifiedAt={lot.verifiedAt}
-        />
-
-        {/* New 3-column hero: 2 cols of large image cards + dark sidebar */}
-        <ProductHero3Col
+      <main className="mx-auto w-full max-w-2xl flex-1 space-y-4 px-4 py-6">
+        {/* 1. HERO COMPACT — visible without scrolling */}
+        <AuthenticityHero
           product={lot.product}
           lot={lot}
           fabricant={lot.fabricant}
-          transparency={lot.transparency}
-          scans={lot.scanCount ?? lot.totalScans ?? 0}
-          totalCerts={totalCerts}
+          status={lot.status}
+          verifiedAt={lot.verifiedAt}
         />
 
-        <TransparencyScore transparency={lot.transparency} />
-
-        <TraceabilityInfo lot={lot} />
-
-        <LotHistory
-          events={lot.historyEvents}
-          daysUntilExpiration={daysToExpiry}
+        {/* 2. BARRE DE FRAÎCHEUR — visual freshness indicator */}
+        <FreshnessBar
+          expiryDate={lot.expiryDate}
+          manufactureDate={lot.manufactureDate}
         />
 
-        <Certifications
-          lotCerts={lot.lotCerts}
-          fabricantCerts={lot.fabricantCerts}
-        />
+        {/* 3. BOUTONS CONTACT — prominent, always visible */}
+        <QuickContact fabricant={lot.fabricant} />
 
-        <AllergensInfo lot={lot} />
+        {/* 4. SECTIONS REPLIABLES — accordions for curious users */}
+        <div className="space-y-3">
+          {/* Ingrédients & Allergènes — OPEN by default (essential info) */}
+          <AccordionSection
+            title="Ingrédients & Allergènes"
+            icon="🌾"
+            defaultOpen={true}
+            color="green"
+          >
+            <CompactIngredients lot={lot} />
+          </AccordionSection>
 
-        <div id="contact-fabricant">
-          <ContactManufacturer fabricant={lot.fabricant} />
+          {/* Traçabilité complète — closed by default */}
+          <AccordionSection
+            title="Traçabilité complète"
+            icon="📍"
+            defaultOpen={false}
+            color="blue"
+          >
+            <CompactTraceability lot={lot} />
+          </AccordionSection>
+
+          {/* Historique du lot — closed by default */}
+          <AccordionSection
+            title="Historique du lot"
+            icon="⏱️"
+            defaultOpen={false}
+            color="purple"
+            badge={
+              lot.historyEvents?.length
+                ? String(lot.historyEvents.length)
+                : undefined
+            }
+          >
+            <CompactHistory events={lot.historyEvents} />
+          </AccordionSection>
+
+          {/* Score de transparence — light version */}
+          <AccordionSection
+            title="Score de transparence"
+            icon="💎"
+            defaultOpen={false}
+            color="amber"
+            badge={`${lot.transparency.score}/${lot.transparency.maxScore}`}
+          >
+            <TransparencyLite transparency={lot.transparency} />
+          </AccordionSection>
+
+          {/* Certifications */}
+          <AccordionSection
+            title="Certifications"
+            icon="🏆"
+            defaultOpen={false}
+            color="emerald"
+            badge={totalCerts > 0 ? String(totalCerts) : undefined}
+          >
+            <CompactCertifications
+              lotCerts={lot.lotCerts}
+              fabricantCerts={lot.fabricantCerts}
+            />
+          </AccordionSection>
+
+          {/* Avis consommateurs */}
+          <AccordionSection
+            title="Avis consommateurs"
+            icon="⭐"
+            defaultOpen={false}
+            color="yellow"
+            badge={
+              lot.product.totalReviews
+                ? String(lot.product.totalReviews)
+                : undefined
+            }
+          >
+            <CompactReviews
+              reviews={lot.reviews}
+              averageRating={lot.product.averageRating}
+              totalReviews={lot.product.totalReviews}
+            />
+          </AccordionSection>
         </div>
 
-        <ReviewsSection
-          reviews={lot.reviews}
-          averageRating={lot.product.averageRating}
-          totalReviews={lot.product.totalReviews}
-        />
-
+        {/* Similar products (still full-width, outside accordions) */}
         {similar.length > 0 && <SimilarProducts products={similar} />}
 
-        <VerificationFooter lot={lot} />
+        {/* 5. FOOTER VÉRIFICATION — compact */}
+        <CompactVerificationFooter lot={lot} />
       </main>
 
       <PublicFooter />
