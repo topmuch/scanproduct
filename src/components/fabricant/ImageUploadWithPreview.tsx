@@ -70,7 +70,35 @@ export function ImageUploadWithPreview({
         setPreview(value);
       }
     }
-  }, [value]);
+  }, [value, preview]);
+
+  // ── CRITICAL FIX ─────────────────────────────────────────────────
+  // Revoke the Blob URL ONLY AFTER `preview` has been committed to a
+  // non-blob URL (the server-returned path). Previously we revoked the
+  // blob URL synchronously right before calling setPreview(serverUrl),
+  // which created a window where the <img> still had src="blob:…"
+  // pointing to an already-revoked blob → the image would appear for a
+  // few seconds (during upload) then suddenly break when the upload
+  // completed. By deferring the revoke to this effect, we guarantee the
+  // <img> element has already re-rendered with the new server URL
+  // before the old blob URL is destroyed.
+  useEffect(() => {
+    if (preview && !preview.startsWith("blob:") && blobUrlRef.current) {
+      const blob = blobUrlRef.current;
+      blobUrlRef.current = null;
+      // Defer to the next macrotask so the browser has fully committed
+      // the new <img src> and any in-flight paint of the old blob has
+      // completed before we destroy it.
+      const id = setTimeout(() => {
+        try {
+          URL.revokeObjectURL(blob);
+        } catch {
+          /* already revoked — ignore */
+        }
+      }, 0);
+      return () => clearTimeout(id);
+    }
+  }, [preview]);
 
   // Cleanup blob URL on unmount
   useEffect(() => {
@@ -127,12 +155,12 @@ export function ImageUploadWithPreview({
           throw new Error(data.error || "Échec de l'upload.");
         }
 
-        // Replace the blob URL with the persistent server URL.
-        // We can revoke the blob URL now — the server URL is on disk.
-        if (blobUrlRef.current) {
-          URL.revokeObjectURL(blobUrlRef.current);
-          blobUrlRef.current = null;
-        }
+        // ── CRITICAL FIX ───────────────────────────────────────────
+        // Switch the preview to the server URL FIRST. The blob URL is
+        // NOT revoked here — the useEffect above will revoke it on the
+        // next tick, AFTER React has committed the new <img src> to the
+        // DOM. This prevents the "image shows then breaks" race where
+        // the <img> briefly pointed to a revoked blob.
         setPreview(data.url);
         onChange(data.url);
       } catch (err) {
@@ -220,14 +248,20 @@ export function ImageUploadWithPreview({
         {preview ? (
           <>
             {/* Plain <img> tag — NOT next/image — so dynamically uploaded
-                local files don't go through the Next.js image optimizer. */}
+                local files don't go through the Next.js image optimizer.
+                The `key` forces React to mount a fresh <img> element when
+                the src changes (e.g. blob: → /uploads/…), guaranteeing a
+                clean load and avoiding any stale error state from a
+                previous (possibly revoked) blob URL. */}
             <img
+              key={preview}
               src={preview}
               alt="Aperçu"
               className="h-full w-full object-cover"
               onError={() => {
-                // If even the preview fails (shouldn't happen with blob URLs,
-                // but defensive), surface an error instead of a broken icon.
+                // If even the preview fails (shouldn't happen with blob
+                // URLs, but defensive), surface an error instead of a
+                // broken icon.
                 setError("Impossible de charger l'aperçu de l'image.");
               }}
             />
