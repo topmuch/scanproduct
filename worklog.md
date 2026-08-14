@@ -2227,3 +2227,26 @@ Stage Summary:
 - Content-Type toujours correct → fini les "Image non disponible" même avec extension mismatched
 - Cache immutable (UUID-based filenames) + sécurité path-traversal + nosniff
 - Commit poussé : cd0283b sur origin/main
+
+---
+Task ID: 7
+Agent: main
+Task: Correction du crash "Application error: a client-side exception" lors de la création de lot
+
+Work Log:
+- Symptôme : sur verifscan.roomscan.pro, l'utilisateur clique sur "Créer le lot et générer QR codes" → "Application error: a client-side exception has occurred".
+- Reproduction locale : POST /api/lots avec un productId valide → HTTP 500 {"error":"Failed to create lot"}.
+- Diagnostic dans dev.log : PrismaClientValidationError sur db.lot.create() — `productId: undefined`.
+- Cause racine : dans src/app/api/lots/route.ts, le findUnique product utilisait `select: { fabricantId: true, name: true }` SANS `id`. Donc `product.id` était undefined. Le code faisait ensuite `productId: product.id` dans db.lot.create → undefined → Prisma refusait.
+- Le frontend catchait l'erreur 500 (toast.error) mais le `refresh()` (router.refresh) qui suivait déclenchait un re-render serveur qui crashait côté client → "Application error: a client-side exception".
+- Correction : ajout de `id: true` au select → `select: { id: true, fabricantId: true, name: true }`.
+- Vérification : POST /api/lots avec productId valide → HTTP 201, lot créé avec productId correct, 0 erreur Prisma.
+- Vérification des autres routes avec pattern similaire (products/[id], qr-codes/generate) : OK, elles utilisent `id` depuis les params ou ne dépendent pas de product.id → pas de bug.
+- Lint : clean (0 erreur, 0 warning).
+- Push : commit d8d10a4 poussé sur origin/main (sync 0 0).
+
+Stage Summary:
+- Root cause : select Prisma incomplet (manquait `id`) → product.id undefined → productId undefined → 500
+- Fix : 1 ligne (ajout de `id: true` au select)
+- Le crash frontend "Application error: a client-side exception" était une conséquence du refresh() après l'échec 500
+- Commit poussé : d8d10a4 sur origin/main
