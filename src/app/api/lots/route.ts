@@ -32,9 +32,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify the product belongs to the fabricant.
+    // NOTE: `id` MUST be in the select — we use `product.id` below when
+    // creating the lot. A previous version omitted it, which made
+    // `product.id` undefined → `productId: undefined` in db.lot.create →
+    // PrismaClientValidationError → HTTP 500 → the frontend's post-create
+    // refresh() crashed with "Application error: a client-side exception".
     const product = await db.product.findUnique({
       where: { id: body.productId },
-      select: { fabricantId: true, name: true },
+      select: { id: true, fabricantId: true, name: true },
     });
     if (!product) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
