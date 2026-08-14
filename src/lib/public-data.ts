@@ -308,6 +308,44 @@ export async function getActiveCategories() {
   });
 }
 
+/**
+ * Categories with product count — for the visual category filter cards.
+ */
+export async function getCategoriesWithCounts() {
+  const categories = await db.category.findMany({
+    where: { isActive: true },
+    orderBy: { order: "asc" },
+    include: {
+      _count: {
+        select: {
+          products: {
+            where: { isPublic: true, status: "ACTIVE" },
+          },
+        },
+      },
+    },
+  });
+  return categories.map((c) => ({
+    id: c.id,
+    name: c.name,
+    slug: c.slug,
+    emoji: c.emoji ?? null,
+    icon: c.icon ?? null,
+    productCount: c._count.products,
+  }));
+}
+
+/**
+ * Catalog stats — total public products + total verified manufacturers.
+ */
+export async function getCatalogStats() {
+  const [totalProducts, manufacturers] = await Promise.all([
+    db.product.count({ where: { isPublic: true, status: "ACTIVE" } }),
+    db.user.count({ where: { role: "FABRICANT", status: "ACTIVE" } }),
+  ]);
+  return { totalProducts, totalManufacturers: manufacturers };
+}
+
 // ---------------------------------------------------------------------------
 // Similar products (same category, different id)
 // ---------------------------------------------------------------------------

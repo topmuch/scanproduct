@@ -1590,3 +1590,70 @@ Stage Summary:
 - Filtres transparence 100% fonctionnels (URL-based, persistants, réinitialisables)
 - Badge "Nouveau" intelligent (age + scans)
 - Design des cartes premium (rating, scans, CTA hover, gradients)
+
+---
+Task ID: 14
+Agent: main
+Task: Refonte premium complète de la page catalogue /produits — v2 marketplace (hero gradient, filtres visuels, vue grid/list, cartes premium)
+
+Work Log:
+- Architecture v2 créée dans src/components/catalog/v2/ (5 nouveaux composants)
+- public-data.ts:
+  - Ajout getCategoriesWithCounts() (categories + _count products)
+  - Ajout getCatalogStats() (totalProducts + totalManufacturers)
+- CatalogHero.tsx (client):
+  - Hero full-bleed gradient bleu (#1e40af → #2563eb → #1e3a8a)
+  - Blobs décoratifs + grid pattern overlay
+  - Badge live "X produits vérifiés disponibles" (ping animation)
+  - Titre "Découvrez des produits authentiques et traçables" (gradient text)
+  - Recherche glassmorphism (bg-white/95, backdrop-blur, shadow-2xl)
+  - 3 stats: Produits / Fabricants / 100% Vérifiés (icônes lucide)
+- CategoryFilters.tsx (client):
+  - Cards visuelles (emoji circle gradient + nom + compteur produits)
+  - 8 gradients cycliques pour variété visuelle
+  - État actif: scale + ring blue + check badge
+  - Bouton "Tout afficher" quand filtre actif
+- ControlBar.tsx (client):
+  - Sticky top-16 avec backdrop-blur
+  - Sort buttons: Populaire/Récent/Mieux notés/Transparence (icônes lucide)
+  - Toggle vue Grid/List (icônes LayoutGrid/List)
+  - Chips transparence compacts (Platine/Or/Argent/Bronze avec pastilles gradient)
+  - Badge "Niveau: X" cliquable pour reset
+- ProductCard.tsx (server component):
+  - Grid variant: aspect-[4/3] grandes images, badges Nouveau/Populaire, hover overlay (Heart/Share decoratifs en span non-interactifs), rating stars, barre transparence gradient blue→violet→pink
+  - List variant: layout horizontal (image 40-56 left + content right), description tronquée, manufacturer avec city
+  - Badge "Nouveau": 14j AND < 5 scans (logique intelligente)
+  - Badge "Populaire": >= 50 scans
+  - Animation fade-in staggered (animation-delay index*60ms)
+- ProductGrid.tsx (server):
+  - Grid: 1/2/3/4 colonnes responsive
+  - List: flex-col gap-4
+  - Empty state premium (gradient icon)
+  - Réutilise CatalogPagination existant
+- page.tsx /produits:
+  - Fetch parallèle: categories + stats + products
+  - Param view (grid|list) validé
+  - Layout: hero + content wrapper (-mt-8 overlap)
+  - PublicHeader + PublicFooter conservés
+- globals.css:
+  - Ajout keyframes vs-fade-in + classe .animate-fade-in
+  - prefers-reduced-motion: animation désactivée
+- Bug fix: "Event handlers cannot be passed to Client Component props"
+  - ProductCard est Server Component mais avait des onClick sur boutons favoris/share
+  - Converti en <span aria-hidden> non-interactifs (pointer-events-none)
+- Vérifications:
+  - Lint: ✅ clean
+  - HTTP 200, 405KB HTML
+  - 0 erreur "Event handlers" / 0 "indisponible"
+  - Filtre catégorie cosmetiques → 2 produits ✅
+  - Vue liste → cartes en mode flex horizontal ✅
+  - Filtre transparence Or → 5 produits (score ≥ 71) ✅
+  - VLM confirme: hero gradient bleu, 6 cards catégories, barre contrôle, cartes premium 4:3, "SaaS B2B2C haut de gamme"
+
+Stage Summary:
+- Page catalogue entièrement refondue en version marketplace premium
+- 5 nouveaux composants v2 créés
+- Toutes les fonctionnalités de la spec implémentées (hero, filtres visuels, tri, vue grid/list, cartes premium)
+- Filtre transparence conservé (chips compacts dans ControlBar)
+- Adapté au modèle de données réel (fabricant, imageUrl, latestLot, categoryRef)
+- Bug Server Component/onClick résolu
