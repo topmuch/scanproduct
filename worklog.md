@@ -1434,3 +1434,51 @@ Stage Summary:
 - Each feature uses its brand color (blue / green / amber) consistently.
 - No new routes created (respects the `/`-only constraint). Single reusable FeatureDetailDialog component driven by a FeatureKey state in Features.tsx.
 - Lint clean, no console errors, verified end-to-end in the browser for all three features.
+
+---
+Task ID: 25
+Agent: main (continuation)
+Task: Redesign the product page (/p/[lotId]) to display images LARGER and use a 3-large-column design inspired by the user-provided reference template (sneakers-flyer-template AVIF).
+
+Work Log:
+- Read the user-provided reference template at /home/z/my-project/upload/sneakers-flyer-template-design-a4_813426-1046.avif. It was AVIF format which the VLM CLI cannot parse directly, so I converted it to PNG with sharp (installed sharp@0.35.3 as a dev dependency).
+- VLM analysis of the reference template confirmed the design intent: a 3-column editorial catalog layout = 2 columns of LARGE product image cards on the left (~70% width) + 1 dark sidebar on the right (~30% width) with key info, promo, and CTAs. Card-based UI, rounded corners, drop shadows, light-gray image containers, vibrant accent color for highlights.
+- Adapted this concept to VerifScan's single-product passport page (the reference shows multiple products, but VerifScan shows ONE product with supplementary visuals).
+- Created src/components/product/ProductHero3Col.tsx:
+  - Top-level grid: `grid-cols-1 lg:grid-cols-3` → 3 columns on desktop, stacked on mobile.
+  - LEFT 2 columns (lg:col-span-2): a 2×2 grid (sm:grid-cols-2) of LARGE image cards, each rendered via a reusable `ImageCard` wrapper (top label bar + big visual area on a light slate-50 background, rounded-2xl, hover lift + shadow):
+    * Card 1 (spans 2 cols): Main product image — LARGE, aspect-[16/10] on mobile / aspect-[2/1] on desktop, object-cover, with brand + weight badges overlaying the bottom-left (echoes the reference price tag).
+    * Card 2: QR code — rendered via QRCodeCanvas (160px), with the lot reference below.
+    * Card 3: Manufacturer — logo (80×80), name, sector, location, verified check.
+    * Card 4 (spans 2 cols): Certifications summary — big total count, "Fabricant vérifié" badge, cert chips for lot + fabricant certs.
+  - RIGHT 1 column (dark sidebar): bg-gradient from-slate-900 to-slate-800, white text:
+    * Category badge.
+    * Product name (h1, 26-34px).
+    * Star rating + review count.
+    * Transparency score badge — big "87%" number (echoes the reference "60%" promo), level icon, progress bar in the level's brand color, "Top X%" label.
+    * Product description.
+    * 3-tile stats row: scans / fabrication date / fabricant initial.
+    * Contact CTAs: WhatsApp (green), Email (blue), Website (outline) — conditional on available data.
+    * "Voir toutes les coordonnées" anchor link → #contact-fabricant.
+  - Each transparency level (bronze/argent/or/platine) gets its own accent color for the score badge.
+  - "use client" because QRCodeCanvas needs canvas + the component uses React.useRef for the QR wrapper.
+- Updated src/app/p/[lotId]/page.tsx:
+  - Replaced imports: removed ProductHeader, QuickStats, QRCodeSection (their content is now consolidated inside ProductHero3Col). Kept TransparencyScore (full detailed breakdown still rendered below), TraceabilityInfo, LotHistory, Certifications, AllergensInfo, ContactManufacturer, ReviewsSection, SimilarProducts, VerificationFooter.
+  - Replaced the `<ProductHeader />`, `<QuickStats />`, `<QRCodeSection />` renders with a single `<ProductHero3Col />` that receives product, lot, fabricant, transparency, scans, totalCerts.
+  - Widened the main container from max-w-5xl to max-w-6xl to give the 3-column hero more room.
+  - Wrapped `<ContactManufacturer />` in `<div id="contact-fabricant">` so the sidebar's "Voir toutes les coordonnées" anchor link scrolls to the full contact section below.
+- Ran `bun run lint` → 0 errors, 0 warnings.
+- Verified with agent-browser at desktop viewport (1440×900):
+  - Page loads for lot cmst0ec8c0022vpgax69h5wug ("Beurre de Karité Brut 200g"), HTTP 200, no console errors.
+  - VLM confirmed: 3-column layout at the top level (2 columns of image cards on the left + 1 dark sidebar on the right). All 4 image cards visible (main product image LARGE, QR code LARGE, manufacturer card, certifications card). Dark sidebar contains: category tag, product name, 4.5-star rating, 87% transparency score badge with progress bar, description, 3 stats tiles, and contact CTA buttons. Images displayed LARGE compared to typical thumbnails.
+  - Full-page screenshot confirmed the entire page still renders correctly below the hero: TransparencyScore breakdown, TraceabilityInfo, LotHistory timeline, Certifications grid, AllergensInfo, ContactManufacturer, ReviewsSection, SimilarProducts, VerificationFooter — no visual breakage, clean transitions.
+- Verified at mobile viewport (390×844): layout stacks vertically (image cards on top, dark sidebar below), main product image remains full-width and large, all text readable, good spacing. VLM confirmed.
+- Verified the mock product passport (/p/l1) still renders correctly (it uses a separate MockProductPassport component, not affected by this change).
+- `agent-browser errors` → no errors. `agent-browser console` → only React DevTools info + HMR logs, no warnings.
+
+Stage Summary:
+- The product page (/p/[lotId]) now uses a 3-column hero layout inspired by the user's reference template: 2 columns of LARGE image cards (main product image, QR code, manufacturer, certifications) on the left + 1 dark slate-900 sidebar on the right with the product name, big transparency % badge, description, stats, and contact CTAs.
+- Images are now displayed MUCH larger: the main product image went from a small ~256px-tall object-contain to a full-width aspect-[2/1] object-cover card; the QR code is rendered at 160px in a dedicated card; manufacturer logo at 80×80 in its own card.
+- Consolidated ProductHeader + QuickStats + QRCodeSection into the new hero (their key info is now in the sidebar / image cards). The full detailed sections (TransparencyScore breakdown, Certifications list, ContactManufacturer, etc.) remain rendered below the hero so no data is lost.
+- Brand colors kept consistent with the rest of the site (blue #2563EB, green #10B981, amber #F59E0B) instead of the reference's lime green.
+- Responsive: 3 columns on desktop (lg+), stacks vertically on mobile. Lint clean, no runtime errors, verified on desktop + mobile + mock passport.

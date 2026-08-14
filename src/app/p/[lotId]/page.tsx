@@ -12,14 +12,12 @@ import { PublicFooter } from "@/components/public/PublicFooter";
 import { MockProductPassport, isMockLotId } from "@/components/public/MockProductPassport";
 
 import { AuthenticityBanner } from "@/components/product/AuthenticityBanner";
-import { ProductHeader } from "@/components/product/ProductHeader";
-import { QuickStats } from "@/components/product/QuickStats";
+import { ProductHero3Col } from "@/components/product/ProductHero3Col";
 import { TransparencyScore } from "@/components/product/TransparencyScore";
 import { TraceabilityInfo } from "@/components/product/TraceabilityInfo";
 import { LotHistory } from "@/components/product/LotHistory";
 import { Certifications } from "@/components/product/Certifications";
 import { AllergensInfo } from "@/components/product/AllergensInfo";
-import { QRCodeSection } from "@/components/product/QRCodeSection";
 import { ContactManufacturer } from "@/components/product/ContactManufacturer";
 import { ReviewsSection } from "@/components/product/ReviewsSection";
 import { SimilarProducts } from "@/components/product/SimilarProducts";
@@ -154,24 +152,21 @@ export default async function ProductPage({
     <div className="flex min-h-screen flex-col bg-[#F9FAFB]">
       <PublicHeader />
 
-      <main className="mx-auto w-full max-w-5xl flex-1 space-y-6 px-4 py-8">
+      <main className="mx-auto w-full max-w-6xl flex-1 space-y-6 px-4 py-8">
         <AuthenticityBanner
           status={lot.status}
           manufacturerName={lot.fabricant.companyName ?? lot.fabricant.name}
           verifiedAt={lot.verifiedAt}
         />
 
-        <ProductHeader
+        {/* New 3-column hero: 2 cols of large image cards + dark sidebar */}
+        <ProductHero3Col
           product={lot.product}
           lot={lot}
           fabricant={lot.fabricant}
-        />
-
-        <QuickStats
+          transparency={lot.transparency}
           scans={lot.scanCount ?? lot.totalScans ?? 0}
-          verified={Boolean(lot.isVerified || lot.fabricant.isVerified)}
-          registeredAt={lot.fabricant.createdAt}
-          certifications={totalCerts}
+          totalCerts={totalCerts}
         />
 
         <TransparencyScore transparency={lot.transparency} />
@@ -190,9 +185,9 @@ export default async function ProductPage({
 
         <AllergensInfo lot={lot} />
 
-        <QRCodeSection lot={lot} />
-
-        <ContactManufacturer fabricant={lot.fabricant} />
+        <div id="contact-fabricant">
+          <ContactManufacturer fabricant={lot.fabricant} />
+        </div>
 
         <ReviewsSection
           reviews={lot.reviews}
