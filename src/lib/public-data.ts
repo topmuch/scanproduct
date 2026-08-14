@@ -155,10 +155,20 @@ export async function getLotWithDetails(lotId: string) {
 // Catalog (all public products)
 // ---------------------------------------------------------------------------
 
+export type TransparencyLevel = "bronze" | "argent" | "or" | "platine";
+
+export const TRANSPARENCY_RANGES: Record<TransparencyLevel, { min: number; max: number }> = {
+  bronze: { min: 0, max: 40 },
+  argent: { min: 41, max: 70 },
+  or: { min: 71, max: 90 },
+  platine: { min: 91, max: 100 },
+};
+
 export type CatalogFilters = {
   category?: string; // category slug
   search?: string;
   sort?: "recent" | "popular" | "transparency" | "name" | "rating";
+  transparency?: TransparencyLevel | null; // min transparency level
   page?: number;
   limit?: number;
 };
@@ -168,6 +178,7 @@ export async function getAllProducts(filters: CatalogFilters = {}) {
     category,
     search,
     sort = "recent",
+    transparency = null,
     page = 1,
     limit = 12,
   } = filters;
@@ -180,10 +191,17 @@ export async function getAllProducts(filters: CatalogFilters = {}) {
     status: string;
     categoryId?: string;
     OR?: Array<Record<string, unknown>>;
+    transparencyScore?: { gte?: number; lte?: number };
   } = {
     isPublic: true,
     status: "ACTIVE",
   };
+
+  // Transparency level filter: show products with score >= level min.
+  // (e.g. "or" → score >= 71). We use gte so higher-tier products also appear.
+  if (transparency && TRANSPARENCY_RANGES[transparency]) {
+    where.transparencyScore = { gte: TRANSPARENCY_RANGES[transparency].min };
+  }
 
   // Resolve category slug to id
   if (category && category !== "all") {

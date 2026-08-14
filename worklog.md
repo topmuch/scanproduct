@@ -1540,3 +1540,53 @@ Stage Summary:
 - The QuickContact section fixes the crucial missing feature — consumers can now contact the manufacturer in 1 tap.
 - 11 new compact components in src/components/product/compact/. The old components (ProductHero3Col, TransparencyScore, etc.) are kept but no longer imported by page.tsx.
 - Lint clean, no runtime errors, verified on mobile + desktop + accordion interactivity.
+
+---
+Task ID: 13
+Agent: main
+Task: Refonte de la page catalogue /produits — activer les filtres transparence, corriger le badge "Nouveau", polish du design
+
+Work Log:
+- Analyse VLM de la page /produits : identifié 3 problèmes principaux
+  1. Filtres transparence "visual-only" avec placeholder "bientôt disponibles" → donnait impression design inachevé
+  2. Tous les produits (6/6) avaient le badge "Nouveau" (seuil 30j trop large car DB fraîchement seedée)
+  3. Design des cartes produit manquait de polish (pas de rating, pas de scans count, pas de CTA hover)
+- Étape 1: Ajout du type `TransparencyLevel` + `TRANSPARENCY_RANGES` dans public-data.ts
+  - Ajout param `transparency` à `CatalogFilters`
+  - Modification `getAllProducts` pour filtrer par `transparencyScore >= min` (gte = niveau et au-dessus)
+- Étape 2: Refonte complète de FilterSidebar.tsx
+  - Wire des checkboxes transparence aux URL params (via useUpdateUrl)
+  - Remplacement du placeholder "bientôt disponibles" par un bouton "Réinitialiser le filtre" (conditionnel)
+  - Design premium : badges couleur gradient (violet/amber/slate/orange), icône Check, ring actif
+  - Titre section changé : "Niveau de transparence" + description "Afficher les produits de ce niveau et au-dessus"
+- Étape 3: Correction logique badge "Nouveau" dans ProductCard.tsx
+  - Ancien : `createdAt >= now - 30 jours` → tous les produits seeded = Nouveau
+  - Nouveau : `createdAt >= now - 14 jours AND totalScans < 5` → 4/6 produits Nouveau (ceux avec 0 scans)
+- Étape 4: Polish ProductCard.tsx
+  - Ajout compte scans (badge bottom-left image area)
+  - Ajout rating stars + nombre d'avis
+  - Badge "Nouveau" en gradient rose→rouge (au lieu de rouge plat)
+  - Barre transparence 2px (au lieu de 1.5px) + icône ShieldCheck
+  - CTA "Voir le passeport →" au hover
+  - Cards en rounded-2xl (au lieu de rounded-xl) + shadow-blue au hover
+- Étape 5: Mise à jour page.tsx /produits
+  - Lecture du param `transparency` depuis searchParams (validé contre TransparencyLevel[])
+  - Passage du param à getAllProducts + FilterSidebar
+  - Hero : ajout de blobs décoratifs (gradient blue/emerald) en arrière-plan
+- Vérifications:
+  - Lint: ✅ clean
+  - HTTP 200 sur /produits (377KB HTML)
+  - Filtre Platine → 2 produits (Couscous + Huile Baobab, score ≥ 91) ✅
+  - Filtre Bronze → 6 produits (gte=0) ✅
+  - État actif: aria-pressed="true" + ring violet + icône Check ✅
+  - "Réinitialiser le filtre" apparaît quand filtre actif ✅
+  - "bientôt disponibles" = 0 occurrence ✅
+  - 4 badges "Nouveau" (au lieu de 6) ✅
+  - VLM confirme: design "moderne, propre et professionnel"
+
+Stage Summary:
+- Page catalogue /produits entièrement refondue et fonctionnelle
+- Les 3 problèmes identifiés par le VLM sont résolus
+- Filtres transparence 100% fonctionnels (URL-based, persistants, réinitialisables)
+- Badge "Nouveau" intelligent (age + scans)
+- Design des cartes premium (rating, scans, CTA hover, gradients)

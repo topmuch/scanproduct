@@ -1,14 +1,16 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Check } from "lucide-react";
 import { useUpdateUrl } from "./use-update-url";
 import type { CategoryTabItem } from "./CategoryTabs";
+import type { TransparencyLevel } from "@/lib/public-data";
 
 type Props = {
   categories: CategoryTabItem[];
   activeCategory: string;
   activeSort: string;
+  activeTransparency: TransparencyLevel | null;
   search: string;
 };
 
@@ -21,22 +23,23 @@ const SORT_OPTIONS: Array<{ value: string; label: string }> = [
 ];
 
 const TRANSPARENCY_FILTERS: Array<{
-  id: string;
+  id: TransparencyLevel;
   label: string;
   range: string;
   color: string;
+  ring: string;
 }> = [
-  { id: "bronze", label: "Bronze", range: "0 – 40", color: "bg-amber-400" },
-  { id: "argent", label: "Argent", range: "41 – 70", color: "bg-gray-400" },
-  { id: "or", label: "Or", range: "71 – 90", color: "bg-yellow-400" },
-  { id: "platine", label: "Platine", range: "91 – 100", color: "bg-purple-400" },
+  { id: "platine", label: "Platine", range: "91 – 100", color: "bg-gradient-to-br from-violet-500 to-purple-600", ring: "ring-violet-200" },
+  { id: "or",      label: "Or",      range: "71 – 90",  color: "bg-gradient-to-br from-amber-400 to-yellow-500",  ring: "ring-amber-200" },
+  { id: "argent",  label: "Argent",  range: "41 – 70",  color: "bg-gradient-to-br from-slate-400 to-slate-500",   ring: "ring-slate-200" },
+  { id: "bronze",  label: "Bronze",  range: "0 – 40",   color: "bg-gradient-to-br from-orange-400 to-amber-700",  ring: "ring-orange-200" },
 ];
 
 /**
  * FilterSidebar — left-column filter card with three collapsible sections:
  *   1. Catégories (radio-like list)
  *   2. Trier par (sort options)
- *   3. Transparence (visual-only toggle checkboxes for now)
+ *   3. Transparence (functional — filters by minimum score tier)
  *
  * Hidden on mobile (`hidden lg:block`) — mobile uses CategoryTabs + SortDropdown.
  */
@@ -44,6 +47,7 @@ export function FilterSidebar({
   categories,
   activeCategory,
   activeSort,
+  activeTransparency,
 }: Props) {
   const updateUrl = useUpdateUrl();
 
@@ -55,11 +59,9 @@ export function FilterSidebar({
     updateUrl({ sort: value });
   }
 
-  // Track transparency toggles locally only (visual filters, not wired to URL
-  // to keep the scope simple per task spec).
-  const [toggles, setToggles] = useState<Record<string, boolean>>({});
-  function toggleTransparency(id: string) {
-    setToggles((t) => ({ ...t, [id]: !t[id] }));
+  function toggleTransparency(id: TransparencyLevel) {
+    // Toggle: if already active, clear; otherwise set.
+    updateUrl({ transparency: activeTransparency === id ? null : id });
   }
 
   return (
@@ -121,17 +123,27 @@ export function FilterSidebar({
           </ul>
         </FilterSection>
 
-        {/* Transparence */}
-        <FilterSection title="Transparence" defaultOpen>
-          <p className="mb-2 text-xs text-gray-500">
-            Niveau de transparence minimum
+        {/* Transparence — functional */}
+        <FilterSection title="Niveau de transparence" defaultOpen>
+          <p className="mb-2.5 text-xs text-gray-500">
+            Afficher les produits de ce niveau et au-dessus
           </p>
           <ul className="space-y-1.5">
             {TRANSPARENCY_FILTERS.map((t) => {
-              const checked = !!toggles[t.id];
+              const checked = activeTransparency === t.id;
               return (
                 <li key={t.id}>
-                  <label className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2 py-1.5 transition-colors hover:bg-gray-50">
+                  <button
+                    type="button"
+                    onClick={() => toggleTransparency(t.id)}
+                    aria-pressed={checked}
+                    className={[
+                      "flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left transition-all",
+                      checked
+                        ? `bg-gray-50 ring-1 ${t.ring}`
+                        : "hover:bg-gray-50",
+                    ].join(" ")}
+                  >
                     <span
                       className={[
                         "flex h-4 w-4 flex-shrink-0 items-center justify-center rounded border-2 transition-colors",
@@ -141,46 +153,36 @@ export function FilterSidebar({
                       ].join(" ")}
                       aria-hidden
                     >
-                      {checked && (
-                        <svg
-                          viewBox="0 0 14 14"
-                          className="h-2.5 w-2.5"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="3"
-                        >
-                          <path
-                            d="M2 7l3 3 7-7"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                        </svg>
-                      )}
+                      {checked && <Check className="h-2.5 w-2.5" strokeWidth={4} />}
                     </span>
-                    <input
-                      type="checkbox"
-                      className="sr-only"
-                      checked={checked}
-                      onChange={() => toggleTransparency(t.id)}
-                    />
                     <span
-                      className={`h-2 w-2 rounded-full ${t.color}`}
+                      className={`h-3 w-3 rounded-full ${t.color} ring-2 ring-white shadow-sm`}
                       aria-hidden
                     />
-                    <span className="flex-1 text-sm text-gray-700">
+                    <span className={[
+                      "flex-1 text-sm",
+                      checked ? "font-bold text-gray-900" : "text-gray-700",
+                    ].join(" ")}
+                    >
                       {t.label}
                     </span>
                     <span className="text-[11px] font-medium text-gray-400">
                       {t.range}
                     </span>
-                  </label>
+                  </button>
                 </li>
               );
             })}
           </ul>
-          <p className="mt-3 rounded-md bg-gray-50 px-2 py-1.5 text-[11px] text-gray-400">
-            Filtres de transparence bientôt disponibles
-          </p>
+          {activeTransparency && (
+            <button
+              type="button"
+              onClick={() => updateUrl({ transparency: null })}
+              className="mt-3 text-xs font-semibold text-[#2563EB] hover:underline"
+            >
+              Réinitialiser le filtre
+            </button>
+          )}
         </FilterSection>
       </div>
     </aside>

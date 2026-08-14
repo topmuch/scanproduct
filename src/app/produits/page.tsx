@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import {
   getActiveCategories,
   getAllProducts,
+  type TransparencyLevel,
 } from "@/lib/public-data";
 import { PublicHeader } from "@/components/public/PublicHeader";
 import { PublicFooter } from "@/components/public/PublicFooter";
@@ -36,10 +37,13 @@ export async function generateMetadata(): Promise<Metadata> {
 // Page
 // ---------------------------------------------------------------------------
 
+const VALID_TRANSPARENCY: TransparencyLevel[] = ["bronze", "argent", "or", "platine"];
+
 type SearchParams = Promise<{
   category?: string;
   search?: string;
   sort?: string;
+  transparency?: string;
   page?: string;
 }>;
 
@@ -49,10 +53,15 @@ export default async function CatalogPage({ searchParams }: { searchParams: Sear
   const search = sp.search || "";
   const sort = (sp.sort as "recent" | "popular" | "transparency" | "name" | "rating") || "recent";
   const page = Math.max(1, parseInt(sp.page || "1", 10) || 1);
+  // Validate transparency param — only accept known levels.
+  const transparency: TransparencyLevel | null =
+    sp.transparency && VALID_TRANSPARENCY.includes(sp.transparency as TransparencyLevel)
+      ? (sp.transparency as TransparencyLevel)
+      : null;
 
   const [categories, { products, pagination }] = await Promise.all([
     getActiveCategories(),
-    getAllProducts({ category, search, sort, page, limit: 12 }),
+    getAllProducts({ category, search, sort, transparency, page, limit: 12 }),
   ]);
 
   // Map DB rows to the simpler shape used by client components.
@@ -69,8 +78,14 @@ export default async function CatalogPage({ searchParams }: { searchParams: Sear
 
       <main className="flex-1">
         {/* Hero section */}
-        <section className="border-b border-gray-100 bg-white">
-          <div className="mx-auto max-w-[1400px] px-4 py-10 text-center sm:px-6 sm:py-14 lg:px-8">
+        <section className="relative overflow-hidden border-b border-gray-100 bg-white">
+          {/* Decorative gradient blobs */}
+          <div aria-hidden className="pointer-events-none absolute inset-0">
+            <div className="absolute -right-20 -top-20 h-72 w-72 rounded-full bg-blue-100/40 blur-3xl" />
+            <div className="absolute -left-20 top-10 h-64 w-64 rounded-full bg-emerald-100/30 blur-3xl" />
+          </div>
+
+          <div className="relative mx-auto max-w-[1400px] px-4 py-10 text-center sm:px-6 sm:py-14 lg:px-8">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-[#2563EB] ring-1 ring-blue-200">
               🛒 Catalogue VerifScan
             </span>
@@ -109,6 +124,7 @@ export default async function CatalogPage({ searchParams }: { searchParams: Sear
               categories={categoryTabs}
               activeCategory={category}
               activeSort={sort}
+              activeTransparency={transparency}
               search={search}
             />
 
