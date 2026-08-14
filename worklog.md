@@ -2150,3 +2150,33 @@ Stage Summary:
 - Les DEUX problèmes utilisateur sont résolus : PNG ne tourne plus en boucle, JPEG n'affiche plus "Échec de l'upload"
 - Vérifié end-to-end via curl (API) + agent-browser (UI réelle avec login FABRICANT)
 - Aucune régression : lint clean, 0 erreur runtime, serveur stable
+
+---
+Task ID: 5
+Agent: main
+Task: Correction du bug "Image non disponible — téléversez à nouveau l'image" après upload
+
+Work Log:
+- Diagnostic : L'erreur venait du `onError` du `<img>` dans ImageUploadWithPreview. L'upload réussissait (POST 200, fichier sauvé) mais le navigateur ne pouvait pas décoder l'image.
+- Investigation avec sharp : découverte que 5 fichiers dans public/uploads/products/ avaient l'extension `.png` mais contenaient en réalité des données JPEG (magic bytes FF D8 FF). L'ancienne route (supprimée puis recréée en Task 4) se fiait à `file.type` (MIME rapporté par le navigateur, basé sur l'extension du fichier) pour choisir l'extension de sauvegarde. Si un utilisateur renommait `photo.jpg` → `photo.png`, le navigateur envoyait `image/png` mais le contenu restait JPEG → le serveur statique envoyait `Content-Type: image/png` pour du contenu JPEG → `<img onError>` → "Image non disponible".
+- Vérification HTTP : `curl -I /uploads/products/22b063d5-....png` → `Content-Type: image/png` mais sharp confirmait `jpeg`. Mismatch Content-Type vs contenu réel = navigateur ne peut pas décoder.
+- Correction de src/app/api/upload/route.ts :
+  - Nouvelle fonction `detectFormatFromBytes(buf)` : lit les magic bytes pour déterminer le VRAI format (FF D8 FF = JPEG, 89 50 4E 47 = PNG, GIF8 = GIF, RIFF....WEBP = WebP, <?xml/<svg = SVG). Indépendant de `file.type`.
+  - L'extension du fichier sauvegardé correspond TOUJOURS au contenu réel, peu importe l'extension/MIME rapporté par le navigateur.
+  - `migrateMismatchedExtensions()` : fonction de migration best-effort qui renomme les fichiers legacy dont l'extension ne correspond pas au contenu. Idempotente, tourne en arrière-plan au premier upload.
+  - Le `mimeType` retourné dans la réponse JSON est maintenant dérivé de l'extension détectée (pas de `file.type`).
+- Migration manuelle des 5 fichiers legacy mismatched : renommés `.png` → `.jpg` (22b063d5, 55dd7158, 6960ed53, c49ce5b2, e5e6004c). Vérifié : tous les fichiers sont maintenant cohérents (ALL MATCH ✓).
+- Vérification API (curl avec session FABRICANT) :
+  - Upload JPEG content avec .png filename → sauvegardé comme `.jpg` → Content-Type: image/jpeg ✅
+  - Upload PNG content avec .jpg filename → sauvegardé comme `.png` → Content-Type: image/png ✅
+- Vérification E2E (agent-browser, login → dashboard → Nouveau produit → upload) :
+  - Upload d'un JPEG 300x300 renommé .png → POST /api/upload 200 → sauvegardé comme 707536a1-...jpg → image décodée 300x300 → AUCUNE erreur "Image non disponible" → boutons "Changer"/"Retirer la photo" visibles ✅
+- Lint : clean (0 erreur, 0 warning)
+- Push : commit 53682ad poussé sur origin/main (sync 0 0). Token PAT nettoyé de .git/config.
+
+Stage Summary:
+- Root cause : la route se fiait à file.type (MIME du navigateur basé sur l'extension) au lieu du contenu réel
+- Fix : détection du format par magic bytes (detectFormatFromBytes) → extension toujours cohérente avec le contenu
+- Migration : 5 fichiers legacy mismatched renommés + fonction de migration auto pour futurs déploiements
+- Le bug "Image non disponible" est résolu pour TOUS les types de mismatch (JPEG→.png, PNG→.jpg, etc.)
+- Commit poussé : 53682ad sur origin/main
