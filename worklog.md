@@ -1302,3 +1302,31 @@ Stage Summary:
 - The "Image non disponible — téléversez à nouveau l'image." error was caused by the upload API route (`src/app/api/upload/route.ts`) being deleted from the working tree. Every upload attempt 404'd, so the `<img>` could never load the (non-existent) uploaded file.
 - Fix: restored the route from git, added missing NEXTAUTH_SECRET/URL env vars, re-seeded the DB.
 - Verified: upload → 201, preview loads, save persists, reload preserves the uploaded image. Combined with the Zustand `persist` middleware from Task 19, uploaded images now both save AND survive page reloads.
+
+---
+Task ID: 21
+Agent: main (continuation)
+Task: Replace the Hero section's two-column layout (text + product image) with the user-provided promotional banner image, displayed full-width.
+
+Work Log:
+- Inspected the uploaded banner at /home/z/my-project/upload/99b9ce85-9b8c-4d32-bee0-7bf06f66e8d6.png — PNG, 1956×804 (aspect ratio 2.43:1). VLM analysis confirmed it is a complete promotional banner containing: headline "Authenticité vérifiée. Confiance renforcée.", an amber "NATURA HUILE PURE" bottle with QR code, a phone showing the VerifScan app confirming the product is authentic, and three feature icons (Authenticité garantie, Traçabilité complète, Relation de confiance durable). Because the banner already contains all the marketing content, no overlay text is needed.
+- Copied the banner to /home/z/my-project/public/hero-banner.png so it is served as a static asset. Verified HTTP 200 at /hero-banner.png.
+- Rewrote src/components/landing/Hero.tsx:
+  - Removed the entire two-column grid (left: badge, h1, paragraph, CTA buttons, stats, client logos; right: product image, floating scan card, QR badge, decorative badges).
+  - Removed the trust ribbon at the bottom of the hero.
+  - Replaced with a single full-bleed <img> (motion.img with a subtle fade+scale entrance) using src="/hero-banner.png", className="block h-auto w-full select-none", draggable={false}.
+  - Kept the section wrapper with id="accueil" and top padding (pt-16 lg:pt-20) to clear the fixed site header. Background is plain white.
+- Ran `bun run lint` → 0 errors, 0 warnings. Dev server recompiled cleanly.
+- Verified with agent-browser at 1440×900 desktop viewport:
+  - Banner loads: src=/hero-banner.png, complete=true, naturalWidth=1956.
+  - Renders edge-to-edge full-width: renderedW=1440 = viewportW, left=0, top=80 (just below the 80px fixed header).
+  - Natural aspect ratio preserved: renderedH=592 (matches 1956×804 ratio, nothing cropped).
+  - Hero-to-Features transition: hero bottom=672, next section top=672, gap=0 — clean, no awkward gap, no overlap.
+- Verified at 390×844 mobile viewport: banner renders full-width (390px) at natural aspect ratio (160px tall). This is the correct, faithful behavior for a horizontal banner — all content preserved without cropping. (On narrow screens a 2.43:1 banner is naturally a thin strip; a separate vertical banner would be needed for a taller mobile hero, which is out of scope of the request.)
+- VLM final verification confirmed: full-width banner directly below the header, edge-to-edge, banner content clearly visible, clean transition to the next section.
+
+Stage Summary:
+- The Hero section now displays the user-provided promotional banner as a full-width image, replacing the previous text column and product-scan visualization.
+- Banner is served from /hero-banner.png (copied from the uploaded file).
+- Verified full-width edge-to-edge rendering on desktop (1440px) and correct responsive scaling on mobile (390px), with a clean transition to the Features section (no gap/overlap).
+- Lint clean, no runtime errors.
