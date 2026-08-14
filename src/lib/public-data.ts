@@ -20,71 +20,122 @@ export type ProductWithRelations = NonNullable<Awaited<ReturnType<typeof getAllP
 // ---------------------------------------------------------------------------
 
 export async function getLotWithDetails(lotId: string) {
-  // Try by id first, then by reference, then by lotNumber
-  let lot = await db.lot.findUnique({ where: { id: lotId } });
-  if (!lot) {
-    lot = await db.lot.findUnique({ where: { reference: lotId } });
+  // Try by id first, then by reference, then by lotNumber.
+  // Each lookup is wrapped in try/catch so a single Prisma error doesn't
+  // crash the whole page — we just fall through to the next strategy.
+  let lot: Awaited<ReturnType<typeof db.lot.findUnique>> = null;
+  try {
+    lot = await db.lot.findUnique({ where: { id: lotId } });
+  } catch (e) {
+    console.error("[getLotWithDetails] findUnique by id failed:", e);
   }
   if (!lot) {
-    lot = await db.product
-      // @ts-expect-error lotNumber is optional
-      ? null
-      : null;
-    lot = await db.lot.findFirst({ where: { lotNumber: lotId } });
+    try {
+      lot = await db.lot.findUnique({ where: { reference: lotId } });
+    } catch (e) {
+      console.error("[getLotWithDetails] findUnique by reference failed:", e);
+    }
+  }
+  if (!lot) {
+    try {
+      lot = await db.lot.findFirst({ where: { lotNumber: lotId } });
+    } catch (e) {
+      console.error("[getLotWithDetails] findFirst by lotNumber failed:", e);
+    }
   }
 
   if (!lot) return null;
 
-  const [product, fabricant, historyEvents, lotCerts, fabricantCerts, reviews, qrCodes] =
-    await Promise.all([
-      db.product.findUnique({ where: { id: lot.productId } }),
-      db.user.findUnique({ where: { id: lot.fabricantId } }),
-      db.lotHistory.findMany({
-        where: { lotId: lot.id },
-        orderBy: { date: "asc" },
-      }),
-      db.lotCertification.findMany({ where: { lotId: lot.id } }),
-      db.certification.findMany({
-        where: { fabricantId: lot.fabricantId, isActive: true },
-      }),
-      db.review.findMany({
-        where: { lotId: lot.id, isApproved: true },
-        orderBy: { createdAt: "desc" },
-      }),
-      db.qRCode.findMany({
-        where: { lotId: lot.id, status: "ACTIVE" },
-        take: 1,
-      }),
-    ]);
+  // Fetch all related data in parallel. Use Promise.allSettled so that if one
+  // query fails (e.g. a transient Prisma error), we still get the rest and
+  // can render a partial page instead of crashing with a server exception.
+  const settled = await Promise.allSettled([
+    db.product.findUnique({ where: { id: lot.productId } }),
+    db.user.findUnique({ where: { id: lot.fabricantId } }),
+    db.lotHistory.findMany({
+      where: { lotId: lot.id },
+      orderBy: { date: "asc" },
+    }),
+    db.lotCertification.findMany({ where: { lotId: lot.id } }),
+    db.certification.findMany({
+      where: { fabricantId: lot.fabricantId, isActive: true },
+    }),
+    db.review.findMany({
+      where: { lotId: lot.id, isApproved: true },
+      orderBy: { createdAt: "desc" },
+    }),
+    db.qRCode.findMany({
+      where: { lotId: lot.id, status: "ACTIVE" },
+      take: 1,
+    }),
+  ]);
+
+  // Helper to extract value or null from a settled promise
+  const val = <T,>(r: PromiseSettledResult<T>): T | null =>
+    r.status === "fulfilled" ? r.value : null;
+
+  const product = val(settled[0]);
+  const fabricant = val(settled[1]);
+  const historyEvents = val(settled[2]) ?? [];
+  const lotCerts = val(settled[3]) ?? [];
+  const fabricantCerts = val(settled[4]) ?? [];
+  const reviews = val(settled[5]) ?? [];
+  const qrCodes = val(settled[6]) ?? [];
+
+  // Log any rejected promises so we can debug, but don't crash the page.
+  settled.forEach((r, i) => {
+    if (r.status === "rejected") {
+      console.error(`[getLotWithDetails] query ${i} rejected:`, r.reason);
+    }
+  });
 
   if (!product || !fabricant) return null;
 
-  // Calculate transparency score
-  const transparency: TransparencyResult = calculateTransparencyScore({
-    lotNumber: lot.lotNumber,
-    manufactureDate: lot.manufactureDate,
-    expiryDate: lot.expiryDate,
-    ingredients: lot.ingredients,
-    manufacturingLocation: lot.manufacturingLocation,
-    transformationLocation: lot.transformationLocation,
-    salesCountries: lot.salesCountries,
-    allergens: lot.allergens,
-    nutritionalInfo: lot.nutritionalInfo,
-    certifications: lotCerts,
-    fabricant: {
-      name: fabricant.name,
-      companyName: fabricant.companyName,
-      logoUrl: fabricant.logoUrl,
-      address: fabricant.address,
-      phone: fabricant.phone,
-      email: fabricant.email,
-      whatsapp: fabricant.whatsapp,
-      isVerified: fabricant.isVerified,
-    },
-  });
+  // Calculate transparency score (wrapped in try/catch — should never throw
+  // but if it does we don't want to crash the whole page).
+  let transparency: TransparencyResult;
+  try {
+    transparency = calculateTransparencyScore({
+      lotNumber: lot.lotNumber,
+      manufactureDate: lot.manufactureDate,
+      expiryDate: lot.expiryDate,
+      ingredients: lot.ingredients,
+      manufacturingLocation: lot.manufacturingLocation,
+      transformationLocation: lot.transformationLocation,
+      salesCountries: lot.salesCountries,
+      allergens: lot.allergens,
+      nutritionalInfo: lot.nutritionalInfo,
+      certifications: lotCerts,
+      fabricant: {
+        name: fabricant.name,
+        companyName: fabricant.companyName,
+        logoUrl: fabricant.logoUrl,
+        address: fabricant.address,
+        phone: fabricant.phone,
+        email: fabricant.email,
+        whatsapp: fabricant.whatsapp,
+        isVerified: fabricant.isVerified,
+      },
+    });
+  } catch (e) {
+    console.error("[getLotWithDetails] calculateTransparencyScore failed:", e);
+    transparency = {
+      score: 0,
+      maxScore: 100,
+      level: "bronze",
+      percentage: 0,
+      details: [],
+      improvements: [],
+    };
+  }
 
-  // Count total scans
-  const scanCount = await db.scan.count({ where: { lotId: lot.id } });
+  // Count total scans (non-blocking — default to 0 on error)
+  let scanCount = 0;
+  try {
+    scanCount = await db.scan.count({ where: { lotId: lot.id } });
+  } catch (e) {
+    console.error("[getLotWithDetails] scan count failed:", e);
+  }
 
   return {
     ...lot,

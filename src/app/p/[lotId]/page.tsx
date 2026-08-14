@@ -35,7 +35,12 @@ export async function generateMetadata({
   params: Promise<{ lotId: string }>;
 }): Promise<Metadata> {
   const { lotId } = await params;
-  const lot = await getLotWithDetails(lotId);
+  let lot: Awaited<ReturnType<typeof getLotWithDetails>> = null;
+  try {
+    lot = await getLotWithDetails(lotId);
+  } catch (e) {
+    console.error("[generateMetadata /p/[lotId]] getLotWithDetails threw:", e);
+  }
   if (!lot) {
     // Check if it's a mock lot ID (l1, l2, p1, etc.)
     if (isMockLotId(lotId)) {
@@ -73,7 +78,15 @@ export default async function ProductPage({
 }) {
   const { lotId } = await params;
 
-  const lot = await getLotWithDetails(lotId);
+  let lot: Awaited<ReturnType<typeof getLotWithDetails>> = null;
+  try {
+    lot = await getLotWithDetails(lotId);
+  } catch (e) {
+    // This is the real "server-side exception" path. Log it clearly so we
+    // can debug, then fall through to the not-found / mock handling below.
+    console.error("[ProductPage /p/[lotId]] getLotWithDetails threw:", e);
+  }
+
   if (!lot) {
     // Check if this is a mock lot ID (l1, l2, p1, …) from the fabricant
     // dashboard demo data. If so, render a mock product passport so the
@@ -115,14 +128,23 @@ export default async function ProductPage({
   }
 
   // Fire and forget — don't block the page render on scan recording
-  void recordScan(lot.id);
-
-  // Similar products (same category, excluding current product)
-  const similar = await getSimilarProducts(
-    lot.product.categoryId,
-    lot.product.id,
-    4,
+  void recordScan(lot.id).catch((e) =>
+    console.error("[ProductPage] recordScan failed:", e),
   );
+
+  // Similar products (same category, excluding current product).
+  // Wrapped in try/catch so a failure here doesn't crash the whole page —
+  // we just render without the "similar products" section.
+  let similar: Awaited<ReturnType<typeof getSimilarProducts>> = [];
+  try {
+    similar = await getSimilarProducts(
+      lot.product.categoryId,
+      lot.product.id,
+      4,
+    );
+  } catch (e) {
+    console.error("[ProductPage] getSimilarProducts failed:", e);
+  }
 
   const daysToExpiry = daysUntil(lot.expiryDate);
   const totalCerts =

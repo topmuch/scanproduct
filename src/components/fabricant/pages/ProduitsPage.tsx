@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useRef, useCallback } from "react";
+import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   Plus,
@@ -15,10 +15,8 @@ import {
   X,
   ChevronDown,
   Check,
-  Upload,
-  Loader2,
-  AlertCircle,
 } from "lucide-react";
+import { ImageUploadWithPreview } from "../ImageUploadWithPreview";
 import {
   CountUpNumber,
   EmptyState,
@@ -305,64 +303,10 @@ function ProductModal({
   const [status, setStatus] = useState<ProductStatus>(product?.status ?? "actif");
 
   // ---- Image upload state ----
+  // The ImageUploadWithPreview component manages its own uploading/error/
+  // drag state internally. We only need to keep the resolved URL so we can
+  // submit it with the form.
   const [imageUrl, setImageUrl] = useState<string>(product?.photo ?? "");
-  const [uploading, setUploading] = useState(false);
-  const [uploadError, setUploadError] = useState<string | null>(null);
-  const [dragActive, setDragActive] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const handleFile = useCallback(async (file: File) => {
-    setUploadError(null);
-
-    // Client-side validation
-    if (!file.type.startsWith("image/")) {
-      setUploadError("Veuillez sélectionner un fichier image.");
-      return;
-    }
-    if (!["image/jpeg", "image/png", "image/webp", "image/gif"].includes(file.type)) {
-      setUploadError("Format non supporté. Utilisez JPG, PNG, WebP ou GIF.");
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      setUploadError("Le fichier dépasse 5 MB.");
-      return;
-    }
-
-    setUploading(true);
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-      const res = await fetch("/api/upload", { method: "POST", body: formData });
-      const data = await res.json();
-      if (!res.ok) {
-        setUploadError(data.error || "Échec de l'upload.");
-        return;
-      }
-      setImageUrl(data.url);
-    } catch {
-      setUploadError("Erreur réseau lors de l'upload.");
-    } finally {
-      setUploading(false);
-    }
-  }, []);
-
-  const onDrop = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault();
-      setDragActive(false);
-      const file = e.dataTransfer.files?.[0];
-      if (file) handleFile(file);
-    },
-    [handleFile]
-  );
-
-  const onFileChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (file) handleFile(file);
-    },
-    [handleFile]
-  );
 
   const cat = CATEGORIES.find((c) => c.nom === categorie);
   const catIcon = cat?.icon ?? "📦";
@@ -518,89 +462,13 @@ function ProductModal({
               <h3 className="mb-3 text-[14px] font-semibold text-[#111827]">
                 Visuels
               </h3>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/jpeg,image/png,image/webp,image/gif"
-                onChange={onFileChange}
-                className="hidden"
+              <ImageUploadWithPreview
+                value={imageUrl}
+                onChange={setImageUrl}
+                label="Photo du produit"
+                hint="JPG, PNG, WebP ou GIF — 5 MB max — 800×800 px recommandé"
+                height={192}
               />
-              {imageUrl ? (
-                <div className="relative overflow-hidden rounded-lg border border-[#E5E7EB] bg-white">
-                  { }
-                  <img
-                    src={imageUrl}
-                    alt="Aperçu du produit"
-                    className="h-48 w-full object-cover"
-                  />
-                  <div className="absolute right-2 top-2 flex gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={uploading}
-                      className="inline-flex items-center gap-1 rounded-md bg-white/95 px-2.5 py-1.5 text-[12px] font-medium text-[#374151] shadow-sm transition-colors hover:bg-white disabled:opacity-60"
-                    >
-                      <Camera className="h-3.5 w-3.5" /> Changer
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => { setImageUrl(""); setUploadError(null); }}
-                      className="inline-flex items-center gap-1 rounded-md bg-white/95 px-2.5 py-1.5 text-[12px] font-medium text-[#EF4444] shadow-sm transition-colors hover:bg-white"
-                    >
-                      <X className="h-3.5 w-3.5" /> Retirer
-                    </button>
-                  </div>
-                  {uploading && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-white/70">
-                      <Loader2 className="h-6 w-6 animate-spin text-[#2563EB]" />
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
-                  onDragLeave={() => setDragActive(false)}
-                  onDrop={onDrop}
-                  disabled={uploading}
-                  className={`flex w-full flex-col items-center justify-center rounded-lg border-2 border-dashed px-4 py-8 text-center transition-colors disabled:cursor-not-allowed ${
-                    dragActive
-                      ? "border-[#2563EB] bg-[#EFF6FF]"
-                      : "border-[#D1D5DB] bg-[#F9FAFB] hover:border-[#2563EB] hover:bg-[#EFF6FF]/50"
-                  }`}
-                >
-                  {uploading ? (
-                    <>
-                      <Loader2 className="mb-3 h-8 w-8 animate-spin text-[#2563EB]" />
-                      <p className="text-[14px] font-medium text-[#2563EB]">
-                        Upload en cours…
-                      </p>
-                    </>
-                  ) : (
-                    <>
-                      <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-white text-[#2563EB] shadow-sm">
-                        <Upload className="h-5 w-5" />
-                      </div>
-                      <p className="text-[14px] font-medium text-[#374151]">
-                        Glissez-déposez votre photo ici
-                      </p>
-                      <p className="mt-1 text-[13px] text-[#6B7280]">
-                        ou cliquez pour parcourir
-                      </p>
-                      <p className="mt-3 text-[11px] text-[#9CA3AF]">
-                        JPG, PNG, WebP (max 5MB)
-                      </p>
-                    </>
-                  )}
-                </button>
-              )}
-              {uploadError && (
-                <div className="mt-2 flex items-start gap-1.5 rounded-md border border-[#FECACA] bg-[#FEF2F2] px-2.5 py-2 text-[12px] text-[#B91C1C]">
-                  <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                  <span>{uploadError}</span>
-                </div>
-              )}
             </section>
 
             {/* Visibilité */}

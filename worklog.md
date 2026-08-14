@@ -1155,3 +1155,87 @@ Stage Summary:
 
 Artifacts:
 - /home/z/my-project/proof-mock-lot.png (screenshot of /p/l1 with product passport)
+
+---
+Task ID: 15
+Agent: main
+Task: Fix 3 issues reported by user: (1) product detail page on catalog landing shows "Application error: a server-side exception has occurred", (2) images broken IMMEDIATELY after upload in dashboard, (3) QR codes show "produit indisponible". User provided a detailed solution for issue #2 (Blob URL preview + plain <img> tag).
+
+Work Log:
+
+Issue 1 — "Application error: a server-side exception has occurred" on /p/[lotId]:
+- ROOT CAUSE FOUND: `VerificationFooter` (server component) imported `getScanOrigin` from `@/lib/qr-utils` which is marked `"use client"`. Next.js throws a server-side exception when a server component tries to call a client function.
+- Confirmed by reproducing: `curl http://localhost:3000/p/cmsry85jv007csgkx4dekegkn` → HTTP 500, dev log showed: "⨯ Error: Attempted to call getScanOrigin() from the server but getScanOrigin is on the client."
+- FIX: Split `qr-utils.tsx` into two files:
+  - NEW `src/lib/qr-url.ts` — server-safe (NO `"use client"`). Contains `getScanOrigin()` and `getScanUrl()`. These are pure JS with a `typeof window !== "undefined"` guard.
+  - UPDATED `src/lib/qr-utils.tsx` — keeps `"use client"` for `downloadQRCode()` (which needs `react-dom/client` + `qrcode.react`). Re-exports `getScanOrigin`/`getScanUrl` from `qr-url.ts` for backward compatibility.
+  - Updated `VerificationFooter.tsx` to import `getScanOrigin` from `@/lib/qr-url` (server-safe) instead of `@/lib/qr-utils`.
+- ALSO: Cleaned up `getLotWithDetails()` in `src/lib/public-data.ts`:
+  - Removed the bizarre `db.product ? null : null` block (dead code from a previous refactor).
+  - Wrapped each of the 3 lot lookups (by id, reference, lotNumber) in try/catch so a single Prisma error doesn't crash the page.
+  - Replaced `Promise.all` with `Promise.allSettled` for the 7 parallel detail queries — one failure no longer crashes the page.
+  - Wrapped `calculateTransparencyScore()` in try/catch with a safe fallback.
+  - Wrapped `db.scan.count()` in try/catch.
+- ALSO: Wrapped `generateMetadata()` and `ProductPage` body in try/catch so any uncaught error falls through to the graceful "Produit introuvable" / MockProductPassport path instead of throwing a raw 500.
+- ALSO: Wrapped `getSimilarProducts()` call in try/catch (non-fatal).
+- ALSO: Added `recordScan(lot.id).catch(...)` so scan recording failures don't crash the page.
+- ADDED: `src/app/p/[lotId]/error.tsx` — Next.js error boundary showing a friendly French error page with "Réessayer" + "Voir le catalogue" buttons instead of the default "Application error: a server-side exception has occurred".
+- ADDED: `src/app/produits/error.tsx` — same kind of error boundary for the catalog route.
+
+Issue 2 — Images broken IMMEDIATELY after upload in dashboard:
+- ROOT CAUSE: The previous `handleFile` function in ProduitsPage.tsx and ProduitDetailPage.tsx immediately uploaded to `/api/upload` and only set `imageUrl` AFTER the upload completed. During the 1-2 second upload, the user saw either a spinner (no preview) or a broken image.
+- APPLIED USER'S SUGGESTED SOLUTION: Created `src/components/fabricant/ImageUploadWithPreview.tsx` — a reusable component that:
+  1. Uses a Blob URL (`URL.createObjectURL(file)`) for INSTANT preview BEFORE the upload completes — the user sees their image immediately.
+  2. Replaces the Blob URL with the server URL (`/uploads/<uuid>.<ext>`) once the upload succeeds.
+  3. Uses a plain `<img>` tag (NOT next/image) to avoid Next.js image optimizer issues with dynamically uploaded local files.
+  4. Revokes the Blob URL on unmount / replacement to prevent memory leaks.
+  5. Surfaces upload errors inline with a clear, actionable message.
+  6. Includes drag-and-drop, click-to-browse, remove button, and change button.
+  7. Client-side validation: type (JPG/PNG/WebP/GIF), size (5 MB max).
+- UPDATED `src/components/fabricant/pages/ProduitsPage.tsx`:
+  - Replaced the entire "Visuels" section (input + preview + drag-drop + error UI) with `<ImageUploadWithPreview value={imageUrl} onChange={setImageUrl} label="Photo du produit" height={192} />`.
+  - Removed now-unused state: `uploading`, `uploadError`, `dragActive`, `fileInputRef`.
+  - Removed now-unused handlers: `handleFile`, `onDrop`, `onFileChange`.
+  - Removed now-unused imports: `useRef`, `useCallback`, `Upload`, `Loader2`, `AlertCircle`.
+- UPDATED `src/components/fabricant/pages/ProduitDetailPage.tsx`:
+  - Replaced the entire "Right — image upload" section of `EditProductModal` with `<ImageUploadWithPreview value={imageUrl} onChange={setImageUrl} label="Photo du produit" height={200} />`.
+  - Removed now-unused state: `uploading`, `dragActive`, `fileInputRef`.
+  - Removed now-unused function: `handleFile`.
+  - Removed now-unused imports: `useRef`, `Upload`, `Loader2`.
+
+Issue 3 — QR codes show "produit indisponible":
+- This was already fixed in Task ID 14 (mock lot IDs render `MockProductPassport` instead of the "Produit introuvable" fallback).
+- Verified again in this task: `/p/l1` returns HTTP 200, title "Passeport numérique VerifScan", shows "Jus de Bissap" product info, does NOT show "Produit introuvable".
+
+ALSO FIXED — DB products had no imageUrl:
+- Discovered that all 6 products in the Prisma DB had `imageUrl: null` or `imageUrl: ""`, so no product images appeared on the catalog or detail pages (the components correctly fell back to category emojis, but the user wanted real images).
+- Ran a script to update all 6 products with their corresponding image paths:
+  - Huile de Baobab Bio 250ml → /products/huile-baobab.png
+  - Beurre de Karité Brut 200g → /products/beurre-karite.png
+  - Savon Noir Africain 150g → /products/savon-noir.png
+  - Couscous de Mil Bio 1kg → /products/couscous-mil.png
+  - Jus de Bissap Bio 1L → /products/jus-bissap.png
+  - Poudre de Moringa 100g → /products/poudre-moringa.png
+- The seed file (`prisma/seed.ts`) already has these imageUrl values, so future seeds will be correct.
+
+Verification:
+- `bun run lint`: 0 errors, 0 warnings ✅
+- `/` → HTTP 200 ✅
+- `/produits` (catalog) → HTTP 200, all 6 product images present in HTML ✅
+- `/p/cmsry85jv007csgkx4dekegkn` (real lot detail page) → HTTP 200 (was HTTP 500 before!), title "Poudre de Moringa 100g — Passeport numérique VerifScan", product image `/products/poudre-moringa.png` present, NO "Application error" / "server-side exception" ✅
+- `/p/l1` (mock lot, QR code target) → HTTP 200, shows "Jus de Bissap" product info, does NOT show "Produit introuvable" ✅
+- `/dashboard` → HTTP 307 (auth redirect, expected), compiles successfully ✅
+- agent-browser verification on `/produits`: 6 product images loaded, 0 broken images, title "Catalogue — VerifScan" ✅
+- agent-browser verification on `/p/cmsry85jv007csgkx4dekegkn`: hasError=false, hasProductName=true, 2 product images, 0 broken images, hasIntrouvable=false ✅
+- agent-browser verification on `/p/l1`: hasError=false, hasProductName=true (Jus de Bissap), 3 images, 0 broken images, hasIntrouvable=false ✅
+
+Artifacts:
+- /home/z/my-project/proof-catalog-after-fix.png (screenshot of /produits)
+- /home/z/my-project/proof-detail-after-fix.png (screenshot of /p/<real-cuid> — no more server error)
+- /home/z/my-project/proof-mock-lot-after-fix.png (screenshot of /p/l1 — QR code target)
+
+Stage Summary:
+- The "Application error: a server-side exception has occurred" on the product detail page is FIXED. The root cause was `VerificationFooter` (a server component) calling `getScanOrigin()` from a `"use client"` file. Split the file into a server-safe `qr-url.ts` and a client-only `qr-utils.tsx`. Also added comprehensive try/catch error handling throughout `getLotWithDetails()` and the page, plus Next.js error boundaries (`error.tsx`) for both `/p/[lotId]` and `/produits` routes.
+- The "images broken immediately after upload" issue is FIXED. Created a new `ImageUploadWithPreview` component that uses a Blob URL for instant preview (before the upload completes), uses a plain `<img>` tag (not next/image), and handles errors gracefully. Replaced the old upload UI in both `ProduitsPage` (create/edit modal) and `ProduitDetailPage` (edit modal).
+- The "QR codes show produit indisponible" issue was already fixed in Task ID 14 and re-verified in this task.
+- ALSO: All 6 DB products now have their `imageUrl` set to the correct `/products/<name>.png` paths, so images appear on the catalog and detail pages.

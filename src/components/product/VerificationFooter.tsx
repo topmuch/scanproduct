@@ -1,7 +1,9 @@
 import { Lock, ShieldCheck, Facebook, Twitter } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import type { LotWithDetails } from "@/lib/public-data";
-import { getScanOrigin } from "@/lib/qr-utils";
+// IMPORTANT: import from `@/lib/qr-url` (server-safe), NOT `@/lib/qr-utils`
+// (which is "use client" and can't be called from a server component).
+import { getScanOrigin } from "@/lib/qr-url";
 
 type Props = {
   lot: LotWithDetails;
@@ -12,9 +14,8 @@ type Props = {
  * hash and share buttons.
  * Server component (links open new tabs — no client interactivity needed).
  *
- * NOTE: `getScanUrl` reads `window.location.origin` on the client, but this is
- * a server component so we build the URL manually from `getScanOrigin()` (which
- * falls back to the `NEXT_PUBLIC_SCAN_URL` env var on the server).
+ * `getScanOrigin()` is server-safe (falls back to NEXT_PUBLIC_SCAN_URL env
+ * var on the server, uses window.location.origin on the client).
  */
 export function VerificationFooter({ lot }: Props) {
   const hash = lot.blockchainHash ?? null;

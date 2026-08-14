@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { QRCodeCanvas } from "qrcode.react";
 import {
@@ -18,9 +18,8 @@ import {
   Layers,
   X,
   ChevronDown,
-  Upload,
-  Loader2,
 } from "lucide-react";
+import { ImageUploadWithPreview } from "../ImageUploadWithPreview";
 import {
   CountUpNumber,
   EmptyState,
@@ -183,40 +182,9 @@ function EditProductModal({
   const [description, setDescription] = useState(product.description);
   const [status, setStatus] = useState<ProductStatus>(product.status);
   const [imageUrl, setImageUrl] = useState(product.photo);
-  const [uploading, setUploading] = useState(false);
-  const [dragActive, setDragActive] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
   const cat = CATEGORIES.find((c) => c.nom === categorie);
   const catIcon = cat?.icon ?? "📦";
   const canSubmit = nom.trim().length > 0;
-
-  async function handleFile(file: File) {
-    if (!file.type.startsWith("image/")) {
-      toast.error("Veuillez sélectionner un fichier image.");
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("Le fichier dépasse 5 MB.");
-      return;
-    }
-    setUploading(true);
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-      const res = await fetch("/api/upload", { method: "POST", body: formData });
-      const data = await res.json();
-      if (!res.ok) {
-        toast.error(data.error || "Échec de l'upload.");
-        return;
-      }
-      setImageUrl(data.url);
-    } catch {
-      toast.error("Erreur réseau lors de l'upload.");
-    } finally {
-      setUploading(false);
-    }
-  }
 
   function handleSubmit() {
     if (!canSubmit) return;
@@ -369,71 +337,13 @@ function EditProductModal({
 
           {/* Right — image upload */}
           <div className="lg:col-span-2">
-            <FieldLabel>Photo du produit</FieldLabel>
-            <div
-              onDragOver={(e) => {
-                e.preventDefault();
-                setDragActive(true);
-              }}
-              onDragLeave={() => setDragActive(false)}
-              onDrop={(e) => {
-                e.preventDefault();
-                setDragActive(false);
-                const file = e.dataTransfer.files?.[0];
-                if (file) handleFile(file);
-              }}
-              className={`relative flex h-[200px] items-center justify-center overflow-hidden rounded-xl border-2 border-dashed transition-colors ${
-                dragActive
-                  ? "border-[#2563EB] bg-[#EFF6FF]"
-                  : "border-[#E5E7EB] bg-[#F9FAFB]"
-              }`}
-            >
-              {imageUrl ? (
-                <>
-                  <img
-                    src={imageUrl}
-                    alt="Aperçu"
-                    className="h-full w-full object-cover"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setImageUrl("")}
-                    className="absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-lg bg-white/90 text-[#6B7280] shadow hover:bg-white"
-                    aria-label="Retirer la photo"
-                  >
-                    <X size={14} />
-                  </button>
-                </>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="flex flex-col items-center gap-2 text-[#6B7280]"
-                >
-                  {uploading ? (
-                    <Loader2 size={28} className="animate-spin" />
-                  ) : (
-                    <Upload size={28} />
-                  )}
-                  <span className="text-[13px] font-medium">
-                    {uploading ? "Upload…" : "Cliquez ou glissez une image"}
-                  </span>
-                  <span className="text-[11px] text-[#9CA3AF]">
-                    JPG, PNG, WebP — 5 MB max
-                  </span>
-                </button>
-              )}
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/jpeg,image/png,image/webp,image/gif"
-                className="hidden"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) handleFile(file);
-                }}
-              />
-            </div>
+            <ImageUploadWithPreview
+              value={imageUrl}
+              onChange={setImageUrl}
+              label="Photo du produit"
+              hint="JPG, PNG, WebP ou GIF — 5 MB max"
+              height={200}
+            />
           </div>
         </div>
 
