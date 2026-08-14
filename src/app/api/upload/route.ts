@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { randomUUID } from "crypto";
-import { mkdir, writeFile, rename } from "fs/promises";
-import { existsSync, readdirSync } from "fs";
-import path from "path";
+import { mkdir, writeFile } from "fs/promises";
+import { existsSync } from "fs";
+import {
+  UPLOAD_DIR,
+  buildUploadUrl,
+} from "@/lib/upload-config";
 
 /**
  * POST /api/upload
@@ -19,36 +22,32 @@ import path from "path";
  *      (NOT from the browser-reported MIME type, which reflects the
  *      filename extension and can be wrong — e.g. a .png renamed to
  *      .jpg, or vice versa). This guarantees the saved extension
- *      always matches the real content, so the static server sends
- *      the correct Content-Type and browsers can always decode it.
+ *      always matches the real content.
  *   4. Enforces a 5 MB size limit.
- *   5. Persists the file to `public/uploads/products/<uuid>.<ext>` and
- *      returns `{ url, filename, size, mimeType }` as JSON.
+ *   5. Persists the file to UPLOAD_DIR (configurable via UPLOAD_DIR env
+ *      var; defaults to public/uploads/products in dev, /app/uploads/products
+ *      in Docker/Coolify) under `<uuid>.<ext>` and returns
+ *      `{ url, filename, size, mimeType }` as JSON.
  *
- * The returned `url` is a root-relative path (e.g. "/uploads/products/abc.png")
- * that is served statically by Next.js from the `public/` directory.
- *
- * NOTE: This route was missing from the codebase after the Prisma migration
- * (Task 2-a). The frontend kept calling /api/upload, but Next.js answered
- * with a 404 HTML page that couldn't be parsed as JSON — causing the
- * "upload en cours" spinner to loop forever (blob preview shown but upload
- * never resolved) and "Échec de l'upload" errors.
- *
- * NOTE 2: An earlier version of this route trusted `file.type` (the MIME
- * type reported by the browser) to pick the file extension. This caused
- * "Image non disponible — téléversez à nouveau l'image." errors when a
- * user uploaded a file whose extension didn't match its actual content
- * (e.g. a JPEG photo renamed with a .png extension): the server saved it
- * as .png, sent Content-Type: image/png, but the bytes were JPEG → the
- * browser's <img> tag fired onError. The fix below detects the real
- * format from the magic bytes instead.
+ * The returned `url` is `/api/uploads/<filename>`, served by the dedicated
+ * route /api/uploads/[...path] which streams the file with the correct
+ * Content-Type. This decouples the storage location (which may be a
+ * persistent volume OUTSIDE the standalone server's public/ dir in
+ * production) from the public URL, so uploads work regardless of where
+ * the volume is mounted.
  */
 export const runtime = "nodejs";
 
 const MAX_SIZE = 5 * 1024 * 1024; // 5 MB
 
-const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads", "products");
-const PUBLIC_PATH = "/uploads/products";
+/** Canonical MIME type for each detected extension. */
+const MIME_FOR_EXT: Record<string, string> = {
+  jpg: "image/jpeg",
+  png: "image/png",
+  gif: "image/gif",
+  webp: "image/webp",
+  svg: "image/svg+xml",
+};
 
 /**
  * Detect the real image format from the first bytes of the file.
@@ -64,11 +63,6 @@ const PUBLIC_PATH = "/uploads/products";
  * content doesn't match any supported image format.
  */
 function detectFormatFromBytes(buf: Buffer): string | null {
-  // Need at least 12 bytes to check all signatures.
-  if (buf.length < 12) {
-    // SVG can be smaller as text, check below.
-  }
-
   // JPEG: FF D8 FF
   if (
     buf.length >= 3 &&
@@ -127,59 +121,6 @@ function detectFormatFromBytes(buf: Buffer): string | null {
   }
 
   return null;
-}
-
-/** Canonical MIME type for each detected extension. */
-const MIME_FOR_EXT: Record<string, string> = {
-  jpg: "image/jpeg",
-  png: "image/png",
-  gif: "image/gif",
-  webp: "image/webp",
-  svg: "image/svg+xml",
-};
-
-/**
- * One-time migration: rename legacy files in the upload directory whose
- * extension doesn't match their actual content (e.g. JPEG data saved as
- * .png by the old, buggy version of this route). Idempotent — skips files
- * that already have the correct extension.
- *
- * This runs on the first upload after deploy and is a no-op on subsequent
- * calls once everything is renamed. It does NOT touch the .gitkeep file.
- */
-async function migrateMismatchedExtensions(): Promise<void> {
-  if (!existsSync(UPLOAD_DIR)) return;
-  const files = readdirSync(UPLOAD_DIR).filter((f) => f !== ".gitkeep");
-  for (const f of files) {
-    // Only process files with a dot in the name.
-    const dotIdx = f.lastIndexOf(".");
-    if (dotIdx === -1) continue;
-    const oldExt = f.slice(dotIdx + 1).toLowerCase();
-    const filepath = path.join(UPLOAD_DIR, f);
-    // Read the first 12 bytes to detect the real format.
-    const { open, read, close } = await import("fs/promises");
-    const handle = await open(filepath, "r");
-    const buf = Buffer.alloc(12);
-    const { bytesRead } = await handle.read(buf, 0, 12, 0);
-    await handle.close();
-    if (bytesRead < 3) continue;
-    const realExt = detectFormatFromBytes(buf.subarray(0, bytesRead));
-    if (!realExt) continue; // unknown format, leave as-is
-    // Normalize: "jpg" extension counts as matching "jpg" content.
-    if (oldExt === realExt || (oldExt === "jpg" && realExt === "jpg")) continue;
-    // Rename the file: replace the old extension with the real one.
-    const base = f.slice(0, dotIdx);
-    const newName = `${base}.${realExt}`;
-    const newPath = path.join(UPLOAD_DIR, newName);
-    // Avoid clobbering an existing file with the same name.
-    if (existsSync(newPath)) continue;
-    try {
-      await rename(filepath, newPath);
-      console.log(`[upload:migrate] renamed ${f} → ${newName}`);
-    } catch {
-      // non-fatal — best-effort migration
-    }
-  }
 }
 
 export async function POST(request: NextRequest) {
@@ -248,9 +189,8 @@ export async function POST(request: NextRequest) {
     // We deliberately IGNORE file.type (browser-reported MIME) because it
     // reflects the filename extension, not the actual content. A user who
     // renames photo.jpg → photo.png would otherwise get a file saved as
-    // .png containing JPEG data, which the static server would serve with
-    // Content-Type: image/png — and the browser's <img> tag would fail to
-    // decode it, showing "Image non disponible".
+    // .png containing JPEG data, which browsers can't decode →
+    // "Image non disponible".
     const ext = detectFormatFromBytes(buf);
     if (!ext) {
       return NextResponse.json(
@@ -270,17 +210,17 @@ export async function POST(request: NextRequest) {
     // ── 7. Write file with a unique, safe name ─────────────────────
     // We deliberately IGNORE the original filename to prevent:
     //   - path traversal (../../etc/passwd)
-    //   - unicode/emoji filenames breaking the static server
+    //   - unicode/emoji filenames breaking the filesystem
     //   - filename collisions
     const filename = `${randomUUID()}.${ext}`;
-    const filepath = path.join(UPLOAD_DIR, filename);
+    const filepath = `${UPLOAD_DIR}/${filename}`;
     await writeFile(filepath, buf);
 
-    const url = `${PUBLIC_PATH}/${filename}`;
-
-    // ── 8. Best-effort: rename legacy mismatched files ─────────────
-    // Runs once on the first upload after deploy; no-op afterwards.
-    migrateMismatchedExtensions().catch(() => undefined);
+    // The public URL is /api/uploads/<filename>, served by the dedicated
+    // route. This works regardless of whether UPLOAD_DIR is inside the
+    // standalone server's public/ folder (dev) or on a separate volume
+    // mounted at /app/uploads (prod).
+    const url = buildUploadUrl(filename);
 
     return NextResponse.json({
       url,

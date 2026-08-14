@@ -89,42 +89,40 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV DATABASE_URL=file:/app/data/scanproduct.db
 ENV NODE_OPTIONS="--max-old-space-size=4096"
 
-# IMPORTANT: create the uploads directory BEFORE `next build` so it is
-# included when the build script copies public/ → .next/standalone/public/.
-# /app/public/uploads/products is where /api/upload writes user-uploaded
-# product images at runtime; it MUST exist in the standalone output or
-# uploads will 404/EACCES in production.
+# IMPORTANT: create the uploads directory BEFORE `next build` so the
+# build doesn't fail if it tries to traverse public/uploads.
+# NOTE: in production, uploaded images are served via the dedicated API
+# route /api/uploads/[...path] (not as static files from public/), so
+# the upload directory can live OUTSIDE public/ — it is configured via
+# the UPLOAD_DIR env var (set below to /app/uploads/products, matching
+# the Coolify persistent volume mount).
 RUN mkdir -p /app/public/uploads/products && \
     chmod -R 777 /app/public/uploads
 RUN bun run build
 
-# Ensure the uploads dir made it into the standalone output, and create
-# the persistent data directory with permissive permissions so the Node
-# process can write SQLite + uploaded files regardless of the user
-# Coolify runs the container as.
+# Create the persistent data + uploads directories with permissive
+# permissions so the Node process can write SQLite + uploaded files
+# regardless of the user Coolify runs the container as.
 #
-# CRITICAL: replace the standalone's copied public/uploads/ directory
-# with a SYMLINK to /app/public/uploads/ (where the Coolify volume is
-# mounted). Without this, /api/upload writes to /app/public/uploads/
-# (the volume) but the standalone server.js serves static files from
-# /app/.next/standalone/public/ — two different directories — so newly
-# uploaded images 404 and appear broken in the UI.
-# The symlink makes /app/.next/standalone/public/uploads → /app/public/uploads
-# so writes and reads hit the SAME location (the persistent volume).
-RUN mkdir -p /app/data /app/public/uploads/products && \
-    chmod -R 777 /app/public/uploads /app/data && \
-    rm -rf /app/.next/standalone/public/uploads && \
-    ln -sf /app/public/uploads /app/.next/standalone/public/uploads && \
-    ls -la /app/.next/standalone/public/uploads
+# /app/uploads/products is where /api/upload writes at runtime
+# (UPLOAD_DIR env var points here). The dedicated serve route
+# /api/uploads/[...path] reads from this directory and streams files
+# with the correct Content-Type (detected from magic bytes), so we do
+# NOT need a symlink into the standalone's public/ folder — uploads
+# work even though the volume is outside public/.
+RUN mkdir -p /app/data /app/uploads/products && \
+    chmod -R 777 /app/uploads /app/data
 
 EXPOSE 3000
 
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 ENV DATABASE_URL=file:/app/data/scanproduct.db
+# Upload directory — matches the Coolify persistent volume mount.
+# The /api/uploads/[...path] route serves files from here.
+ENV UPLOAD_DIR=/app/uploads/products
 
-# At runtime: re-ensure the uploads dir + symlink exist (in case a fresh
-# empty volume is mounted over /app/public/uploads, which would break the
-# symlink target), run DB migrations + seed, then start the standalone
-# Next.js server.
-CMD ["sh", "-c", "mkdir -p /app/data /app/public/uploads/products && chmod -R 777 /app/public/uploads /app/data && rm -rf /app/.next/standalone/public/uploads && ln -sf /app/public/uploads /app/.next/standalone/public/uploads && export DATABASE_URL=file:/app/data/scanproduct.db && bunx prisma db push --skip-generate 2>/dev/null || true && bun run prisma/seed.ts 2>/dev/null || true && exec node .next/standalone/server.js"]
+# At runtime: re-ensure the uploads + data dirs exist (in case a fresh
+# empty volume is mounted), run DB migrations + seed, then start the
+# standalone Next.js server.
+CMD ["sh", "-c", "mkdir -p /app/data /app/uploads/products && chmod -R 777 /app/uploads /app/data && export DATABASE_URL=file:/app/data/scanproduct.db && export UPLOAD_DIR=/app/uploads/products && bunx prisma db push --skip-generate 2>/dev/null || true && bun run prisma/seed.ts 2>/dev/null || true && exec node .next/standalone/server.js"]
