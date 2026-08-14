@@ -1239,3 +1239,35 @@ Stage Summary:
 - The "images broken immediately after upload" issue is FIXED. Created a new `ImageUploadWithPreview` component that uses a Blob URL for instant preview (before the upload completes), uses a plain `<img>` tag (not next/image), and handles errors gracefully. Replaced the old upload UI in both `ProduitsPage` (create/edit modal) and `ProduitDetailPage` (edit modal).
 - The "QR codes show produit indisponible" issue was already fixed in Task ID 14 and re-verified in this task.
 - ALSO: All 6 DB products now have their `imageUrl` set to the correct `/products/<name>.png` paths, so images appear on the catalog and detail pages.
+
+---
+Task ID: 19
+Agent: main (continuation)
+Task: Answer user question "pourquoi les images codées en dur s'affichent pas [comme] les images uploadées" — diagnose why hardcoded product images show but uploaded images don't, and fix it.
+
+Work Log:
+- Verified dev server healthy (HTTP 200 on `/` and `/dashboard`).
+- Confirmed both hardcoded (`/products/*.png`) and uploaded (`/uploads/products/*.png`) images are served correctly (HTTP 200, valid JPEG bytes with `.png` extension, Content-Type: image/png). The files are NOT broken on disk.
+- Used agent-browser to load `/` (landing) and `/dashboard` → Produits page. All 24 hardcoded product images load successfully (naturalWidth=1024, complete=true). VLM analysis of the Produits screenshot confirmed every card shows a real photo, no broken-image icons, no placeholders.
+- Root cause found: the fabricant dashboard uses a Zustand store (`src/lib/fabricant-data-store.ts`) initialized from hardcoded mock data in `src/lib/fabricant-data.ts`, with NO persistence layer (no localStorage, no DB). When a user uploads a product image, the file IS saved to `public/uploads/products/<uuid>.png` and the product's `photo` IS updated in memory (so it shows during the session), BUT on page reload the store re-initializes from the hardcoded `PRODUITS` array, reverting `photo` to e.g. `/products/jus-bissap.png`. The uploaded file is orphaned on disk.
+- Proof: 4 uploaded files existed in `public/uploads/products/` (all copies of jus-bissap.png, 61428 bytes, identical md5 `07d1068aea7eaff99c1183ca5f710785`), yet 0 products in the live store referenced any `/uploads/...` path — all 24 pointed to hardcoded `/products/*.png`.
+- Fix applied: wrapped the Zustand store with the `persist` middleware (zustand v5.0.10, `zustand/middleware`). Configuration:
+  - `name: "verifscan-fabricant-data"`
+  - `version: 1` (bumpable to invalidate stale snapshots)
+  - `storage: createJSONStorage(() => localStorage)`
+  - `partialize`: persists ONLY the data arrays (produits, lots, qrCodes), never the action functions.
+- Ran `bun run lint` → 0 errors, 0 warnings. Dev server recompiled cleanly.
+- End-to-end verification with agent-browser:
+  1. Logged in as sarine@biocosmetique.sn / Demo1234!
+  2. Opened the edit modal for "Granola Maison", uploaded `/tmp/test-upload-savon.png` (a copy of savon-noir.png).
+  3. Upload returned 201, preview showed `/uploads/products/55dd7158-79b5-410b-b8ae-bb95fb0fdd2b.png`.
+  4. Clicked "Enregistrer les modifications". The Granola Maison card immediately reflected the uploaded URL.
+  5. localStorage key `verifscan-fabricant-data` now contains the uploaded UUID.
+  6. RELOADED the page, navigated back to the Produits tab → Granola Maison card STILL shows `/uploads/products/55dd7158-79b5-410b-b8ae-bb95fb0fdd2b.png` with `loaded:true` (naturalWidth>0). Before the fix, the reload would have reverted it to `/products/jus-bissap.png`.
+  7. No page errors, no console errors (only the pre-existing unrelated `[next-auth][warn][NEXTAUTH_URL]`).
+
+Stage Summary:
+- Root cause of "uploaded images disappear after reload": the fabricant Zustand store had no persistence; reloads re-seeded from hardcoded mock data, orphaning uploaded files on disk.
+- Fix: added `persist` middleware (localStorage, versioned, partialized to data only) to `src/lib/fabricant-data-store.ts`. Uploaded image URLs now survive page reloads.
+- Verified end-to-end: upload → save → reload → image persists and renders. Lint clean, dev server healthy.
+- Note: this is client-side localStorage persistence (appropriate for the current mock/demo architecture). If multi-device or server-side persistence is later required, the store should be rewired to read/write the Prisma `Product` table instead.

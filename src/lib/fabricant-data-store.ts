@@ -1,6 +1,7 @@
 "use client";
 
 import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
 import { useShallow } from "zustand/react/shallow";
 import {
   PRODUITS,
@@ -55,11 +56,31 @@ type FabricantDataState = {
 
 // ============================================================================
 // Store implementation
+// ----------------------------------------------------------------------------
+// PERSISTENCE:
+// The store is wrapped with Zustand's `persist` middleware so that product
+// edits (including uploaded photo URLs like "/uploads/products/<uuid>.png")
+// survive page reloads. Without this, every reload re-initialised the store
+// from the hardcoded PRODUITS/LOTS/QR_CODES constants, which orphaned every
+// uploaded image file on disk — the file was still in public/uploads/products/
+// but no product referenced it anymore, so the user saw the hardcoded photo
+// instead of the one they just uploaded.
+//
+// `partialize` ensures we only persist the DATA (produits, lots, qrCodes),
+// never the action functions (addProduct, updateProduct, …). Functions are
+// re-created from the store initializer on every load, so persisting them
+// would be wasteful (and they'd be dropped by JSON.stringify anyway).
+//
+// `version` lets us invalidate the persisted snapshot if the shape of the
+// mock data changes in a future release — bump it and old browsers will
+// discard their stale localStorage and re-seed from the hardcoded constants.
 // ============================================================================
-export const useFabricantData = create<FabricantDataState>((set, get) => ({
-  produits: initialProduits,
-  lots: initialLots,
-  qrCodes: initialQRCodes,
+export const useFabricantData = create<FabricantDataState>()(
+  persist(
+    (set, get) => ({
+      produits: initialProduits,
+      lots: initialLots,
+      qrCodes: initialQRCodes,
 
   // ---- Products ----------------------------------------------------------
   addProduct: (p) => {
@@ -197,7 +218,20 @@ export const useFabricantData = create<FabricantDataState>((set, get) => ({
     }));
     return newCodes;
   },
-}));
+    }),
+    {
+      name: "verifscan-fabricant-data",
+      version: 1,
+      storage: createJSONStorage(() => localStorage),
+      // Only persist the data arrays — never the action functions.
+      partialize: (s) => ({
+        produits: s.produits,
+        lots: s.lots,
+        qrCodes: s.qrCodes,
+      }),
+    },
+  ),
+);
 
 // ============================================================================
 // Convenience typed hooks — each returns the relevant collection + the
