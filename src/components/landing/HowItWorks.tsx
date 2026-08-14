@@ -6,62 +6,63 @@ import { getScanUrl } from "@/lib/qr-utils";
 import { AnimatedSection } from "./AnimatedSection";
 import { SectionBadge } from "./SectionBadge";
 
+/**
+ * HowItWorks — "3 étapes simples pour la confiance de vos clients"
+ *
+ * Three ENLARGED step cards, each with:
+ *   - A large generated illustration (top) showing the step in action.
+ *   - The step number badge.
+ *   - The title + description.
+ *
+ * The previous small 72px number circle + 96px icon bubble have been replaced
+ * by larger card surfaces so each step reads as a real content block rather
+ * than a timeline node.
+ */
+
 type Step = {
   number: number;
-  icon: React.ReactNode;
+  illustration: string;
+  illustrationAlt: string;
   title: string;
   description: string;
-  circleBg: string;
-  ringColor: string;
+  numberBg: string;
+  accent: string;
+  accentSoft: string;
 };
 
 const STEPS: Step[] = [
   {
     number: 1,
-    icon: (
-      <img
-        src="/products/jus-bissap.png"
-        alt="Création d'un produit VerifScan"
-        className="h-full w-full object-cover rounded-xl"
-      />
-    ),
+    illustration: "/features/step-create-product.png",
+    illustrationAlt: "Création d'un produit VerifScan sur tablette",
     title: "Créez votre produit",
     description:
       "Ajoutez les détails de vos produits : nom, ingrédients, dates de fabrication et péremption, logo, certifications. Tout est centralisé sur une fiche propre et professionnelle.",
-    circleBg: "bg-[#2563EB]",
-    ringColor: "ring-[#2563EB]/20",
+    numberBg: "bg-[#2563EB]",
+    accent: "text-[#2563EB]",
+    accentSoft: "bg-[#EFF6FF]",
   },
   {
     number: 2,
-    icon: (
-      <QRCodeCanvas
-        value={getScanUrl("demo-step")}
-        size={96}
-        fgColor="#10B981"
-        level="M"
-        marginSize={1}
-      />
-    ),
+    illustration: "/features/step-generate-qr.png",
+    illustrationAlt: "Génération de QR codes pour étiquettes de produit",
     title: "Générez le QR code",
     description:
       "Un QR code unique est créé pour chaque lot, prêt à imprimer sur vos étiquettes. Chaque code est sécurisé et infalsifiable, lié à votre compte fabricant.",
-    circleBg: "bg-[#10B981]",
-    ringColor: "ring-[#10B981]/20",
+    numberBg: "bg-[#10B981]",
+    accent: "text-[#10B981]",
+    accentSoft: "bg-[#F0FDF4]",
   },
   {
     number: 3,
-    icon: (
-      <img
-        src="/products/poudre-moringa.png"
-        alt="Produit scanné et partagé avec VerifScan"
-        className="h-full w-full object-cover rounded-xl"
-      />
-    ),
+    illustration: "/features/step-share-track.png",
+    illustrationAlt: "Clients scannant et suivi des scans sur carte",
     title: "Partagez et suivez",
     description:
       "Vos clients scannent et accèdent à la fiche authentique. Vous suivez en temps réel les scans, retours clients et zones de consommation.",
-    circleBg: "bg-[#F59E0B]",
-    ringColor: "ring-[#F59E0B]/20",
+    numberBg: "bg-[#F59E0B]",
+    accent: "text-[#F59E0B]",
+    accentSoft: "bg-[#FFFBEB]",
   },
 ];
 
@@ -82,56 +83,42 @@ export function HowItWorks() {
           </p>
         </AnimatedSection>
 
-        {/* Timeline */}
-        <div className="relative mt-14">
-          {/* horizontal connector (desktop) */}
-          <div
-            className="pointer-events-none absolute left-0 right-0 top-9 hidden h-0.5 lg:block"
-            style={{
-              background:
-                "linear-gradient(90deg, transparent 0%, #2563EB 18%, #10B981 50%, #F59E0B 82%, transparent 100%)",
-            }}
-            aria-hidden
-          />
+        {/* Enlarged step cards */}
+        <div className="mt-14 grid grid-cols-1 gap-8 lg:grid-cols-3 lg:gap-10">
+          {STEPS.map((step, i) => (
+            <AnimatedSection
+              as="article"
+              key={step.number}
+              index={i}
+              className="group relative flex flex-col overflow-hidden rounded-2xl border border-[#E5E7EB] bg-white shadow-[0_4px_20px_rgba(0,0,0,0.05)] transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_24px_40px_rgba(0,0,0,0.10)]"
+            >
+              {/* Large illustration */}
+              <div className="relative aspect-[4/3] w-full overflow-hidden bg-[#F3F4F6]">
+                <img
+                  src={step.illustration}
+                  alt={step.illustrationAlt}
+                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  loading="lazy"
+                />
+                {/* Step number badge, overlapping the illustration */}
+                <span
+                  className={`absolute left-4 top-4 inline-flex h-12 w-12 items-center justify-center rounded-full ${step.numberBg} font-display text-xl font-bold text-white shadow-lg ring-4 ring-white/90`}
+                >
+                  {step.number}
+                </span>
+              </div>
 
-          <ol className="relative grid grid-cols-1 gap-10 lg:grid-cols-3 lg:gap-8">
-            {STEPS.map((step, i) => (
-              <AnimatedSection as="li" key={step.number} index={i} className="relative">
-                {/* number circle */}
-                <div className="flex justify-center lg:mb-0">
-                  <span
-                    className={`relative z-10 flex h-[72px] w-[72px] items-center justify-center rounded-full ${step.circleBg} text-white shadow-lg ring-8 ${step.ringColor}`}
-                  >
-                    <span className="font-display text-2xl font-bold">{step.number}</span>
-                  </span>
-                </div>
-
-                {/* icon bubble */}
-                <div className="mt-6 flex justify-center">
-                  <span className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-xl border border-[#E5E7EB] bg-white text-[#374151] shadow-sm">
-                    {step.icon}
-                  </span>
-                </div>
-
-                <div className="mt-4 text-center">
-                  <h3 className="font-display text-xl font-semibold text-[#111827]">
-                    {step.title}
-                  </h3>
-                  <p className="mx-auto mt-3 max-w-[340px] text-[15px] leading-relaxed text-[#4B5563]">
-                    {step.description}
-                  </p>
-                </div>
-
-                {/* vertical connector for mobile */}
-                {i < STEPS.length - 1 && (
-                  <span
-                    className="mx-auto mt-8 block h-8 w-0.5 rounded bg-gradient-to-b from-[#2563EB] to-[#10B981] lg:hidden"
-                    aria-hidden
-                  />
-                )}
-              </AnimatedSection>
-            ))}
-          </ol>
+              {/* Content */}
+              <div className="flex flex-1 flex-col p-6 sm:p-7">
+                <h3 className="font-display text-[22px] font-semibold text-[#111827] sm:text-2xl">
+                  {step.title}
+                </h3>
+                <p className="mt-3 text-[15px] leading-relaxed text-[#4B5563]">
+                  {step.description}
+                </p>
+              </div>
+            </AnimatedSection>
+          ))}
         </div>
 
         {/* Process mini-illustration */}

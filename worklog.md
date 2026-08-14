@@ -1356,3 +1356,37 @@ Stage Summary:
 - The two marketing texts (headline + value-proposition paragraph) now appear directly below the hero banner, centered and responsive, along with the primary CTA button.
 - The hero now communicates clearly what VerifScan is for, even though the banner itself was image-only.
 - Lint clean, no runtime errors, verified on desktop and mobile.
+
+---
+Task ID: 23
+Agent: main (continuation)
+Task: Below "Des fonctionnalités conçues pour votre succès" — develop explanatory pages/cards for Traçabilité totale / Export simplifié / Statistiques utiles WITH a multicolor background. Below "3 étapes simples pour la confiance de vos clients" — regenerate the images and enlarge the 3 step cards (Créez votre produit / Générez le QR code / Partagez et suivez).
+
+Work Log:
+- Generated 6 new AI illustrations via z-ai-web-dev-sdk (image-generation skill) into public/features/:
+  - feature-tracabilite.png (blue theme — traceability infographic)
+  - feature-export.png (green theme — export documents/flags)
+  - feature-statistiques.png (amber theme — analytics dashboard)
+  - step-create-product.png (blue — product form on tablet)
+  - step-generate-qr.png (green — QR labels from printer)
+  - step-share-track.png (amber — scan map/tracking)
+  All 6 return HTTP 200, 1024×1024, loaded=true in browser.
+- Rewrote src/components/landing/Features.tsx:
+  - Section background changed from plain white to a multicolor gradient: from-[#EFF6FF] via-[#F0FDF4] to-[#FFFBEB] (blue→green→amber), PLUS three soft blurred color blobs (blue/green/amber) positioned around the section to reinforce the multicolor backdrop.
+  - Each of the 3 cards now has: a top accent bar in the feature's brand color, a large 16:10 illustration at the top, icon+title, description, a bullet list of 3 concrete sub-benefits (with colored check icons), and a "Découvrir" link.
+  - Card backgrounds use per-feature gradients echoing their color (tracabilité: blue→green; export: green→cyan; stats: amber→orange).
+  - Hover: lift + stronger shadow + image zoom.
+- Rewrote src/components/landing/HowItWorks.tsx:
+  - Replaced the small timeline (72px number circle + 96px icon bubble) with 3 ENLARGED card surfaces.
+  - Each card has a large 4:3 illustration on top, a step number badge (1/2/3) overlapping the top-left of the illustration, then title + description in a padded content area.
+  - Kept the bottom mini process ribbon (Fiche produit → QR code → Scan & suivi) and the "Démarrer maintenant" CTA.
+- Ran `bun run lint` → 0 errors, 0 warnings. Dev server recompiled cleanly.
+- Verified with agent-browser (desktop 1440×900):
+  - Features: all 3 illustration images loaded (natW=1024, complete=true). VLM confirms multicolor gradient background, each card has illustration + icon+title + description + bullet list, all images display as real images.
+  - HowItWorks: all 3 illustration images loaded (natW=1024, complete=true). VLM confirms large cards with prominent illustrations, step number badges (1,2,3), all images display correctly.
+- Verified mobile (390×844): both sections stack vertically, fully readable, images display correctly (VLM confirmed).
+
+Stage Summary:
+- Features section: 3 detailed explanatory cards (Traçabilité totale / Export simplifié / Statistiques utiles) with illustrations + bullet sub-benefits, on a multicolor gradient background (blue→green→amber with soft color blobs).
+- HowItWorks section: 3 enlarged step cards (Créez votre produit / Générez le QR code / Partagez et suivez) with large regenerated illustrations and step number badges.
+- 6 new AI illustrations generated and served from /features/*. Lint clean, verified on desktop + mobile.
