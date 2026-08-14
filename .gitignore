@@ -80,4 +80,4 @@ tsconfig.tsbuildinfo
 # OS / editor
 Thumbs.db
 .idea/
-.vscode/
+.vscode/.png
