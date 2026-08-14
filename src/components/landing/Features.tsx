@@ -1,8 +1,13 @@
 "use client";
 
+import * as React from "react";
 import { Smartphone, Globe, BarChart3, ArrowRight, Check } from "lucide-react";
 import { AnimatedSection } from "./AnimatedSection";
 import { SectionBadge } from "./SectionBadge";
+import {
+  FeatureDetailDialog,
+  type FeatureKey,
+} from "./FeatureDetailDialog";
 
 /**
  * Features — "Des fonctionnalités conçues pour votre succès"
@@ -16,14 +21,18 @@ import { SectionBadge } from "./SectionBadge";
  *   - A generated illustration (top) showing the feature in action.
  *   - The icon + title + description.
  *   - A bullet list of 3 concrete sub-benefits.
- *   - A "Découvrir" link.
+ *   - A "Découvrir" button that opens a rich FeatureDetailDialog.
+ *
+ * Previously the "Découvrir" links pointed to `href="#"`, which redirected
+ * the user to the top of the home page. They now open a detailed modal that
+ * explains the feature (how it works, deliverables, benefits).
  *
  * The section background is a soft multi-color gradient (blue → green → amber)
- * so the three cards visually echo their respective brand color, exactly as
- * requested ("mettre un fond multicolors ces 3 cards").
+ * so the three cards visually echo their respective brand color.
  */
 
 type Feature = {
+  featureKey: FeatureKey;
   icon: React.ReactNode;
   title: string;
   description: string;
@@ -40,6 +49,7 @@ type Feature = {
 
 const FEATURES: Feature[] = [
   {
+    featureKey: "tracabilite",
     icon: <Smartphone className="h-6 w-6" />,
     title: "Traçabilité totale",
     description:
@@ -57,6 +67,7 @@ const FEATURES: Feature[] = [
     link: "Découvrir la traçabilité",
   },
   {
+    featureKey: "export",
     icon: <Globe className="h-6 w-6" />,
     title: "Export simplifié",
     description:
@@ -74,6 +85,7 @@ const FEATURES: Feature[] = [
     link: "Découvrir l'export",
   },
   {
+    featureKey: "statistiques",
     icon: <BarChart3 className="h-6 w-6" />,
     title: "Statistiques utiles",
     description:
@@ -93,6 +105,11 @@ const FEATURES: Feature[] = [
 ];
 
 export function Features() {
+  const [activeFeature, setActiveFeature] = React.useState<FeatureKey | null>(
+    null,
+  );
+  const open = activeFeature !== null;
+
   return (
     <section
       id="fonctionnalites"
@@ -181,18 +198,29 @@ export function Features() {
                   ))}
                 </ul>
 
-                <a
-                  href="#"
+                {/* "Découvrir" button — opens the detail dialog (no more href="#") */}
+                <button
+                  type="button"
+                  onClick={() => setActiveFeature(feature.featureKey)}
                   className={`mt-6 inline-flex items-center gap-1 text-sm font-semibold ${feature.accent} transition-colors hover:opacity-80`}
                 >
                   {feature.link}
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-                </a>
+                </button>
               </div>
             </AnimatedSection>
           ))}
         </div>
       </div>
+
+      {/* Detail dialog rendered once, controlled by activeFeature */}
+      <FeatureDetailDialog
+        feature={activeFeature}
+        open={open}
+        onOpenChange={(next) => {
+          if (!next) setActiveFeature(null);
+        }}
+      />
     </section>
   );
 }

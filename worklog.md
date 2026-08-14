@@ -1390,3 +1390,47 @@ Stage Summary:
 - Features section: 3 detailed explanatory cards (Traçabilité totale / Export simplifié / Statistiques utiles) with illustrations + bullet sub-benefits, on a multicolor gradient background (blue→green→amber with soft color blobs).
 - HowItWorks section: 3 enlarged step cards (Créez votre produit / Générez le QR code / Partagez et suivez) with large regenerated illustrations and step number badges.
 - 6 new AI illustrations generated and served from /features/*. Lint clean, verified on desktop + mobile.
+
+---
+Task ID: 24
+Agent: main (continuation)
+Task: Fix the "Découvrir la traçabilité / l'export / les stats" links in the Features section that redirected to the top of the home page (href="#"). Replace them with dedicated explanatory content.
+
+Work Log:
+- Root cause: in src/components/landing/Features.tsx, the three "Découvrir…" links all had href="#". Clicking them scrolled the page back to the top (the home page), so the user never saw any explanatory content — it looked like the pages were "not developed".
+- Constraint: the project only exposes the `/` route (src/app/page.tsx). New routes are not allowed, so a dedicated page-per-feature was not an option. The correct pattern for explanatory content in this constraint is a modal dialog.
+- Created src/components/landing/FeatureDetailDialog.tsx:
+  - Uses the existing shadcn/ui Dialog + ScrollArea primitives.
+  - Exports FeatureKey type ("tracabilite" | "export" | "statistiques") and a FeatureDetailDialog component controlled by `open` + `onOpenChange` props.
+  - For each feature, the dialog renders:
+    * A hero image header (the existing /features/*.png illustration) with a gradient overlay, a colored top accent bar, a feature label badge, the DialogTitle (h2) overlaid on the image, and a custom round close button (top-right).
+    * A subtitle + intro paragraph.
+    * A "Comment ça marche" section with 4 numbered step cards (icon + title + description), each feature having its own 4 steps.
+    * A deliverables section ("Ce que voit votre client en un scan" / "Documents générés automatiquement" / "Indicateurs disponibles en un coup d'œil") with 4 cards each.
+    * A "Bénéfices concrets pour vous" section with 4 bullet points (check icons).
+    * A CTA card at the bottom with "Créer mon compte gratuit" linking to #pricing (which closes the dialog on click).
+  - Each feature uses its own brand color (blue / green / amber) consistently across the accent bar, badges, icons, bullets, and CTA button.
+  - The body is wrapped in ScrollArea so all the content is reachable even though the dialog is capped at max-h-[92vh].
+  - DialogDescription is provided (sr-only) for accessibility.
+- Updated src/components/landing/Features.tsx:
+  - Added `import { FeatureDetailDialog, type FeatureKey }`.
+  - Added `const [activeFeature, setActiveFeature] = React.useState<FeatureKey | null>(null)`.
+  - Replaced the `<a href="#">` "Découvrir" link with a `<button type="button" onClick={() => setActiveFeature(feature.featureKey)}>`. The button keeps the same visual style (accent color text + arrow icon) so the UI looks unchanged.
+  - Added a single `<FeatureDetailDialog feature={activeFeature} open={open} onOpenChange={...} />` at the bottom of the section.
+  - Added `featureKey` to the Feature type and to each of the 3 FEATURES entries.
+- Ran `bun run lint` → 0 errors, 0 warnings.
+- Verified with agent-browser at desktop viewport:
+  - Opened the home page, scrolled to the Features section.
+  - The three "Découvrir…" elements are now `<button>` elements (refs e63/e65/e67), not anchors.
+  - Clicked "Découvrir la traçabilité" → modal opened: heading "La traçabilité totale, du producteur au consommateur", sections "Comment ça marche", "Ce que voit votre client en un scan", "Bénéfices concrets pour vous", CTA "Créer mon compte gratuit". URL stayed at http://localhost:3000/ (no redirect to top).
+  - Closed via the round close button → modal closed, URL unchanged.
+  - Clicked "Découvrir l'export" → modal opened: heading "Vos dossiers d'export prêts en quelques clics", sections "Comment ça marche", "Documents générés automatiquement", "Bénéfices concrets pour vous", CTA. URL unchanged.
+  - Closed, then clicked "Découvrir les stats" → modal opened: heading "Pilotez votre marché grâce à vos données de scan", sections "Comment ça marche", "Indicateurs disponibles en un coup d'œil", "Bénéfices concrets pour vous", CTA. URL unchanged.
+  - `agent-browser errors` → no console errors, no runtime errors.
+  - VLM analysis of the traceability modal screenshot confirmed: hero image at top, title, intro text, "Comment ça marche" section, polished professional layout, content well-rendered. (The lower sections are below the fold of the scrollable dialog, confirmed present via snapshot.)
+
+Stage Summary:
+- The "Découvrir la traçabilité / l'export / les stats" links no longer redirect to the top of the home page. They now open rich, scrollable explanatory modals with: hero image, intro, 4 "Comment ça marche" steps, 4 deliverable cards, 4 benefit bullets, and a CTA.
+- Each feature uses its brand color (blue / green / amber) consistently.
+- No new routes created (respects the `/`-only constraint). Single reusable FeatureDetailDialog component driven by a FeatureKey state in Features.tsx.
+- Lint clean, no console errors, verified end-to-end in the browser for all three features.
