@@ -42,17 +42,17 @@ const SLIDES: Slide[] = [
   {
     webpSrc: "/hero-slide-1.webp",
     pngSrc: "/hero-slide-1-opt.png",
-    alt: "VerifScan — scan d'une bouteille de jus d'orange 100% naturel avec un smartphone, affichant le passeport numérique du produit : origine Sénégal, producteur Vergers de Casamance, authenticité vérifiée.",
+    alt: "VerifScan — une main tient un smartphone affichant l'application qui confirme l'authenticité d'une huile pure Natura après le scan de son QR code.",
   },
   {
     webpSrc: "/hero-slide-2.webp",
     pngSrc: "/hero-slide-2-opt.png",
-    alt: "VerifScan — Authenticité vérifiée, confiance renforcée. Un scan garantit l'authenticité de vos produits et protège votre marque contre la contrefaçon.",
+    alt: "VerifScan — une main scanne le QR code d'une bouteille de jus d'orange 100% naturel, affichant sur l'écran du smartphone la confirmation « Produit authentique » avec les détails d'origine, ingrédients et traçabilité garantie.",
   },
   {
     webpSrc: "/hero-slide-3.webp",
     pngSrc: "/hero-slide-3-opt.png",
-    alt: "VerifScan — scan d'un QR code sur un avocat pour tracer des fruits et légumes frais, avec sur l'écran du téléphone : authenticité garantie, origine vérifiée, traçabilité complète et confiance renforcée.",
+    alt: "VerifScan — un smartphone scanne un QR code sur un avocat au milieu de légumes frais, affichant l'écran « Passeport numérique du produit » confirmant un « Produit authentique » avec traçabilité complète.",
   },
 ];
 
