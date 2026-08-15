@@ -33,6 +33,12 @@ const ERROR_MESSAGES: Record<string, string> = {
   CallbackVerifyError:
     "Session expirée ou jeton invalide. Rafraîchissez la page et réessayez.",
   OAuthCallback: "La connexion via le fournisseur a échoué. Réessayez.",
+  // session_invalid = the JWT references a user.id that no longer exists in
+  // the database (e.g. the DB was reset/re-seeded while the browser still
+  // holds the old session cookie). The dashboard redirects here. The user
+  // just needs to sign in again with valid credentials.
+  session_invalid:
+    "Votre session n'est plus valide (compte introuvable). Veuillez vous reconnecter.",
   default: "Une erreur est survenue. Veuillez réessayer.",
 };
 

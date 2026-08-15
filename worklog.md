@@ -4040,3 +4040,46 @@ Stage Summary:
 - Cause racine du problème : le bloc cookies: custom dans auth.ts empêchait NextAuth de poser le cookie de session avec le bon préfixe __Secure- en HTTPS, ET le login/page.tsx sur-complexifié (auto-redirect useEffect + window.location.href) cassait le flux de navigation.
 - Les améliorations récentes (polices locales, réorg page d'accueil, fix Dockerfile) sont CONSERVÉES.
 - Prêt à pousser sur main.
+
+---
+Task ID: 9
+Agent: main
+Task: Corriger l'erreur "Une erreur est survenue (session_invalid)" affichée côté frontend
+
+Work Log:
+- Diagnostic du flux d'erreur : /dashboard/page.tsx catchait TOUTE erreur de getFabricantData() (9 sous-requêtes en parallèle via Promise.all) et redirigeait vers /login?error=session_invalid. La page login n'avait PAS de mappage pour "session_invalid" dans ERROR_MESSAGES → affichait le message générique "Une erreur est survenue. Veuillez réessayer." (opaque pour l'utilisateur).
+- Analyse du scénario réel : le user.id dans le cookie JWT peut ne plus exister en DB (après un reset/re-seed) → getFabricantProfile() lance "Fabricant not found" → redirection session_invalid. MAIS d'autres erreurs transitoires (une sous-requête qui échoue) déclenchaient aussi la même redirection = faux positif de session invalide.
+
+- Fix 1 — login/page.tsx : ajout de `session_invalid` à ERROR_MESSAGES avec un message clair et actionnable : "Votre session n'est plus valide (compte introuvable). Veuillez vous reconnecter." + commentaire expliquant le scénario (DB reset pendant que le navigateur garde l'ancien cookie).
+
+- Fix 2 — dashboard/page.tsx (réécrit) :
+  * AVANT getFabricantData : vérification explicite que l'user existe en DB (db.user.findUnique select id+status).
+  * Si user introuvable → redirect /login?error=session_invalid (vraie session périmée).
+  * Si user SUSPENDED → redirect /login?error=suspended.
+  * Si user existe mais getFabricantData lance → render <DashboardLoadError/> au lieu de forcer le logout (erreur de données ≠ erreur de session).
+
+- Fix 3 — nouveau composant dashboard/DashboardLoadError.tsx (client) : UI d'erreur inline avec boutons "Réessayer" (window.location.reload) et "Se déconnecter" (signOut), message clair + code DASHBOARD_LOAD_FAILED pour le support.
+
+- Fix 4 — Cause racine secondaire découverte : le client Prisma généré était INCOMPLET.
+  * node_modules/.prisma/client/index.d.ts était absent (client.d.ts ne faisait que 23 octets).
+  * db.notification était undefined → [notifications] getUnreadCount failed: TypeError: Cannot read properties of undefined (reading 'count').
+  * Correction : `bun run prisma generate` → client régénéré (index.d.ts = 1.7MB, 189 refs à "notification").
+
+- Fix 5 — DB SQLite désynchronisée du schéma : 8 tables manquaient (Notification, NotificationPreference, EmailLog, AiConversation, AiMessage, MarketplaceInquiry, Consumer, LoyaltyRedemption) — définies dans schema.prisma mais jamais créées en DB.
+  * Correction : `bun run db:push` → 21 tables présentes, db.notification.count() fonctionne.
+
+- Fix 6 — src/lib/db.ts : bump de PRISMA_CACHE_VERSION de 'v4-barcode-off' à 'v5-full-schema' pour que le serveur dev charge le nouveau client Prisma au lieu du cache stale.
+
+- Vérification end-to-end (Agent Browser, 3 tests) :
+  * TEST A: /login?error=session_invalid → affiche "Votre session n'est plus valide (compte introuvable). Veuillez vous reconnecter." ✓
+  * TEST B: Login FABRICANT (sarine@biocosmetique.sn) → /dashboard charge avec 4 produits, 4 lots, 20 QR codes ✓
+  * TEST C: Login SUPERADMIN (admin@verifscan.sn) → /superadmin charge (3 utilisateurs) ✓
+  * API /api/notifications?limit=20 → HTTP 200 (plus d'erreur getUnreadCount) ✓
+  * 0 erreur page, console propre (sauf warning dev-mode PrismaClient-in-browser non-fatal)
+- Lint : 0 erreur, 0 warning
+
+Stage Summary:
+- L'erreur "session_invalid" est maintenant correctement gérée : message clair côté login, et le dashboard ne force plus la déconnexion sur une erreur de données transitoire (user vérifié d'abord, UI d'erreur inline avec retry sinon).
+- Cause racine technique secondaire corrigée : client Prisma régénéré + 8 tables manquantes créées en DB → tous les accesseurs db.* (notification, aiMessage, marketplaceInquiry, etc.) fonctionnent maintenant.
+- PRISMA_CACHE_VERSION bumpé pour propager le fix au serveur dev.
+- Le serveur dev tourne de façon persistante (port 3000, HTTP 200).
