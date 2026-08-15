@@ -138,10 +138,11 @@ export function HowItWorks() {
           </div>
         </AnimatedSection>
 
-        {/* CTA */}
+        {/* CTA — pointe vers l'inscription plutôt que la section tarifs
+            (la section Pricing a été retirée de la home le 2025-08-15). */}
         <AnimatedSection className="mt-10 text-center">
           <a
-            href="#pricing"
+            href="/register"
             className="group inline-flex items-center gap-2 rounded-[10px] bg-[#2563EB] px-8 py-3.5 text-base font-semibold text-white shadow-lg shadow-[#2563EB]/25 transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#1D4ED8]"
           >
             Démarrer maintenant

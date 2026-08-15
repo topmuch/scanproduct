@@ -40,11 +40,9 @@ import {
   Info,
   Loader2,
   Pencil,
-  Plus,
   ScanLine,
   Sticker,
   Tag,
-  Trash2,
   X,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -62,6 +60,8 @@ import type { ExtractedOffData } from "@/lib/openfoodfacts";
 import { useFabricantData } from "./FabricantDataProvider";
 import { BarcodeScanner } from "./BarcodeScanner";
 import { ImageUploadWithPreview } from "./ImageUploadWithPreview";
+import { CertificationSelector } from "./CertificationSelector";
+import type { ProductCertification } from "@/lib/certifications";
 import {
   GradientButton,
   OutlineButton,
@@ -82,7 +82,7 @@ export type DynamicProductInitialData = {
   isExport?: boolean;
   categoryData?: Record<string, unknown>;
   exportData?: Record<string, unknown>;
-  certifications?: { name: string; issuer?: string; validUntil?: string; fileUrl?: string }[];
+  certifications?: { id?: string; name: string; issuer?: string; validUntil?: string; fileUrl?: string }[];
   status?: ProductStatus;
   /** Task ID 5 — business type chosen at Step 1 (drives category filtering). */
   businessType?: BusinessType;
@@ -120,12 +120,9 @@ type StepId =
   | "export"
   | "summary";
 
-type CertificationRow = {
-  name: string;
-  issuer: string;
-  validUntil: string;
-  fileUrl: string;
-};
+// CertificationRow now carries an optional `id` so the catalog lookup
+// (emoji, category, description) works in the public CertificationsSection.
+type CertificationRow = ProductCertification;
 
 type StepMeta = {
   id: StepId;
@@ -806,12 +803,13 @@ export function DynamicProductForm({
   const [certifications, setCertifications] = useState<CertificationRow[]>(
     initialData?.certifications && initialData.certifications.length > 0
       ? initialData.certifications.map((c) => ({
+          id: typeof c.id === "string" ? c.id : undefined,
           name: c.name ?? "",
-          issuer: c.issuer ?? "",
-          validUntil: c.validUntil ?? "",
-          fileUrl: c.fileUrl ?? "",
+          issuer: c.issuer || undefined,
+          validUntil: c.validUntil || undefined,
+          fileUrl: c.fileUrl || undefined,
         }))
-      : [{ name: "", issuer: "", validUntil: "", fileUrl: "" }],
+      : [],
   );
 
   // ── Wizard state ──────────────────────────────────────────────────
@@ -941,9 +939,10 @@ export function DynamicProductForm({
           errs[`exp_${f.name}`] = `${f.label} est requis.`;
         }
       }
+      // With the new CertificationSelector, rows can never have an empty
+      // name (they are created from the catalog or via the "Autre" form
+      // which requires a non-empty name). We still validate defensively.
       certifications.forEach((c, idx) => {
-        // Allow trailing empty row for UX.
-        if (!c.name.trim() && idx === certifications.length - 1) return;
         if (!c.name.trim()) errs[`cert_${idx}`] = "Le nom de la certification est requis.";
       });
     }
@@ -1109,7 +1108,8 @@ export function DynamicProductForm({
 
     setSubmitting(true);
 
-    // Strip out empty trailing certification row.
+    // Defensive: strip out any row with an empty name (shouldn't happen
+    // with the new selector, but keeps the contract robust).
     const cleanCerts = certifications.filter((c) => c.name.trim());
 
     // Strip File objects from categoryData/exportData — they can't be
@@ -1552,6 +1552,28 @@ export function DynamicProductForm({
                 Aucun champ spécifique défini pour cette catégorie pour l'instant.
               </div>
             )}
+
+            {/* Certifications — disponible pour TOUS les produits (pas seulement
+                l'export). Catalogue de 28 certifications reconnues (Bio, Halal,
+                ISO 22000, HACCP, GlobalGAP, Fairtrade…). Affiché ici plutôt que
+                dans l'étape Export pour que les produits locaux puissent aussi
+                déclarer leurs certifications. */}
+            <section className="rounded-xl border border-[#E5E7EB] bg-[#FAFAFA] p-4">
+              <p className="mb-3 text-[12px] text-[#6B7280]">
+                Bio, Halal, ISO 22000, HACCP, GlobalGAP, Fairtrade, etc. —
+                sélectionnez vos certifications depuis le catalogue VerifScan.
+                Ces informations renforcent la confiance des acheteurs et
+                s&apos;affichent automatiquement sur la page produit scanné.
+              </p>
+              <CertificationSelector
+                value={certifications}
+                onChange={(next: ProductCertification[]) =>
+                  setCertifications(next)
+                }
+                disabled={submitting}
+                max={20}
+              />
+            </section>
           </div>
         );
 
@@ -1571,10 +1593,10 @@ export function DynamicProductForm({
                 </span>
                 <p className="mt-1 text-[12px] text-[#6B7280]">
                   Renseignez les informations réglementaires requises pour
-                  l'export (pays de destination, conformité sanitaire,
-                  certifications spécifiques). Pour désactiver l'export,
-                  retournez à l'étape « Informations générales » et décochez
-                  la case « Je vends à l'international ».
+                  l&apos;export (pays de destination, conformité sanitaire,
+                  certifications spécifiques). Pour désactiver l&apos;export,
+                  retournez à l&apos;étape « Informations générales » et décochez
+                  la case « Je vends à l&apos;international ».
                 </p>
               </div>
             </div>
@@ -1582,7 +1604,7 @@ export function DynamicProductForm({
             {/* Export fields */}
             {filteredExportFields.length === 0 && (
               <div className="rounded-lg border border-dashed border-[#E5E7EB] bg-[#F9FAFB] px-4 py-6 text-center text-[13px] text-[#6B7280]">
-                Aucun champ d'export défini pour cette catégorie. Des champs
+                Aucun champ d&apos;export défini pour cette catégorie. Des champs
                 seront ajoutés prochainement.
               </div>
             )}
@@ -1620,133 +1642,9 @@ export function DynamicProductForm({
               </div>
             )}
 
-            {/* Certifications */}
-            <section className="rounded-xl border border-[#E5E7EB] bg-[#FAFAFA] p-4">
-              <div className="mb-3 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Sticker size={16} className="text-[#10B981]" />
-                  <h4 className="text-[13px] font-semibold uppercase tracking-wide text-[#374151]">
-                    Certifications
-                  </h4>
-                </div>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setCertifications((prev) => [
-                      ...prev,
-                      { name: "", issuer: "", validUntil: "", fileUrl: "" },
-                    ])
-                  }
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-[#E5E7EB] bg-white px-3 py-1.5 text-[13px] font-medium text-[#374151] transition-colors hover:bg-[#F9FAFB]"
-                >
-                  <Plus size={14} /> Ajouter
-                </button>
-              </div>
-              <p className="mb-3 text-[12px] text-[#6B7280]">
-                Bio, Halal, ISO 22000, HACCP, GlobalGAP, etc. — ces
-                informations renforcent la confiance des acheteurs.
-              </p>
-
-              <div className="space-y-3">
-                {certifications.map((c, idx) => (
-                  <div
-                    key={idx}
-                    ref={(el) => { errorRefs.current[`cert_${idx}`] = el; }}
-                    className="rounded-xl border border-[#E5E7EB] bg-white p-4"
-                  >
-                    <div className="mb-3 flex items-center justify-between">
-                      <span className="text-[12px] font-semibold uppercase tracking-wide text-[#9CA3AF]">
-                        Certification #{idx + 1}
-                      </span>
-                      {certifications.length > 1 ? (
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setCertifications((prev) =>
-                              prev.filter((_, i) => i !== idx),
-                            )
-                          }
-                          className="inline-flex h-6 w-6 items-center justify-center rounded-md text-[#EF4444] transition-colors hover:bg-[#FEE2E2]"
-                          aria-label="Supprimer cette certification"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      ) : null}
-                    </div>
-                    <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                      <div>
-                        <FieldLabel required>Nom</FieldLabel>
-                        <input
-                          type="text"
-                          value={c.name}
-                          onChange={(e) => {
-                            const v = e.target.value;
-                            setCertifications((prev) =>
-                              prev.map((row, i) =>
-                                i === idx ? { ...row, name: v } : row,
-                              ),
-                            );
-                          }}
-                          placeholder="Ex : Bio, Halal, ISO 22000"
-                          className={inputClass}
-                        />
-                        <FieldError message={errors[`cert_${idx}`]} />
-                      </div>
-                      <div>
-                        <FieldLabel>Organisme émetteur</FieldLabel>
-                        <input
-                          type="text"
-                          value={c.issuer}
-                          onChange={(e) => {
-                            const v = e.target.value;
-                            setCertifications((prev) =>
-                              prev.map((row, i) =>
-                                i === idx ? { ...row, issuer: v } : row,
-                              ),
-                            );
-                          }}
-                          placeholder="Ex : Ecocert, Bureau Veritas"
-                          className={inputClass}
-                        />
-                      </div>
-                      <div>
-                        <FieldLabel>Valable jusqu'au</FieldLabel>
-                        <input
-                          type="date"
-                          value={c.validUntil}
-                          onChange={(e) => {
-                            const v = e.target.value;
-                            setCertifications((prev) =>
-                              prev.map((row, i) =>
-                                i === idx ? { ...row, validUntil: v } : row,
-                              ),
-                            );
-                          }}
-                          className={inputClass}
-                        />
-                      </div>
-                      <div>
-                        <FieldLabel>URL du document</FieldLabel>
-                        <input
-                          type="url"
-                          value={c.fileUrl}
-                          onChange={(e) => {
-                            const v = e.target.value;
-                            setCertifications((prev) =>
-                              prev.map((row, i) =>
-                                i === idx ? { ...row, fileUrl: v } : row,
-                              ),
-                            );
-                          }}
-                          placeholder="https://…"
-                          className={inputClass}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
+            {/* Note: les certifications sont désormais saisies à l'étape
+                "Spécificités" (Step 4) afin d'être disponibles pour tous les
+                produits, pas seulement ceux destinés à l'export. */}
           </div>
         );
 

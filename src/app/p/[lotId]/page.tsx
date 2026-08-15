@@ -32,6 +32,7 @@ import { CompactHistory } from "@/components/product/compact/CompactHistory";
 import { TransparencyLite } from "@/components/product/compact/TransparencyLite";
 import { CompactCertifications } from "@/components/product/compact/CompactCertifications";
 import { CompactReviews } from "@/components/product/compact/CompactReviews";
+import { CertificationsSection } from "@/components/product/CertificationsSection";
 
 // ---------------------------------------------------------------------------
 // Force dynamic rendering so the page always reflects the latest reviews
@@ -171,7 +172,9 @@ export default async function ProductPage({
   }
 
   const totalCerts =
-    (lot.lotCerts?.length ?? 0) + (lot.fabricantCerts?.length ?? 0);
+    (lot.lotCerts?.length ?? 0) +
+    (lot.fabricantCerts?.length ?? 0) +
+    (lot.productCertifications?.length ?? 0);
 
   return (
     <div className="relative flex min-h-screen flex-col bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50">
@@ -290,6 +293,17 @@ export default async function ProductPage({
             color="emerald"
             badge={totalCerts > 0 ? String(totalCerts) : undefined}
           >
+            {/* Section 1: certifications produits (catalogue VerifScan — Bio, Halal, ISO 22000…) */}
+            {lot.productCertifications && lot.productCertifications.length > 0 && (
+              <div className="mb-4">
+                <CertificationsSection
+                  certifications={lot.productCertifications}
+                  showTitle
+                  compact
+                />
+              </div>
+            )}
+            {/* Section 2: certifications du lot + certifications du fabricant (legacy) */}
             <CompactCertifications
               lotCerts={lot.lotCerts}
               fabricantCerts={lot.fabricantCerts}

@@ -6,6 +6,7 @@
  */
 import { db } from "@/lib/db";
 import { calculateTransparencyScore, type TransparencyResult } from "@/lib/utils";
+import { parseProductCertifications } from "@/lib/certifications";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -144,6 +145,11 @@ export async function getLotWithDetails(lotId: string) {
     historyEvents,
     lotCerts,
     fabricantCerts,
+    // Product-level certifications (from Product.certifications JSON column).
+    // Parsed via parseProductCertifications for type-safe consumption by the
+    // CertificationsSection component on the /p/[lotId] page. Robust to null
+    // or malformed JSON — never throws.
+    productCertifications: parseProductCertifications(product.certifications),
     reviews,
     qrCode: qrCodes[0] ?? null,
     scanCount,

@@ -6,7 +6,6 @@ import { CatalogSlider } from "@/components/landing/CatalogSlider";
 import { DemoSection } from "@/components/landing/DemoSection";
 import { Testimonials } from "@/components/landing/Testimonials";
 import { StatsBanner } from "@/components/landing/StatsBanner";
-import { Pricing } from "@/components/landing/Pricing";
 import { FinalCTA } from "@/components/landing/FinalCTA";
 import { Footer } from "@/components/landing/Footer";
 
@@ -22,7 +21,6 @@ export default function Home() {
         <DemoSection />
         <Testimonials />
         <StatsBanner />
-        <Pricing />
         <FinalCTA />
       </main>
       <Footer />

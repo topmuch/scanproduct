@@ -38,11 +38,6 @@ export function PublicFooter() {
                   Fonctionnalités
                 </Link>
               </li>
-              <li>
-                <Link href="/#pricing" className="text-white/70 hover:text-white">
-                  Tarifs
-                </Link>
-              </li>
             </ul>
           </div>
 

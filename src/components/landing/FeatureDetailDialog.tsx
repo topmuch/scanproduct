@@ -476,7 +476,7 @@ export function FeatureDetailDialog({
                     </p>
                   </div>
                   <a
-                    href="#pricing"
+                    href="/register"
                     onClick={() => onOpenChange(false)}
                     className={`group inline-flex items-center justify-center gap-2 rounded-[10px] ${data.accentSoft} px-6 py-3 text-sm font-semibold text-white shadow-lg transition-all duration-300 hover:-translate-y-0.5 hover:opacity-90`}
                   >

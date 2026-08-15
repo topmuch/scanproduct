@@ -3572,3 +3572,173 @@ Stage Summary:
 - Wizard : fonctionne jusqu'à Step 2 (VLM-confirmé)
 - Code Step 3 : barcode scanner + auto-fill + preview OFF correctement intégrés, lint clean
 - L'instabilité du dev server (process tué entre appels bash) empêche la capture d'un screenshot de Step 3, mais le code est vérifié par lint + review + test API
+
+---
+Task ID: 1
+Agent: Explore
+Task: Explore existing certifications + home page structure for VerifScan
+
+Work Log:
+- Read worklog.md to understand prior work (landing page already built with Pricing section; admin/fabricant dashboards in place).
+- Read prisma/schema.prisma — identified 3 certification-related models/fields: Product.certifications (JSON string), Certification (fabricant-level), LotCertification (lot-level).
+- Read src/lib/fabricant-types.ts — Product type already has `certifications?` field (lines 36-41) with shape {name, issuer?, validUntil?, fileUrl?}.
+- Read src/lib/public-data.ts — getLotWithDetails() (lines 22-152) fetches LotCertification[] (line 59) + Certification[] (lines 60-62) and returns them as `lotCerts` + `fabricantCerts`. NOTE: product-level Product.certifications JSON column is NOT currently loaded by getLotWithDetails.
+- Read src/app/api/products/route.ts — POST handler persists `certifications` array as JSON-string (lines 134-137, 170).
+- Read src/app/api/products/[id]/route.ts — PATCH handler updates `certifications` (lines 122-127).
+- Read src/components/fabricant/DynamicProductForm.tsx — Step 5 "Export & Certifications" (lines 1558-1751) contains inline certifications editor with 4 inputs (Nom, Organisme émetteur, Valable jusqu'au, URL du document). State at lines 805-815, submit logic at lines 1112-1144. Step 5 is hidden unless `showExportStep` is true (export opt-in).
+- Read src/components/fabricant/pages/ProduitsPage.tsx — initialData round-trips product.certifications (line 235).
+- Read src/lib/fabricant-server-data.ts — mapProduct() parses p.certifications JSON back to array (lines 194-196).
+- Read src/components/product/compact/CompactCertifications.tsx — existing component displays lotCerts + fabricantCerts (used inside WowAccordion on scanned product page).
+- Read src/app/p/[lotId]/page.tsx — scanned product page structure (lines 1-331). Already renders CompactCertifications inside a WowAccordion (lines 285-297). totalCerts = lotCerts.length + fabricantCerts.length (lines 173-174).
+- Read src/app/page.tsx — home page renders 9 sections including <Pricing /> at line 25.
+- Read src/components/landing/Pricing.tsx — full Pricing component (243 lines) with PLANS array, formatFCFA, monthly/yearly toggle, 3 plan cards with FCFA prices, CTA links to /register?plan=.
+- Read src/components/landing/Header.tsx — NAV_LINKS (lines 10-16) does NOT include "Tarifs".
+- Read src/components/landing/Footer.tsx — COLUMNS array line 16 includes `{ label: "Tarifs", href: "/#pricing" }` in Produit column.
+- Grep'd landing/ for prix|price|FCFA|tarif — only Pricing.tsx has actual prices. No other landing component shows prices.
+- Confirmed `src/lib/certifications.ts`, `src/components/**/CertificationSelector.tsx`, `src/components/**/CertificationsSection.tsx` do NOT yet exist (Glob returned no matches).
+
+Stage Summary:
+
+## 1. Existing certifications handling — file paths + line numbers
+
+### Prisma schema (`prisma/schema.prisma`)
+- **Product.certifications** (line 163): `certifications String?` — JSON-encoded array of `{name, issuer, validUntil, fileUrl}`. Comment on line 162.
+- **Certification model** (lines 361-378): fabricant-level certifications with `name`, `issuer`, `certificateNumber`, `issueDate`, `expirationDate`, `documentUrl`, `isActive`. Linked to User via `fabricantId`.
+- **LotCertification model** (lines 380-392): lot-level certifications with `name`, `issuer`, `documentUrl`. Linked to Lot via `lotId`.
+
+### Types (`src/lib/fabricant-types.ts`)
+- **Product.certifications** (lines 36-41): `Array<{ name: string; issuer?: string; validUntil?: string; fileUrl?: string }> | null`
+- **FabricantAbonnement** type contains `prix`/`prixAnnuel` (lines 207-222) — unrelated to product certifications (this is the fabricant subscription).
+
+### Components displaying/editing certifications
+- **src/components/fabricant/DynamicProductForm.tsx** — inline editor at Step 5 "Export & Certifications" (lines 1558-1751). State at lines 805-815, validation at lines 944-947, submit at lines 1112-1144, summary at lines 1843-1882. Editor is a free-form text row per certification with 4 inputs (name, issuer, validUntil, fileUrl). NOT a structured selector.
+- **src/components/product/compact/CompactCertifications.tsx** (107 lines) — read-only display of lotCerts + fabricantCerts on the scanned product page. Compact list with 📜 emoji, name, issuer, expiration date, active/expired icon.
+- **src/components/fabricant/pages/ProduitsPage.tsx** (line 235) — passes `certifications: product.certifications` into DynamicProductForm initialData.
+- **src/components/fabricant/pages/AIAssistantPage.tsx** — references "certifications" only in AI prompt strings (no UI).
+
+### API routes
+- **src/app/api/products/route.ts** — POST (lines 134-137): `const certifications = Array.isArray(body.certifications) && body.certifications.length > 0 ? JSON.stringify(body.certifications) : null;` persisted at line 170.
+- **src/app/api/products/[id]/route.ts** — PATCH (lines 122-127): same JSON-stringify logic on update.
+- **src/lib/public-data.ts** — `getLotWithDetails` fetches `db.lotCertification.findMany` (line 59) and `db.certification.findMany({ fabricantId, isActive: true })` (lines 60-62), returns as `lotCerts` + `fabricantCerts` (lines 80-81, 145-146). NOTE: does NOT load `Product.certifications` JSON column.
+- **src/lib/fabricant-server-data.ts** — `mapProduct()` parses Product.certifications JSON back to typed array (lines 194-196). `getFabricantScore()` includes `certifications: true` in lot include (line 771) and passes `lot.certifications` (line 807) to `calculateTransparencyScore` — but here `lot.certifications` refers to **LotCertification[]** relation, NOT Product.certifications.
+- **src/lib/utils.ts** (lines 161, 183, 326-339) — transparency score calculation: 15 points for certifications, max 3 × 5.
+
+## 2. Home / Landing page — pricing elements to remove
+
+### Home page structure (`src/app/page.tsx`, 31 lines)
+Renders 9 sections in this order:
+1. `<Header />` (line 16)
+2. `<Hero />` (line 18)
+3. `<Features />` (line 19)
+4. `<HowItWorks />` (line 20)
+5. `<CatalogSlider />` (line 21)
+6. `<DemoSection />` (line 22)
+7. `<Testimonials />` (line 23)
+8. `<StatsBanner />` (line 24)
+9. `<Pricing />` (line 25) ← **REMOVE THIS LINE**
+10. `<FinalCTA />` (line 26)
+11. `<Footer />` (line 28)
+
+### Pricing JSX blocks to remove — `src/components/landing/Pricing.tsx` (entire file, 243 lines)
+The whole `<Pricing />` component is the pricing UI. Key pricing-containing blocks:
+- **PLANS array** (lines 22-80) — 3 plans with monthly/yearly FCFA prices (Starter 10000/84000, Pro 25000/210000, Business 75000/630000).
+- **Toggle** (lines 106-148) — Mensuel/Annuel toggle with -30% badge.
+- **Price display** (lines 175-192):
+  ```jsx
+  <div className="mt-5 flex items-end gap-2">
+    <span className="font-display text-[36px] font-bold leading-none text-[#111827]">
+      {formatFCFA(price)}
+    </span>
+    <span className="mb-1 text-sm text-[#6B7280]">FCFA/mois</span>
+  </div>
+  ```
+- **Bottom note** (lines 231-238): "💡 Économisez 30% avec le paiement annuel".
+
+### Footer link to remove — `src/components/landing/Footer.tsx` line 16
+```jsx
+{ label: "Tarifs", href: "/#pricing" },
+```
+This is inside the `COLUMNS` array's first column ("Produit"). Removing it requires deleting this single line (or the whole Pricing link entry).
+
+### Other pricing-related elements
+- **src/components/landing/Header.tsx** — NAV_LINKS (lines 10-16) does NOT contain a "Tarifs" link, so no change needed in header.
+- No other landing component (Hero, Features, HowItWorks, CatalogSlider, DemoSection, Testimonials, StatsBanner, FinalCTA) contains FCFA/€/$ prices. Grep confirmed.
+
+## 3. Scanned product page — where CertificationsSection will be displayed
+
+### Page location: `src/app/p/[lotId]/page.tsx` (331 lines)
+- Server component, `export const dynamic = "force-dynamic"` (line 41).
+- Loads lot via `getLotWithDetails(lotId)` (line 99).
+- Returns object with `lotCerts` (LotCertification[]) and `fabricantCerts` (Certification[]) — see `src/lib/public-data.ts` lines 80-81, 145-146.
+- `totalCerts` computed at lines 173-174: `(lot.lotCerts?.length ?? 0) + (lot.fabricantCerts?.length ?? 0)`.
+
+### Current section structure (lines 197-326)
+1. `WowHero` (line 199-203) — product header card
+2. `FreshnessGlow` (line 206-209) — freshness bar
+3. `LoyaltyWidget` (line 212) — consumer loyalty
+4. `ContactOrb` (line 215) — contact buttons
+5. InquiryModal block (lines 218-235) — B2B inquiry CTA
+6. Accordions block (lines 238-319):
+   - Ingrédients & Allergènes (line 240-247)
+   - Traçabilité complète (line 250-257)
+   - Historique du lot (line 260-272)
+   - Score de transparence (line 275-283)
+   - **Certifications** (lines 285-297) ← existing accordion, uses `<CompactCertifications lotCerts={...} fabricantCerts={...} />`
+   - Avis consommateurs (line 300-318)
+7. `SimilarProducts` (line 322) — similar products grid
+8. `VerificationGlow` (line 325) — verification footer
+
+### How certifications are currently rendered
+- Inside a `WowAccordion` (lines 285-297) with title "Certifications", icon "🏆", color "emerald", badge = totalCerts count.
+- Content: `<CompactCertifications lotCerts={lot.lotCerts} fabricantCerts={lot.fabricantCerts} />` (lines 293-296).
+- `CompactCertifications` (src/components/product/compact/CompactCertifications.tsx, 107 lines) renders a simple list of 📜 cards with name + issuer + expiration date. Lot certs in blue cards, fabricant certs in green cards with active/expired indicator.
+
+### Where a new `CertificationsSection` would fit
+Two natural options:
+- **Option A (replace accordion content)**: Keep the WowAccordion wrapper at lines 285-297 but replace `<CompactCertifications>` with `<CertificationsSection>`. This keeps the visual consistency (collapsible section, badge count, icon) while upgrading the inner content.
+- **Option B (standalone section)**: Insert a new full-width `<CertificationsSection>` between two existing sections (e.g., between `ContactOrb` and the InquiryModal block, or as a new section before the accordions block). This gives certifications more visual prominence.
+
+NOTE: `getLotWithDetails` in `src/lib/public-data.ts` does NOT currently load `Product.certifications` (the JSON column). If `CertificationsSection` needs to display product-level certifications (the ones entered via DynamicProductForm Step 5), `getLotWithDetails` must be extended to also fetch `product.certifications` and parse the JSON string. Currently only `lotCerts` (LotCertification[]) and `fabricantCerts` (Certification[]) are loaded.
+
+## 4. Recommendations
+
+### Where to add `lib/certifications.ts`
+- **Path**: `/home/z/my-project/src/lib/certifications.ts`
+- **Rationale**: Co-locate with other pure utility/data files (`fabricant-types.ts`, `product-schemas.ts`, `public-data.ts`). Should contain:
+  - TypeScript types for certifications (ProductCertification, LotCertification, FabricantCertification) — possibly re-exporting from fabricant-types.ts.
+  - Predefined list of common certifications (Bio, Halal, ISO 22000, HACCP, GlobalGAP, Fairtrade, Ecocert, USDA Organic, etc.) with metadata (icon/emoji, color, description) for use in a selector UI.
+  - Helper functions: `parseProductCertifications(json: string | null)`, `isCertificationActive(expirationDate: string | Date | null): boolean`, `formatCertificationExpiry(date: string): string`.
+  - No DB imports — keep it pure/client-safe like fabricant-types.ts.
+
+### Where to add `CertificationSelector.tsx`
+- **Path**: `/home/z/my-project/src/components/fabricant/CertificationSelector.tsx` (alongside DynamicProductForm.tsx, BarcodeScanner.tsx, ImageUploadWithPreview.tsx).
+- **Rationale**: It's a fabricant-facing editor used inside DynamicProductForm Step 5. Should be a client component (`"use client"`) that:
+  - Accepts `value: CertificationRow[]` and `onChange: (rows: CertificationRow[]) => void`.
+  - Renders a searchable dropdown of predefined certifications (from `lib/certifications.ts`) + custom "Autre" option.
+  - For each selected certification, renders the 4 inputs (name, issuer, validUntil, fileUrl) currently inlined in DynamicProductForm.tsx lines 1651-1747.
+  - Replaces the inline JSX block at lines 1623-1749 in DynamicProductForm.tsx.
+
+### Where to add `CertificationsSection.tsx`
+- **Path**: `/home/z/my-project/src/components/product/CertificationsSection.tsx` (alongside other product-display components in `src/components/product/`).
+- **Rationale**: It's a public-facing display component for the scanned product page. Should be a server component (or client if interactive) that:
+  - Accepts `lotCerts`, `fabricantCerts`, and optionally `productCertifications` (parsed from Product.certifications JSON).
+  - Renders a richer, more visual certifications section than CompactCertifications (badges, icons, color-coded by type, expandable details, document links).
+  - Can either replace CompactCertifications inside the existing WowAccordion (Option A) or be a standalone section (Option B).
+- **If replacing CompactCertifications**: Update `src/app/p/[lotId]/page.tsx` lines 293-296 to use the new component. May also need to extend `getLotWithDetails` in `src/lib/public-data.ts` to load `product.certifications`.
+
+### Which JSX blocks to remove for "remove prices from home page" task
+1. **`src/app/page.tsx` line 25**: Remove `<Pricing />` and its import on line 9.
+   ```diff
+   -import { Pricing } from "@/components/landing/Pricing";
+   ...
+   -        <Pricing />
+   ```
+2. **`src/components/landing/Footer.tsx` line 16**: Remove the Tarifs link from the COLUMNS array.
+   ```diff
+        { label: "Fonctionnalités", href: "/#fonctionnalites" },
+   -    { label: "Tarifs", href: "/#pricing" },
+        { label: "Marketplace B2B", href: "/#contact" },
+   ```
+3. **Optional**: Delete `src/components/landing/Pricing.tsx` entirely (243 lines) since it's no longer referenced. Or keep it for future re-use if pricing might come back.
+4. **No changes needed** in `src/components/landing/Header.tsx` — its NAV_LINKS array (lines 10-16) does not contain a Tarifs/pricing link.
+
