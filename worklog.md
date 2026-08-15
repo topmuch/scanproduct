@@ -3807,3 +3807,47 @@ Stage Summary:
 - Warning cross-origin résolu : `allowedDevOrigins` étendu.
 - Tests FABRICANT et SUPERADMIN réussis (login → dashboard correct en 3s).
 - Note : le serveur de dev meurt constamment entre les commandes bash dans ce sandbox (problème environnemental, pas de code). Les tests doivent être faits en une seule commande avec pré-compilation des routes.
+
+---
+Task ID: 13
+Agent: main
+Task: Remplacer les emojis des 12 cartes IndustryCards par de vraies images
+
+Work Log:
+- Lecture du composant IndustryCards.tsx (882 lignes, 12 industries avec emojis)
+- Invocation de la skill image-search (z-ai-web-dev-sdk CLI)
+- Recherche d'images réelles pour les 12 industries (requêtes séquentielles pour éviter le 429) :
+  1. fruits-legumes → fresh colorful fruits and vegetables at market stall
+  2. boissons → natural fruit juice bottles with fresh fruits
+  3. epices → colorful spices in bowls on market display
+  4. cosmetiques → natural organic cosmetic bottles with herbs
+  5. produits-de-la-mer → fresh fish and seafood on ice at market
+  6. viandes → fresh raw meat cuts at butcher shop
+  7. cereales → grains cereals rice wheat in bowls
+  8. noix-fruits-secs → assorted nuts and dried fruits display
+  9. huiles → olive oil and cooking oils in bottles
+  10. cafe-cacao → coffee beans and cocoa pods on table
+  11. miel → honey jars and honeycomb golden
+  12. produits-laitiers → fresh dairy products milk cheese yogurt
+- Téléchargement des 12 images (sélection du meilleur ratio paysage par industrie) dans /public/images/industries/ (12 fichiers, 6.3MB total)
+- Modification de IndustryCards.tsx via MultiEdit :
+  * Import de `Image` depuis next/image
+  * Ajout d'un champ `image: string` au type Industry
+  * Ajout du chemin d'image pour chacune des 12 industries
+  * Remplacement du header de carte (gradient + emoji) par une vraie image (h-44, object-cover, group-hover:scale-105) avec overlay gradient couleur d'accent + chip emoji en coin
+  * Remplacement du hero de modale (gradient + emoji) par une vraie image en background (fill, object-cover) avec overlay couleur d'accent + badge emoji + titre/sous-titre blancs par-dessus
+- Lint : `bun run lint` → 0 erreur
+- Vérification end-to-end avec Agent Browser :
+  * Page charge (HTTP 200, titre "VerifScan — La vérité au bout du scan")
+  * Section #metiers présente dans le DOM
+  * 12 images détectées dans la section #metiers (une par carte)
+  * Clic sur la 1ère carte ("Fruits & Légumes Frais") → modale s'ouvre avec 1 image (alt correct)
+  * Aucune erreur console / page
+- Serveur dev redémarré de façon persistante (PID 22397, port 3000)
+
+Stage Summary:
+- Les 12 cartes IndustryCards utilisent maintenant de vraies photos (next/image optimisé) au lieu d'emojis
+- Chaque image est teintée de la couleur d'accent de son industrie (overlay gradient) pour conserver l'identité visuelle
+- Le chip emoji est conservé en coin pour garder le repère visuel ludique
+- La modale de détail utilise aussi l'image réelle en background avec overlay couleur
+- Aucune régression : lint clean, 0 erreur runtime, navigation et modale fonctionnelles

@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ArrowRight, Check, Sparkles, X } from "lucide-react";
+import Image from "next/image";
 import { AnimatedSection } from "./AnimatedSection";
 import { SectionBadge } from "./SectionBadge";
 
@@ -40,6 +41,8 @@ type Solution = {
 type Industry = {
   id: string;
   emoji: string;
+  /** Local image path in /public/images/industries — real photo for the card header & modal hero */
+  image: string;
   title: string;
   subtitle: string;
   description: string;
@@ -58,6 +61,7 @@ const INDUSTRIES: Industry[] = [
   {
     id: "fruits-legumes",
     emoji: "🥭",
+    image: "/images/industries/fruits-legumes.jpg",
     title: "Fruits & Légumes Frais",
     subtitle: "Exportez en toute confiance",
     description:
@@ -104,6 +108,7 @@ const INDUSTRIES: Industry[] = [
   {
     id: "boissons",
     emoji: "🥤",
+    image: "/images/industries/boissons.jpg",
     title: "Boissons & Jus",
     subtitle: "Rassurez vos consommateurs",
     description:
@@ -150,6 +155,7 @@ const INDUSTRIES: Industry[] = [
   {
     id: "epices",
     emoji: "🌶️",
+    image: "/images/industries/epices.png",
     title: "Épices & Aromates",
     subtitle: "Valorisez l'authenticité",
     description:
@@ -196,6 +202,7 @@ const INDUSTRIES: Industry[] = [
   {
     id: "cosmetiques",
     emoji: "🧴",
+    image: "/images/industries/cosmetiques.jpg",
     title: "Cosmétiques Naturels",
     subtitle: "Créez un passeport numérique pour rassurer vos clients",
     description:
@@ -242,6 +249,7 @@ const INDUSTRIES: Industry[] = [
   {
     id: "produits-de-la-mer",
     emoji: "🐟",
+    image: "/images/industries/produits-de-la-mer.jpg",
     title: "Produits de la Mer",
     subtitle: "Traçabilité océan-assiette",
     description:
@@ -288,6 +296,7 @@ const INDUSTRIES: Industry[] = [
   {
     id: "viandes",
     emoji: "🥩",
+    image: "/images/industries/viandes.jpg",
     title: "Viandes & Volailles",
     subtitle: "De l'élevage à l'assiette",
     description:
@@ -334,6 +343,7 @@ const INDUSTRIES: Industry[] = [
   {
     id: "cereales",
     emoji: "🌾",
+    image: "/images/industries/cereales.jpg",
     title: "Céréales & Légumineuses",
     subtitle: "Exportez vos récoltes",
     description:
@@ -380,6 +390,7 @@ const INDUSTRIES: Industry[] = [
   {
     id: "noix-fruits-secs",
     emoji: "🥜",
+    image: "/images/industries/noix-fruits-secs.jpg",
     title: "Noix & Fruits Secs",
     subtitle: "Qualité certifiée à l'export",
     description:
@@ -426,6 +437,7 @@ const INDUSTRIES: Industry[] = [
   {
     id: "huiles",
     emoji: "🫒",
+    image: "/images/industries/huiles.jpg",
     title: "Huiles & Corps Gras",
     subtitle: "Pureté et authenticité garanties",
     description:
@@ -472,6 +484,7 @@ const INDUSTRIES: Industry[] = [
   {
     id: "cafe-cacao",
     emoji: "☕",
+    image: "/images/industries/cafe-cacao.jpg",
     title: "Café & Cacao",
     subtitle: "Valorisez votre terroir",
     description:
@@ -518,6 +531,7 @@ const INDUSTRIES: Industry[] = [
   {
     id: "miel",
     emoji: "🍯",
+    image: "/images/industries/miel.jpg",
     title: "Miel & Produits de la Ruche",
     subtitle: "Authenticité du miel garantie",
     description:
@@ -564,6 +578,7 @@ const INDUSTRIES: Industry[] = [
   {
     id: "produits-laitiers",
     emoji: "🥛",
+    image: "/images/industries/produits-laitiers.jpg",
     title: "Produits Laitiers",
     subtitle: "Fraîcheur et sécurité",
     description:
@@ -625,16 +640,26 @@ function IndustryCard({
         onClick={() => onOpen(industry)}
         className="group flex h-full w-full flex-col overflow-hidden rounded-2xl border-2 border-[#F3F4F6] bg-white text-left transition-all duration-300 hover:-translate-y-1.5 hover:border-transparent hover:shadow-[0_20px_50px_rgba(0,0,0,0.10)]"
       >
-        {/* Gradient header with emoji */}
-        <div
-          className={`relative flex h-28 items-center justify-center overflow-hidden bg-gradient-to-br ${industry.gradient}`}
-        >
-          <span className="text-6xl drop-shadow-lg transition-transform duration-300 group-hover:scale-110">
+        {/* Real image header with brand color tint */}
+        <div className="relative h-44 overflow-hidden">
+          <Image
+            src={industry.image}
+            alt={industry.title}
+            fill
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
+            className="object-cover transition-transform duration-500 group-hover:scale-105"
+          />
+          {/* Brand color gradient overlay for identity & legibility */}
+          <div
+            className="absolute inset-0"
+            style={{
+              background: `linear-gradient(to top, ${industry.accent}66 0%, transparent 55%)`,
+            }}
+          />
+          {/* Emoji chip — keeps the playful identity cue */}
+          <span className="absolute left-3 top-3 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-xl shadow-md backdrop-blur-sm">
             {industry.emoji}
           </span>
-          {/* Decorative circles */}
-          <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-white/10" />
-          <div className="absolute -bottom-6 -left-6 h-20 w-20 rounded-full bg-white/10" />
         </div>
 
         {/* Content */}
@@ -692,21 +717,32 @@ function IndustryDetailDialog({
       >
         {industry && (
           <ScrollArea className="max-h-[85vh]">
-            {/* Hero */}
-            <div
-              className={`relative flex flex-col items-center justify-center bg-gradient-to-br ${industry.gradient} px-6 py-12 text-center text-white`}
-            >
-              <span className="text-7xl drop-shadow-lg">
+            {/* Hero — real photo background with brand color overlay */}
+            <div className="relative flex min-h-[220px] flex-col items-center justify-center px-6 py-16 text-center text-white">
+              <Image
+                src={industry.image}
+                alt={industry.title}
+                fill
+                sizes="(max-width: 672px) 100vw, 672px"
+                className="object-cover"
+              />
+              {/* Brand color gradient overlay for legibility */}
+              <div
+                className="absolute inset-0"
+                style={{
+                  background: `linear-gradient(135deg, ${industry.accent}E6 0%, ${industry.accent}99 100%)`,
+                }}
+              />
+              {/* Emoji badge */}
+              <span className="relative z-[1] flex h-16 w-16 items-center justify-center rounded-full bg-white/25 text-4xl backdrop-blur-sm">
                 {industry.emoji}
               </span>
-              <DialogTitle className="mt-4 font-display text-3xl font-bold leading-tight">
+              <DialogTitle className="relative z-[1] mt-4 font-display text-3xl font-bold leading-tight drop-shadow-lg">
                 {industry.title}
               </DialogTitle>
-              <DialogDescription className="mt-2 text-lg text-white/90">
+              <DialogDescription className="relative z-[1] mt-2 text-lg text-white/95">
                 {industry.subtitle}
               </DialogDescription>
-              <div className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-white/10" />
-              <div className="absolute -bottom-8 -left-8 h-24 w-24 rounded-full bg-white/10" />
               {/* Custom close button — white on colored gradient hero */}
               <button
                 type="button"
