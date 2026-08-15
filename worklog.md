@@ -4083,3 +4083,23 @@ Stage Summary:
 - Cause racine technique secondaire corrigée : client Prisma régénéré + 8 tables manquantes créées en DB → tous les accesseurs db.* (notification, aiMessage, marketplaceInquiry, etc.) fonctionnent maintenant.
 - PRISMA_CACHE_VERSION bumpé pour propager le fix au serveur dev.
 - Le serveur dev tourne de façon persistante (port 3000, HTTP 200).
+
+---
+Task ID: 10
+Agent: main
+Task: Corriger l'erreur "Impossible de charger votre tableau de bord" affichée sur le dashboard fabricant
+
+Work Log:
+- Diagnostic : le serveur renvoie le vrai dashboard (HTTP 200, contenu réel "Teranga Foods"/"Sarine Bio" avec produits/lots/QR codes) pour les 2 comptes fabricant. L'erreur que voit l'utilisateur est dans le cache du routeur Next.js (RSC cache) côté navigateur — payload d'erreur mis en cache pendant la fenêtre transitoire de prisma generate / db push.
+- Preuve : curl avec session Teranga → HTML contient "Teranga Foods", "Couscous", "Score Transparence" (pas "Impossible de charger"). Cache-Control: no-store, must-revalidate côté serveur. Mais le RSC cache client-side persiste.
+- Fix 1 — DashboardLoadError.tsx : le bouton "Réessayer" utilisait window.location.reload() qui peut re-servir le payload RSC caché. Remplacé par window.location.href = '/dashboard?_r=' + Date.now() (URL unique = cache miss forcé → nouvelle requête serveur → vrai dashboard).
+- Fix 2 — StripRetryParam.tsx (nouveau client component) : nettoie le paramètre _r de l'URL après chargement réussi via history.replaceState (pas de navigation supplémentaire, pas de flicker).
+- Fix 3 — dashboard/page.tsx : ajout de <StripRetryParam/> dans le render de succès pour auto-nettoyer l'URL.
+- Vérification : les 2 comptes fabricant (sarine@biocosmetique.sn + contact@teranga-foods.sn) chargent correctement via curl ET Agent Browser. Le param _r n'interfère pas avec le middleware (proxy.ts).
+- Lint : 0 erreur. Push : commit 8a4b4f5 sur origin/main.
+
+Stage Summary:
+- Le serveur fonctionne correctement pour tous les comptes fabricant — l'erreur était un artefact de cache client-side.
+- Le bouton "Réessayer" fait maintenant une navigation hard avec cache-busting (URL unique) au lieu d'un simple reload.
+- L'URL est automatiquement nettoyée après un retry réussi.
+- ACTION UTILISATEUR REQUISE : hard-refresh du navigateur (Ctrl+Shift+R / Cmd+Shift+R) pour vider le cache RSC stale et récupérer le nouveau code du bouton retry.
