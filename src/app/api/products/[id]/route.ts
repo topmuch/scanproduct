@@ -8,15 +8,22 @@ import { db } from "@/lib/db";
  * user. Only the fields present in the body are updated.
  *
  * Body (all optional):
- *   name        — string
- *   brand       — string
- *   description — string
- *   category    — string (free-text)
- *   categoryId  — string (FK)
- *   imageUrl    — string
- *   weight      — string
- *   isPublic    — boolean
- *   status      — "ACTIVE" | "ARCHIVED"
+ *   name            — string
+ *   brand           — string
+ *   description     — string
+ *   category        — string (free-text, legacy)
+ *   categoryId      — string (FK; can be a Category slug OR Category.id —
+ *                     resolved the same way as POST /api/products)
+ *   imageUrl        — string
+ *   weight          — string
+ *   isPublic        — boolean
+ *   status          — "ACTIVE" | "ARCHIVED"
+ *
+ * V3 Phase 3 (dynamic categories + export + certifications):
+ *   isExport        — boolean
+ *   categoryData    — object  (JSON-stringified; null/empty → null)
+ *   exportData      — object  (JSON-stringified; null/empty → null)
+ *   certifications  — array<{name, issuer, validUntil, fileUrl}>  (JSON-stringified)
  */
 export async function PATCH(
   request: NextRequest,
@@ -52,11 +59,72 @@ export async function PATCH(
     if (typeof body.brand === "string") patch.brand = body.brand.trim() || null;
     if (typeof body.description === "string") patch.description = body.description || null;
     if (typeof body.category === "string") patch.category = body.category || null;
-    if (typeof body.categoryId === "string") patch.categoryId = body.categoryId || null;
     if (typeof body.imageUrl === "string") patch.imageUrl = body.imageUrl || null;
     if (typeof body.weight === "string") patch.weight = body.weight || null;
     if (typeof body.isPublic === "boolean") patch.isPublic = body.isPublic;
     if (body.status === "ACTIVE" || body.status === "ARCHIVED") patch.status = body.status;
+
+    // ── V3 Phase 3: resolve categoryId (slug or id) ──────────────────
+    // Same logic as POST — see that handler for the rationale.
+    if (typeof body.categoryId === "string") {
+      const raw = body.categoryId.trim();
+      if (!raw) {
+        // Explicit empty string → clear the FK + the legacy category name.
+        patch.categoryId = null;
+        if (!("category" in patch)) patch.category = null;
+      } else {
+        const bySlug = await db.category.findUnique({ where: { slug: raw } });
+        if (bySlug) {
+          patch.categoryId = bySlug.id;
+          patch.category = bySlug.name;
+        } else {
+          const byId = await db.category.findUnique({ where: { id: raw } });
+          if (byId) {
+            patch.categoryId = byId.id;
+            patch.category = byId.name;
+          }
+          // If neither matched, leave the FK untouched (caller's slug may
+          // be from a not-yet-seeded category — they can still set the
+          // free-text `category` field separately).
+        }
+      }
+    }
+
+    // ── V3 Phase 3: isExport + dynamic data ──────────────────────────
+    if (typeof body.isExport === "boolean") {
+      patch.isExport = body.isExport;
+      // When the product is no longer for export, clear exportData so it
+      // doesn't linger as stale JSON in the DB.
+      if (!body.isExport) {
+        patch.exportData = null;
+      }
+    }
+
+    if (body.categoryData !== undefined) {
+      patch.categoryData =
+        body.categoryData && typeof body.categoryData === "object"
+          ? JSON.stringify(body.categoryData)
+          : null;
+    }
+
+    if (body.exportData !== undefined) {
+      // Only persist exportData if the product is (or will be) for export.
+      const willBeExport = body.isExport === true ||
+        (body.isExport === undefined && patch.isExport === undefined) ||
+        patch.isExport === true;
+      if (willBeExport && body.exportData && typeof body.exportData === "object") {
+        patch.exportData = JSON.stringify(body.exportData);
+      } else if (body.exportData === null) {
+        patch.exportData = null;
+      }
+    }
+
+    if (body.certifications !== undefined) {
+      patch.certifications =
+        Array.isArray(body.certifications) && body.certifications.length > 0
+          ? JSON.stringify(body.certifications)
+          : null;
+    }
 
     const updated = await db.product.update({
       where: { id },

@@ -45,6 +45,22 @@ function toISODate(d: Date | string | null | undefined): string {
   return date.toISOString().split("T")[0];
 }
 
+/**
+ * Safely parse a JSON-encoded string from the DB into the expected shape.
+ * Returns null on parse failure or empty input — never throws.
+ *
+ * SQLite doesn't support Prisma `Json`, so V3 Phase 3 dynamic fields
+ * (categoryData, exportData, certifications) are stored as JSON strings.
+ */
+function safeParseJSON<T>(raw: string | null | undefined): T | null {
+  if (!raw || typeof raw !== "string" || raw.length === 0) return null;
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    return null;
+  }
+}
+
 function mapProductStatus(status: string | null, isPublic: boolean): ProductStatus {
   // Prisma Product.status: "ACTIVE" | "ARCHIVED"
   // Mock ProductStatus: "actif" | "brouillon" | "masque"
@@ -166,6 +182,18 @@ export async function getFabricantProducts(userId: string): Promise<Product[]> {
       scans: p.totalScans,
       scansParMois: Math.round(p.totalScans / ageMonths),
       createdAt: toISODate(p.createdAt),
+      // V3 Phase 3 — dynamic category fields (JSON-encoded strings in SQLite)
+      categoryId: p.categoryId,
+      isExport: p.isExport,
+      categoryData: p.categoryData
+        ? safeParseJSON<Record<string, unknown>>(p.categoryData)
+        : null,
+      exportData: p.exportData
+        ? safeParseJSON<Record<string, unknown>>(p.exportData)
+        : null,
+      certifications: p.certifications
+        ? safeParseJSON<Array<{ name: string; issuer?: string; validUntil?: string; fileUrl?: string }>>(p.certifications)
+        : null,
     };
   });
 }

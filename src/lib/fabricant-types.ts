@@ -28,6 +28,17 @@ export type Product = {
   scans: number;
   scansParMois: number;
   createdAt: string;
+  // V3 Phase 3 — dynamic category fields
+  categoryId?: string | null;
+  isExport?: boolean;
+  categoryData?: Record<string, unknown> | null;
+  exportData?: Record<string, unknown> | null;
+  certifications?: Array<{
+    name: string;
+    issuer?: string;
+    validUntil?: string;
+    fileUrl?: string;
+  }> | null;
 };
 
 export type LotStatus = "actif" | "rappelle" | "expire";

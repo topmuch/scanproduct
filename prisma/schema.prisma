@@ -110,6 +110,12 @@ model Category {
   icon        String?
   emoji       String?
   description String?
+  // JSON-encoded FieldConfig[] — fields specific to this category
+  schema      String?
+  // JSON-encoded FieldConfig[] — fields specific to export (only for export products)
+  exportSchema String?
+  // Deployment phase: 1 (immediate), 2 (3-6 months), 3 (6-12 months)
+  phase       Int      @default(1)
   order       Int      @default(0)
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
@@ -119,6 +125,7 @@ model Category {
 
   @@index([slug])
   @@index([isActive])
+  @@index([phase])
 }
 
 // ============================================================================
@@ -137,6 +144,14 @@ model Product {
   weight          String?
   fabricantId     String
   fabricant       User     @relation(fields: [fabricantId], references: [id])
+  // Category-specific dynamic data (JSON-encoded object keyed by field name)
+  categoryData    String?
+  // Export-specific data (JSON-encoded object — only populated when isExport=true)
+  exportData      String?
+  // Whether the product is intended for export (requires extra compliance docs)
+  isExport        Boolean  @default(false)
+  // Certifications array (JSON-encoded: [{name, issuer, validUntil, fileUrl}])
+  certifications  String?
   // Visibility
   isPublic        Boolean  @default(true)
   isFeatured      Boolean  @default(false)
@@ -157,6 +172,7 @@ model Product {
   @@index([fabricantId])
   @@index([category])
   @@index([categoryId])
+  @@index([isExport])
   @@index([isPublic])
   @@index([transparencyScore])
 }
