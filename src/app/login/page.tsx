@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -96,6 +96,18 @@ function LoginForm() {
     errorParam ? ERROR_MESSAGES[errorParam] ?? ERROR_MESSAGES.default : null
   );
 
+  // ── Guards against race conditions ─────────────────────────────────
+  // `submittingRef` is set to true while handleSubmit is in flight, so the
+  // auto-redirect useEffect below doesn't fire mid-login and cause a
+  // double-navigation (router.push + router.replace racing each other,
+  // which leaves the browser stuck on /login even though the server
+  // rendered /dashboard successfully — the original "boucle" bug).
+  const submittingRef = useRef(false);
+  // `autoRedirectedRef` ensures the useEffect only fires ONCE on mount.
+  // Without this, any re-render (e.g. router state change during client
+  // navigation) re-triggers the session fetch + redirect.
+  const autoRedirectedRef = useRef(false);
+
   // ── Auto-redirect already-authenticated users ──────────────────────
   // If a logged-in user lands on /login (e.g. middleware bounced them
   // from /dashboard → /login?error=unauthorized because their role didn't
@@ -104,17 +116,24 @@ function LoginForm() {
   // would see "Vous n'êtes pas autorisé" on /login even though they ARE
   // logged in, and every manual re-login would just loop again.
   useEffect(() => {
+    if (autoRedirectedRef.current) return;
+    autoRedirectedRef.current = true;
     let cancelled = false;
     fetch("/api/auth/session", { cache: "no-store" })
       .then((r) => r.json())
       .then((session) => {
-        if (cancelled) return;
+        if (cancelled || submittingRef.current) return;
         if (session?.user?.role) {
           const target = resolveTargetUrl(session.user.role, callbackUrl);
           // Only redirect if we're actually going somewhere other than
           // /login — otherwise we'd loop on /login itself.
           if (target !== "/login") {
-            router.replace(target);
+            // Use a hard navigation so the browser does a full page load.
+            // router.replace() is a client-side transition that can
+            // silently no-op if the server is slow to compile the target
+            // route (which was happening: server rendered /dashboard 200
+            // but the URL stayed on /login).
+            window.location.href = target;
           }
         }
       })
@@ -124,7 +143,7 @@ function LoginForm() {
     return () => {
       cancelled = true;
     };
-  }, [router, callbackUrl]);
+  }, [callbackUrl]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -134,6 +153,7 @@ function LoginForm() {
     }
     setLoading(true);
     setError(null);
+    submittingRef.current = true;
 
     // signIn() can throw if the server is unreachable (dev server down,
     // Coolify container restarting, network issue). We catch that and show
@@ -149,12 +169,14 @@ function LoginForm() {
     } catch {
       setError(NETWORK_ERROR);
       setLoading(false);
+      submittingRef.current = false;
       return;
     }
 
     if (res?.error) {
       setError(ERROR_MESSAGES[res.error] ?? ERROR_MESSAGES.default);
       setLoading(false);
+      submittingRef.current = false;
       return;
     }
 
@@ -162,16 +184,21 @@ function LoginForm() {
     // We use the role-aware resolver so a SUPERADMIN with
     // callbackUrl=/dashboard (and vice-versa) doesn't get bounced back
     // here by the role-guard middleware — that was the redirect loop.
+    //
+    // IMPORTANT: we use window.location.href instead of router.push() +
+    // router.refresh(). The App Router's client-side navigation can
+    // silently fail when the target route needs a cold compile (4-5s for
+    // /dashboard). The server returns 200 but the browser URL never
+    // updates, leaving the user stuck on /login — the "boucle" symptom.
+    // A hard navigation forces the browser to wait for the full page load.
     try {
       const r = await fetch("/api/auth/session", { cache: "no-store" });
       const session = await r.json();
       const role = session?.user?.role;
       const target = resolveTargetUrl(role, callbackUrl);
-      router.push(target);
-      router.refresh();
+      window.location.href = target;
     } catch {
-      router.push("/dashboard");
-      router.refresh();
+      window.location.href = "/dashboard";
     }
   }
 
