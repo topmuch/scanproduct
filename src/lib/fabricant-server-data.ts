@@ -194,6 +194,12 @@ export async function getFabricantProducts(userId: string): Promise<Product[]> {
       certifications: p.certifications
         ? safeParseJSON<Array<{ name: string; issuer?: string; validUntil?: string; fileUrl?: string }>>(p.certifications)
         : null,
+      // Open Food Facts
+      barcode: p.barcode,
+      offData: p.offData
+        ? safeParseJSON<Record<string, unknown>>(p.offData)
+        : null,
+      offLastSync: p.offLastSync ? toISODate(p.offLastSync) : null,
     };
   });
 }

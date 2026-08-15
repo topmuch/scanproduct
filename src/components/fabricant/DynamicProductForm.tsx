@@ -33,6 +33,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   Check,
+  CheckCircle2,
   ChevronDown,
   Globe2,
   Image as ImageIcon,
@@ -40,6 +41,7 @@ import {
   Loader2,
   Pencil,
   Plus,
+  ScanLine,
   Sticker,
   Tag,
   Trash2,
@@ -56,7 +58,9 @@ import {
   type ProductSchema,
 } from "@/lib/product-schemas";
 import type { ProductStatus } from "@/lib/fabricant-types";
+import type { ExtractedOffData } from "@/lib/openfoodfacts";
 import { useFabricantData } from "./FabricantDataProvider";
+import { BarcodeScanner } from "./BarcodeScanner";
 import { ImageUploadWithPreview } from "./ImageUploadWithPreview";
 import {
   GradientButton,
@@ -84,6 +88,9 @@ export type DynamicProductInitialData = {
   businessType?: BusinessType;
   /** Kept for backward-compat with prior callers — superseded by `businessType`. */
   vendorType?: string;
+  /** Open Food Facts — EAN-13 barcode + extracted payload (auto-fill). */
+  barcode?: string | null;
+  offData?: ExtractedOffData | null;
 };
 
 type DynamicProductFormProps = {
@@ -775,6 +782,16 @@ export function DynamicProductForm({
     initialData?.status ?? "actif",
   );
 
+  // ── Open Food Facts (barcode + extracted data) ────────────────────
+  // `barcode` is a free-text EAN-13 field the fabricant can fill by hand
+  // or via the BarcodeScanner modal. `offData` holds the normalized OFF
+  // payload so we can show a preview + persist it for the scan page.
+  const [barcode, setBarcode] = useState<string>(initialData?.barcode ?? "");
+  const [offData, setOffData] = useState<ExtractedOffData | null>(
+    initialData?.offData ?? null,
+  );
+  const [showScanner, setShowScanner] = useState(false);
+
   // ── Dynamic category fields (Step 4) ──────────────────────────────
   const [categoryId, setCategoryId] = useState<string>(initialData?.categoryId ?? "");
   const [isExport, setIsExport] = useState<boolean>(initialData?.isExport ?? false);
@@ -1031,6 +1048,38 @@ export function DynamicProductForm({
     if (!checked) setExportData({});
   }
 
+  // ── Open Food Facts — barcode scanned / looked up ─────────────────
+  // Auto-fills the general fields (name/brand/weight) + any matching
+  // category-specific fields (ingredients, sugar, allergens…). Existing
+  // values are preserved so a re-scan doesn't clobber manual edits.
+  function handleBarcodeScanned(
+    scannedBarcode: string,
+    productData: ExtractedOffData | null,
+  ) {
+    setBarcode(scannedBarcode);
+    setShowScanner(false);
+    if (productData) {
+      if (productData.name) setName(productData.name);
+      if (productData.brand) setBrand(productData.brand);
+      if (productData.weight) setWeight(productData.weight);
+      setOffData(productData);
+      // Map OFF data into the category's dynamic fields (ingredients, sugar…).
+      if (categoryFields.length > 0) {
+        setCategoryData((prev) =>
+          mapOffToCategoryData(productData, categoryFields, prev),
+        );
+      }
+      toast.success(
+        "Produit trouvé sur Open Food Facts — champs auto-remplis.",
+      );
+    } else {
+      setOffData(null);
+      toast.info(
+        "Produit introuvable sur Open Food Facts — remplissez les champs manuellement.",
+      );
+    }
+  }
+
   // ── Submit ───────────────────────────────────────────────────────
   async function handleSubmit() {
     // Final validation across all visible steps.
@@ -1096,6 +1145,9 @@ export function DynamicProductForm({
       // Task ID 5 — businessType replaces vendorType. Sent but ignored by
       // the API (kept for future analytics / personalization).
       businessType: businessType ?? undefined,
+      // Open Food Facts — barcode + extracted payload
+      barcode: barcode.trim() || undefined,
+      offData: offData ?? undefined,
     };
 
     try {
@@ -1275,6 +1327,70 @@ export function DynamicProductForm({
       case "general":
         return (
           <div className="space-y-5">
+            {/* Open Food Facts — barcode lookup (auto-fill) */}
+            <div className="rounded-xl border border-[#E5E7EB] bg-gradient-to-br from-[#F0FDF4] to-[#ECFDF5] p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start gap-2.5">
+                  <span
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-white"
+                    style={{ backgroundColor: "#10B981" }}
+                  >
+                    <ScanLine size={18} />
+                  </span>
+                  <div>
+                    <h4 className="text-[13px] font-semibold text-[#111827]">
+                      Code-barres (Open Food Facts)
+                    </h4>
+                    <p className="text-[12px] text-[#6B7280]">
+                      Scannez ou saisissez le code-barres pour auto-remplir le produit.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowScanner(true)}
+                  className="inline-flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-[12px] font-semibold text-white transition-colors hover:opacity-90"
+                  style={{ backgroundColor: "#10B981" }}
+                >
+                  <ScanLine size={14} /> Scanner
+                </button>
+              </div>
+              <div className="mt-3">
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={barcode}
+                  onChange={(e) => setBarcode(e.target.value.replace(/[^\d]/g, ""))}
+                  placeholder="Ex : 3017620422003"
+                  className="w-full rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 font-mono text-[13px] text-[#111827] placeholder:text-[#9CA3AF] focus:border-[#10B981] focus:outline-none focus:ring-2 focus:ring-[#10B981]/20"
+                />
+              </div>
+              {offData && (
+                <div className="mt-3 rounded-lg border border-[#10B981]/30 bg-white p-3">
+                  <div className="flex items-center gap-1.5 text-[#047857]">
+                    <CheckCircle2 size={15} />
+                    <span className="text-[12px] font-semibold">
+                      Produit trouvé sur Open Food Facts
+                    </span>
+                  </div>
+                  <div className="mt-1.5 space-y-0.5 text-[12px] text-[#374151]">
+                    {offData.name && (
+                      <p><span className="font-medium">Nom :</span> {offData.name}</p>
+                    )}
+                    {offData.brand && (
+                      <p><span className="font-medium">Marque :</span> {offData.brand}</p>
+                    )}
+                    {offData.nutriscore && (
+                      <p>
+                        <span className="font-medium">Nutri-Score :</span>{" "}
+                        <span className="uppercase font-bold">{offData.nutriscore}</span>
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
             {/* Name + brand */}
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div ref={(el) => { errorRefs.current.name = el; }}>
@@ -1876,9 +1992,60 @@ export function DynamicProductForm({
             </GradientButton>
           )}
         </div>
+
+        {/* Open Food Facts — barcode scanner modal */}
+        {showScanner && (
+          <BarcodeScanner
+            onBarcodeScanned={handleBarcodeScanned}
+            onClose={() => setShowScanner(false)}
+          />
+        )}
       </motion.div>
     </motion.div>
   );
+}
+
+// ============================================================================
+// Open Food Facts → categoryData mapping
+// ============================================================================
+// Matches OFF-derived values to the category's dynamic fields by name. Only
+// free-text / number fields are filled — selects & booleans are skipped
+// because a raw OFF string won't match the option values. Existing non-empty
+// values are preserved so a re-scan never clobbers manual edits.
+function mapOffToCategoryData(
+  off: ExtractedOffData,
+  fields: FieldConfig[],
+  current: Record<string, unknown>,
+): Record<string, unknown> {
+  const next = { ...current };
+  for (const f of fields) {
+    if (f.type !== "text" && f.type !== "textarea" && f.type !== "number") continue;
+    const cur = next[f.name];
+    if (cur !== undefined && cur !== "" && cur !== null) continue;
+    const val = offToFieldValue(f.name, off);
+    if (val !== undefined && val !== null && val !== "") next[f.name] = val;
+  }
+  return next;
+}
+
+function offToFieldValue(fieldName: string, off: ExtractedOffData): unknown {
+  const n = fieldName.toLowerCase();
+  if (n === "ingredients" || n === "ingredient_list" || n === "composition")
+    return off.ingredients ?? "";
+  if (n === "allergenes" || n === "allergens") return off.allergens.join(", ");
+  if (n === "nutriscore" || n === "nutritiongrade") return off.nutriscore ?? "";
+  if (n === "sugarcontent" || n === "sucre" || n === "sugars")
+    return off.nutriments?.sugars ?? "";
+  if (n === "calories" || n === "energy" || n === "energie")
+    return off.nutriments?.calories ?? "";
+  if (n === "proteines" || n === "proteins" || n === "protein")
+    return off.nutriments?.proteins ?? "";
+  if (n === "glucides" || n === "carbs" || n === "carbohydrates")
+    return off.nutriments?.carbs ?? "";
+  if (n === "lipides" || n === "fat") return off.nutriments?.fat ?? "";
+  if (n === "sel" || n === "salt") return off.nutriments?.salt ?? "";
+  if (n === "fibre" || n === "fiber") return off.nutriments?.fiber ?? "";
+  return undefined;
 }
 
 // ============================================================================

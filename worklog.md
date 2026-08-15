@@ -3510,3 +3510,65 @@ Stage Summary:
 - API reviews : testée via curl, retourne 200/400/404/405 correctement, recalcul averageRating/totalReviews OK, revalidatePath appelé sur /p/[lotId] + /p/[reference]
 - Formulaire : intégré en haut de CompactReviews, visible dans l'accordéon "Avis consommateurs" de la page scannée
 - Qualité : `bun run lint` → 0 errors, 0 warnings ; `bunx tsc --noEmit` → 0 errors sur les fichiers modifiés (erreurs pré-existantes dans autres fichiers non concernés) ; dev server compile sans erreur, GET /p/[lotId] → 200 (3.2s first compile, 391ms cached), POST /api/reviews → 200 (11ms)
+
+---
+Task ID: OFF-1
+Agent: main
+Task: Intégration Open Food Facts + scanner de code-barres dans le wizard de création produit
+
+Work Log:
+- Lecture du worklog existant + schema Prisma + DynamicProductForm.tsx pour comprendre la structure (6-step wizard, champs categoryData/exportData, design system emerald #10B981)
+- Schéma Prisma : ajout de `barcode String? @unique`, `offData String?` (JSON string — SQLite), `offLastSync DateTime?` + `@@index([barcode])` sur le modèle Product. Bump du PRISMA_CACHE_VERSION à 'v4-barcode-off'. `bun run db:push` réussi.
+- Installation de `html5-qrcode@2.3.8` (support EAN-13/UPC via caméra).
+- Création de `src/lib/openfoodfacts.ts` : service avec `getProductByBarcode()`, `searchProducts()`, `extractProductData()`. Préfère les noms FR (`product_name_fr`, `ingredients_text_fr`). Timeout 15s. User-Agent ASCII-only (em dash → hyphen pour éviter l'erreur ByteString).
+- Création de `src/app/api/products/lookup/route.ts` : GET public, valide le format EAN (8-14 chiffres), proxy vers OFF, retourne `{ found, barcode, product }`.
+- Mise à jour de `src/app/api/products/route.ts` (POST) et `src/app/api/products/[id]/route.ts` (PATCH) : persistance de `barcode` (normalisé digits-only) + `offData` (JSON.stringify) + `offLastSync`.
+- Mise à jour de `src/lib/fabricant-server-data.ts` : mapping de `barcode`, `offData` (safeParseJSON), `offLastSync` dans getFabricantProducts().
+- Mise à jour de `src/lib/fabricant-types.ts` : ajout de `barcode?`, `offData?`, `offLastSync?` au type Product.
+- Création de `src/components/fabricant/BarcodeScanner.tsx` : modal plein écran avec onglets Caméra/Saisie manuelle. Utilise `useCallback` stable + `onScannedRef` (ref synchronisée via useEffect) pour éviter les restarts de caméra. Design emerald (pas de bleu/violet). Footer "Données fournies par Open Food Facts".
+- Intégration dans `src/components/fabricant/DynamicProductForm.tsx` :
+  * Imports : ScanLine, CheckCircle2 (lucide) + BarcodeScanner + type ExtractedOffData
+  * State : barcode, offData, showScanner
+  * Step 3 (Général) : section "Code-barres (Open Food Facts)" en haut avec input + bouton Scanner + preview verte quand produit trouvé
+  * handleBarcodeScanned() : auto-fill name/brand/weight + mapOffToCategoryData() (remplit ingredients, sugarContent, allergenes, nutriments selon les noms de champs)
+  * Submit payload : barcode + offData inclus
+  * Modal BarcodeScanner rendu à la fin du composant
+- Lint : 0 errors, 0 warnings (fixé 2 erreurs : react-hooks/immutability → useCallback stable ; react-hooks/refs → useEffect pour synchro ref)
+- Test API : `GET /api/products/lookup?barcode=3017620422003` (Nutella) retourne found=true avec name=Nutella, nutriscore=e, ingredients FR, allergens, nova=4, calories=539. Bug initial : em dash dans User-Agent → corrigé.
+
+Stage Summary:
+- Schéma DB : Product.barcode (unique), Product.offData (JSON string), Product.offLastSync
+- Service OFF : src/lib/openfoodfacts.ts (getProductByBarcode, searchProducts, extractProductData)
+- API : GET /api/products/lookup?barcode=<ean> → proxy OFF public
+- POST/PATCH /api/products : persiste barcode + offData
+- UI : BarcodeScanner modal (caméra + saisie) + section code-barres au Step 3 du wizard avec auto-fill
+- Auto-fill : name, brand, weight (général) + ingredients/sugar/allergens/nutriments (categoryData si noms de champs matchent)
+- Testé : API retourne Nutella avec données complètes. Lint clean. Dev server compile.
+
+---
+Task ID: OFF-1-VERIFY
+Agent: main
+Task: Vérification end-to-end de l'intégration Open Food Facts + barcode
+
+Work Log:
+- Lint : 0 errors, 0 warnings (vérifié avec `bun run lint`)
+- Dev server : compile avec succès (Turbopack, Prisma cache v4-barcode-off recréé)
+- Test API direct : `curl /api/products/lookup?barcode=3017620422003` (Nutella)
+  * found: true
+  * name: Nutella, brand: Nutella
+  * nutriscore: e, nova: 4, ecoscore: unknown
+  * ingredients: "Sucre, huile de palme, NOISETTES 13%, cacao maigre 7,4%..." (FR)
+  * allergens: [en:milk, en:nuts, en:soybeans]
+  * calories: 539 kcal/100g
+- Bug initial corrigé : em dash (—) dans le User-Agent HTTP → TypeError ByteString. Remplacé par hyphen ASCII (-).
+- Bug initial corrigé : timeout OFF 8s trop court depuis le sandbox → augmenté à 15s.
+- agent-browser : landing page rend correctement (titre "VerifScan — La vérité au bout du scan", 0 erreurs)
+- agent-browser : login réussi en tant que sarine@biocosmetique.sn → /dashboard
+- agent-browser + VLM : wizard de création produit ouvert, Step 1 (Métier) validé, Step 2 (Catégorie) affiche 3 options (Café & Cacao, Boissons & Jus, Miel) — screenshot /tmp/wizard-state.png confirmé par VLM
+- Step 3 (Code-barres + scanner) : code correctement intégré en haut du `case "general"` dans DynamicProductForm.tsx. Lint clean. Le screenshot direct n'a pas pu être capturé en raison de l'instabilité du dev server entre appels bash (le serveur meurt entre les commandes, empêchant la navigation séquentielle des 5 étapes du wizard).
+
+Stage Summary:
+- API OFF : pleinement fonctionnelle, retourne données Nutella complètes
+- Wizard : fonctionne jusqu'à Step 2 (VLM-confirmé)
+- Code Step 3 : barcode scanner + auto-fill + preview OFF correctement intégrés, lint clean
+- L'instabilité du dev server (process tué entre appels bash) empêche la capture d'un screenshot de Step 3, mais le code est vérifié par lint + review + test API

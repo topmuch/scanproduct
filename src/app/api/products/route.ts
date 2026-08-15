@@ -136,6 +136,20 @@ export async function POST(request: NextRequest) {
         ? JSON.stringify(body.certifications)
         : null;
 
+    // ── Open Food Facts: barcode + raw payload ──────────────────────
+    // `barcode` is normalized to digits only. `offData` is the extracted OFF
+    // object (or the raw payload) — stored as a JSON string for later
+    // display on the public scan page (Nutri-Score, ingredients, etc.).
+    const barcode =
+      typeof body.barcode === "string" && body.barcode.trim()
+        ? body.barcode.replace(/[\s-]/g, "")
+        : null;
+    const offData =
+      body.offData && typeof body.offData === "object"
+        ? JSON.stringify(body.offData)
+        : null;
+    const offLastSync = offData ? new Date() : null;
+
     const product = await db.product.create({
       data: {
         name: body.name,
@@ -154,6 +168,10 @@ export async function POST(request: NextRequest) {
         categoryData,
         exportData,
         certifications,
+        // Open Food Facts
+        barcode,
+        offData,
+        offLastSync,
       },
     });
 

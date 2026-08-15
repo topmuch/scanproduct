@@ -144,6 +144,15 @@ model Product {
   weight          String?
   fabricantId     String
   fabricant       User     @relation(fields: [fabricantId], references: [id])
+  // ── Open Food Facts integration ──────────────────────────────────
+  // EAN-13 / UPC code-barres. Unique so two fabricants can't claim the
+  // same barcode. Nullable because many artisanal products have none.
+  barcode         String?  @unique
+  // Raw Open Food Facts payload (JSON-encoded string — SQLite has no Json
+  // type). Populated when the fabricant scans/looks up a barcode. Kept in
+  // sync via offLastSync so we can refresh periodically.
+  offData         String?
+  offLastSync     DateTime?
   // Category-specific dynamic data (JSON-encoded object keyed by field name)
   categoryData    String?
   // Export-specific data (JSON-encoded object — only populated when isExport=true)
@@ -175,6 +184,7 @@ model Product {
   @@index([isExport])
   @@index([isPublic])
   @@index([transparencyScore])
+  @@index([barcode])
 }
 
 // ============================================================================

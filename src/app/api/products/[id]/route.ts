@@ -126,6 +126,23 @@ export async function PATCH(
           : null;
     }
 
+    // ── Open Food Facts: barcode + raw payload ──────────────────────
+    // `barcode` is normalized to digits only. Passing null clears it. The
+    // `offLastSync` is refreshed whenever `offData` is written.
+    if (typeof body.barcode === "string") {
+      const cleaned = body.barcode.replace(/[\s-]/g, "");
+      patch.barcode = cleaned || null;
+    }
+    if (body.offData !== undefined) {
+      if (body.offData && typeof body.offData === "object") {
+        patch.offData = JSON.stringify(body.offData);
+        patch.offLastSync = new Date();
+      } else {
+        patch.offData = null;
+        patch.offLastSync = null;
+      }
+    }
+
     const updated = await db.product.update({
       where: { id },
       data: patch,

@@ -39,6 +39,10 @@ export type Product = {
     validUntil?: string;
     fileUrl?: string;
   }> | null;
+  // Open Food Facts integration — EAN-13 barcode + raw OFF payload
+  barcode?: string | null;
+  offData?: Record<string, unknown> | null;
+  offLastSync?: string | null;
 };
 
 export type LotStatus = "actif" | "rappelle" | "expire";
