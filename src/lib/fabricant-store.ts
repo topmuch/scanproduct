@@ -12,6 +12,7 @@ export type FabricantPage =
   | "qr-masse"
   | "statistiques"
   | "notifications"
+  | "ai-assistant"
   | "score"
   | "abonnement"
   | "parametres";

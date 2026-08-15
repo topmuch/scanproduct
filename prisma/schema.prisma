@@ -74,6 +74,7 @@ model User {
   notifications   Notification[]
   notificationPreference NotificationPreference?
   emailLogs       EmailLog[]    @relation("EmailLogUser")
+  aiConversations AiConversation[]
 
   @@index([role])
   @@index([status])
@@ -548,4 +549,51 @@ model EmailLog {
   @@index([status])
   @@index([createdAt])
   @@index([to])
+}
+
+// ============================================================================
+// AI Conversations — V3 AI Intelligence module
+// ============================================================================
+// Persists chat history between fabricants and the VerifScan AI assistant.
+// Each conversation has a title (auto-generated from first message) and a
+// list of messages with role "user" | "assistant".
+//
+// `context` is a JSON-encoded object with optional payload like:
+//   { productId, lotId, tool: "description"|"translate"|"analyze" }
+// so the assistant can ground its answers in the fabricant's real data.
+model AiConversation {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  title     String   @default("Nouvelle conversation")
+  // "chat" | "description" | "translate" | "analyze" | "recommendations"
+  tool      String   @default("chat")
+  context   String?  // JSON-encoded contextual payload
+
+  messages  AiMessage[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([updatedAt])
+}
+
+model AiMessage {
+  id             String   @id @default(cuid())
+  conversationId String
+  conversation   AiConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  // "user" | "assistant"
+  role           String
+  content        String
+
+  // Optional metadata (JSON): tokens used, model, tool call info, etc.
+  metadata       String?
+
+  createdAt      DateTime @default(now())
+
+  @@index([conversationId])
+  @@index([createdAt])
 }

@@ -52,6 +52,7 @@ const NAV_SECTIONS: NavSection[] = [
     title: "ANALYTIQUE",
     items: [
       { key: "statistiques", page: "statistiques", label: "Statistiques", icon: BarChart3 },
+      { key: "ai-assistant", page: "ai-assistant", label: "Assistant IA", icon: Sparkles, badge: { text: "IA", color: "#10B981" } },
       { key: "notifications", page: "notifications", label: "Notifications", icon: Bell },
       { key: "score", page: "score", label: "Score Transparence", icon: Gem, badge: { text: "0/100", color: "#8B5CF6" } },
     ],
@@ -75,6 +76,7 @@ const PAGE_TO_KEY: Record<FabricantPage, string> = {
   "qr-masse": "qr-masse",
   statistiques: "statistiques",
   notifications: "notifications",
+  "ai-assistant": "ai-assistant",
   score: "score",
   abonnement: "abonnement",
   parametres: "parametres",

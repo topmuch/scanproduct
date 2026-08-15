@@ -114,6 +114,7 @@ const PAGE_TITLES: Record<FabricantPage, { title: string; breadcrumb: string }> 
   "qr-masse": { title: "Génération en masse", breadcrumb: "Dashboard / QR Codes / Génération en masse" },
   statistiques: { title: "Statistiques", breadcrumb: "Dashboard / Statistiques" },
   notifications: { title: "Notifications", breadcrumb: "Dashboard / Notifications" },
+  "ai-assistant": { title: "Assistant IA", breadcrumb: "Dashboard / Assistant IA" },
   score: { title: "Score de Transparence", breadcrumb: "Dashboard / Score Transparence" },
   abonnement: { title: "Mon Abonnement", breadcrumb: "Dashboard / Abonnement" },
   parametres: { title: "Paramètres", breadcrumb: "Dashboard / Paramètres" },
