@@ -3742,3 +3742,37 @@ NOTE: `getLotWithDetails` in `src/lib/public-data.ts` does NOT currently load `P
 3. **Optional**: Delete `src/components/landing/Pricing.tsx` entirely (243 lines) since it's no longer referenced. Or keep it for future re-use if pricing might come back.
 4. **No changes needed** in `src/components/landing/Header.tsx` — its NAV_LINKS array (lines 10-16) does not contain a Tarifs/pricing link.
 
+
+---
+Task ID: 2
+Agent: main
+Task: 1) Pousser le code sur GitHub avec le token fourni. 2) Créer les 12 cards de métiers sur la page d'accueil (sous DemoSection) avec pages dédiées par métier.
+
+Work Log:
+- Git push : `git push https://topmuch:***@github.com/topmuch/scanproduct.git main` → 3 commits poussés (cb2bd9f..e2df6cf) incluant le fix de boucle de redirection /dashboard.
+- Création `src/components/landing/IndustryCards.tsx` (composant client, ~870 lignes) :
+  * 12 métiers définis en données : Fruits & Légumes, Boissons & Jus, Épices & Aromates, Cosmétiques Naturels, Produits de la Mer, Viandes & Volailles, Céréales & Légumineuses, Noix & Fruits Secs, Huiles & Corps Gras, Café & Cacao, Miel & Produits de la Ruche, Produits Laitiers.
+  * Chaque métier a : emoji, titre, sous-titre, description, gradient coloré unique, couleur accent, 3 features (pills), 3 défis, 3 solutions VerifScan.
+  * Grid responsive : 1 colonne mobile → 2 sm → 3 lg → 4 xl.
+  * Card = bouton cliquable qui ouvre un IndustryDetailDialog (modal).
+- Pattern modal (pas de route /metiers/[slug]) : respecte la contrainte "pas d'autres routes" du projet. Suit le pattern existant de FeatureDetailDialog.
+- Modal détaillé : hero coloré avec emoji + titre + sous-titre, section "Vos défis" (3 cards), section "La solution VerifScan" (3 solutions avec icônes), section "Points forts" (pills), CTA "Créer mon passeport numérique" → /register.
+- Bouton de fermeture personnalisé blanc (bg-white/20 backdrop-blur) sur le hero coloré, car le bouton par défaut de DialogContent n'était pas visible sur le gradient. showCloseButton={false} + bouton custom.
+- Adaptation design system : utilise SectionBadge, AnimatedSection (framer-motion scroll-in), font-display, couleurs hex du projet (#2563EB, #10B981, #111827, #6B7280, #F3F4F6), gradients par métier en hex.
+- Insertion dans `src/app/page.tsx` : `<IndustryCards />` ajouté entre `<DemoSection />` et `<Testimonials />`.
+- Lint : 0 errors, 0 warnings.
+- Vérification agent-browser + VLM :
+  * Section #metiers trouvée sur la page d'accueil.
+  * 12 cards rendues avec bons titres et emojis.
+  * Modal s'ouvre au clic : hero, "Vos défis", "La solution VerifScan", CTA tous présents.
+  * Bouton "Fermer" accessible et fonctionnel (modal se ferme).
+  * VLM confirme : grille bien alignée, cards lisibles, hero coloré bien rendu, bouton X blanc visible.
+  * Responsive mobile (390px) : 1 colonne, cards parfaitement lisibles (VLM-confirmé).
+  * 0 erreur runtime, 0 erreur console.
+
+Stage Summary:
+- Code poussé sur GitHub (main, 3 commits).
+- 12 cards de métiers opérationnelles sur la page d'accueil sous la DemoSection.
+- Chaque card ouvre un modal riche (défs + solutions + CTA) au lieu d'une route dédiée — respecte la contrainte "pas d'autres routes".
+- Design cohérent avec le reste du landing (SectionBadge, AnimatedSection, couleurs du projet).
+- Responsive mobile vérifié.
