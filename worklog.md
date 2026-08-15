@@ -3851,3 +3851,42 @@ Stage Summary:
 - Le chip emoji est conservé en coin pour garder le repère visuel ludique
 - La modale de détail utilise aussi l'image réelle en background avec overlay couleur
 - Aucune régression : lint clean, 0 erreur runtime, navigation et modale fonctionnelles
+
+---
+Task ID: 14
+Agent: main
+Task: Corriger la boucle/le scintillement de la page /login (impossible de se connecter)
+
+Work Log:
+- Analyse du composant src/app/login/page.tsx (LoginForm + auto-redirect useEffect)
+- Diagnostic de la cause racine : l'useEffect d'auto-redirect se déclenchait à CHAQUE mount avec dependency [callbackUrl]. Quand un utilisateur avait une session stale/invalide côté serveur mais lisible côté client (/api/auth/session), cela créait une boucle infinie :
+    /login → auto-redirect (session trouvée) → window.location.href = /dashboard
+    → /dashboard (serveur) getServerSession=null → redirect /login?callbackUrl=/dashboard
+    → /login?callbackUrl=/dashboard (nouveau page load, ref reset) → auto-redirect RE-fire
+    → /dashboard → reboucle → LOOP infini + scintillement
+- Reproduction avec Agent Browser : confirmation que /login seule ne boucle pas sans session, mais que le scénario de bounce-back créerait la boucle
+- Test API curl : login FABRICANT + SUPERADMIN fonctionnent côté serveur (cookie session posé, /dashboard retourne 200)
+- Correction appliquée (MultiEdit sur login/page.tsx) :
+  1. Auto-redirect useEffect : ajout d'un "bounce-back guard" — si errorParam OU callbackUrl est présent dans l'URL, ne PAS auto-redirecter (l'utilisateur vient d'être rebondi par une route protégée, rediriger re-déclencherait le bounce = boucle)
+  2. Suppression du autoRedirectedRef (au profit du bounce-back guard + deps [errorParam, callbackUrl])
+  3. handleSubmit : ajout d'un retry avec délai 400ms sur le fetch de session après signIn (race condition : le cookie Set-Cookie peut ne pas être immédiatement visible au fetch suivant dans certains environnements proxy)
+  4. Suppression de l'import useRouter inutilisé
+- Lint : 0 erreur, 0 warning
+- Vérification end-to-end avec Agent Browser (8 tests) :
+  * TEST 1: /login sans session → reste, formulaire visible ✓
+  * TEST 2: Login FABRICANT → /dashboard, "Bonjour Sarine Bio" ✓
+  * TEST 3: /login déjà connecté → auto-redirect /dashboard ✓
+  * TEST 4: Bounce-back ?callbackUrl=/dashboard → RESTE sur /login (boucle cassée!) ✓
+  * TEST 5: Bounce-back ?error=unauthorized → reste + affiche l'erreur ✓
+  * TEST 6: Login SUPERADMIN → /superadmin, "Tableau de bord" ✓
+  * TEST 7: SUPERADMIN visite /login → auto-redirect /superadmin ✓
+  * TEST 8: Bounce-back ?callbackUrl=/superadmin → RESTE sur /login ✓
+  * 0 erreur console, 0 erreur page
+- Serveur dev redémarré de façon persistante (PID 26844, port 3000, HTTP 200)
+
+Stage Summary:
+- La boucle infinie /login ↔ /dashboard est définitivement cassée par le "bounce-back guard"
+- Le scintillement (causé par les rechargements rapides de la boucle) est éliminé
+- L'auto-redirect fonctionne toujours pour les visites fraîches (utilisateur connecté qui visite /login manuellement)
+- Le login FABRICANT et SUPERADMIN fonctionnent tous les deux
+- Le retry sur le fetch de session rend le handleSubmit robuste face aux race conditions de cookie

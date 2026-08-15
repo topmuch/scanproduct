@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, Suspense } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
@@ -84,7 +84,6 @@ const NETWORK_ERROR =
   "Serveur indisponible. Le serveur est peut-être en cours de redémarrage — réessayez dans quelques secondes.";
 
 function LoginForm() {
-  const router = useRouter();
   const params = useSearchParams();
   const callbackUrl = params.get("callbackUrl") || "";
   const errorParam = params.get("error");
@@ -99,40 +98,40 @@ function LoginForm() {
   // ── Guards against race conditions ─────────────────────────────────
   // `submittingRef` is set to true while handleSubmit is in flight, so the
   // auto-redirect useEffect below doesn't fire mid-login and cause a
-  // double-navigation (router.push + router.replace racing each other,
-  // which leaves the browser stuck on /login even though the server
-  // rendered /dashboard successfully — the original "boucle" bug).
+  // double-navigation.
   const submittingRef = useRef(false);
-  // `autoRedirectedRef` ensures the useEffect only fires ONCE on mount.
-  // Without this, any re-render (e.g. router state change during client
-  // navigation) re-triggers the session fetch + redirect.
-  const autoRedirectedRef = useRef(false);
 
   // ── Auto-redirect already-authenticated users ──────────────────────
-  // If a logged-in user lands on /login (e.g. middleware bounced them
-  // from /dashboard → /login?error=unauthorized because their role didn't
-  // match), skip the login form entirely and send them to their real home.
-  // This is the second half of the redirect-loop fix: without it the user
-  // would see "Vous n'êtes pas autorisé" on /login even though they ARE
-  // logged in, and every manual re-login would just loop again.
+  // CRITICAL — redirect-loop prevention:
+  //
+  // The previous version auto-redirected on EVERY mount. When a logged-in
+  // user had a session cookie that the client-side /api/auth/session
+  // endpoint accepted but the server-side getServerSession() rejected
+  // (stale JWT, proxy cookie stripping, role mismatch), this created an
+  // infinite loop:
+  //
+  //   /login → auto-redirect → /dashboard → server redirect →
+  //   /login?callbackUrl=/dashboard → auto-redirect again → /dashboard →
+  //   … (infinite loop = "scintillement")
+  //
+  // Fix: only auto-redirect on a FRESH visit to /login — i.e. when there
+  // is NO `error` and NO `callbackUrl` query param. If either is present,
+  // the user was just bounced here by a protected route, so we must NOT
+  // redirect them back (that would re-trigger the bounce).
   useEffect(() => {
-    if (autoRedirectedRef.current) return;
-    autoRedirectedRef.current = true;
+    // Bounce-back guard: if we arrived here via a redirect from a
+    // protected route, do NOT auto-redirect (would loop).
+    if (errorParam || callbackUrl) return;
+    if (submittingRef.current) return;
+
     let cancelled = false;
     fetch("/api/auth/session", { cache: "no-store" })
       .then((r) => r.json())
       .then((session) => {
         if (cancelled || submittingRef.current) return;
         if (session?.user?.role) {
-          const target = resolveTargetUrl(session.user.role, callbackUrl);
-          // Only redirect if we're actually going somewhere other than
-          // /login — otherwise we'd loop on /login itself.
+          const target = resolveTargetUrl(session.user.role, "");
           if (target !== "/login") {
-            // Use a hard navigation so the browser does a full page load.
-            // router.replace() is a client-side transition that can
-            // silently no-op if the server is slow to compile the target
-            // route (which was happening: server rendered /dashboard 200
-            // but the URL stayed on /login).
             window.location.href = target;
           }
         }
@@ -143,7 +142,7 @@ function LoginForm() {
     return () => {
       cancelled = true;
     };
-  }, [callbackUrl]);
+  }, [errorParam, callbackUrl]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -183,23 +182,36 @@ function LoginForm() {
     // Fetch the session to learn the role and route accordingly.
     // We use the role-aware resolver so a SUPERADMIN with
     // callbackUrl=/dashboard (and vice-versa) doesn't get bounced back
-    // here by the role-guard middleware — that was the redirect loop.
+    // here by the role-guard middleware.
     //
-    // IMPORTANT: we use window.location.href instead of router.push() +
-    // router.refresh(). The App Router's client-side navigation can
-    // silently fail when the target route needs a cold compile (4-5s for
-    // /dashboard). The server returns 200 but the browser URL never
-    // updates, leaving the user stuck on /login — the "boucle" symptom.
-    // A hard navigation forces the browser to wait for the full page load.
+    // RACE CONDITION FIX: after signIn() resolves, the Set-Cookie header
+    // has been processed by the browser, but the cookie may not be
+    // immediately visible to a follow-up fetch in some environments
+    // (reverse proxy, slow browser cookie store). We add a short delay +
+    // retry: if the first session fetch returns no role, wait 400ms and
+    // try once more before falling back.
+    const fetchSession = () =>
+      fetch("/api/auth/session", { cache: "no-store" }).then((r) => r.json());
+    let session: { user?: { role?: string } } | null = null;
     try {
-      const r = await fetch("/api/auth/session", { cache: "no-store" });
-      const session = await r.json();
-      const role = session?.user?.role;
-      const target = resolveTargetUrl(role, callbackUrl);
-      window.location.href = target;
+      session = await fetchSession();
+      if (!session?.user?.role) {
+        // Cookie might not have settled yet — retry after a brief pause.
+        await new Promise((r) => setTimeout(r, 400));
+        session = await fetchSession();
+      }
     } catch {
-      window.location.href = "/dashboard";
+      /* network error — fall through to default */
     }
+
+    // Determine the redirect target from the session role (if we got one),
+    // otherwise fall back to /dashboard and let the server-side guard sort
+    // it out (it will redirect to /login with an error if the session is
+    // truly invalid — and our bounce-back guard will then show the form
+    // instead of looping).
+    const role = session?.user?.role;
+    const target = resolveTargetUrl(role, callbackUrl);
+    window.location.href = target;
   }
 
   return (
