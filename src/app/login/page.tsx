@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -17,6 +17,50 @@ import {
   Factory,
   CheckCircle2,
 } from "lucide-react";
+
+/**
+ * Resolve the post-login target URL based on the user's role AND the
+ * `callbackUrl` from the query string.
+ *
+ * CRITICAL — this is what prevents the redirect loop:
+ *   1. A logged-out user visits /dashboard  → middleware redirects to
+ *      /login?callbackUrl=/dashboard.
+ *   2. If that user is actually a SUPERADMIN, blindly honouring
+ *      callbackUrl="/dashboard" sends them back to /dashboard, where the
+ *      role-guard middleware blocks them → /login?error=unauthorized →
+ *      they log in again → infinite loop.
+ *
+ * So: if the callbackUrl points to a route the user's role cannot access,
+ * we drop it and fall back to the role-appropriate home. We also reject
+ * absolute / non-relative callback URLs for safety (open-redirect guard).
+ */
+function resolveTargetUrl(
+  role: string | undefined,
+  callbackUrl: string
+): string {
+  const isSuperadmin = role === "SUPERADMIN";
+  const roleHome = isSuperadmin ? "/superadmin" : "/dashboard";
+
+  // No callback URL → use role-based default.
+  if (!callbackUrl) return roleHome;
+
+  // Only allow relative same-origin URLs (prevent open redirect).
+  if (
+    !callbackUrl.startsWith("/") ||
+    callbackUrl.startsWith("//") ||
+    callbackUrl.includes(":")
+  ) {
+    return roleHome;
+  }
+
+  // Role-mismatch guard: don't send a SUPERADMIN to /dashboard or a
+  // FABRICANT to /superadmin, even if callbackUrl asks for it.
+  const cb = callbackUrl.toLowerCase();
+  if (isSuperadmin && cb.startsWith("/dashboard")) return "/superadmin";
+  if (!isSuperadmin && cb.startsWith("/superadmin")) return "/dashboard";
+
+  return callbackUrl;
+}
 
 const ERROR_MESSAGES: Record<string, string> = {
   unauthorized: "Vous n'êtes pas autorisé à accéder à cette page.",
@@ -52,6 +96,36 @@ function LoginForm() {
     errorParam ? ERROR_MESSAGES[errorParam] ?? ERROR_MESSAGES.default : null
   );
 
+  // ── Auto-redirect already-authenticated users ──────────────────────
+  // If a logged-in user lands on /login (e.g. middleware bounced them
+  // from /dashboard → /login?error=unauthorized because their role didn't
+  // match), skip the login form entirely and send them to their real home.
+  // This is the second half of the redirect-loop fix: without it the user
+  // would see "Vous n'êtes pas autorisé" on /login even though they ARE
+  // logged in, and every manual re-login would just loop again.
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/auth/session", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((session) => {
+        if (cancelled) return;
+        if (session?.user?.role) {
+          const target = resolveTargetUrl(session.user.role, callbackUrl);
+          // Only redirect if we're actually going somewhere other than
+          // /login — otherwise we'd loop on /login itself.
+          if (target !== "/login") {
+            router.replace(target);
+          }
+        }
+      })
+      .catch(() => {
+        /* not logged in — stay on the login form */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [router, callbackUrl]);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!email || !password) {
@@ -84,14 +158,15 @@ function LoginForm() {
       return;
     }
 
-    // Fetch the session to learn the role and route accordingly
+    // Fetch the session to learn the role and route accordingly.
+    // We use the role-aware resolver so a SUPERADMIN with
+    // callbackUrl=/dashboard (and vice-versa) doesn't get bounced back
+    // here by the role-guard middleware — that was the redirect loop.
     try {
-      const r = await fetch("/api/auth/session");
+      const r = await fetch("/api/auth/session", { cache: "no-store" });
       const session = await r.json();
       const role = session?.user?.role;
-      const target =
-        callbackUrl ||
-        (role === "SUPERADMIN" ? "/superadmin" : "/dashboard");
+      const target = resolveTargetUrl(role, callbackUrl);
       router.push(target);
       router.refresh();
     } catch {
