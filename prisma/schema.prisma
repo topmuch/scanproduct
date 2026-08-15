@@ -71,6 +71,9 @@ model User {
   certifications  Certification[]
   auditLogs       AuditLog[]
   ticketsAuthored Ticket[]      @relation("TicketAuthor")
+  notifications   Notification[]
+  notificationPreference NotificationPreference?
+  emailLogs       EmailLog[]    @relation("EmailLogUser")
 
   @@index([role])
   @@index([status])
@@ -446,4 +449,103 @@ model Setting {
   key       String   @id
   value     String
   updatedAt DateTime @updatedAt
+}
+
+// ============================================================================
+// Notifications — in-app notification center for fabricants & superadmins
+// ============================================================================
+// Types:
+//   - "lot_recall"      → a lot was recalled (critical)
+//   - "quota_warning"   → fabricant reached 80% of plan QR quota
+//   - "quota_exceeded"  → fabricant reached 100% of plan QR quota
+//   - "new_scan"        → first scan on a lot (or milestone)
+//   - "weekly_report"   → weekly stats digest
+//   - "system"          → generic platform message
+//   - "ticket_update"   → support ticket status changed
+//   - "subscription"    → plan changes, payment success/failure
+//
+// Channels (JSON-encoded array of strings): ["in_app", "email", "sms"]
+// Only "in_app" is always on; "email" depends on user preferences + SMTP config.
+//
+// `data` is a JSON-encoded object with contextual payload (lotId, planName…).
+model Notification {
+  id         String    @id @default(cuid())
+  userId     String    // recipient (fabricant or superadmin)
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type       String    // see comment above
+  title      String
+  message    String
+  data       String?   // JSON-encoded contextual payload
+
+  // Delivery
+  channels   String    @default("[\"in_app\"]") // JSON array of channels used
+  readAt     DateTime? // null = unread
+  emailedAt  DateTime? // null = not emailed (or email skipped)
+  emailedTo  String?   // recipient email snapshot
+
+  // Severity for UI styling: "info" | "success" | "warning" | "critical"
+  severity   String    @default("info")
+
+  createdAt  DateTime  @default(now())
+
+  @@index([userId])
+  @@index([readAt])
+  @@index([type])
+  @@index([createdAt])
+}
+
+// ============================================================================
+// Notification preferences — per-user opt-in/opt-out for each channel & type
+// ============================================================================
+// Stored as a single row per user. The `prefs` JSON object has the shape:
+//   {
+//     "lot_recall":      { "in_app": true, "email": true,  "sms": false },
+//     "quota_warning":   { "in_app": true, "email": true,  "sms": false },
+//     "new_scan":        { "in_app": true, "email": false, "sms": false },
+//     "weekly_report":   { "in_app": true, "email": true,  "sms": false },
+//     ...
+//   }
+// Missing keys default to in_app=true, others=false.
+model NotificationPreference {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  emailEnabled    Boolean  @default(true)   // global email opt-in
+  smsEnabled      Boolean  @default(false)  // global SMS opt-in (not yet wired)
+  pushEnabled     Boolean  @default(true)   // in-app opt-in
+
+  prefs           String   @default("{}")   // JSON-encoded per-type prefs
+
+  updatedAt       DateTime @updatedAt
+}
+
+// ============================================================================
+// Email log — tracks every outbound email (success or failure)
+// ============================================================================
+// Used by superadmin for debugging email delivery + audit trail.
+// Status: "queued" | "sent" | "failed" | "skipped"
+//   - "queued"  → created just before send attempt
+//   - "sent"    → SMTP accepted the message
+//   - "failed"  → SMTP rejected (error field contains the message)
+//   - "skipped" → no SMTP configured (dev mode) — body logged to console
+model EmailLog {
+  id         String   @id @default(cuid())
+  to         String
+  from       String?
+  subject    String
+  body       String?  // plain text or HTML (truncated if too long)
+  status     String   @default("queued")
+  error      String?
+  userId     String?  // optional link to user (nullable for system emails)
+  user       User?    @relation("EmailLogUser", fields: [userId], references: [id])
+
+  sentAt     DateTime?
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([to])
 }

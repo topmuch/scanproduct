@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { db } from "@/lib/db";
+import { applyRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
+import { canGenerateQr, getFabricantQrUsage } from "@/lib/plan-limits";
+import { createNotification } from "@/lib/notifications";
 
 /**
  * POST /api/qr-codes/generate
@@ -23,6 +26,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  // Rate-limit — 20 QR generations per minute per fabricant.
+  // Applied BEFORE any DB work; key = userId (auth already verified above).
+  const limited = applyRateLimit(request, {
+    ...RATE_LIMITS.QR_GENERATE,
+    namespace: "qr:gen",
+    key: token.sub,
+  });
+  if (limited) return limited;
+
   try {
     const body = await request.json();
     const { lotId, quantity = 1, options = {} } = body;
@@ -32,6 +44,24 @@ export async function POST(request: NextRequest) {
     }
 
     const qty = Math.min(100, Math.max(1, parseInt(quantity, 10) || 1));
+
+    // Quota enforcement — refuse if the user would exceed their plan limit.
+    // Returns 402 Payment Required to hint the client should upgrade.
+    const quotaCheck = await canGenerateQr(token.sub, qty);
+    if (!quotaCheck.allowed) {
+      return NextResponse.json(
+        {
+          error:
+            quotaCheck.reason ||
+            "Quota dépassé. Passez à un plan supérieur.",
+          quota: {
+            used: quotaCheck.remaining === 0 ? "exceeded" : "limited",
+            remaining: quotaCheck.remaining,
+          },
+        },
+        { status: 402 }
+      );
+    }
 
     // Verify the lot belongs to the authenticated fabricant
     const lot = await db.lot.findUnique({
@@ -57,7 +87,10 @@ export async function POST(request: NextRequest) {
     const baseUrl =
       process.env.NEXT_PUBLIC_SCAN_URL?.replace(/\/$/, "") ||
       "https://verifscan.sn";
-    const qrCodes = [];
+    // Pre-existing TypeScript inference: `const qrCodes = []` is inferred as
+    // `never[]`, which then rejects the `.push(...)` below. Annotate the
+    // array explicitly so the push type-checks cleanly.
+    const qrCodes: Array<Awaited<ReturnType<typeof db.qRCode.create>> & { publicUrl: string }> = [];
 
     for (let i = 0; i < qty; i++) {
       // Generate a unique code (stored in DB for tracking/analytics)
@@ -93,6 +126,38 @@ export async function POST(request: NextRequest) {
       where: { id: lot.id },
       data: { qrCodeCount: { increment: qty } },
     });
+
+    // Fire-and-forget: if the user just crossed 80% or 100% of their quota,
+    // send a notification to their bell. Never blocks the response.
+    //
+    // Capture `userId` as a const here so TypeScript keeps it narrowed to
+    // `string` inside the async `.then()` callback (token.sub would
+    // otherwise widen back to `string | undefined`).
+    const userId = token.sub;
+    getFabricantQrUsage(userId)
+      .then((usage) => {
+        const alert = usage.percent >= 80;
+        if (!alert) return;
+        const isExceeded = usage.percent >= 100;
+        createNotification({
+          userId,
+          type: isExceeded ? "quota_exceeded" : "quota_warning",
+          title: isExceeded
+            ? `Quota QR codes atteint (${usage.used}/${usage.limit})`
+            : `Quota QR codes à ${Math.floor(usage.percent)}% (${usage.used}/${usage.limit})`,
+          message: isExceeded
+            ? `Vous avez atteint la limite de votre plan. Les nouvelles générations seront bloquées jusqu'au prochain cycle ou passage à un plan supérieur.`
+            : `Il vous reste ${usage.remaining} QR codes avant d'atteindre la limite de votre plan.`,
+          severity: isExceeded ? "critical" : "warning",
+          data: {
+            used: usage.used,
+            limit: usage.limit,
+            percent: usage.percent,
+            remaining: usage.remaining,
+          },
+        }).catch(() => undefined);
+      })
+      .catch(() => undefined);
 
     return NextResponse.json({
       success: true,

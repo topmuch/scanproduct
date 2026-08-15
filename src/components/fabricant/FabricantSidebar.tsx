@@ -7,6 +7,7 @@ import {
   QrCode,
   Layers,
   BarChart3,
+  Bell,
   Gem,
   CreditCard,
   Settings,
@@ -51,6 +52,7 @@ const NAV_SECTIONS: NavSection[] = [
     title: "ANALYTIQUE",
     items: [
       { key: "statistiques", page: "statistiques", label: "Statistiques", icon: BarChart3 },
+      { key: "notifications", page: "notifications", label: "Notifications", icon: Bell },
       { key: "score", page: "score", label: "Score Transparence", icon: Gem, badge: { text: "0/100", color: "#8B5CF6" } },
     ],
   },
@@ -72,6 +74,7 @@ const PAGE_TO_KEY: Record<FabricantPage, string> = {
   "qr-codes": "qr-codes",
   "qr-masse": "qr-masse",
   statistiques: "statistiques",
+  notifications: "notifications",
   score: "score",
   abonnement: "abonnement",
   parametres: "parametres",

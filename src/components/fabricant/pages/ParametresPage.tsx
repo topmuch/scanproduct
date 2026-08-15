@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback, type ComponentType, type ReactNode } from "react";
+import { useState, useRef, useCallback, useEffect, type ComponentType, type ReactNode } from "react";
 import {
   Building2,
   Image as ImageIcon,
@@ -31,6 +31,8 @@ import {
   OutlineButton,
   PillFilter,
 } from "@/components/fabricant/ui";
+import { Switch } from "@/components/ui/switch";
+import { toast } from "sonner";
 import { QRCodeCanvas } from "qrcode.react";
 import { useFabricantData } from "../FabricantDataProvider";
 import { useFabricantNav, type SettingsSection } from "@/lib/fabricant-store";
@@ -974,187 +976,381 @@ function SecuriteSection() {
 
 // ============================================================================
 // Section: Notifications
+// ----------------------------------------------------------------------------
+// Real preferences UI — backed by /api/notifications/preferences.
+// Reads master toggles (pushEnabled / emailEnabled / smsEnabled) and the
+// per-type channel overrides (prefs[type].{in_app,email,sms}).
+// Auto-saves with a 500ms debounce + a manual "Enregistrer" button at the
+// bottom (for UX parity with the other sections).
 // ============================================================================
 
-type NotifRow = {
-  id: string;
-  label: string;
-  description: string;
-  email: boolean;
-  inApp: boolean;
-  frequencyType: "frequency" | "day" | "threshold" | "none";
-};
+type NotificationPrefType =
+  | "lot_recall"
+  | "quota_warning"
+  | "quota_exceeded"
+  | "new_scan"
+  | "weekly_report"
+  | "system"
+  | "ticket_update"
+  | "subscription";
 
-const INITIAL_NOTIFS: NotifRow[] = [
-  { id: "n1", label: "Nouveau scan", description: "Notification à chaque scan de vos produits", email: true, inApp: true, frequencyType: "frequency" },
-  { id: "n2", label: "Rapport hebdomadaire", description: "Synthèse de l'activité de la semaine", email: true, inApp: false, frequencyType: "day" },
-  { id: "n3", label: "Alerte lot rappelé", description: "Notification quand un lot est rappelé", email: true, inApp: true, frequencyType: "none" },
-  { id: "n4", label: "Quota approaching", description: "Alerte quand votre quota de scans est proche de la limite", email: true, inApp: true, frequencyType: "threshold" },
-  { id: "n5", label: "Nouveautés et mises à jour", description: "Nouvelles fonctionnalités et améliorations", email: false, inApp: true, frequencyType: "none" },
-  { id: "n6", label: "Offres promotionnelles", description: "Réductions et offres exclusives", email: false, inApp: false, frequencyType: "none" },
+type ChannelPrefs = { in_app: boolean; email: boolean; sms: boolean };
+
+const PREF_TYPE_ROWS: { key: NotificationPrefType; label: string }[] = [
+  { key: "lot_recall", label: "Lot rappelé" },
+  { key: "quota_warning", label: "Alerte quota (80%)" },
+  { key: "quota_exceeded", label: "Quota atteint (100%)" },
+  { key: "new_scan", label: "Nouveau scan" },
+  { key: "weekly_report", label: "Rapport hebdomadaire" },
+  { key: "system", label: "Système" },
+  { key: "ticket_update", label: "Mise à jour ticket" },
+  { key: "subscription", label: "Abonnement" },
 ];
 
-function NotifRowView({
-  row,
-  onToggle,
-  children,
-}: {
-  row: NotifRow;
-  onToggle: () => void;
-  children?: ReactNode;
-}) {
-  return (
-    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#F3F4F6] py-3 last:border-0">
-      <div className="min-w-0 flex-1">
-        <p className="text-[14px] font-medium text-[#111827]">{row.label}</p>
-        <p className="text-[12px] text-[#6B7280]">{row.description}</p>
-      </div>
-      <div className="flex items-center gap-3">
-        {children}
-        <Toggle checked={row.email} onChange={onToggle} />
-      </div>
-    </div>
-  );
-}
+const DEFAULT_CHANNEL_PREFS: Record<NotificationPrefType, ChannelPrefs> = {
+  lot_recall: { in_app: true, email: true, sms: false },
+  quota_warning: { in_app: true, email: true, sms: false },
+  quota_exceeded: { in_app: true, email: true, sms: false },
+  new_scan: { in_app: true, email: false, sms: false },
+  weekly_report: { in_app: true, email: true, sms: false },
+  system: { in_app: true, email: true, sms: false },
+  ticket_update: { in_app: true, email: true, sms: false },
+  subscription: { in_app: true, email: true, sms: false },
+};
 
-function FrequencySelect({ type }: { type: NotifRow["frequencyType"] }) {
-  if (type === "frequency") {
-    return (
-      <SelectInput defaultValue="Immédiat" className="w-36">
-        <option>Immédiat</option>
-        <option>Quotidien</option>
-        <option>Hebdomadaire</option>
-      </SelectInput>
-    );
-  }
-  if (type === "day") {
-    return (
-      <SelectInput defaultValue="Lundi" className="w-36">
-        {["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"].map((d) => (
-          <option key={d}>{d}</option>
-        ))}
-      </SelectInput>
-    );
-  }
-  if (type === "threshold") {
-    return (
-      <SelectInput defaultValue="75%" className="w-28">
-        <option>50%</option>
-        <option>75%</option>
-        <option>90%</option>
-      </SelectInput>
-    );
-  }
-  return null;
-}
+type NotifPrefsState = {
+  pushEnabled: boolean;
+  emailEnabled: boolean;
+  smsEnabled: boolean;
+  prefs: Record<NotificationPrefType, ChannelPrefs>;
+};
 
 function NotificationsSection() {
-  const [notifs, setNotifs] = useState<NotifRow[]>(INITIAL_NOTIFS);
-  const [smsAlerts, setSmsAlerts] = useState({
-    lotRappele: true,
-    paiement: true,
-    securite: false,
-  });
-  const [toast, setToast] = useState<string | null>(null);
+  const [prefs, setPrefs] = useState<NotifPrefsState | null>(null);
+  const [loaded, setLoaded] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const initialLoadRef = useRef(true);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const toggleEmail = (id: string) =>
-    setNotifs((prev) => prev.map((n) => (n.id === id ? { ...n, email: !n.email } : n)));
-  const toggleInApp = (id: string) =>
-    setNotifs((prev) => prev.map((n) => (n.id === id ? { ...n, inApp: !n.inApp } : n)));
+  // ----- Initial fetch ----------------------------------------------------
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/notifications/preferences", { cache: "no-store" });
+        if (!res.ok) {
+          toast.error("Impossible de charger vos préférences");
+          return;
+        }
+        const json = await res.json();
+        if (cancelled) return;
+        const incoming: Record<NotificationPrefType, ChannelPrefs> = { ...DEFAULT_CHANNEL_PREFS };
+        for (const row of PREF_TYPE_ROWS) {
+          const p = json.prefs?.[row.key];
+          incoming[row.key] = {
+            in_app: typeof p?.in_app === "boolean" ? p.in_app : DEFAULT_CHANNEL_PREFS[row.key].in_app,
+            email: typeof p?.email === "boolean" ? p.email : DEFAULT_CHANNEL_PREFS[row.key].email,
+            sms: typeof p?.sms === "boolean" ? p.sms : DEFAULT_CHANNEL_PREFS[row.key].sms,
+          };
+        }
+        setPrefs({
+          pushEnabled: typeof json.pushEnabled === "boolean" ? json.pushEnabled : true,
+          emailEnabled: typeof json.emailEnabled === "boolean" ? json.emailEnabled : true,
+          smsEnabled: typeof json.smsEnabled === "boolean" ? json.smsEnabled : false,
+          prefs: incoming,
+        });
+      } catch {
+        toast.error("Erreur réseau lors du chargement");
+      } finally {
+        if (!cancelled) setLoaded(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // ----- Debounced auto-save ---------------------------------------------
+
+  const persistPrefs = useCallback(async (next: NotifPrefsState) => {
+    setSaving(true);
+    try {
+      const res = await fetch("/api/notifications/preferences", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          pushEnabled: next.pushEnabled,
+          emailEnabled: next.emailEnabled,
+          smsEnabled: next.smsEnabled,
+          prefs: next.prefs,
+        }),
+      });
+      if (!res.ok) throw new Error();
+      toast.success("Préférences enregistrées");
+    } catch {
+      toast.error("Échec de l'enregistrement");
+    } finally {
+      setSaving(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!loaded || !prefs) return;
+    // Skip the very first run (right after the initial fetch hydrated state).
+    if (initialLoadRef.current) {
+      initialLoadRef.current = false;
+      return;
+    }
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      persistPrefs(prefs);
+    }, 500);
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [prefs, loaded, persistPrefs]);
+
+  // ----- Handlers ---------------------------------------------------------
+
+  const updateChannel = (
+    key: NotificationPrefType,
+    channel: "in_app" | "email" | "sms",
+    value: boolean,
+  ) => {
+    if (!prefs) return;
+    setPrefs({
+      ...prefs,
+      prefs: {
+        ...prefs.prefs,
+        [key]: { ...prefs.prefs[key], [channel]: value },
+      },
+    });
+  };
+
+  const updateGlobal = (
+    key: "pushEnabled" | "emailEnabled" | "smsEnabled",
+    value: boolean,
+  ) => {
+    if (!prefs) return;
+    setPrefs({ ...prefs, [key]: value });
+  };
+
+  const handleManualSave = () => {
+    if (!prefs) return;
+    // Flush any pending debounced save immediately.
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+      debounceRef.current = null;
+    }
+    persistPrefs(prefs);
+  };
+
+  // ----- Render -----------------------------------------------------------
+
+  if (!loaded || !prefs) {
+    return (
+      <div className="space-y-6">
+        <SectionTitle>Notifications</SectionTitle>
+        <SectionCard title="Préférences de notification" subtitle="Choisissez comment vous souhaitez être informé">
+          <div className="flex items-center justify-center py-10">
+            <Loader2 className="h-6 w-6 animate-spin text-[#2563EB]" />
+          </div>
+        </SectionCard>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       <SectionTitle>Notifications</SectionTitle>
 
-      {toast && (
-        <div className="fixed left-1/2 top-5 z-[60] -translate-x-1/2">
-          <div className="flex items-center gap-2 rounded-xl border border-[#10B981]/30 bg-white px-4 py-2.5 text-[13px] font-semibold text-[#065F46] shadow-lg">
-            {toast}
-          </div>
-        </div>
-      )}
-
-      {/* Email */}
-      <SectionCard title="Notifications par email">
-        <div>
-          {notifs.map((n) => (
-            <NotifRowView key={n.id} row={n} onToggle={() => toggleEmail(n.id)}>
-              <FrequencySelect type={n.frequencyType} />
-            </NotifRowView>
-          ))}
-        </div>
-      </SectionCard>
-
-      {/* In-app */}
-      <SectionCard title="Notifications dans l'application">
-        <div>
-          {notifs.map((n) => (
-            <div
-              key={n.id}
-              className="flex flex-wrap items-center justify-between gap-3 border-b border-[#F3F4F6] py-3 last:border-0"
-            >
-              <div className="min-w-0 flex-1">
-                <p className="text-[14px] font-medium text-[#111827]">{n.label}</p>
-                <p className="text-[12px] text-[#6B7280]">{n.description}</p>
-              </div>
-              <Toggle checked={n.inApp} onChange={() => toggleInApp(n.id)} />
-            </div>
-          ))}
-        </div>
-      </SectionCard>
-
-      {/* SMS */}
-      <SectionCard title="Notifications SMS (optionnel, payant)">
-        <div className="space-y-4">
-          <Field
-            label="Téléphone SMS"
-            helper="Numéro de téléphone pour recevoir les alertes SMS."
-          >
-            <div className="flex">
-              <span className="inline-flex items-center gap-1.5 rounded-l-lg border border-r-0 border-[#E5E7EB] bg-[#F9FAFB] px-3 py-2 text-sm text-[#374151]">
-                <span>🇸🇳</span>
-                <span>+221</span>
-              </span>
-              <input className={cn(inputClass, "rounded-l-none")} placeholder="77 123 45 67" />
-            </div>
-          </Field>
-
-          <div className="rounded-lg border border-[#E5E7EB]">
-            {[
-              { id: "lotRappele", label: "Lot rappelé scanné", desc: "SMS dès qu'un lot rappelé est scanné" },
-              { id: "paiement", label: "Problème de paiement", desc: "Échec ou expiration de carte" },
-              { id: "securite", label: "Sécurité (connexion suspecte)", desc: "Connexion depuis un nouvel appareil ou pays" },
-            ].map((item, idx, arr) => (
-              <div
-                key={item.id}
-                className={cn(
-                  "flex flex-wrap items-center justify-between gap-3 p-4",
-                  idx !== arr.length - 1 && "border-b border-[#F3F4F6]"
-                )}
-              >
-                <div>
-                  <p className="text-[14px] font-medium text-[#111827]">{item.label}</p>
-                  <p className="text-[12px] text-[#6B7280]">{item.desc}</p>
-                </div>
-                <Toggle
-                  checked={smsAlerts[item.id as keyof typeof smsAlerts]}
-                  onChange={(v) =>
-                    setSmsAlerts((prev) => ({ ...prev, [item.id]: v }))
-                  }
-                />
-              </div>
-            ))}
+      <SectionCard
+        title="Préférences de notification"
+        subtitle="Choisissez comment vous souhaitez être informé"
+        action={
+          saving ? (
+            <span className="inline-flex items-center gap-1.5 text-[12px] text-[#6B7280]">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              Enregistrement...
+            </span>
+          ) : null
+        }
+      >
+        <div className="space-y-6">
+          {/* Global master toggles */}
+          <div className="grid gap-3 sm:grid-cols-3">
+            <GlobalToggleCard
+              icon={<Globe className="h-4 w-4" />}
+              iconColor="#2563EB"
+              iconBg="#EFF6FF"
+              label="Notifications in-app"
+              description="Afficher les notifications dans la barre de navigation."
+              checked={prefs.pushEnabled}
+              onCheckedChange={(v) => updateGlobal("pushEnabled", v)}
+            />
+            <GlobalToggleCard
+              icon={<Mail className="h-4 w-4" />}
+              iconColor="#10B981"
+              iconBg="#D1FAE5"
+              label="Notifications par email"
+              description="Recevoir un email pour chaque notification déclenchée."
+              checked={prefs.emailEnabled}
+              onCheckedChange={(v) => updateGlobal("emailEnabled", v)}
+            />
+            <GlobalToggleCard
+              icon={<Smartphone className="h-4 w-4" />}
+              iconColor="#F59E0B"
+              iconBg="#FEF3C7"
+              label="Notifications par SMS"
+              description="SMS pour les alertes critiques."
+              checked={prefs.smsEnabled}
+              onCheckedChange={(v) => updateGlobal("smsEnabled", v)}
+              disabled
+              badge="Bientôt disponible"
+            />
           </div>
 
-          <p className="text-[13px] text-[#6B7280]">
-            💡 Coût : <span className="font-medium text-[#374151]">50 FCFA/SMS</span> facturé sur votre forfait.
-          </p>
+          {/* Per-type table */}
+          <div>
+            <p className="mb-2 text-[13px] font-semibold text-[#374151] dark:text-white/80">
+              Préférences par type de notification
+            </p>
+            <div className="overflow-x-auto rounded-lg border border-[#E5E7EB] dark:border-white/10">
+              <table className="w-full min-w-[480px] border-collapse text-left">
+                <thead>
+                  <tr className="bg-[#F9FAFB] dark:bg-white/5">
+                    <th className="px-4 py-3 text-[12px] font-semibold uppercase tracking-wide text-[#6B7280] dark:text-white/60">
+                      Type de notification
+                    </th>
+                    <th className="px-4 py-3 text-center text-[12px] font-semibold uppercase tracking-wide text-[#6B7280] dark:text-white/60">
+                      In-app
+                    </th>
+                    <th className="px-4 py-3 text-center text-[12px] font-semibold uppercase tracking-wide text-[#6B7280] dark:text-white/60">
+                      Email
+                    </th>
+                    <th className="px-4 py-3 text-center text-[12px] font-semibold uppercase tracking-wide text-[#6B7280] dark:text-white/60">
+                      SMS
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {PREF_TYPE_ROWS.map((row, idx) => {
+                    const p = prefs.prefs[row.key];
+                    return (
+                      <tr
+                        key={row.key}
+                        className={cn(
+                          "border-t border-[#F3F4F6] dark:border-white/5",
+                          idx % 2 === 1 && "bg-[#FAFAFA] dark:bg-white/[0.02]",
+                        )}
+                      >
+                        <td className="px-4 py-3 text-[13px] font-medium text-[#111827] dark:text-white">
+                          {row.label}
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex justify-center">
+                            <Switch
+                              checked={p.in_app && prefs.pushEnabled}
+                              onCheckedChange={(v) => updateChannel(row.key, "in_app", v)}
+                              disabled={!prefs.pushEnabled}
+                              aria-label={`${row.label} - In-app`}
+                            />
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex justify-center">
+                            <Switch
+                              checked={p.email && prefs.emailEnabled}
+                              onCheckedChange={(v) => updateChannel(row.key, "email", v)}
+                              disabled={!prefs.emailEnabled}
+                              aria-label={`${row.label} - Email`}
+                            />
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex justify-center">
+                            <Switch
+                              checked={p.sms && prefs.smsEnabled}
+                              onCheckedChange={(v) => updateChannel(row.key, "sms", v)}
+                              disabled
+                              aria-label={`${row.label} - SMS`}
+                            />
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            <p className="mt-2 text-[12px] text-[#9CA3AF]">
+              💡 Les notifications sont toujours créées dans la base. Les préférences contrôlent seulement les canaux de diffusion.
+            </p>
+          </div>
         </div>
       </SectionCard>
 
       <SaveRow>
-        <GradientButton onClick={() => { setToast("✅ Paramètres de notifications enregistrés"); setTimeout(() => setToast(null), 3000); }}>Enregistrer les préférences</GradientButton>
+        <GradientButton onClick={handleManualSave} disabled={saving}>
+          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+          Enregistrer les préférences
+        </GradientButton>
       </SaveRow>
+    </div>
+  );
+}
+
+function GlobalToggleCard({
+  icon,
+  iconColor,
+  iconBg,
+  label,
+  description,
+  checked,
+  onCheckedChange,
+  disabled,
+  badge,
+}: {
+  icon: ReactNode;
+  iconColor: string;
+  iconBg: string;
+  label: string;
+  description: string;
+  checked: boolean;
+  onCheckedChange: (v: boolean) => void;
+  disabled?: boolean;
+  badge?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "flex h-full flex-col gap-3 rounded-lg border p-4 transition-colors",
+        disabled
+          ? "border-[#E5E7EB] bg-[#F9FAFB] dark:border-white/10 dark:bg-white/5"
+          : "border-[#E5E7EB] bg-white dark:border-white/10 dark:bg-white/5",
+      )}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <span
+          className="flex h-9 w-9 items-center justify-center rounded-full"
+          style={{ backgroundColor: iconBg, color: iconColor }}
+        >
+          {icon}
+        </span>
+        <Switch checked={checked} onCheckedChange={onCheckedChange} disabled={disabled} aria-label={label} />
+      </div>
+      <div>
+        <div className="flex items-center gap-2">
+          <p className="text-[13px] font-semibold text-[#111827] dark:text-white">{label}</p>
+          {badge && (
+            <span className="rounded-full bg-[#FEF3C7] px-1.5 py-0.5 text-[10px] font-semibold text-[#92400E]">
+              {badge}
+            </span>
+          )}
+        </div>
+        <p className="mt-0.5 text-[12px] text-[#6B7280] dark:text-white/60">{description}</p>
+      </div>
     </div>
   );
 }

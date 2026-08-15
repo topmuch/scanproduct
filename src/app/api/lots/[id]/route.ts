@@ -7,6 +7,9 @@ import {
   isBotUserAgent,
 } from "@/lib/public-data";
 import { parseJsonArray, parseJsonObject } from "@/lib/utils";
+import { applyRateLimit, RATE_LIMITS, getRateLimitKey } from "@/lib/rate-limit";
+import { publicCache } from "@/lib/cache";
+import { createNotification } from "@/lib/notifications";
 
 /**
  * GET /api/lots/[id]
@@ -29,8 +32,26 @@ export async function GET(
   const sp = request.nextUrl.searchParams;
   const shouldRecordScan = sp.get("scan") === "true";
 
+  // Public scan rate-limit — 60 req/min per IP (QR-scan flood protection).
+  // Applied BEFORE any DB work so even unauthenticated floods are throttled.
+  const limited = applyRateLimit(request, {
+    ...RATE_LIMITS.PUBLIC_SCAN,
+    namespace: "scan:public",
+    key: getRateLimitKey(request),
+  });
+  if (limited) return limited;
+
   try {
-    const lot = await getLotWithDetails(id);
+    // Cache lookup for the lot data — the lot itself rarely changes between
+    // scans, so we cache it for 60s. NOTE: the scan recording below MUST
+    // still run on every request (that's how we count scans), so it is NOT
+    // cached — only the lot payload is.
+    const cachedLot = publicCache.get(`lot:${id}`);
+    let lot = cachedLot as Awaited<ReturnType<typeof getLotWithDetails>> | undefined;
+    if (!lot) {
+      lot = await getLotWithDetails(id);
+      if (lot) publicCache.set(`lot:${id}`, lot, 60_000); // 60s TTL
+    }
 
     if (!lot) {
       return NextResponse.json({ error: "Lot not found" }, { status: 404 });
@@ -177,7 +198,15 @@ export async function PATCH(
       data: patch,
     });
 
-    // If the lot was just recalled, append a history event.
+    // Invalidate the public lot cache so the next scan returns fresh data
+    // (recall status, ingredients, etc.). Both `lot:${id}` (used by the JSON
+    // endpoint) and `lot-detail:${id}` (used by the public passport page if
+    // it adopts the same cache) are cleared.
+    publicCache.delete(`lot:${id}`);
+    publicCache.delete(`lot-detail:${id}`);
+
+    // If the lot was just recalled, append a history event + fire a
+    // `lot_recall` notification to the fabricant's bell (severity critical).
     if (body.status === "RECALLED" && lot.status !== "RECALLED") {
       db.lotHistory
         .create({
@@ -190,6 +219,24 @@ export async function PATCH(
           },
         })
         .catch(() => undefined);
+
+      // Fire-and-forget — never block the API response on the notification.
+      createNotification({
+        userId: token.sub, // the fabricant who triggered the recall
+        type: "lot_recall",
+        title: `Lot rappelé : ${lot.lotNumber || lot.reference}`,
+        message:
+          typeof body.recallReason === "string" && body.recallReason.trim()
+            ? body.recallReason
+            : "Ce lot a été marqué comme rappelé. Les consommateurs verront une alerte lors du scan.",
+        severity: "critical",
+        data: {
+          lotId: id,
+          lotNumber: lot.lotNumber,
+          reference: lot.reference,
+          recallReason: body.recallReason,
+        },
+      }).catch(() => undefined);
     }
 
     db.auditLog
