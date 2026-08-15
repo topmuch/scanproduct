@@ -1,31 +1,37 @@
 "use client";
 
 // ============================================================================
-// DynamicProductForm — Guided 6-step wizard (V3 Phase 4 refactor)
+// DynamicProductForm — Guided 6-step wizard (Task ID 5 onboarding refactor)
 // ============================================================================
 // Replaces the previous 4-tab free-form interface with a linear onboarding
 // wizard that the user cannot skip through. The wizard orients the user
-// based on their business type (vendor type) and adapts the form:
+// based on their business type ("métier") and adapts the form:
 //
-//   Step 1 — Type de commerce (vendor type onboarding)
-//   Step 2 — Catégorie de produit (10 category cards)
-//   Step 3 — Informations générales (name / brand / weight / image / status)
+//   Step 1 — Votre métier (BusinessType onboarding — 6 cards)
+//   Step 2 — Catégorie de produit (filtered by BusinessType)
+//   Step 3 — Informations générales (name / brand / weight / image / status
+//            + export opt-in checkbox)
 //   Step 4 — Spécificités produit (dynamic category fields, grouped)
-//   Step 5 — Export & Certifications (conditional — only if isExport)
+//   Step 5 — Export & Certifications (conditional — only when export opt-in
+//            is checked at Step 3)
 //   Step 6 — Récapitulatif (summary before submit)
 //
 // Validation blocks forward navigation. Steps 1 & 2 auto-advance after a
 // 400ms delay on selection. Edit mode skips Step 1 and pre-fills everything.
 //
-// Public API unchanged: same `DynamicProductInitialData` type, same `onClose`
-// prop, same POST/PATCH contract. The `vendorType` field is sent in the body
-// but ignored by the API.
+// Export is now OPT-IN (Task ID 5): no longer driven by vendor type. A
+// single checkbox at Step 3 toggles `showExportStep` + `isExport` together.
+// The previous ConfirmDialog, `handleExportToggle` and `handleEnableExportFromSummary`
+// helpers have been removed.
+//
+// Public API unchanged: same `DynamicProductInitialData` type (with optional
+// `businessType` added), same `onClose` prop, same POST/PATCH contract. The
+// `businessType` field is sent in the body but ignored by the API.
 // ============================================================================
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  AlertTriangle,
   Check,
   ChevronDown,
   Globe2,
@@ -74,6 +80,10 @@ export type DynamicProductInitialData = {
   exportData?: Record<string, unknown>;
   certifications?: { name: string; issuer?: string; validUntil?: string; fileUrl?: string }[];
   status?: ProductStatus;
+  /** Task ID 5 — business type chosen at Step 1 (drives category filtering). */
+  businessType?: BusinessType;
+  /** Kept for backward-compat with prior callers — superseded by `businessType`. */
+  vendorType?: string;
 };
 
 type DynamicProductFormProps = {
@@ -81,10 +91,22 @@ type DynamicProductFormProps = {
   onClose: () => void;
 };
 
-type VendorType = "producteur" | "transformateur" | "exportateur" | "distributeur";
+/**
+ * Task ID 5 — six "métier" choices that replace the previous abstract
+ * VendorType cards (Producteur / Transformateur / Exportateur / Distributeur).
+ * The métier drives the category filter at Step 2 (BUSINESS_TO_CATEGORIES)
+ * and is otherwise non-persistent — the API ignores it.
+ */
+export type BusinessType =
+  | "boissons"
+  | "cosmetiques"
+  | "alimentaire"
+  | "agriculture"
+  | "peche"
+  | "artisanat";
 
 type StepId =
-  | "vendorType"
+  | "businessType"
   | "category"
   | "general"
   | "specifics"
@@ -117,40 +139,69 @@ const EMERALD_SOFT = "#ECFDF5";
 const inputClass =
   "w-full rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-[14px] text-[#111827] placeholder:text-[#9CA3AF] focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 transition";
 
-const VENDOR_TYPES: {
-  id: VendorType;
+const BUSINESS_TYPES: {
+  id: BusinessType;
   emoji: string;
   title: string;
   description: string;
 }[] = [
   {
-    id: "producteur",
-    emoji: "🌱",
-    title: "Producteur local",
-    description: "Je produis et vends localement (marchés, boutiques)",
+    id: "boissons",
+    emoji: "🥤",
+    title: "Boissons & Jus",
+    description: "Jus, boissons, café, thé, boissons énergisantes",
   },
   {
-    id: "transformateur",
-    emoji: "🏭",
-    title: "Transformateur artisanal",
-    description: "Je transforme des matières premières (jus, confitures, épices)",
+    id: "cosmetiques",
+    emoji: "🧴",
+    title: "Cosmétiques & Soins",
+    description: "Crèmes, savons, huiles, produits de beauté",
   },
   {
-    id: "exportateur",
-    emoji: "🚢",
-    title: "Exportateur",
-    description: "Je vends à l'international (export UE, USA, Asie)",
+    id: "alimentaire",
+    emoji: "🥫",
+    title: "Alimentaire transformé",
+    description: "Épices, condiments, confitures, épicerie",
   },
   {
-    id: "distributeur",
-    emoji: "🛒",
-    title: "Distributeur / Grossiste",
-    description: "Je distribue des produits de plusieurs fabricants",
+    id: "agriculture",
+    emoji: "🌿",
+    title: "Agriculture & Élevage",
+    description: "Fruits, légumes, céréales, viandes, lait",
+  },
+  {
+    id: "peche",
+    emoji: "🐟",
+    title: "Pêche & Aquaculture",
+    description: "Poisson, fruits de mer",
+  },
+  {
+    id: "artisanat",
+    emoji: "🧵",
+    title: "Artisanat & Autre",
+    description: "Textile, artisanat, produits divers",
   },
 ];
 
+/**
+ * Maps a Step 1 métier to the subset of category slugs that are relevant.
+ * Drives the Step 2 filter. An empty array ("artisanat") renders a
+ * "Bientôt disponible" placeholder instead of an empty card grid.
+ *
+ * Slugs not yet covered by a ProductSchema (epicerie, agro-alimentaire,
+ * textile) are intentionally absent — they will be added in a future task.
+ */
+const BUSINESS_TO_CATEGORIES: Record<BusinessType, string[]> = {
+  boissons: ["boissons", "cafe-cacao", "miel"],
+  cosmetiques: ["cosmetiques", "hygiene", "huiles"],
+  alimentaire: ["epices", "noix-fruits-secs"],
+  agriculture: ["fruits-legumes", "cereales", "viandes", "produits-laitiers"],
+  peche: ["produits-mer"],
+  artisanat: [],
+};
+
 const ALL_STEPS: StepMeta[] = [
-  { id: "vendorType", label: "Type de commerce", shortLabel: "Type" },
+  { id: "businessType", label: "Votre métier", shortLabel: "Métier" },
   { id: "category", label: "Catégorie de produit", shortLabel: "Catégorie" },
   { id: "general", label: "Informations générales", shortLabel: "Général" },
   { id: "specifics", label: "Spécificités produit", shortLabel: "Spécificités" },
@@ -486,15 +537,15 @@ function CategoryCard({
 }
 
 // ============================================================================
-// Vendor type card — Step 1 selection card
+// Business type card — Step 1 selection card (Task ID 5)
 // ============================================================================
 
-function VendorTypeCard({
-  vt,
+function BusinessTypeCard({
+  bt,
   selected,
   onSelect,
 }: {
-  vt: (typeof VENDOR_TYPES)[number];
+  bt: (typeof BUSINESS_TYPES)[number];
   selected: boolean;
   onSelect: () => void;
 }) {
@@ -509,7 +560,7 @@ function VendorTypeCard({
       }`}
     >
       <div className="flex w-full items-start justify-between">
-        <span className="text-[32px] leading-none">{vt.emoji}</span>
+        <span className="text-[32px] leading-none">{bt.emoji}</span>
         {selected ? (
           <span
             className="inline-flex h-6 w-6 items-center justify-center rounded-full text-white"
@@ -520,10 +571,10 @@ function VendorTypeCard({
         ) : null}
       </div>
       <h4 className="mt-1 text-[15px] font-semibold text-[#111827]">
-        {vt.title}
+        {bt.title}
       </h4>
       <p className="text-[12px] leading-snug text-[#6B7280]">
-        {vt.description}
+        {bt.description}
       </p>
     </button>
   );
@@ -663,71 +714,6 @@ function Stepper({
 }
 
 // ============================================================================
-// Confirm dialog — used when an "Exportateur" tries to turn off the export
-// toggle. Prevents accidental data loss.
-// ============================================================================
-
-function ConfirmDialog({
-  title,
-  message,
-  confirmLabel,
-  cancelLabel,
-  onConfirm,
-  onCancel,
-}: {
-  title: string;
-  message: string;
-  confirmLabel: string;
-  cancelLabel: string;
-  onConfirm: () => void;
-  onCancel: () => void;
-}) {
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      onClick={onCancel}
-      className="absolute inset-0 z-10 flex items-center justify-center bg-black/40 p-4"
-    >
-      <motion.div
-        initial={{ scale: 0.95, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.95, opacity: 0 }}
-        onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-sm rounded-xl bg-white p-5 shadow-2xl"
-      >
-        <div className="mb-3 flex items-start gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#FEF3C7]">
-            <AlertTriangle size={20} className="text-[#92400E]" />
-          </div>
-          <div>
-            <h3 className="text-[15px] font-semibold text-[#111827]">
-              {title}
-            </h3>
-            <p className="mt-1 text-[13px] leading-snug text-[#6B7280]">
-              {message}
-            </p>
-          </div>
-        </div>
-        <div className="flex gap-2">
-          <OutlineButton onClick={onCancel} className="flex-1">
-            {cancelLabel}
-          </OutlineButton>
-          <button
-            type="button"
-            onClick={onConfirm}
-            className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-[#EF4444] px-4 py-2.5 text-[14px] font-semibold text-white transition-colors hover:bg-[#DC2626]"
-          >
-            {confirmLabel}
-          </button>
-        </div>
-      </motion.div>
-    </motion.div>
-  );
-}
-
-// ============================================================================
 // Summary value formatter — renders a FieldConfig value as a display string
 // ============================================================================
 
@@ -771,9 +757,10 @@ export function DynamicProductForm({
   // ── Active categories (from product-schemas lib) ──────────────────
   const activeCategories = useMemo(() => getActiveCategories(), []);
 
-  // ── Vendor type (Step 1) — not persisted, only drives the wizard UX ──
-  const [vendorType, setVendorType] = useState<VendorType | undefined>(
-    undefined,
+  // ── Business type (Step 1) — not persisted, only drives the wizard UX
+  // (category filter at Step 2). Sent to the API but ignored. ─────────
+  const [businessType, setBusinessType] = useState<BusinessType | undefined>(
+    initialData?.businessType ?? undefined,
   );
 
   // ── General fields (Step 3) ───────────────────────────────────────
@@ -811,22 +798,26 @@ export function DynamicProductForm({
   );
 
   // ── Wizard state ──────────────────────────────────────────────────
-  // showExportStep: true in edit mode (always accessible); in create mode,
-  // set by handleVendorTypeSelect based on the chosen vendor type.
-  const [showExportStep, setShowExportStep] = useState<boolean>(isEdit);
+  // Task ID 5 — export is OPT-IN: in create mode, the export step is
+  // hidden until the user checks the "Je vends à l'international" box at
+  // Step 3. In edit mode, the export step is shown only if the product
+  // was previously flagged as `isExport`.
+  const [showExportStep, setShowExportStep] = useState<boolean>(
+    isEdit ? Boolean(initialData?.isExport) : false,
+  );
 
   // Compute visible steps based on isEdit + showExportStep.
   const visibleSteps = useMemo<StepMeta[]>(() => {
     const out: StepMeta[] = [];
     for (const s of ALL_STEPS) {
-      if (s.id === "vendorType" && isEdit) continue;
+      if (s.id === "businessType" && isEdit) continue;
       if (s.id === "export" && !showExportStep) continue;
       out.push(s);
     }
     return out;
   }, [isEdit, showExportStep]);
 
-  // Starting step: in edit mode, skip vendorType (Step 1). If categoryId
+  // Starting step: in edit mode, skip businessType (Step 1). If categoryId
   // is already set, start at Step 3 (general); otherwise Step 2 (category).
   const startStepIdx = useMemo(() => {
     if (isEdit) {
@@ -838,7 +829,6 @@ export function DynamicProductForm({
   const [currentStep, setCurrentStep] = useState(startStepIdx);
   const [direction, setDirection] = useState<1 | -1>(1);
   const [submitting, setSubmitting] = useState(false);
-  const [confirmExportOff, setConfirmExportOff] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const errorRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const bodyRef = useRef<HTMLDivElement>(null);
@@ -878,7 +868,7 @@ export function DynamicProductForm({
     [filteredExportFields],
   );
 
-  const currentStepId: StepId = visibleSteps[currentStep]?.id ?? "vendorType";
+  const currentStepId: StepId = visibleSteps[currentStep]?.id ?? "businessType";
   const isLastStep = currentStepId === "summary";
 
   // ── Field mutation helper ─────────────────────────────────────────
@@ -897,8 +887,8 @@ export function DynamicProductForm({
   // ── Step validation — per-step checks ─────────────────────────────
   function validateStep(stepId: StepId): Record<string, string> {
     const errs: Record<string, string> = {};
-    if (stepId === "vendorType") {
-      if (!vendorType) errs.vendorType = "Veuillez sélectionner votre type de commerce.";
+    if (stepId === "businessType") {
+      if (!businessType) errs.businessType = "Veuillez sélectionner votre métier.";
     }
     if (stepId === "category") {
       if (!categoryId) errs.categoryId = "Veuillez sélectionner une catégorie.";
@@ -983,7 +973,7 @@ export function DynamicProductForm({
     }
   }
 
-  // ── Auto-advance on Step 1 (vendorType) and Step 2 (category) ─────
+  // ── Auto-advance on Step 1 (businessType) and Step 2 (category) ──
   // Selecting a card auto-advances after a 400ms delay (with the manual
   // "Continuer" button still available for keyboard users). We target the
   // next step by id (not currentStep+1) so the closure doesn't depend on
@@ -993,7 +983,7 @@ export function DynamicProductForm({
       clearTimeout(autoAdvanceTimerRef.current);
       autoAdvanceTimerRef.current = null;
     }
-    if (currentStepId === "vendorType" && vendorType) {
+    if (currentStepId === "businessType" && businessType) {
       autoAdvanceTimerRef.current = setTimeout(() => {
         setErrors({});
         goToStepById("category");
@@ -1010,21 +1000,12 @@ export function DynamicProductForm({
         autoAdvanceTimerRef.current = null;
       }
     };
-  }, [vendorType, categoryId, currentStepId]);
+  }, [businessType, categoryId, currentStepId]);
 
   // ── Scroll body to top on step change ─────────────────────────────
   useEffect(() => {
     bodyRef.current?.scrollTo({ top: 0, behavior: "smooth" });
   }, [currentStep]);
-
-  // ── Vendor type selection — sets vendorType + isExport/showExportStep defaults
-  function handleVendorTypeSelect(vt: VendorType) {
-    setVendorType(vt);
-    // Drive export step visibility + isExport default based on vendor type.
-    const showExport = vt === "exportateur" || vt === "transformateur";
-    setShowExportStep(showExport);
-    setIsExport(vt === "exportateur");
-  }
 
   // ── Category selection — resets dynamic data when category changes ─
   function handleCategorySelect(schema: ProductSchema) {
@@ -1040,30 +1021,14 @@ export function DynamicProductForm({
     }
   }
 
-  // ── Export toggle handler — shows confirm dialog for "Exportateur" ─
-  function handleExportToggle(newValue: boolean) {
-    if (!newValue && vendorType === "exportateur" && isExport) {
-      setConfirmExportOff(true);
-      return;
-    }
-    setIsExport(newValue);
-    if (!newValue) setExportData({});
-  }
-
-  // ── "Activer l'export" from summary — flips showExportStep + isExport ─
-  function handleEnableExportFromSummary() {
-    if (!showExportStep) {
-      // After update, export step will be inserted before summary (at the
-      // current summary index). Compute the new index synchronously.
-      const newExportIdx = visibleSteps.length - 1;
-      setShowExportStep(true);
-      setIsExport(true);
-      setDirection(1);
-      setCurrentStep(newExportIdx);
-    } else {
-      setIsExport(true);
-      goToStepById("export");
-    }
+  // ── Export opt-in toggle (Step 3 checkbox) ────────────────────────
+  // Task ID 5 — export is now driven by a single checkbox at Step 3.
+  // No more vendor-type-driven logic, no confirm dialog. Toggling off
+  // clears any export data the user might have started filling.
+  function handleExportOptIn(checked: boolean) {
+    setShowExportStep(checked);
+    setIsExport(checked);
+    if (!checked) setExportData({});
   }
 
   // ── Submit ───────────────────────────────────────────────────────
@@ -1085,8 +1050,8 @@ export function DynamicProductForm({
             ? "general"
             : firstErrKey === "categoryId"
               ? "category"
-              : firstErrKey === "vendorType"
-                ? "vendorType"
+              : firstErrKey === "businessType"
+                ? "businessType"
                 : "";
       if (prefix) goToStepById(prefix as StepId);
       toast.error("Veuillez remplir les champs obligatoires.");
@@ -1128,9 +1093,9 @@ export function DynamicProductForm({
       categoryData: stripFiles(categoryData),
       exportData: isExport ? stripFiles(exportData) : null,
       certifications: cleanCerts.length > 0 ? cleanCerts : null,
-      // V3 Phase 4 — vendorType is sent but ignored by the API (kept for
-      // future analytics / personalization).
-      vendorType: vendorType ?? undefined,
+      // Task ID 5 — businessType replaces vendorType. Sent but ignored by
+      // the API (kept for future analytics / personalization).
+      businessType: businessType ?? undefined,
     };
 
     try {
@@ -1165,11 +1130,11 @@ export function DynamicProductForm({
   // ESC key closes the modal.
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape" && !confirmExportOff) onClose();
+      if (e.key === "Escape") onClose();
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [onClose, confirmExportOff]);
+  }, [onClose]);
 
   // ── Clean certifications for summary display ──────────────────────
   const cleanCerts = useMemo(
@@ -1180,53 +1145,65 @@ export function DynamicProductForm({
   // ── Render step content by id ─────────────────────────────────────
   function renderStep(stepId: StepId) {
     switch (stepId) {
-      // ── Step 1: Vendor type ──────────────────────────────────────
-      case "vendorType":
+      // ── Step 1: Business type (métier) ────────────────────────
+      case "businessType":
         return (
           <div className="space-y-5">
             <div>
               <h3 className="text-[16px] font-semibold text-[#111827]">
-                Quel est votre type de commerce&nbsp;?
+                Quel est votre métier&nbsp;?
               </h3>
               <p className="mt-1 text-[13px] text-[#6B7280]">
-                Cette information adapte le formulaire à votre activité. Vous
-                pourrez toujours ajuster les options dans les étapes suivantes.
+                Sélectionnez l’activité qui correspond le mieux à votre produit.
+                Le formulaire affichera uniquement les catégories pertinentes.
               </p>
             </div>
 
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              {VENDOR_TYPES.map((vt) => (
-                <VendorTypeCard
-                  key={vt.id}
-                  vt={vt}
-                  selected={vendorType === vt.id}
-                  onSelect={() => handleVendorTypeSelect(vt.id)}
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {BUSINESS_TYPES.map((bt) => (
+                <BusinessTypeCard
+                  key={bt.id}
+                  bt={bt}
+                  selected={businessType === bt.id}
+                  onSelect={() => setBusinessType(bt.id)}
                 />
               ))}
             </div>
 
-            {vendorType && (
+            {businessType && (
               <motion.div
                 initial={{ opacity: 0, y: 4 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="flex items-center gap-2 rounded-lg bg-[#ECFDF5] px-4 py-2.5 text-[13px] font-medium text-[#047857]"
               >
                 <Check size={14} />
-                Sélectionné&nbsp;: {VENDOR_TYPES.find((v) => v.id === vendorType)?.title}
+                Sélectionné&nbsp;: {BUSINESS_TYPES.find((v) => v.id === businessType)?.title}
                 <span className="ml-auto text-[#10B981]">Continuer →</span>
               </motion.div>
             )}
 
-            {errors.vendorType && (
-              <div ref={(el) => { errorRefs.current.vendorType = el; }}>
-                <FieldError message={errors.vendorType} />
+            {errors.businessType && (
+              <div ref={(el) => { errorRefs.current.businessType = el; }}>
+                <FieldError message={errors.businessType} />
               </div>
             )}
           </div>
         );
 
-      // ── Step 2: Category ─────────────────────────────────────────
-      case "category":
+      // ── Step 2: Category (filtered by businessType) ──────────
+      case "category": {
+        // In create mode, filter categories by the chosen business type.
+        // In edit mode (or if no businessType was chosen), show all — the
+        // user can always change the category when editing.
+        const allowedSlugs = businessType
+          ? BUSINESS_TO_CATEGORIES[businessType]
+          : null;
+        const filteredCategories = allowedSlugs
+          ? activeCategories.filter((c) => allowedSlugs.includes(c.id))
+          : activeCategories;
+        const isArtisanatEmpty =
+          businessType === "artisanat" && filteredCategories.length === 0;
+
         return (
           <div className="space-y-5">
             <div>
@@ -1234,23 +1211,35 @@ export function DynamicProductForm({
                 Choisissez une catégorie
               </h3>
               <p className="mt-1 text-[13px] text-[#6B7280]">
-                Chaque catégorie débloque des champs spécifiques (variété,
-                origine, conservation, etc.).
+                {businessType
+                  ? `Catégories proposées pour « ${BUSINESS_TYPES.find((v) => v.id === businessType)?.title} ». Chaque catégorie débloque des champs spécifiques.`
+                  : "Chaque catégorie débloque des champs spécifiques (variété, origine, conservation, etc.)."}
               </p>
             </div>
 
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {activeCategories.map((c) => (
-                <CategoryCard
-                  key={c.id}
-                  schema={c}
-                  selected={categoryId === c.id}
-                  onSelect={() => handleCategorySelect(c)}
-                />
-              ))}
-            </div>
+            {isArtisanatEmpty ? (
+              <div className="flex items-start gap-2 rounded-lg border border-[#FCD34D] bg-[#FFFBEB] px-4 py-4 text-[13px] text-[#92400E]">
+                <Info size={16} className="mt-0.5 shrink-0" />
+                <span>
+                  Les catégories pour l'artisanat seront bientôt disponibles. En
+                  attendant, choisissez « Alimentaire transformé » ou
+                  contactez-nous.
+                </span>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {filteredCategories.map((c) => (
+                  <CategoryCard
+                    key={c.id}
+                    schema={c}
+                    selected={categoryId === c.id}
+                    onSelect={() => handleCategorySelect(c)}
+                  />
+                ))}
+              </div>
+            )}
 
-            {categoryId && (
+            {categoryId && !isArtisanatEmpty && (
               <motion.div
                 initial={{ opacity: 0, y: 4 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -1280,6 +1269,7 @@ export function DynamicProductForm({
             )}
           </div>
         );
+      }
 
       // ── Step 3: General info ─────────────────────────────────────
       case "general":
@@ -1364,6 +1354,26 @@ export function DynamicProductForm({
                 height={180}
               />
             </div>
+
+            {/* Export opt-in checkbox (Task ID 5) */}
+            <label className="flex items-start gap-3 rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] p-3 cursor-pointer hover:bg-[#F3F4F6]">
+              <input
+                type="checkbox"
+                checked={showExportStep}
+                onChange={(e) => handleExportOptIn(e.target.checked)}
+                className="mt-0.5 h-4 w-4 rounded border-[#D1D5DB] text-[#10B981] focus:ring-[#10B981]"
+              />
+              <div>
+                <span className="text-[13px] font-semibold text-[#111827]">
+                  Je vends à l'international (export)
+                </span>
+                <p className="text-[12px] text-[#6B7280]">
+                  Cochez cette case si vous exportez vos produits à l'étranger.
+                  Des champs supplémentaires (certificats phytosanitaires,
+                  incoterm, code douanier) seront demandés.
+                </p>
+              </div>
+            </label>
           </div>
         );
 
@@ -1430,42 +1440,38 @@ export function DynamicProductForm({
         );
 
       // ── Step 5: Export & Certifications ─────────────────────────
+      // (Task ID 5) This step is only shown when the export opt-in
+      // checkbox at Step 3 is checked. The previous toggle at the top of
+      // this step has been removed — `isExport` is always `true` here.
       case "export":
         return (
           <div className="space-y-5">
-            {/* Export toggle */}
-            <label className="flex cursor-pointer items-start gap-3 rounded-xl border-2 border-[#E5E7EB] bg-white p-4 transition-colors hover:bg-[#F9FAFB]">
-              <input
-                type="checkbox"
-                checked={isExport}
-                onChange={(e) => handleExportToggle(e.target.checked)}
-                className="mt-0.5 h-5 w-5 rounded border-[#D1D5DB] text-[#10B981] focus:ring-[#10B981]"
-              />
+            {/* Export info banner (opt-in reminder) */}
+            <div className="flex items-start gap-3 rounded-xl border-2 border-[#10B981]/30 bg-[#ECFDF5] p-4">
+              <Globe2 size={18} className="mt-0.5 shrink-0 text-[#10B981]" />
               <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <Globe2 size={16} className="text-[#10B981]" />
-                  <span className="text-[14px] font-semibold text-[#111827]">
-                    Produit destiné à l'exportation
-                  </span>
-                </div>
+                <span className="text-[14px] font-semibold text-[#111827]">
+                  Export international activé
+                </span>
                 <p className="mt-1 text-[12px] text-[#6B7280]">
-                  Activez cette option pour renseigner les informations
-                  réglementaires requises pour l'export (pays de destination,
-                  conformité sanitaire, certifications spécifiques).
+                  Renseignez les informations réglementaires requises pour
+                  l'export (pays de destination, conformité sanitaire,
+                  certifications spécifiques). Pour désactiver l'export,
+                  retournez à l'étape « Informations générales » et décochez
+                  la case « Je vends à l'international ».
                 </p>
               </div>
-            </label>
+            </div>
 
-            {/* Export fields (only when toggle is ON) */}
-            {isExport && filteredExportFields.length === 0 && (
+            {/* Export fields */}
+            {filteredExportFields.length === 0 && (
               <div className="rounded-lg border border-dashed border-[#E5E7EB] bg-[#F9FAFB] px-4 py-6 text-center text-[13px] text-[#6B7280]">
-                Aucun champ d'export défini pour cette catégorie. Vous pouvez
-                quand même activer l'export pour signaler votre intention — des
-                champs seront ajoutés prochainement.
+                Aucun champ d'export défini pour cette catégorie. Des champs
+                seront ajoutés prochainement.
               </div>
             )}
 
-            {isExport && Object.keys(groupedExportFields).length > 0 && (
+            {Object.keys(groupedExportFields).length > 0 && (
               <div className="space-y-5">
                 {Object.entries(groupedExportFields).map(([group, fields]) => (
                   <section
@@ -1498,145 +1504,133 @@ export function DynamicProductForm({
               </div>
             )}
 
-            {/* Certifications (only when export is ON) */}
-            {isExport && (
-              <section className="rounded-xl border border-[#E5E7EB] bg-[#FAFAFA] p-4">
-                <div className="mb-3 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Sticker size={16} className="text-[#10B981]" />
-                    <h4 className="text-[13px] font-semibold uppercase tracking-wide text-[#374151]">
-                      Certifications
-                    </h4>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setCertifications((prev) => [
-                        ...prev,
-                        { name: "", issuer: "", validUntil: "", fileUrl: "" },
-                      ])
-                    }
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-[#E5E7EB] bg-white px-3 py-1.5 text-[13px] font-medium text-[#374151] transition-colors hover:bg-[#F9FAFB]"
-                  >
-                    <Plus size={14} /> Ajouter
-                  </button>
+            {/* Certifications */}
+            <section className="rounded-xl border border-[#E5E7EB] bg-[#FAFAFA] p-4">
+              <div className="mb-3 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Sticker size={16} className="text-[#10B981]" />
+                  <h4 className="text-[13px] font-semibold uppercase tracking-wide text-[#374151]">
+                    Certifications
+                  </h4>
                 </div>
-                <p className="mb-3 text-[12px] text-[#6B7280]">
-                  Bio, Halal, ISO 22000, HACCP, GlobalGAP, etc. — ces
-                  informations renforcent la confiance des acheteurs.
-                </p>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setCertifications((prev) => [
+                      ...prev,
+                      { name: "", issuer: "", validUntil: "", fileUrl: "" },
+                    ])
+                  }
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-[#E5E7EB] bg-white px-3 py-1.5 text-[13px] font-medium text-[#374151] transition-colors hover:bg-[#F9FAFB]"
+                >
+                  <Plus size={14} /> Ajouter
+                </button>
+              </div>
+              <p className="mb-3 text-[12px] text-[#6B7280]">
+                Bio, Halal, ISO 22000, HACCP, GlobalGAP, etc. — ces
+                informations renforcent la confiance des acheteurs.
+              </p>
 
-                <div className="space-y-3">
-                  {certifications.map((c, idx) => (
-                    <div
-                      key={idx}
-                      ref={(el) => { errorRefs.current[`cert_${idx}`] = el; }}
-                      className="rounded-xl border border-[#E5E7EB] bg-white p-4"
-                    >
-                      <div className="mb-3 flex items-center justify-between">
-                        <span className="text-[12px] font-semibold uppercase tracking-wide text-[#9CA3AF]">
-                          Certification #{idx + 1}
-                        </span>
-                        {certifications.length > 1 ? (
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setCertifications((prev) =>
-                                prev.filter((_, i) => i !== idx),
-                              )
-                            }
-                            className="inline-flex h-6 w-6 items-center justify-center rounded-md text-[#EF4444] transition-colors hover:bg-[#FEE2E2]"
-                            aria-label="Supprimer cette certification"
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        ) : null}
+              <div className="space-y-3">
+                {certifications.map((c, idx) => (
+                  <div
+                    key={idx}
+                    ref={(el) => { errorRefs.current[`cert_${idx}`] = el; }}
+                    className="rounded-xl border border-[#E5E7EB] bg-white p-4"
+                  >
+                    <div className="mb-3 flex items-center justify-between">
+                      <span className="text-[12px] font-semibold uppercase tracking-wide text-[#9CA3AF]">
+                        Certification #{idx + 1}
+                      </span>
+                      {certifications.length > 1 ? (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setCertifications((prev) =>
+                              prev.filter((_, i) => i !== idx),
+                            )
+                          }
+                          className="inline-flex h-6 w-6 items-center justify-center rounded-md text-[#EF4444] transition-colors hover:bg-[#FEE2E2]"
+                          aria-label="Supprimer cette certification"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      ) : null}
+                    </div>
+                    <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                      <div>
+                        <FieldLabel required>Nom</FieldLabel>
+                        <input
+                          type="text"
+                          value={c.name}
+                          onChange={(e) => {
+                            const v = e.target.value;
+                            setCertifications((prev) =>
+                              prev.map((row, i) =>
+                                i === idx ? { ...row, name: v } : row,
+                              ),
+                            );
+                          }}
+                          placeholder="Ex : Bio, Halal, ISO 22000"
+                          className={inputClass}
+                        />
+                        <FieldError message={errors[`cert_${idx}`]} />
                       </div>
-                      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                        <div>
-                          <FieldLabel required>Nom</FieldLabel>
-                          <input
-                            type="text"
-                            value={c.name}
-                            onChange={(e) => {
-                              const v = e.target.value;
-                              setCertifications((prev) =>
-                                prev.map((row, i) =>
-                                  i === idx ? { ...row, name: v } : row,
-                                ),
-                              );
-                            }}
-                            placeholder="Ex : Bio, Halal, ISO 22000"
-                            className={inputClass}
-                          />
-                          <FieldError message={errors[`cert_${idx}`]} />
-                        </div>
-                        <div>
-                          <FieldLabel>Organisme émetteur</FieldLabel>
-                          <input
-                            type="text"
-                            value={c.issuer}
-                            onChange={(e) => {
-                              const v = e.target.value;
-                              setCertifications((prev) =>
-                                prev.map((row, i) =>
-                                  i === idx ? { ...row, issuer: v } : row,
-                                ),
-                              );
-                            }}
-                            placeholder="Ex : Ecocert, Bureau Veritas"
-                            className={inputClass}
-                          />
-                        </div>
-                        <div>
-                          <FieldLabel>Valable jusqu'au</FieldLabel>
-                          <input
-                            type="date"
-                            value={c.validUntil}
-                            onChange={(e) => {
-                              const v = e.target.value;
-                              setCertifications((prev) =>
-                                prev.map((row, i) =>
-                                  i === idx ? { ...row, validUntil: v } : row,
-                                ),
-                              );
-                            }}
-                            className={inputClass}
-                          />
-                        </div>
-                        <div>
-                          <FieldLabel>URL du document</FieldLabel>
-                          <input
-                            type="url"
-                            value={c.fileUrl}
-                            onChange={(e) => {
-                              const v = e.target.value;
-                              setCertifications((prev) =>
-                                prev.map((row, i) =>
-                                  i === idx ? { ...row, fileUrl: v } : row,
-                                ),
-                              );
-                            }}
-                            placeholder="https://…"
-                            className={inputClass}
-                          />
-                        </div>
+                      <div>
+                        <FieldLabel>Organisme émetteur</FieldLabel>
+                        <input
+                          type="text"
+                          value={c.issuer}
+                          onChange={(e) => {
+                            const v = e.target.value;
+                            setCertifications((prev) =>
+                              prev.map((row, i) =>
+                                i === idx ? { ...row, issuer: v } : row,
+                              ),
+                            );
+                          }}
+                          placeholder="Ex : Ecocert, Bureau Veritas"
+                          className={inputClass}
+                        />
+                      </div>
+                      <div>
+                        <FieldLabel>Valable jusqu'au</FieldLabel>
+                        <input
+                          type="date"
+                          value={c.validUntil}
+                          onChange={(e) => {
+                            const v = e.target.value;
+                            setCertifications((prev) =>
+                              prev.map((row, i) =>
+                                i === idx ? { ...row, validUntil: v } : row,
+                              ),
+                            );
+                          }}
+                          className={inputClass}
+                        />
+                      </div>
+                      <div>
+                        <FieldLabel>URL du document</FieldLabel>
+                        <input
+                          type="url"
+                          value={c.fileUrl}
+                          onChange={(e) => {
+                            const v = e.target.value;
+                            setCertifications((prev) =>
+                              prev.map((row, i) =>
+                                i === idx ? { ...row, fileUrl: v } : row,
+                              ),
+                            );
+                          }}
+                          placeholder="https://…"
+                          className={inputClass}
+                        />
                       </div>
                     </div>
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {/* Friendly placeholder when export is OFF but step is shown */}
-            {!isExport && (
-              <div className="rounded-lg border border-dashed border-[#E5E7EB] bg-[#F9FAFB] px-4 py-6 text-center text-[13px] text-[#6B7280]">
-                L'export est actuellement désactivé. Cliquez sur{" "}
-                <span className="font-medium text-[#374151]">Continuer</span>{" "}
-                pour passer au récapitulatif, ou activez l'export ci-dessus pour
-                renseigner les informations réglementaires.
+                  </div>
+                ))}
               </div>
-            )}
+            </section>
           </div>
         );
 
@@ -1655,12 +1649,12 @@ export function DynamicProductForm({
               </p>
             </div>
 
-            {/* Vendor type + category badge */}
+            {/* Business type + category badge */}
             <div className="flex flex-wrap items-center gap-2 rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] px-4 py-3">
-              {vendorType ? (
+              {businessType ? (
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-[#ECFDF5] px-3 py-1 text-[12px] font-semibold text-[#047857]">
-                  {VENDOR_TYPES.find((v) => v.id === vendorType)?.emoji}{" "}
-                  {VENDOR_TYPES.find((v) => v.id === vendorType)?.title}
+                  {BUSINESS_TYPES.find((v) => v.id === businessType)?.emoji}{" "}
+                  {BUSINESS_TYPES.find((v) => v.id === businessType)?.title}
                 </span>
               ) : null}
               {selectedSchema ? (
@@ -1733,7 +1727,7 @@ export function DynamicProductForm({
             {/* Export info section */}
             <SummarySection
               title="Export & Certifications"
-              onEdit={() => goToStepById("export")}
+              onEdit={isExport ? () => goToStepById("export") : () => goToStepById("general")}
             >
               {isExport ? (
                 <>
@@ -1764,13 +1758,9 @@ export function DynamicProductForm({
                   <p className="text-[13px] text-[#6B7280]">
                     Export non activé pour ce produit.
                   </p>
-                  <button
-                    type="button"
-                    onClick={handleEnableExportFromSummary}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-[#10B981] bg-[#ECFDF5] px-3 py-1.5 text-[12px] font-semibold text-[#047857] transition-colors hover:bg-[#D1FAE5]"
-                  >
-                    <Globe2 size={14} /> Activer l'export
-                  </button>
+                  <span className="inline-flex items-center gap-1.5 text-[12px] font-medium text-[#9CA3AF]">
+                    <Globe2 size={14} /> Cochez la case export à l'étape « Informations générales »
+                  </span>
                 </div>
               )}
             </SummarySection>
@@ -1886,24 +1876,6 @@ export function DynamicProductForm({
             </GradientButton>
           )}
         </div>
-
-        {/* Confirm dialog overlay (for export toggle off) */}
-        <AnimatePresence>
-          {confirmExportOff && (
-            <ConfirmDialog
-              title="Désactiver l'export ?"
-              message="Vous êtes exportateur — êtes-vous sûr de vouloir créer un produit non-exportable ? Les informations d'export saisies seront effacées."
-              confirmLabel="Oui, désactiver"
-              cancelLabel="Annuler"
-              onConfirm={() => {
-                setIsExport(false);
-                setExportData({});
-                setConfirmExportOff(false);
-              }}
-              onCancel={() => setConfirmExportOff(false)}
-            />
-          )}
-        </AnimatePresence>
       </motion.div>
     </motion.div>
   );

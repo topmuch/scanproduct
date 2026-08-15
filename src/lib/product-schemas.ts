@@ -2219,18 +2219,457 @@ const MIEL: ProductSchema = {
 };
 
 // ---------------------------------------------------------------------------
+// PHASE 1 (continued) — Onboarding wizard categories (Task ID 5)
+// ---------------------------------------------------------------------------
+// Three additional schemas covering the "missing" categories that were
+// previously seeded as legacy rows (Cosmétiques / Boissons / Hygiène) but
+// had no `fields`/`exportFields` of their own. They unlock the new
+// business-type onboarding flow (see DynamicProductForm Step 1).
+
+const COSMETIQUES: ProductSchema = {
+  id: "cosmetiques",
+  name: "Cosmétiques & Soins",
+  emoji: "🧴",
+  description:
+    "Crèmes, huiles, savons, laits, sérums et baumes — cosmétiques naturels ou transformés. Suivi de la formulation au conditionnement, avec certifications bio, halal et cruelty-free.",
+  phase: 1,
+  fields: [
+    // Production
+    {
+      name: "productType",
+      label: "Type de produit",
+      type: "select",
+      required: true,
+      options: [
+        { value: "creme", label: "Crème" },
+        { value: "huile", label: "Huile" },
+        { value: "savon", label: "Savon" },
+        { value: "lait", label: "Lait" },
+        { value: "serum", label: "Sérum" },
+        { value: "baume", label: "Baume" },
+      ],
+      group: "Production",
+    },
+    {
+      name: "skinType",
+      label: "Type de peau ciblé",
+      type: "select",
+      options: [
+        { value: "tous-types", label: "Tous types" },
+        { value: "peau-seche", label: "Peau sèche" },
+        { value: "peau-grasse", label: "Peau grasse" },
+        { value: "peau-sensible", label: "Peau sensible" },
+      ],
+      group: "Production",
+    },
+    {
+      name: "ingredients",
+      label: "Ingrédients / Composition",
+      type: "textarea",
+      placeholder: "Listez les ingrédients principaux — ex: huile de baobab, beurre de karité, vitamine E…",
+      group: "Production",
+    },
+    {
+      name: "naturalOrigin",
+      label: "100% naturel",
+      type: "boolean",
+      group: "Production",
+    },
+    // Conditionnement
+    {
+      name: "capacity",
+      label: "Capacité / Contenance",
+      type: "text",
+      required: true,
+      placeholder: "ex: 250 ml, 50 g, 100 ml…",
+      unit: "ml/g",
+      group: "Conditionnement",
+    },
+    {
+      name: "packaging",
+      label: "Conditionnement",
+      type: "select",
+      options: [
+        { value: "tube", label: "Tube" },
+        { value: "flacon-pompe", label: "Flacon pompe" },
+        { value: "pot", label: "Pot" },
+        { value: "flacon-vaporisateur", label: "Flacon vaporisateur" },
+        { value: "bouteille", label: "Bouteille" },
+        { value: "boite", label: "Boîte" },
+      ],
+      group: "Conditionnement",
+    },
+    // Certifications
+    {
+      name: "organicLabel",
+      label: "Bio certifié",
+      type: "boolean",
+      group: "Certifications",
+    },
+    {
+      name: "halalCertified",
+      label: "Halal",
+      type: "boolean",
+      group: "Certifications",
+    },
+    {
+      name: "crueltyFree",
+      label: "Cruelty-free / Non testé sur animaux",
+      type: "boolean",
+      group: "Certifications",
+    },
+  ],
+  exportFields: [
+    {
+      name: "destinationCountry",
+      label: "Pays de destination",
+      type: "text",
+      required: true,
+      placeholder: "ex: France, Allemagne, USA…",
+      exportRequired: true,
+      group: "Certifications Export",
+    },
+    {
+      name: "incoterm",
+      label: "Incoterm",
+      type: "select",
+      required: true,
+      options: INCOTERM_OPTIONS,
+      exportRequired: true,
+      group: "Certifications Export",
+    },
+    {
+      name: "customsCode",
+      label: "Code douanier HS",
+      type: "text",
+      placeholder: "ex: 3304.99.00 (cosmétiques)",
+      helpText: "Code du Système Harmonisé de désignation des marchandises",
+      exportRequired: true,
+      group: "Certifications Export",
+    },
+    {
+      name: "cosmeticsCertificate",
+      label: "Certificat de conformité cosmétique (CPNP / FDA)",
+      type: "file",
+      required: true,
+      exportRequired: true,
+      group: "Certifications Export",
+    },
+    {
+      name: "safetyReport",
+      label: "Rapport de sécurité (CPSR)",
+      type: "file",
+      exportRequired: true,
+      group: "Certifications Export",
+    },
+  ],
+};
+
+const BOISSONS: ProductSchema = {
+  id: "boissons",
+  name: "Boissons & Jus",
+  emoji: "🥤",
+  description:
+    "Jus, sodas, boissons énergisantes, thé, café et boissons lactées — suivi de la formulation à la mise en bouteille, avec certifications bio, halal et sans conservateurs.",
+  phase: 1,
+  fields: [
+    // Production
+    {
+      name: "beverageType",
+      label: "Type de boisson",
+      type: "select",
+      required: true,
+      options: [
+        { value: "jus", label: "Jus" },
+        { value: "soda", label: "Soda" },
+        { value: "boisson-energisante", label: "Boisson énergisante" },
+        { value: "the", label: "Thé" },
+        { value: "cafe", label: "Café" },
+        { value: "boisson-lactee", label: "Boisson lactée" },
+      ],
+      group: "Production",
+    },
+    {
+      name: "flavor",
+      label: "Parfum / Arôme",
+      type: "text",
+      placeholder: "ex: Bissap, Baobab, Ananas, Gingembre…",
+      group: "Production",
+    },
+    {
+      name: "ingredients",
+      label: "Ingrédients",
+      type: "textarea",
+      placeholder: "Listez les ingrédients — ex: jus de bissap, sucre de canne, acide citrique…",
+      group: "Production",
+    },
+    {
+      name: "sugarContent",
+      label: "Teneur en sucre",
+      type: "number",
+      unit: "g/100ml",
+      validation: { min: 0, max: 100 },
+      group: "Production",
+    },
+    {
+      name: "alcoholDegree",
+      label: "Degré d'alcool",
+      type: "number",
+      unit: "%",
+      validation: { min: 0, max: 100 },
+      helpText: "0 si non alcoolisé",
+      group: "Production",
+    },
+    // Conditionnement
+    {
+      name: "capacity",
+      label: "Capacité / Contenance",
+      type: "text",
+      required: true,
+      placeholder: "ex: 250 ml, 500 ml, 1 L…",
+      unit: "ml",
+      group: "Conditionnement",
+    },
+    {
+      name: "packaging",
+      label: "Conditionnement",
+      type: "select",
+      options: [
+        { value: "bouteille-pet", label: "Bouteille PET" },
+        { value: "bouteille-verre", label: "Bouteille verre" },
+        { value: "canette", label: "Canette" },
+        { value: "brique", label: "Brique (Tetra Pak)" },
+        { value: "fut", label: "Fût" },
+      ],
+      group: "Conditionnement",
+    },
+    {
+      name: "shelfLifeDays",
+      label: "Durée de conservation",
+      type: "number",
+      unit: "jours",
+      validation: { min: 1, max: 730 },
+      group: "Conditionnement",
+    },
+    // Certifications
+    {
+      name: "organicLabel",
+      label: "Bio certifié",
+      type: "boolean",
+      group: "Certifications",
+    },
+    {
+      name: "halalCertified",
+      label: "Halal",
+      type: "boolean",
+      group: "Certifications",
+    },
+    {
+      name: "noPreservatives",
+      label: "Sans conservateurs",
+      type: "boolean",
+      group: "Certifications",
+    },
+  ],
+  exportFields: [
+    {
+      name: "destinationCountry",
+      label: "Pays de destination",
+      type: "text",
+      required: true,
+      placeholder: "ex: France, Allemagne, USA…",
+      exportRequired: true,
+      group: "Certifications Export",
+    },
+    {
+      name: "incoterm",
+      label: "Incoterm",
+      type: "select",
+      required: true,
+      options: INCOTERM_OPTIONS,
+      exportRequired: true,
+      group: "Certifications Export",
+    },
+    {
+      name: "customsCode",
+      label: "Code douanier HS",
+      type: "text",
+      placeholder: "ex: 2202.99.00 (boissons non alcoolisées)",
+      helpText: "Code du Système Harmonisé de désignation des marchandises",
+      exportRequired: true,
+      group: "Certifications Export",
+    },
+    {
+      name: "healthCertificate",
+      label: "Certificat sanitaire",
+      type: "file",
+      required: true,
+      exportRequired: true,
+      group: "Certifications Export",
+    },
+    {
+      name: "phytosanitaryCertificate",
+      label: "Certificat phytosanitaire",
+      type: "file",
+      exportRequired: true,
+      group: "Certifications Export",
+    },
+  ],
+};
+
+const HYGIENE: ProductSchema = {
+  id: "hygiene",
+  name: "Hygiène",
+  emoji: "🧼",
+  description:
+    "Savons, shampoings, gels douche, dentifrices et déodorants — produits d'hygiène au quotidien. Suivi de la formulation au conditionnement, avec certifications bio, halal et cruelty-free.",
+  phase: 1,
+  fields: [
+    // Production
+    {
+      name: "productType",
+      label: "Type de produit",
+      type: "select",
+      required: true,
+      options: [
+        { value: "savon", label: "Savon" },
+        { value: "shampoing", label: "Shampoing" },
+        { value: "gel-douche", label: "Gel douche" },
+        { value: "dentifrice", label: "Dentifrice" },
+        { value: "deodorant", label: "Déodorant" },
+      ],
+      group: "Production",
+    },
+    {
+      name: "usage",
+      label: "Usage / Zone d'application",
+      type: "select",
+      options: [
+        { value: "corps", label: "Corps" },
+        { value: "cheveux", label: "Cheveux" },
+        { value: "visage", label: "Visage" },
+        { value: "dents", label: "Dents" },
+      ],
+      group: "Production",
+    },
+    {
+      name: "ingredients",
+      label: "Ingrédients / Composition",
+      type: "textarea",
+      placeholder: "Listez les ingrédients principaux — ex: glycérine, huile de coco, sulfate…",
+      group: "Production",
+    },
+    {
+      name: "naturalOrigin",
+      label: "100% naturel",
+      type: "boolean",
+      group: "Production",
+    },
+    // Conditionnement
+    {
+      name: "capacity",
+      label: "Capacité / Contenance",
+      type: "text",
+      required: true,
+      placeholder: "ex: 200 ml, 100 g, 50 ml…",
+      unit: "ml/g",
+      group: "Conditionnement",
+    },
+    {
+      name: "packaging",
+      label: "Conditionnement",
+      type: "select",
+      options: [
+        { value: "tube", label: "Tube" },
+        { value: "flacon", label: "Flacon" },
+        { value: "pompe", label: "Pompe" },
+        { value: "barre", label: "Barre" },
+        { value: "boite", label: "Boîte" },
+        { value: "sachet", label: "Sachet" },
+      ],
+      group: "Conditionnement",
+    },
+    // Certifications
+    {
+      name: "organicLabel",
+      label: "Bio certifié",
+      type: "boolean",
+      group: "Certifications",
+    },
+    {
+      name: "halalCertified",
+      label: "Halal",
+      type: "boolean",
+      group: "Certifications",
+    },
+    {
+      name: "crueltyFree",
+      label: "Cruelty-free / Non testé sur animaux",
+      type: "boolean",
+      group: "Certifications",
+    },
+  ],
+  exportFields: [
+    {
+      name: "destinationCountry",
+      label: "Pays de destination",
+      type: "text",
+      required: true,
+      placeholder: "ex: France, Allemagne, USA…",
+      exportRequired: true,
+      group: "Certifications Export",
+    },
+    {
+      name: "incoterm",
+      label: "Incoterm",
+      type: "select",
+      required: true,
+      options: INCOTERM_OPTIONS,
+      exportRequired: true,
+      group: "Certifications Export",
+    },
+    {
+      name: "customsCode",
+      label: "Code douanier HS",
+      type: "text",
+      placeholder: "ex: 3401.11.00 (savons)",
+      helpText: "Code du Système Harmonisé de désignation des marchandises",
+      exportRequired: true,
+      group: "Certifications Export",
+    },
+    {
+      name: "healthCertificate",
+      label: "Certificat sanitaire",
+      type: "file",
+      required: true,
+      exportRequired: true,
+      group: "Certifications Export",
+    },
+  ],
+};
+
+// ---------------------------------------------------------------------------
 // Master registry
 // ---------------------------------------------------------------------------
 
 /**
- * All 10 product category schemas keyed by their slug. Order matters — it is
+ * All product category schemas keyed by their slug. Order matters — it is
  * preserved by the seed script for the `order` column on the Category table.
+ *
+ * Breakdown:
+ *   - 10 V3 categories (Phase 1 / 2 / 3)
+ *   - 3 onboarding-wizard categories (Task ID 5 — Phase 1): cosmetiques,
+ *     boissons, hygiene
  */
 export const PRODUCT_SCHEMAS: Record<string, ProductSchema> = {
-  // Phase 1
+  // Phase 1 — V3
   "fruits-legumes": FRUITS_LEGUMES,
   "cafe-cacao": CAFE_CACAO,
   epices: EPICES,
+  // Phase 1 — Onboarding wizard (Task ID 5)
+  cosmetiques: COSMETIQUES,
+  boissons: BOISSONS,
+  hygiene: HYGIENE,
   // Phase 2
   "produits-mer": PRODUITS_MER,
   "noix-fruits-secs": NOIX_FRUITS_SECS,
