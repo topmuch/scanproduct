@@ -10,6 +10,13 @@ import { StatsBanner } from "@/components/landing/StatsBanner";
 import { FinalCTA } from "@/components/landing/FinalCTA";
 import { Footer } from "@/components/landing/Footer";
 
+// Force dynamic rendering — the CatalogSlider is an async server component
+// that fetches from the DB. Without this flag, `next build` tries to
+// statically pre-render the home page at build time, which fails in Docker
+// (DATABASE_URL points to a non-existent file during build) and causes the
+// build to hang at "Creating an optimized production build ...".
+export const dynamic = "force-dynamic";
+
 export default function Home() {
   return (
     <div className="relative flex min-h-screen flex-col bg-white">

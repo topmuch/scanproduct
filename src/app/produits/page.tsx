@@ -15,6 +15,12 @@ import { ControlBar } from "@/components/catalog/v2/ControlBar";
 import { ProductGrid } from "@/components/catalog/v2/ProductGrid";
 import { LoadingSkeleton } from "@/components/catalog/LoadingSkeleton";
 
+// Force dynamic rendering — this page fetches from the DB (products,
+// categories, stats). Without this flag, `next build` tries to statically
+// pre-render it at build time, which fails in Docker because the database
+// file doesn't exist yet during the build phase.
+export const dynamic = "force-dynamic";
+
 // ---------------------------------------------------------------------------
 // Metadata
 // ---------------------------------------------------------------------------

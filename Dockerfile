@@ -89,15 +89,19 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV DATABASE_URL=file:/app/data/scanproduct.db
 ENV NODE_OPTIONS="--max-old-space-size=4096"
 
-# IMPORTANT: create the uploads directory BEFORE `next build` so the
-# build doesn't fail if it tries to traverse public/uploads.
+# IMPORTANT: create the uploads AND data directories BEFORE `next build`.
+# - uploads: so the build doesn't fail if it traverses public/uploads.
+# - data: so Prisma can create the SQLite file if any page is evaluated
+#   at build time (even with force-dynamic, Next.js may still collect
+#   page data). Without this dir, Prisma errors with "directory does not
+#   exist" and the build hangs at "Creating an optimized production build".
 # NOTE: in production, uploaded images are served via the dedicated API
 # route /api/uploads/[...path] (not as static files from public/), so
 # the upload directory can live OUTSIDE public/ — it is configured via
 # the UPLOAD_DIR env var (set below to /app/public/uploads/product,
 # matching the Coolify persistent volume mount — singular "product").
-RUN mkdir -p /app/public/uploads/product && \
-    chmod -R 777 /app/public/uploads
+RUN mkdir -p /app/public/uploads/product /app/data && \
+    chmod -R 777 /app/public/uploads /app/data
 RUN bun run build
 
 # Create the persistent data + uploads directories with permissive
