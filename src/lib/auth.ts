@@ -14,10 +14,10 @@ import { db } from "@/lib/db";
  */
 export const authOptions: NextAuthOptions = {
   // Trust the incoming request's Host header. Required when running behind a
-  // reverse proxy / gateway (e.g. the preview panel) so NextAuth uses the
-  // public URL the browser sees, not the internal `localhost:3000`.
-  // Without this, the session cookie's domain/SameSite check fails and the
-  // user sees "Une erreur est survenue. Veuillez réessayer." on every login.
+  // reverse proxy / gateway (e.g. the preview panel, Coolify/Caddy) so
+  // NextAuth uses the public URL the browser sees, not the internal
+  // `localhost:3000`. Without this, the session cookie's domain/SameSite
+  // check fails and the user sees "Une erreur est survenue." on every login.
   trustHost: true,
   session: {
     strategy: "jwt",
@@ -26,6 +26,44 @@ export const authOptions: NextAuthOptions = {
   pages: {
     signIn: "/login",
     error: "/login",
+  },
+  // ── Cookie configuration for reverse-proxy environments ──────────────
+  // NextAuth v4 auto-selects the `__Secure-` cookie prefix when it detects
+  // HTTPS (via X-Forwarded-Proto). Behind Coolify's Caddy this is usually
+  // correct, but if the proxy inconsistently forwards the proto header the
+  // cookie name can mismatch between set (POST callback) and read (GET
+  // session), causing the login to silently fail.
+  //
+  // We pin the cookie names WITHOUT the `__Secure-` prefix so they are
+  // identical regardless of proto detection. The `secure` flag is still
+  // set in production so the cookie is only ever transmitted over HTTPS.
+  cookies: {
+    sessionToken: {
+      name: "next-auth.session-token",
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+      },
+    },
+    callbackUrl: {
+      name: "next-auth.callback-url",
+      options: {
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+      },
+    },
+    csrfToken: {
+      name: "next-auth.csrf-token",
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+      },
+    },
   },
   providers: [
     CredentialsProvider({

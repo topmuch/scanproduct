@@ -24,8 +24,20 @@ const ERROR_MESSAGES: Record<string, string> = {
   // the res.error value when authorize() throws new Error("suspended").
   suspended: "Votre compte a été suspendu. Contactez le support.",
   CredentialsSignin: "Email ou mot de passe incorrect.",
+  // Configuration = NEXTAUTH_SECRET missing or cookie/URL mismatch behind a
+  // reverse proxy. Happens on Coolify when env vars aren't set correctly.
+  Configuration:
+    "Erreur de configuration serveur. Contactez l'administrateur.",
+  // OAuthCallback / OAuthCreateAccount etc. — surface a clear message.
+  OAuthCallback: "La connexion via le fournisseur a échoué. Réessayez.",
   default: "Une erreur est survenue. Veuillez réessayer.",
 };
+
+// Message shown when the fetch itself fails (server unreachable / network
+// down). This is the most common cause of the generic error: the dev server
+// or the Coolify container is not running.
+const NETWORK_ERROR =
+  "Serveur indisponible. Le serveur est peut-être en cours de redémarrage — réessayez dans quelques secondes.";
 
 function LoginForm() {
   const router = useRouter();
@@ -49,11 +61,22 @@ function LoginForm() {
     setLoading(true);
     setError(null);
 
-    const res = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-    });
+    // signIn() can throw if the server is unreachable (dev server down,
+    // Coolify container restarting, network issue). We catch that and show
+    // a clear network-level message instead of the generic "Une erreur est
+    // survenue" which leaves the user guessing.
+    let res: { error?: string; status?: number; ok?: boolean } | undefined;
+    try {
+      res = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
+    } catch {
+      setError(NETWORK_ERROR);
+      setLoading(false);
+      return;
+    }
 
     if (res?.error) {
       setError(ERROR_MESSAGES[res.error] ?? ERROR_MESSAGES.default);
