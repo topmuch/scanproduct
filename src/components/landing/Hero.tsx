@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import Link from "next/link";
 import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -14,6 +14,18 @@ import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
  *   2. Right below the carousel, a centered text block explaining what the
  *      site is for, plus the primary CTA button.
  *
+ * Image strategy:
+ *   - Each slide renders BOTH a <picture> with a WebP source (≈110-145 KB,
+ *     92-94% smaller than the original PNG) and a PNG fallback. Modern
+ *     browsers load WebP; legacy ones fall back to PNG.
+ *
+ * Transition strategy (no white gap):
+ *   - All slides are stacked in the DOM at all times (no AnimatePresence
+ *     enter/exit). The active slide has opacity:1 + z-index:2; inactive
+ *     slides have opacity:0 + z-index:1. Both layers fade simultaneously,
+ *     so the crossfade is seamless — there is NEVER a moment where the
+ *     container shows its background.
+ *
  * Accessibility:
  *   - Each slide has a descriptive alt text.
  *   - Arrows and dots are keyboard-focusable buttons with aria-labels.
@@ -21,30 +33,34 @@ import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
  */
 
 type Slide = {
-  src: string;
+  webpSrc: string;
+  pngSrc: string;
   alt: string;
 };
 
 const SLIDES: Slide[] = [
   {
-    src: "/hero-slide-1.png",
+    webpSrc: "/hero-slide-1.webp",
+    pngSrc: "/hero-slide-1-opt.png",
     alt: "VerifScan — scan d'une bouteille de jus d'orange 100% naturel avec un smartphone, affichant le passeport numérique du produit : origine Sénégal, producteur Vergers de Casamance, authenticité vérifiée.",
   },
   {
-    src: "/hero-slide-2.png",
+    webpSrc: "/hero-slide-2.webp",
+    pngSrc: "/hero-slide-2-opt.png",
     alt: "VerifScan — Authenticité vérifiée, confiance renforcée. Un scan garantit l'authenticité de vos produits et protège votre marque contre la contrefaçon.",
   },
   {
-    src: "/hero-slide-3.png",
+    webpSrc: "/hero-slide-3.webp",
+    pngSrc: "/hero-slide-3-opt.png",
     alt: "VerifScan — scan d'un QR code sur un avocat pour tracer des fruits et légumes frais, avec sur l'écran du téléphone : authenticité garantie, origine vérifiée, traçabilité complète et confiance renforcée.",
   },
 ];
 
 const AUTOPLAY_MS = 6000;
+const FADE_DURATION = 0.6; // seconds — kept short so crossfade feels snappy
 
 export function Hero() {
   const [index, setIndex] = useState(0);
-  const [direction, setDirection] = useState(1);
   const [paused, setPaused] = useState(false);
   const reduceMotionRef = useRef(false);
 
@@ -59,27 +75,16 @@ export function Hero() {
     setIndex((prev) => {
       const total = SLIDES.length;
       const clamped = ((next % total) + total) % total;
-      setDirection(clamped >= prev ? 1 : -1);
       return clamped;
     });
   }, []);
 
   const next = useCallback(() => {
-    setIndex((prev) => {
-      const total = SLIDES.length;
-      const n = (prev + 1) % total;
-      setDirection(1);
-      return n;
-    });
+    setIndex((prev) => (prev + 1) % SLIDES.length);
   }, []);
 
   const prev = useCallback(() => {
-    setIndex((p) => {
-      const total = SLIDES.length;
-      const n = (p - 1 + total) % total;
-      setDirection(-1);
-      return n;
-    });
+    setIndex((p) => (p - 1 + SLIDES.length) % SLIDES.length);
   }, []);
 
   // Autoplay with pause-on-hover.
@@ -119,27 +124,36 @@ export function Hero() {
         role="region"
         aria-label="Carrousel d'images, utilisez les flèches gauche et droite pour naviguer"
       >
-        {/* Slides */}
-        <div className="relative aspect-[1956/804] w-full sm:aspect-[1956/804]">
-          <AnimatePresence initial={false} custom={direction} mode="popLayout">
-            <motion.img
-              key={index}
-              src={SLIDES[index].src}
-              alt={SLIDES[index].alt}
-              custom={direction}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
-              className="absolute inset-0 h-full w-full select-none object-cover"
-              draggable={false}
-              aria-hidden={false}
-            />
-          </AnimatePresence>
+        {/* Slides — all stacked, crossfade via opacity (no exit/enter gap) */}
+        <div className="relative aspect-[1956/804] w-full bg-[#0a0a0a]">
+          {SLIDES.map((slide, i) => {
+            const isActive = i === index;
+            return (
+              <motion.picture
+                key={i}
+                initial={false}
+                animate={{ opacity: isActive ? 1 : 0 }}
+                transition={{ duration: FADE_DURATION, ease: [0.4, 0, 0.2, 1] }}
+                style={{ zIndex: isActive ? 2 : 1 }}
+                className="absolute inset-0 h-full w-full select-none"
+                aria-hidden={!isActive}
+              >
+                <source srcSet={slide.webpSrc} type="image/webp" />
+                <img
+                  src={slide.pngSrc}
+                  alt={isActive ? slide.alt : ""}
+                  className="h-full w-full object-cover"
+                  draggable={false}
+                  loading={i === 0 ? "eager" : "lazy"}
+                  decoding="async"
+                />
+              </motion.picture>
+            );
+          })}
 
           {/* Subtle gradient overlay for legibility of controls */}
           <div
-            className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/15 via-transparent to-transparent"
+            className="pointer-events-none absolute inset-0 z-[3] bg-gradient-to-t from-black/15 via-transparent to-transparent"
             aria-hidden
           />
         </div>

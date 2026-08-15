@@ -1,14 +1,38 @@
 "use client";
 
+// ============================================================================
+// DynamicProductForm — Guided 6-step wizard (V3 Phase 4 refactor)
+// ============================================================================
+// Replaces the previous 4-tab free-form interface with a linear onboarding
+// wizard that the user cannot skip through. The wizard orients the user
+// based on their business type (vendor type) and adapts the form:
+//
+//   Step 1 — Type de commerce (vendor type onboarding)
+//   Step 2 — Catégorie de produit (10 category cards)
+//   Step 3 — Informations générales (name / brand / weight / image / status)
+//   Step 4 — Spécificités produit (dynamic category fields, grouped)
+//   Step 5 — Export & Certifications (conditional — only if isExport)
+//   Step 6 — Récapitulatif (summary before submit)
+//
+// Validation blocks forward navigation. Steps 1 & 2 auto-advance after a
+// 400ms delay on selection. Edit mode skips Step 1 and pre-fills everything.
+//
+// Public API unchanged: same `DynamicProductInitialData` type, same `onClose`
+// prop, same POST/PATCH contract. The `vendorType` field is sent in the body
+// but ignored by the API.
+// ============================================================================
+
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
+  AlertTriangle,
   Check,
   ChevronDown,
   Globe2,
   Image as ImageIcon,
   Info,
   Loader2,
+  Pencil,
   Plus,
   Sticker,
   Tag,
@@ -34,7 +58,7 @@ import {
 } from "./ui";
 
 // ============================================================================
-// Types
+// Types — public API (unchanged from V3 Phase 3)
 // ============================================================================
 
 export type DynamicProductInitialData = {
@@ -57,7 +81,15 @@ type DynamicProductFormProps = {
   onClose: () => void;
 };
 
-type TabId = "general" | "category" | "export" | "certifications";
+type VendorType = "producteur" | "transformateur" | "exportateur" | "distributeur";
+
+type StepId =
+  | "vendorType"
+  | "category"
+  | "general"
+  | "specifics"
+  | "export"
+  | "summary";
 
 type CertificationRow = {
   name: string;
@@ -66,28 +98,75 @@ type CertificationRow = {
   fileUrl: string;
 };
 
+type StepMeta = {
+  id: StepId;
+  label: string;
+  shortLabel: string;
+};
+
 // ============================================================================
-// Style constants — match the existing fabricant dashboard palette.
-// Primary accent: emerald #10B981 (differentiated from the legacy #2563EB
-// blue used for input focus rings, which we keep for backward-compat with
-// the rest of the dashboard).
+// Style constants — emerald #10B981 is the primary accent for V3 wizard
+// elements. Legacy #2563EB blue is kept for input focus rings for
+// backward-compat with the rest of the fabricant dashboard.
 // ============================================================================
 
 const EMERALD = "#10B981";
 const EMERALD_DARK = "#047857";
+const EMERALD_SOFT = "#ECFDF5";
 
 const inputClass =
   "w-full rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-[14px] text-[#111827] placeholder:text-[#9CA3AF] focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 transition";
 
-const TABS: { id: TabId; label: string; icon: typeof Tag }[] = [
-  { id: "general", label: "Informations générales", icon: Info },
-  { id: "category", label: "Spécificités produit", icon: Tag },
-  { id: "export", label: "Export", icon: Globe2 },
-  { id: "certifications", label: "Certifications", icon: Sticker },
+const VENDOR_TYPES: {
+  id: VendorType;
+  emoji: string;
+  title: string;
+  description: string;
+}[] = [
+  {
+    id: "producteur",
+    emoji: "🌱",
+    title: "Producteur local",
+    description: "Je produis et vends localement (marchés, boutiques)",
+  },
+  {
+    id: "transformateur",
+    emoji: "🏭",
+    title: "Transformateur artisanal",
+    description: "Je transforme des matières premières (jus, confitures, épices)",
+  },
+  {
+    id: "exportateur",
+    emoji: "🚢",
+    title: "Exportateur",
+    description: "Je vends à l'international (export UE, USA, Asie)",
+  },
+  {
+    id: "distributeur",
+    emoji: "🛒",
+    title: "Distributeur / Grossiste",
+    description: "Je distribue des produits de plusieurs fabricants",
+  },
 ];
 
+const ALL_STEPS: StepMeta[] = [
+  { id: "vendorType", label: "Type de commerce", shortLabel: "Type" },
+  { id: "category", label: "Catégorie de produit", shortLabel: "Catégorie" },
+  { id: "general", label: "Informations générales", shortLabel: "Général" },
+  { id: "specifics", label: "Spécificités produit", shortLabel: "Spécificités" },
+  { id: "export", label: "Export & Certifications", shortLabel: "Export" },
+  { id: "summary", label: "Récapitulatif", shortLabel: "Résumé" },
+];
+
+// Framer-motion variants for direction-aware step transitions.
+const stepVariants = {
+  enter: (dir: number) => ({ x: dir > 0 ? 48 : -48, opacity: 0 }),
+  center: { x: 0, opacity: 1 },
+  exit: (dir: number) => ({ x: dir > 0 ? -48 : 48, opacity: 0 }),
+};
+
 // ============================================================================
-// Field label helper
+// Field label + error helpers
 // ============================================================================
 
 function FieldLabel({
@@ -121,7 +200,7 @@ function FieldError({ message }: { message?: string }) {
 
 // ============================================================================
 // DynamicField — renders a single FieldConfig input.
-// Supports all 8 documented field types.
+// Supports all 8 documented field types. Reused from V3 Phase 3.
 // ============================================================================
 
 function DynamicField({
@@ -132,7 +211,6 @@ function DynamicField({
   fieldId,
 }: {
   field: FieldConfig;
-  // Stored value: string | number | boolean | File | null
   value: unknown;
   onChange: (v: unknown) => void;
   error?: string;
@@ -307,9 +385,8 @@ function DynamicField({
       );
 
     case "file":
-      // TODO(iteration 2): wire to /api/upload once we have a docs upload
-      // endpoint. For now, accept the File object in state only — actual
-      // persistence happens later.
+      // Accepts the File object in state only — actual persistence happens
+      // via /api/upload in iteration 2 (see stripFiles() below).
       return (
         <div>
           {label}
@@ -358,7 +435,7 @@ function DynamicField({
 }
 
 // ============================================================================
-// Category card
+// Category card — reused from V3 Phase 3
 // ============================================================================
 
 function CategoryCard({
@@ -409,8 +486,51 @@ function CategoryCard({
 }
 
 // ============================================================================
-// Status radio (actif / brouillon / masque) — mirrors the existing
-// ProductModal's StatusRadio but uses emerald for the "actif" selected state.
+// Vendor type card — Step 1 selection card
+// ============================================================================
+
+function VendorTypeCard({
+  vt,
+  selected,
+  onSelect,
+}: {
+  vt: (typeof VENDOR_TYPES)[number];
+  selected: boolean;
+  onSelect: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className={`group relative flex flex-col items-start gap-2 rounded-xl border-2 p-5 text-left transition-all ${
+        selected
+          ? "border-[#10B981] bg-[#ECFDF5] shadow-sm"
+          : "border-[#E5E7EB] bg-white hover:border-[#10B981]/40 hover:bg-[#F9FAFB]"
+      }`}
+    >
+      <div className="flex w-full items-start justify-between">
+        <span className="text-[32px] leading-none">{vt.emoji}</span>
+        {selected ? (
+          <span
+            className="inline-flex h-6 w-6 items-center justify-center rounded-full text-white"
+            style={{ backgroundColor: EMERALD }}
+          >
+            <Check size={14} />
+          </span>
+        ) : null}
+      </div>
+      <h4 className="mt-1 text-[15px] font-semibold text-[#111827]">
+        {vt.title}
+      </h4>
+      <p className="text-[12px] leading-snug text-[#6B7280]">
+        {vt.description}
+      </p>
+    </button>
+  );
+}
+
+// ============================================================================
+// Status radio (actif / brouillon / masque) — reused from V3 Phase 3
 // ============================================================================
 
 function StatusRadio({
@@ -451,7 +571,194 @@ function StatusRadio({
 }
 
 // ============================================================================
-// Main component
+// Stepper — horizontal progress indicator at the top of the modal
+// ============================================================================
+
+function Stepper({
+  steps,
+  currentIdx,
+}: {
+  steps: StepMeta[];
+  currentIdx: number;
+}) {
+  return (
+    <div className="border-b border-[#F3F4F6] bg-[#F9FAFB] px-4 py-3 sm:px-6">
+      {/* Desktop stepper — full horizontal with labels */}
+      <div className="hidden items-start sm:flex">
+        {steps.map((step, idx) => {
+          const completed = idx < currentIdx;
+          const active = idx === currentIdx;
+          return (
+            <div key={step.id} className="flex flex-1 items-start last:flex-none">
+              <div className="flex w-20 flex-col items-center gap-1.5">
+                <div
+                  className="flex h-8 w-8 items-center justify-center rounded-full text-[13px] font-semibold transition-all"
+                  style={{
+                    backgroundColor: active
+                      ? EMERALD
+                      : completed
+                        ? EMERALD_SOFT
+                        : "#F3F4F6",
+                    color: active
+                      ? "white"
+                      : completed
+                        ? EMERALD_DARK
+                        : "#9CA3AF",
+                    border: active
+                      ? "none"
+                      : `2px solid ${completed ? EMERALD : "#E5E7EB"}`,
+                  }}
+                >
+                  {completed ? <Check size={14} /> : idx + 1}
+                </div>
+                <span
+                  className="text-center text-[11px] font-medium leading-tight"
+                  style={{
+                    color: active
+                      ? EMERALD_DARK
+                      : completed
+                        ? "#374151"
+                        : "#9CA3AF",
+                    fontWeight: active ? 600 : 500,
+                  }}
+                >
+                  {step.shortLabel}
+                </span>
+              </div>
+              {idx < steps.length - 1 && (
+                <div
+                  className="mt-4 h-0.5 flex-1 rounded-full transition-colors"
+                  style={{
+                    backgroundColor: idx < currentIdx ? EMERALD : "#E5E7EB",
+                  }}
+                />
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Mobile stepper — compact "Étape X sur Y" + progress bar */}
+      <div className="sm:hidden">
+        <div className="mb-1.5 flex items-center justify-between">
+          <span className="text-[12px] font-semibold text-[#047857]">
+            Étape {currentIdx + 1} sur {steps.length}
+          </span>
+          <span className="truncate pl-2 text-[12px] text-[#6B7280]">
+            {steps[currentIdx]?.label}
+          </span>
+        </div>
+        <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#E5E7EB]">
+          <div
+            className="h-full rounded-full transition-all duration-300"
+            style={{
+              width: `${((currentIdx + 1) / steps.length) * 100}%`,
+              backgroundColor: EMERALD,
+            }}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// Confirm dialog — used when an "Exportateur" tries to turn off the export
+// toggle. Prevents accidental data loss.
+// ============================================================================
+
+function ConfirmDialog({
+  title,
+  message,
+  confirmLabel,
+  cancelLabel,
+  onConfirm,
+  onCancel,
+}: {
+  title: string;
+  message: string;
+  confirmLabel: string;
+  cancelLabel: string;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onClick={onCancel}
+      className="absolute inset-0 z-10 flex items-center justify-center bg-black/40 p-4"
+    >
+      <motion.div
+        initial={{ scale: 0.95, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.95, opacity: 0 }}
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-sm rounded-xl bg-white p-5 shadow-2xl"
+      >
+        <div className="mb-3 flex items-start gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#FEF3C7]">
+            <AlertTriangle size={20} className="text-[#92400E]" />
+          </div>
+          <div>
+            <h3 className="text-[15px] font-semibold text-[#111827]">
+              {title}
+            </h3>
+            <p className="mt-1 text-[13px] leading-snug text-[#6B7280]">
+              {message}
+            </p>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <OutlineButton onClick={onCancel} className="flex-1">
+            {cancelLabel}
+          </OutlineButton>
+          <button
+            type="button"
+            onClick={onConfirm}
+            className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-[#EF4444] px-4 py-2.5 text-[14px] font-semibold text-white transition-colors hover:bg-[#DC2626]"
+          >
+            {confirmLabel}
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+// ============================================================================
+// Summary value formatter — renders a FieldConfig value as a display string
+// ============================================================================
+
+function formatFieldValue(field: FieldConfig, value: unknown): string {
+  if (value === undefined || value === null || value === "") return "—";
+  if (field.type === "boolean") return value ? "Oui" : "Non";
+  if (field.type === "checkbox") {
+    if (!Array.isArray(value) || value.length === 0) return "—";
+    const labels = (value as string[]).map((v) => {
+      const opt = field.options?.find((o) => o.value === String(v));
+      return opt?.label ?? String(v);
+    });
+    return labels.join(", ");
+  }
+  if (field.type === "select") {
+    const opt = field.options?.find((o) => o.value === String(value));
+    return opt?.label ?? String(value);
+  }
+  if (field.type === "file") {
+    if (value instanceof File) return value.name;
+    if (typeof value === "string" && value) return "Document joint";
+    return "—";
+  }
+  if (field.type === "number") {
+    return field.unit ? `${value} ${field.unit}` : String(value);
+  }
+  return String(value);
+}
+
+// ============================================================================
+// Main component — guided 6-step wizard
 // ============================================================================
 
 export function DynamicProductForm({
@@ -464,7 +771,12 @@ export function DynamicProductForm({
   // ── Active categories (from product-schemas lib) ──────────────────
   const activeCategories = useMemo(() => getActiveCategories(), []);
 
-  // ── General fields ────────────────────────────────────────────────
+  // ── Vendor type (Step 1) — not persisted, only drives the wizard UX ──
+  const [vendorType, setVendorType] = useState<VendorType | undefined>(
+    undefined,
+  );
+
+  // ── General fields (Step 3) ───────────────────────────────────────
   const [name, setName] = useState(initialData?.name ?? "");
   const [brand, setBrand] = useState(
     initialData?.brand ?? data.profile.companyName,
@@ -476,7 +788,7 @@ export function DynamicProductForm({
     initialData?.status ?? "actif",
   );
 
-  // ── Dynamic category fields ──────────────────────────────────────
+  // ── Dynamic category fields (Step 4) ──────────────────────────────
   const [categoryId, setCategoryId] = useState<string>(initialData?.categoryId ?? "");
   const [isExport, setIsExport] = useState<boolean>(initialData?.isExport ?? false);
   const [categoryData, setCategoryData] = useState<Record<string, unknown>>(
@@ -486,7 +798,7 @@ export function DynamicProductForm({
     initialData?.exportData ?? {},
   );
 
-  // ── Certifications ───────────────────────────────────────────────
+  // ── Certifications (Step 5) ───────────────────────────────────────
   const [certifications, setCertifications] = useState<CertificationRow[]>(
     initialData?.certifications && initialData.certifications.length > 0
       ? initialData.certifications.map((c) => ({
@@ -498,21 +810,46 @@ export function DynamicProductForm({
       : [{ name: "", issuer: "", validUntil: "", fileUrl: "" }],
   );
 
-  // ── Tab state ────────────────────────────────────────────────────
-  const [activeTab, setActiveTab] = useState<TabId>("general");
-  const [submitting, setSubmitting] = useState(false);
+  // ── Wizard state ──────────────────────────────────────────────────
+  // showExportStep: true in edit mode (always accessible); in create mode,
+  // set by handleVendorTypeSelect based on the chosen vendor type.
+  const [showExportStep, setShowExportStep] = useState<boolean>(isEdit);
 
-  // ── Validation errors ────────────────────────────────────────────
+  // Compute visible steps based on isEdit + showExportStep.
+  const visibleSteps = useMemo<StepMeta[]>(() => {
+    const out: StepMeta[] = [];
+    for (const s of ALL_STEPS) {
+      if (s.id === "vendorType" && isEdit) continue;
+      if (s.id === "export" && !showExportStep) continue;
+      out.push(s);
+    }
+    return out;
+  }, [isEdit, showExportStep]);
+
+  // Starting step: in edit mode, skip vendorType (Step 1). If categoryId
+  // is already set, start at Step 3 (general); otherwise Step 2 (category).
+  const startStepIdx = useMemo(() => {
+    if (isEdit) {
+      return initialData?.categoryId ? 1 : 0;
+    }
+    return 0;
+  }, [isEdit, initialData?.categoryId]);
+
+  const [currentStep, setCurrentStep] = useState(startStepIdx);
+  const [direction, setDirection] = useState<1 | -1>(1);
+  const [submitting, setSubmitting] = useState(false);
+  const [confirmExportOff, setConfirmExportOff] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const errorRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const autoAdvanceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // ── Derived schema data ───────────────────────────────────────────
   const selectedSchema = useMemo(
     () => (categoryId ? getProductSchema(categoryId) : undefined),
     [categoryId],
   );
 
-  // Build the field lists (memoized) so we can render grouped sections.
-  // Note: ProductSchema.id is the slug (e.g. "fruits-legumes").
   const categoryFields = useMemo(
     () => (selectedSchema ? getCategoryFields(selectedSchema.id, false) : []),
     [selectedSchema],
@@ -522,27 +859,29 @@ export function DynamicProductForm({
     [selectedSchema],
   );
 
-  // Non-export fields grouped by `group` (e.g. "Production", "Qualité").
   const groupedCategoryFields = useMemo(
     () => groupFieldsByGroup(categoryFields),
     [categoryFields],
   );
 
-  // Export fields — only those whose `group` includes "Export" OR with
-  // `exportRequired === true`. These are rendered only when isExport is on.
-  const filteredExportFields = useMemo(() => {
-    return exportFields.filter(
-      (f) =>
-        (f.group && f.group.toLowerCase().includes("export")) ||
-        f.exportRequired === true,
-    );
-  }, [exportFields]);
+  const filteredExportFields = useMemo(
+    () =>
+      exportFields.filter(
+        (f) =>
+          (f.group && f.group.toLowerCase().includes("export")) ||
+          f.exportRequired === true,
+      ),
+    [exportFields],
+  );
   const groupedExportFields = useMemo(
     () => groupFieldsByGroup(filteredExportFields),
     [filteredExportFields],
   );
 
-  // ── Helpers for categoryData / exportData mutations ──────────────
+  const currentStepId: StepId = visibleSteps[currentStep]?.id ?? "vendorType";
+  const isLastStep = currentStepId === "summary";
+
+  // ── Field mutation helper ─────────────────────────────────────────
   function setField(
     target: "categoryData" | "exportData",
     name: string,
@@ -555,62 +894,202 @@ export function DynamicProductForm({
     }
   }
 
-  // ── Validation ───────────────────────────────────────────────────
-  function validate(): Record<string, string> {
+  // ── Step validation — per-step checks ─────────────────────────────
+  function validateStep(stepId: StepId): Record<string, string> {
     const errs: Record<string, string> = {};
-    if (!name.trim()) errs.name = "Le nom du produit est requis.";
-    else if (name.trim().length < 3) errs.name = "Le nom doit faire au moins 3 caractères.";
-
-    // Required category fields
-    for (const f of categoryFields) {
-      if (!f.required) continue;
-      const v = categoryData[f.name];
-      if (v === undefined || v === null || v === "" ||
-          (Array.isArray(v) && v.length === 0)) {
-        errs[`cat_${f.name}`] = `${f.label} est requis.`;
-      }
+    if (stepId === "vendorType") {
+      if (!vendorType) errs.vendorType = "Veuillez sélectionner votre type de commerce.";
     }
-
-    // Required export fields (only when isExport is on)
-    if (isExport) {
-      for (const f of filteredExportFields) {
-        if (!f.required && !f.exportRequired) continue;
-        const v = exportData[f.name];
-        if (v === undefined || v === null || v === "" ||
-            (Array.isArray(v) && v.length === 0)) {
-          errs[`exp_${f.name}`] = `${f.label} est requis.`;
+    if (stepId === "category") {
+      if (!categoryId) errs.categoryId = "Veuillez sélectionner une catégorie.";
+    }
+    if (stepId === "general") {
+      if (!name.trim()) errs.name = "Le nom du produit est requis.";
+      else if (name.trim().length < 3) errs.name = "Le nom doit faire au moins 3 caractères.";
+    }
+    if (stepId === "specifics") {
+      for (const f of categoryFields) {
+        if (!f.required) continue;
+        const v = categoryData[f.name];
+        if (
+          v === undefined ||
+          v === null ||
+          v === "" ||
+          (Array.isArray(v) && v.length === 0)
+        ) {
+          errs[`cat_${f.name}`] = `${f.label} est requis.`;
         }
       }
     }
-
-    // Certifications: every row that has a name must have all required bits
-    // (we allow trailing empty rows for UX).
-    certifications.forEach((c, idx) => {
-      if (!c.name.trim() && idx === certifications.length - 1) return;
-      if (!c.name.trim()) errs[`cert_${idx}`] = "Le nom de la certification est requis.";
-    });
-
+    if (stepId === "export" && isExport) {
+      for (const f of filteredExportFields) {
+        if (!f.required && !f.exportRequired) continue;
+        const v = exportData[f.name];
+        if (
+          v === undefined ||
+          v === null ||
+          v === "" ||
+          (Array.isArray(v) && v.length === 0)
+        ) {
+          errs[`exp_${f.name}`] = `${f.label} est requis.`;
+        }
+      }
+      certifications.forEach((c, idx) => {
+        // Allow trailing empty row for UX.
+        if (!c.name.trim() && idx === certifications.length - 1) return;
+        if (!c.name.trim()) errs[`cert_${idx}`] = "Le nom de la certification est requis.";
+      });
+    }
     return errs;
   }
 
-  // ── Submit ───────────────────────────────────────────────────────
-  async function handleSubmit() {
-    const errs = validate();
-    setErrors(errs);
+  // ── Navigation ────────────────────────────────────────────────────
+  function goToStep(targetIdx: number) {
+    const clamped = Math.max(0, Math.min(visibleSteps.length - 1, targetIdx));
+    setDirection(clamped > currentStep ? 1 : -1);
+    setCurrentStep(clamped);
+  }
+
+  function goToStepById(id: StepId) {
+    const idx = visibleSteps.findIndex((s) => s.id === id);
+    if (idx !== -1) goToStep(idx);
+  }
+
+  function next() {
+    const errs = validateStep(currentStepId);
     if (Object.keys(errs).length > 0) {
-      // Scroll to the first error.
+      setErrors(errs);
+      // Scroll to first error.
       const firstKey = Object.keys(errs)[0];
       const ref = errorRefs.current[firstKey];
       if (ref) {
         ref.scrollIntoView({ behavior: "smooth", block: "center" });
       } else {
-        // No ref registered (e.g. name field) — switch to the right tab.
-        if (firstKey === "name") setActiveTab("general");
-        else if (firstKey.startsWith("cat_")) setActiveTab("category");
-        else if (firstKey.startsWith("exp_")) setActiveTab("export");
-        else if (firstKey.startsWith("cert_")) setActiveTab("certifications");
+        bodyRef.current?.scrollTo({ top: 0, behavior: "smooth" });
       }
-      toast.error("Veuillez corriger les champs en rouge.");
+      toast.error("Veuillez remplir les champs obligatoires.");
+      return;
+    }
+    setErrors({});
+    if (currentStep < visibleSteps.length - 1) {
+      goToStep(currentStep + 1);
+    }
+  }
+
+  function prev() {
+    setErrors({});
+    if (currentStep > 0) {
+      goToStep(currentStep - 1);
+    }
+  }
+
+  // ── Auto-advance on Step 1 (vendorType) and Step 2 (category) ─────
+  // Selecting a card auto-advances after a 400ms delay (with the manual
+  // "Continuer" button still available for keyboard users). We target the
+  // next step by id (not currentStep+1) so the closure doesn't depend on
+  // currentStep — only on the selection state that triggers the advance.
+  useEffect(() => {
+    if (autoAdvanceTimerRef.current) {
+      clearTimeout(autoAdvanceTimerRef.current);
+      autoAdvanceTimerRef.current = null;
+    }
+    if (currentStepId === "vendorType" && vendorType) {
+      autoAdvanceTimerRef.current = setTimeout(() => {
+        setErrors({});
+        goToStepById("category");
+      }, 400);
+    } else if (currentStepId === "category" && categoryId) {
+      autoAdvanceTimerRef.current = setTimeout(() => {
+        setErrors({});
+        goToStepById("general");
+      }, 400);
+    }
+    return () => {
+      if (autoAdvanceTimerRef.current) {
+        clearTimeout(autoAdvanceTimerRef.current);
+        autoAdvanceTimerRef.current = null;
+      }
+    };
+  }, [vendorType, categoryId, currentStepId]);
+
+  // ── Scroll body to top on step change ─────────────────────────────
+  useEffect(() => {
+    bodyRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+  }, [currentStep]);
+
+  // ── Vendor type selection — sets vendorType + isExport/showExportStep defaults
+  function handleVendorTypeSelect(vt: VendorType) {
+    setVendorType(vt);
+    // Drive export step visibility + isExport default based on vendor type.
+    const showExport = vt === "exportateur" || vt === "transformateur";
+    setShowExportStep(showExport);
+    setIsExport(vt === "exportateur");
+  }
+
+  // ── Category selection — resets dynamic data when category changes ─
+  function handleCategorySelect(schema: ProductSchema) {
+    if (categoryId !== schema.id) {
+      setCategoryId(schema.id);
+      setCategoryData({});
+      setExportData({});
+    }
+    if (schema.phase > 1) {
+      toast.info(
+        `Catégorie « ${schema.name} » en phase ${schema.phase} — disponible prochainement.`,
+      );
+    }
+  }
+
+  // ── Export toggle handler — shows confirm dialog for "Exportateur" ─
+  function handleExportToggle(newValue: boolean) {
+    if (!newValue && vendorType === "exportateur" && isExport) {
+      setConfirmExportOff(true);
+      return;
+    }
+    setIsExport(newValue);
+    if (!newValue) setExportData({});
+  }
+
+  // ── "Activer l'export" from summary — flips showExportStep + isExport ─
+  function handleEnableExportFromSummary() {
+    if (!showExportStep) {
+      // After update, export step will be inserted before summary (at the
+      // current summary index). Compute the new index synchronously.
+      const newExportIdx = visibleSteps.length - 1;
+      setShowExportStep(true);
+      setIsExport(true);
+      setDirection(1);
+      setCurrentStep(newExportIdx);
+    } else {
+      setIsExport(true);
+      goToStepById("export");
+    }
+  }
+
+  // ── Submit ───────────────────────────────────────────────────────
+  async function handleSubmit() {
+    // Final validation across all visible steps.
+    const allErrs: Record<string, string> = {};
+    for (const step of visibleSteps) {
+      Object.assign(allErrs, validateStep(step.id));
+    }
+    if (Object.keys(allErrs).length > 0) {
+      setErrors(allErrs);
+      // Jump to the first step that has an error.
+      const firstErrKey = Object.keys(allErrs)[0];
+      const prefix = firstErrKey.startsWith("cat_")
+        ? "specifics"
+        : firstErrKey.startsWith("exp_") || firstErrKey.startsWith("cert_")
+          ? "export"
+          : firstErrKey === "name"
+            ? "general"
+            : firstErrKey === "categoryId"
+              ? "category"
+              : firstErrKey === "vendorType"
+                ? "vendorType"
+                : "";
+      if (prefix) goToStepById(prefix as StepId);
+      toast.error("Veuillez remplir les champs obligatoires.");
       return;
     }
 
@@ -626,8 +1105,6 @@ export function DynamicProductForm({
       const out: Record<string, unknown> = {};
       for (const [k, v] of Object.entries(obj)) {
         if (v instanceof File) {
-          // TODO(iteration 2): upload the File to /api/upload and replace
-          // the value with the returned URL.
           out[k] = null;
         } else {
           out[k] = v;
@@ -636,13 +1113,13 @@ export function DynamicProductForm({
       return out;
     };
 
-    const payload = {
+    const payload: Record<string, unknown> = {
       name: name.trim(),
       brand: brand.trim() || data.profile.companyName,
       weight: weight.trim(),
       description: description.trim(),
       imageUrl,
-      // status mapping: actif/brouillon/masque → isPublic + status
+      // Status mapping: actif/brouillon/masque → isPublic + status
       isPublic: status !== "masque",
       status: status === "brouillon" ? "ARCHIVED" : "ACTIVE",
       // V3 Phase 3
@@ -651,12 +1128,16 @@ export function DynamicProductForm({
       categoryData: stripFiles(categoryData),
       exportData: isExport ? stripFiles(exportData) : null,
       certifications: cleanCerts.length > 0 ? cleanCerts : null,
+      // V3 Phase 4 — vendorType is sent but ignored by the API (kept for
+      // future analytics / personalization).
+      vendorType: vendorType ?? undefined,
     };
 
     try {
-      const url = isEdit && initialData?.id
-        ? `/api/products/${initialData.id}`
-        : "/api/products";
+      const url =
+        isEdit && initialData?.id
+          ? `/api/products/${initialData.id}`
+          : "/api/products";
       const method = isEdit ? "PATCH" : "POST";
       const res = await fetch(url, {
         method,
@@ -684,381 +1165,348 @@ export function DynamicProductForm({
   // ESC key closes the modal.
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape" && !confirmExportOff) onClose();
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  }, [onClose, confirmExportOff]);
 
-  // ── Render ───────────────────────────────────────────────────────
-  const visibleTabs = TABS.filter((t) => {
-    if (t.id === "export") return Boolean(categoryId);
-    return true;
-  });
+  // ── Clean certifications for summary display ──────────────────────
+  const cleanCerts = useMemo(
+    () => certifications.filter((c) => c.name.trim()),
+    [certifications],
+  );
 
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      onClick={onClose}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-    >
-      <motion.div
-        initial={{ scale: 0.96, opacity: 0, y: 8 }}
-        animate={{ scale: 1, opacity: 1, y: 0 }}
-        exit={{ scale: 0.96, opacity: 0, y: 8 }}
-        transition={{ type: "spring", stiffness: 280, damping: 26 }}
-        onClick={(e) => e.stopPropagation()}
-        className="flex max-h-[92vh] w-full max-w-[860px] flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between border-b border-[#F3F4F6] px-6 py-4">
-          <div className="flex items-center gap-3">
-            <div
-              className="flex h-9 w-9 items-center justify-center rounded-lg text-white"
-              style={{ backgroundColor: EMERALD }}
-            >
-              <Tag size={18} />
-            </div>
+  // ── Render step content by id ─────────────────────────────────────
+  function renderStep(stepId: StepId) {
+    switch (stepId) {
+      // ── Step 1: Vendor type ──────────────────────────────────────
+      case "vendorType":
+        return (
+          <div className="space-y-5">
             <div>
-              <h2 className="font-display text-[18px] font-bold text-[#111827]">
-                {isEdit ? "Modifier le produit" : "Nouveau produit"}
-              </h2>
-              <p className="mt-0.5 text-[13px] text-[#6B7280]">
-                {isEdit
-                  ? "Mettez à jour les informations de votre produit."
-                  : "Renseignez les informations de votre nouveau produit."}
+              <h3 className="text-[16px] font-semibold text-[#111827]">
+                Quel est votre type de commerce&nbsp;?
+              </h3>
+              <p className="mt-1 text-[13px] text-[#6B7280]">
+                Cette information adapte le formulaire à votre activité. Vous
+                pourrez toujours ajuster les options dans les étapes suivantes.
               </p>
             </div>
+
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {VENDOR_TYPES.map((vt) => (
+                <VendorTypeCard
+                  key={vt.id}
+                  vt={vt}
+                  selected={vendorType === vt.id}
+                  onSelect={() => handleVendorTypeSelect(vt.id)}
+                />
+              ))}
+            </div>
+
+            {vendorType && (
+              <motion.div
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-center gap-2 rounded-lg bg-[#ECFDF5] px-4 py-2.5 text-[13px] font-medium text-[#047857]"
+              >
+                <Check size={14} />
+                Sélectionné&nbsp;: {VENDOR_TYPES.find((v) => v.id === vendorType)?.title}
+                <span className="ml-auto text-[#10B981]">Continuer →</span>
+              </motion.div>
+            )}
+
+            {errors.vendorType && (
+              <div ref={(el) => { errorRefs.current.vendorType = el; }}>
+                <FieldError message={errors.vendorType} />
+              </div>
+            )}
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-[#6B7280] transition-colors hover:bg-[#F9FAFB]"
-            aria-label="Fermer"
-          >
-            <X size={18} />
-          </button>
-        </div>
+        );
 
-        {/* Tabs */}
-        <div className="flex flex-wrap items-center gap-1 border-b border-[#F3F4F6] bg-[#F9FAFB] px-3 py-2">
-          {visibleTabs.map((tab) => {
-            const TabIcon = tab.icon;
-            const active = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setActiveTab(tab.id)}
-                className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[13px] font-medium transition-colors ${
-                  active
-                    ? "bg-white text-[#047857] shadow-sm"
-                    : "text-[#6B7280] hover:text-[#111827]"
-                }`}
-                style={active ? { color: EMERALD_DARK } : undefined}
+      // ── Step 2: Category ─────────────────────────────────────────
+      case "category":
+        return (
+          <div className="space-y-5">
+            <div>
+              <h3 className="text-[16px] font-semibold text-[#111827]">
+                Choisissez une catégorie
+              </h3>
+              <p className="mt-1 text-[13px] text-[#6B7280]">
+                Chaque catégorie débloque des champs spécifiques (variété,
+                origine, conservation, etc.).
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {activeCategories.map((c) => (
+                <CategoryCard
+                  key={c.id}
+                  schema={c}
+                  selected={categoryId === c.id}
+                  onSelect={() => handleCategorySelect(c)}
+                />
+              ))}
+            </div>
+
+            {categoryId && (
+              <motion.div
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-center gap-2 rounded-lg bg-[#ECFDF5] px-4 py-2.5 text-[13px] font-medium text-[#047857]"
               >
-                <TabIcon size={14} />
-                <span className="hidden sm:inline">{tab.label}</span>
-                <span className="sm:hidden">
-                  {tab.id === "general" ? "Général" :
-                    tab.id === "category" ? "Catégorie" :
-                      tab.id === "export" ? "Export" : "Certs"}
+                <Check size={14} />
+                {selectedSchema?.emoji} {selectedSchema?.name}
+                <span className="ml-auto text-[#10B981]">Continuer →</span>
+              </motion.div>
+            )}
+
+            {selectedSchema && selectedSchema.phase > 1 ? (
+              <div className="flex items-start gap-2 rounded-lg border border-[#FCD34D] bg-[#FFFBEB] px-4 py-3 text-[13px] text-[#92400E]">
+                <Info size={16} className="mt-0.5 shrink-0" />
+                <span>
+                  Cette catégorie sera disponible prochainement (phase{" "}
+                  {selectedSchema.phase}). Vous pouvez pré-remplir les champs
+                  dès maintenant — ils seront enregistrés.
                 </span>
-              </button>
-            );
-          })}
-        </div>
+              </div>
+            ) : null}
 
-        {/* Body */}
-        <div className="flex-1 overflow-y-auto px-6 py-5">
-          <AnimatePresence mode="wait">
-            {activeTab === "general" && (
-              <motion.div
-                key="general"
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -6 }}
-                transition={{ duration: 0.15 }}
-                className="space-y-5"
-              >
-                {/* Name + brand */}
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  <div ref={(el) => { errorRefs.current.name = el; }}>
-                    <FieldLabel htmlFor="dpf-name" required>Nom du produit</FieldLabel>
-                    <input
-                      id="dpf-name"
-                      type="text"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      placeholder="Ex : Jus de Bissap Premium"
-                      className={inputClass}
-                    />
-                    <FieldError message={errors.name} />
-                  </div>
-                  <div>
-                    <FieldLabel htmlFor="dpf-brand">Marque</FieldLabel>
-                    <input
-                      id="dpf-brand"
-                      type="text"
-                      value={brand}
-                      onChange={(e) => setBrand(e.target.value)}
-                      placeholder="Sarine Bio"
-                      className={inputClass}
-                    />
-                  </div>
-                </div>
-
-                {/* Weight + status */}
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  <div>
-                    <FieldLabel htmlFor="dpf-weight">Poids / Contenance</FieldLabel>
-                    <input
-                      id="dpf-weight"
-                      type="text"
-                      value={weight}
-                      onChange={(e) => setWeight(e.target.value)}
-                      placeholder="500ml"
-                      className={inputClass}
-                    />
-                  </div>
-                  <div>
-                    <p className="mb-1.5 text-[13px] font-medium text-[#374151]">
-                      Statut du produit
-                    </p>
-                    <div className="flex gap-2">
-                      <StatusRadio value="actif" current={status} onChange={setStatus} label="Actif" color="#10B981" />
-                      <StatusRadio value="brouillon" current={status} onChange={setStatus} label="Brouillon" color="#6B7280" />
-                      <StatusRadio value="masque" current={status} onChange={setStatus} label="Masqué" color="#EF4444" />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Description */}
-                <div>
-                  <div className="mb-1.5 flex items-center justify-between">
-                    <FieldLabel>Description</FieldLabel>
-                    <span className="text-[12px] text-[#9CA3AF]">
-                      {description.length}/500
-                    </span>
-                  </div>
-                  <textarea
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value.slice(0, 500))}
-                    placeholder="Décrivez votre produit en quelques lignes..."
-                    rows={3}
-                    className={`${inputClass} resize-none`}
-                  />
-                </div>
-
-                {/* Image upload */}
-                <div>
-                  <ImageUploadWithPreview
-                    value={imageUrl}
-                    onChange={setImageUrl}
-                    label="Photo du produit"
-                    hint="JPG, PNG, WebP ou GIF — 5 MB max — 800×800 px recommandé"
-                    height={180}
-                  />
-                </div>
-              </motion.div>
+            {errors.categoryId && (
+              <div ref={(el) => { errorRefs.current.categoryId = el; }}>
+                <FieldError message={errors.categoryId} />
+              </div>
             )}
+          </div>
+        );
 
-            {activeTab === "category" && (
-              <motion.div
-                key="category"
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -6 }}
-                transition={{ duration: 0.15 }}
-                className="space-y-5"
-              >
-                <div>
-                  <h3 className="mb-1 text-[14px] font-semibold text-[#111827]">
-                    Choisissez une catégorie
-                  </h3>
-                  <p className="text-[12px] text-[#6B7280]">
-                    Chaque catégorie débloque des champs spécifiques (variété, origine, conservation, etc.).
-                  </p>
+      // ── Step 3: General info ─────────────────────────────────────
+      case "general":
+        return (
+          <div className="space-y-5">
+            {/* Name + brand */}
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div ref={(el) => { errorRefs.current.name = el; }}>
+                <FieldLabel htmlFor="dpf-name" required>Nom du produit</FieldLabel>
+                <input
+                  id="dpf-name"
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Ex : Jus de Bissap Premium"
+                  className={inputClass}
+                />
+                <FieldError message={errors.name} />
+              </div>
+              <div>
+                <FieldLabel htmlFor="dpf-brand">Marque</FieldLabel>
+                <input
+                  id="dpf-brand"
+                  type="text"
+                  value={brand}
+                  onChange={(e) => setBrand(e.target.value)}
+                  placeholder="Sarine Bio"
+                  className={inputClass}
+                />
+              </div>
+            </div>
+
+            {/* Weight + status */}
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div>
+                <FieldLabel htmlFor="dpf-weight">Poids / Contenance</FieldLabel>
+                <input
+                  id="dpf-weight"
+                  type="text"
+                  value={weight}
+                  onChange={(e) => setWeight(e.target.value)}
+                  placeholder="500ml"
+                  className={inputClass}
+                />
+              </div>
+              <div>
+                <p className="mb-1.5 text-[13px] font-medium text-[#374151]">
+                  Statut du produit
+                </p>
+                <div className="flex gap-2">
+                  <StatusRadio value="actif" current={status} onChange={setStatus} label="Actif" color="#10B981" />
+                  <StatusRadio value="brouillon" current={status} onChange={setStatus} label="Brouillon" color="#6B7280" />
+                  <StatusRadio value="masque" current={status} onChange={setStatus} label="Masqué" color="#EF4444" />
                 </div>
+              </div>
+            </div>
 
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                  {activeCategories.map((c) => (
-                    <CategoryCard
-                      key={c.id}
-                      schema={c}
-                      selected={categoryId === c.id}
-                      onSelect={() => {
-                        setCategoryId(c.id);
-                        // Reset dynamic data when category changes so old
-                        // values don't leak into the new schema.
-                        setCategoryData({});
-                        setExportData({});
-                        if (c.phase > 1) {
-                          toast.info(
-                            `Catégorie « ${c.name} » en phase ${c.phase} — disponible prochainement.`,
-                          );
-                        }
-                      }}
-                    />
-                  ))}
-                </div>
+            {/* Description */}
+            <div>
+              <div className="mb-1.5 flex items-center justify-between">
+                <FieldLabel>Description</FieldLabel>
+                <span className="text-[12px] text-[#9CA3AF]">
+                  {description.length}/500
+                </span>
+              </div>
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value.slice(0, 500))}
+                placeholder="Décrivez votre produit en quelques lignes..."
+                rows={3}
+                className={`${inputClass} resize-none`}
+              />
+            </div>
 
-                {selectedSchema && selectedSchema.phase > 1 ? (
-                  <div className="flex items-start gap-2 rounded-lg border border-[#FCD34D] bg-[#FFFBEB] px-4 py-3 text-[13px] text-[#92400E]">
-                    <Info size={16} className="mt-0.5 shrink-0" />
-                    <span>
-                      Cette catégorie sera disponible prochainement (phase {selectedSchema.phase}).
-                      Vous pouvez pré-remplir les champs dès maintenant — ils seront enregistrés.
-                    </span>
-                  </div>
-                ) : null}
+            {/* Image upload */}
+            <div>
+              <ImageUploadWithPreview
+                value={imageUrl}
+                onChange={setImageUrl}
+                label="Photo du produit"
+                hint="JPG, PNG, WebP ou GIF — 5 MB max — 800×800 px recommandé"
+                height={180}
+              />
+            </div>
+          </div>
+        );
 
-                {/* Category-specific fields, grouped by `group` */}
-                {selectedSchema && Object.keys(groupedCategoryFields).length > 0 && (
-                  <div className="space-y-5">
-                    {Object.entries(groupedCategoryFields).map(([group, fields]) => (
-                      <section
-                        key={group}
-                        className="rounded-xl border border-[#E5E7EB] bg-[#FAFAFA] p-4"
-                      >
-                        <h4 className="mb-3 flex items-center gap-2 text-[13px] font-semibold uppercase tracking-wide text-[#374151]">
-                          <span
-                            className="inline-block h-2 w-2 rounded-full"
-                            style={{ backgroundColor: EMERALD }}
+      // ── Step 4: Category-specific fields ────────────────────────
+      case "specifics":
+        return (
+          <div className="space-y-5">
+            <div className="flex items-center gap-2">
+              <span className="text-[24px]">{selectedSchema?.emoji}</span>
+              <div>
+                <h3 className="text-[15px] font-semibold text-[#111827]">
+                  Spécificités — {selectedSchema?.name}
+                </h3>
+                <p className="text-[12px] text-[#6B7280]">
+                  Renseignez les détails propres à cette catégorie. Les champs
+                  marqués d'un <span className="text-[#EF4444]">*</span> sont
+                  obligatoires.
+                </p>
+              </div>
+            </div>
+
+            {Object.keys(groupedCategoryFields).length > 0 && (
+              <div className="space-y-5">
+                {Object.entries(groupedCategoryFields).map(([group, fields]) => (
+                  <section
+                    key={group}
+                    className="rounded-xl border border-[#E5E7EB] bg-[#FAFAFA] p-4"
+                  >
+                    <h4 className="mb-3 flex items-center gap-2 text-[13px] font-semibold uppercase tracking-wide text-[#374151]">
+                      <span
+                        className="inline-block h-2 w-2 rounded-full"
+                        style={{ backgroundColor: EMERALD }}
+                      />
+                      {group}
+                    </h4>
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                      {fields.map((f) => (
+                        <div
+                          key={f.name}
+                          ref={(el) => { errorRefs.current[`cat_${f.name}`] = el; }}
+                          className={f.type === "textarea" ? "md:col-span-2" : ""}
+                        >
+                          <DynamicField
+                            field={f}
+                            value={categoryData[f.name] ?? f.defaultValue ?? ""}
+                            onChange={(v) => setField("categoryData", f.name, v)}
+                            error={errors[`cat_${f.name}`]}
+                            fieldId={`cat_${f.name}`}
                           />
-                          {group}
-                        </h4>
-                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                          {fields.map((f) => (
-                            <div
-                              key={f.name}
-                              ref={(el) => { errorRefs.current[`cat_${f.name}`] = el; }}
-                              className={f.type === "textarea" ? "md:col-span-2" : ""}
-                            >
-                              <DynamicField
-                                field={f}
-                                value={categoryData[f.name] ?? f.defaultValue ?? ""}
-                                onChange={(v) => setField("categoryData", f.name, v)}
-                                error={errors[`cat_${f.name}`]}
-                                fieldId={`cat_${f.name}`}
-                              />
-                            </div>
-                          ))}
                         </div>
-                      </section>
-                    ))}
-                  </div>
-                )}
-
-                {/* If category is selected but has no fields defined yet */}
-                {selectedSchema && Object.keys(groupedCategoryFields).length === 0 && (
-                  <div className="rounded-lg border border-dashed border-[#E5E7EB] bg-[#F9FAFB] px-4 py-6 text-center text-[13px] text-[#6B7280]">
-                    Aucun champ spécifique défini pour cette catégorie pour l'instant.
-                  </div>
-                )}
-
-                {!selectedSchema && (
-                  <div className="rounded-lg border border-dashed border-[#E5E7EB] bg-[#F9FAFB] px-4 py-6 text-center text-[13px] text-[#6B7280]">
-                    Sélectionnez une catégorie ci-dessus pour révéler les champs spécifiques au produit.
-                  </div>
-                )}
-              </motion.div>
-            )}
-
-            {activeTab === "export" && (
-              <motion.div
-                key="export"
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -6 }}
-                transition={{ duration: 0.15 }}
-                className="space-y-5"
-              >
-                <label className="flex cursor-pointer items-start gap-3 rounded-xl border-2 border-[#E5E7EB] bg-white p-4 transition-colors hover:bg-[#F9FAFB]">
-                  <input
-                    type="checkbox"
-                    checked={isExport}
-                    onChange={(e) => {
-                      setIsExport(e.target.checked);
-                      if (!e.target.checked) setExportData({});
-                    }}
-                    className="mt-0.5 h-5 w-5 rounded border-[#D1D5DB] text-[#10B981] focus:ring-[#10B981]"
-                  />
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <Globe2 size={16} className="text-[#10B981]" />
-                      <span className="text-[14px] font-semibold text-[#111827]">
-                        Produit destiné à l'exportation
-                      </span>
+                      ))}
                     </div>
-                    <p className="mt-1 text-[12px] text-[#6B7280]">
-                      Active cette option pour renseigner les informations réglementaires requises
-                      pour l'export (pays de destination, conformité sanitaire, certifications spécifiques).
-                    </p>
-                  </div>
-                </label>
-
-                {isExport && filteredExportFields.length === 0 && (
-                  <div className="rounded-lg border border-dashed border-[#E5E7EB] bg-[#F9FAFB] px-4 py-6 text-center text-[13px] text-[#6B7280]">
-                    Aucun champ d'export défini pour cette catégorie. Vous pouvez quand même
-                    activer l'export pour signaler votre intention — des champs seront ajoutés prochainement.
-                  </div>
-                )}
-
-                {isExport && Object.keys(groupedExportFields).length > 0 && (
-                  <div className="space-y-5">
-                    {Object.entries(groupedExportFields).map(([group, fields]) => (
-                      <section
-                        key={group}
-                        className="rounded-xl border border-[#E5E7EB] bg-[#FFFBEB]/40 p-4"
-                      >
-                        <h4 className="mb-3 flex items-center gap-2 text-[13px] font-semibold uppercase tracking-wide text-[#92400E]">
-                          <Globe2 size={14} />
-                          {group}
-                        </h4>
-                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                          {fields.map((f) => (
-                            <div
-                              key={f.name}
-                              ref={(el) => { errorRefs.current[`exp_${f.name}`] = el; }}
-                              className={f.type === "textarea" ? "md:col-span-2" : ""}
-                            >
-                              <DynamicField
-                                field={f}
-                                value={exportData[f.name] ?? f.defaultValue ?? ""}
-                                onChange={(v) => setField("exportData", f.name, v)}
-                                error={errors[`exp_${f.name}`]}
-                                fieldId={`exp_${f.name}`}
-                              />
-                            </div>
-                          ))}
-                        </div>
-                      </section>
-                    ))}
-                  </div>
-                )}
-              </motion.div>
+                  </section>
+                ))}
+              </div>
             )}
 
-            {activeTab === "certifications" && (
-              <motion.div
-                key="certifications"
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -6 }}
-                transition={{ duration: 0.15 }}
-                className="space-y-4"
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-[14px] font-semibold text-[#111827]">
-                      Certifications du produit
-                    </h3>
-                    <p className="mt-0.5 text-[12px] text-[#6B7280]">
-                      Bio, Halal, ISO 22000, HACCP, etc. — ces infos renforcent la confiance des consommateurs.
-                    </p>
+            {Object.keys(groupedCategoryFields).length === 0 && (
+              <div className="rounded-lg border border-dashed border-[#E5E7EB] bg-[#F9FAFB] px-4 py-6 text-center text-[13px] text-[#6B7280]">
+                Aucun champ spécifique défini pour cette catégorie pour l'instant.
+              </div>
+            )}
+          </div>
+        );
+
+      // ── Step 5: Export & Certifications ─────────────────────────
+      case "export":
+        return (
+          <div className="space-y-5">
+            {/* Export toggle */}
+            <label className="flex cursor-pointer items-start gap-3 rounded-xl border-2 border-[#E5E7EB] bg-white p-4 transition-colors hover:bg-[#F9FAFB]">
+              <input
+                type="checkbox"
+                checked={isExport}
+                onChange={(e) => handleExportToggle(e.target.checked)}
+                className="mt-0.5 h-5 w-5 rounded border-[#D1D5DB] text-[#10B981] focus:ring-[#10B981]"
+              />
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <Globe2 size={16} className="text-[#10B981]" />
+                  <span className="text-[14px] font-semibold text-[#111827]">
+                    Produit destiné à l'exportation
+                  </span>
+                </div>
+                <p className="mt-1 text-[12px] text-[#6B7280]">
+                  Activez cette option pour renseigner les informations
+                  réglementaires requises pour l'export (pays de destination,
+                  conformité sanitaire, certifications spécifiques).
+                </p>
+              </div>
+            </label>
+
+            {/* Export fields (only when toggle is ON) */}
+            {isExport && filteredExportFields.length === 0 && (
+              <div className="rounded-lg border border-dashed border-[#E5E7EB] bg-[#F9FAFB] px-4 py-6 text-center text-[13px] text-[#6B7280]">
+                Aucun champ d'export défini pour cette catégorie. Vous pouvez
+                quand même activer l'export pour signaler votre intention — des
+                champs seront ajoutés prochainement.
+              </div>
+            )}
+
+            {isExport && Object.keys(groupedExportFields).length > 0 && (
+              <div className="space-y-5">
+                {Object.entries(groupedExportFields).map(([group, fields]) => (
+                  <section
+                    key={group}
+                    className="rounded-xl border border-[#E5E7EB] bg-[#FFFBEB]/40 p-4"
+                  >
+                    <h4 className="mb-3 flex items-center gap-2 text-[13px] font-semibold uppercase tracking-wide text-[#92400E]">
+                      <Globe2 size={14} />
+                      {group}
+                    </h4>
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                      {fields.map((f) => (
+                        <div
+                          key={f.name}
+                          ref={(el) => { errorRefs.current[`exp_${f.name}`] = el; }}
+                          className={f.type === "textarea" ? "md:col-span-2" : ""}
+                        >
+                          <DynamicField
+                            field={f}
+                            value={exportData[f.name] ?? f.defaultValue ?? ""}
+                            onChange={(v) => setField("exportData", f.name, v)}
+                            error={errors[`exp_${f.name}`]}
+                            fieldId={`exp_${f.name}`}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                ))}
+              </div>
+            )}
+
+            {/* Certifications (only when export is ON) */}
+            {isExport && (
+              <section className="rounded-xl border border-[#E5E7EB] bg-[#FAFAFA] p-4">
+                <div className="mb-3 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Sticker size={16} className="text-[#10B981]" />
+                    <h4 className="text-[13px] font-semibold uppercase tracking-wide text-[#374151]">
+                      Certifications
+                    </h4>
                   </div>
                   <button
                     type="button"
@@ -1073,13 +1521,17 @@ export function DynamicProductForm({
                     <Plus size={14} /> Ajouter
                   </button>
                 </div>
+                <p className="mb-3 text-[12px] text-[#6B7280]">
+                  Bio, Halal, ISO 22000, HACCP, GlobalGAP, etc. — ces
+                  informations renforcent la confiance des acheteurs.
+                </p>
 
                 <div className="space-y-3">
                   {certifications.map((c, idx) => (
                     <div
                       key={idx}
                       ref={(el) => { errorRefs.current[`cert_${idx}`] = el; }}
-                      className="rounded-xl border border-[#E5E7EB] bg-[#FAFAFA] p-4"
+                      className="rounded-xl border border-[#E5E7EB] bg-white p-4"
                     >
                       <div className="mb-3 flex items-center justify-between">
                         <span className="text-[12px] font-semibold uppercase tracking-wide text-[#9CA3AF]">
@@ -1173,34 +1625,335 @@ export function DynamicProductForm({
                     </div>
                   ))}
                 </div>
-              </motion.div>
+              </section>
             )}
+
+            {/* Friendly placeholder when export is OFF but step is shown */}
+            {!isExport && (
+              <div className="rounded-lg border border-dashed border-[#E5E7EB] bg-[#F9FAFB] px-4 py-6 text-center text-[13px] text-[#6B7280]">
+                L'export est actuellement désactivé. Cliquez sur{" "}
+                <span className="font-medium text-[#374151]">Continuer</span>{" "}
+                pour passer au récapitulatif, ou activez l'export ci-dessus pour
+                renseigner les informations réglementaires.
+              </div>
+            )}
+          </div>
+        );
+
+      // ── Step 6: Summary ─────────────────────────────────────────
+      case "summary":
+        return (
+          <div className="space-y-5">
+            <div>
+              <h3 className="text-[16px] font-semibold text-[#111827]">
+                Récapitulatif
+              </h3>
+              <p className="mt-1 text-[13px] text-[#6B7280]">
+                Vérifiez les informations avant de{" "}
+                {isEdit ? "enregistrer" : "créer"} le produit. Cliquez sur{" "}
+                « Modifier » pour revenir à une étape.
+              </p>
+            </div>
+
+            {/* Vendor type + category badge */}
+            <div className="flex flex-wrap items-center gap-2 rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] px-4 py-3">
+              {vendorType ? (
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-[#ECFDF5] px-3 py-1 text-[12px] font-semibold text-[#047857]">
+                  {VENDOR_TYPES.find((v) => v.id === vendorType)?.emoji}{" "}
+                  {VENDOR_TYPES.find((v) => v.id === vendorType)?.title}
+                </span>
+              ) : null}
+              {selectedSchema ? (
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-[12px] font-semibold text-[#374151] border border-[#E5E7EB]">
+                  {selectedSchema.emoji} {selectedSchema.name}
+                </span>
+              ) : null}
+              <span className="ml-auto inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-[12px] font-semibold text-[#374151] border border-[#E5E7EB]">
+                <span
+                  className="inline-block h-2 w-2 rounded-full"
+                  style={{
+                    backgroundColor:
+                      status === "actif"
+                        ? "#10B981"
+                        : status === "brouillon"
+                          ? "#6B7280"
+                          : "#EF4444",
+                  }}
+                />
+                {status === "actif" ? "Actif" : status === "brouillon" ? "Brouillon" : "Masqué"}
+              </span>
+            </div>
+
+            {/* General info section */}
+            <SummarySection
+              title="Informations générales"
+              onEdit={() => goToStepById("general")}
+            >
+              <SummaryRow label="Nom" value={name || "—"} />
+              <SummaryRow label="Marque" value={brand || "—"} />
+              <SummaryRow label="Poids / Contenance" value={weight || "—"} />
+              {description ? (
+                <SummaryRow label="Description" value={description} fullWidth />
+              ) : null}
+            </SummarySection>
+
+            {/* Category-specific fields */}
+            <SummarySection
+              title={`Spécificités — ${selectedSchema?.name ?? "Catégorie"}`}
+              onEdit={() => goToStepById("specifics")}
+            >
+              {Object.keys(groupedCategoryFields).length === 0 ? (
+                <p className="text-[13px] text-[#9CA3AF]">
+                  Aucun champ spécifique renseigné.
+                </p>
+              ) : (
+                Object.entries(groupedCategoryFields).map(([group, fields]) => (
+                  <div key={group} className="mb-3 last:mb-0">
+                    <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-[#9CA3AF]">
+                      {group}
+                    </p>
+                    <div className="grid grid-cols-1 gap-x-4 gap-y-2 sm:grid-cols-2">
+                      {fields.map((f) => {
+                        const val = formatFieldValue(f, categoryData[f.name]);
+                        if (val === "—") return null;
+                        return (
+                          <SummaryRow
+                            key={f.name}
+                            label={f.label}
+                            value={val}
+                          />
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))
+              )}
+            </SummarySection>
+
+            {/* Export info section */}
+            <SummarySection
+              title="Export & Certifications"
+              onEdit={() => goToStepById("export")}
+            >
+              {isExport ? (
+                <>
+                  <div className="grid grid-cols-1 gap-x-4 gap-y-2 sm:grid-cols-2">
+                    {filteredExportFields.map((f) => {
+                      const val = formatFieldValue(f, exportData[f.name]);
+                      if (val === "—") return null;
+                      return (
+                        <SummaryRow
+                          key={f.name}
+                          label={f.label}
+                          value={val}
+                        />
+                      );
+                    })}
+                  </div>
+                  <div className="mt-3 flex items-center gap-2 rounded-lg bg-[#ECFDF5] px-3 py-2 text-[12px] font-medium text-[#047857]">
+                    <Sticker size={14} />
+                    {cleanCerts.length} certification
+                    {cleanCerts.length > 1 ? "s" : ""}
+                    {cleanCerts.length > 0
+                      ? ` : ${cleanCerts.map((c) => c.name).join(", ")}`
+                      : ""}
+                  </div>
+                </>
+              ) : (
+                <div className="flex items-center justify-between">
+                  <p className="text-[13px] text-[#6B7280]">
+                    Export non activé pour ce produit.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleEnableExportFromSummary}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-[#10B981] bg-[#ECFDF5] px-3 py-1.5 text-[12px] font-semibold text-[#047857] transition-colors hover:bg-[#D1FAE5]"
+                  >
+                    <Globe2 size={14} /> Activer l'export
+                  </button>
+                </div>
+              )}
+            </SummarySection>
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  }
+
+  // ── Render ───────────────────────────────────────────────────────
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onClick={onClose}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+    >
+      <motion.div
+        initial={{ scale: 0.96, opacity: 0, y: 8 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.96, opacity: 0, y: 8 }}
+        transition={{ type: "spring", stiffness: 280, damping: 26 }}
+        onClick={(e) => e.stopPropagation()}
+        className="relative flex max-h-[92vh] w-full max-w-[880px] flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-[#F3F4F6] px-4 py-4 sm:px-6">
+          <div className="flex items-center gap-3">
+            <div
+              className="flex h-9 w-9 items-center justify-center rounded-lg text-white"
+              style={{ backgroundColor: EMERALD }}
+            >
+              <Tag size={18} />
+            </div>
+            <div>
+              <h2 className="font-display text-[17px] font-bold text-[#111827] sm:text-[18px]">
+                {isEdit ? "Modifier le produit" : "Nouveau produit"}
+              </h2>
+              <p className="mt-0.5 text-[12px] text-[#6B7280] sm:text-[13px]">
+                {isEdit
+                  ? "Mettez à jour les informations de votre produit."
+                  : "Assistant de création — étape par étape."}
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-[#6B7280] transition-colors hover:bg-[#F9FAFB]"
+            aria-label="Fermer"
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        {/* Stepper */}
+        <Stepper steps={visibleSteps} currentIdx={currentStep} />
+
+        {/* Body (scrollable) */}
+        <div
+          ref={bodyRef}
+          className="flex-1 overflow-y-auto px-4 py-5 sm:px-6"
+        >
+          <AnimatePresence mode="wait" custom={direction}>
+            <motion.div
+              key={currentStepId}
+              custom={direction}
+              variants={stepVariants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{ duration: 0.2, ease: "easeInOut" }}
+            >
+              {renderStep(currentStepId)}
+            </motion.div>
           </AnimatePresence>
         </div>
 
         {/* Footer */}
-        <div className="flex flex-wrap items-center justify-end gap-2 border-t border-[#F3F4F6] bg-[#F9FAFB] px-6 py-4">
-          <OutlineButton onClick={onClose}>Annuler</OutlineButton>
-          <GradientButton onClick={handleSubmit} disabled={submitting}>
-            {submitting ? (
-              <>
-                <Loader2 size={16} className="animate-spin" />
-                Enregistrement…
-              </>
-            ) : isEdit ? (
-              <>
-                <Check size={16} />
-                Enregistrer les modifications
-              </>
-            ) : (
-              <>
-                <Plus size={16} />
-                Créer le produit
-              </>
-            )}
-          </GradientButton>
+        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[#F3F4F6] bg-[#F9FAFB] px-4 py-4 sm:px-6">
+          {currentStep === 0 ? (
+            <OutlineButton onClick={onClose}>Annuler</OutlineButton>
+          ) : (
+            <OutlineButton onClick={prev}>
+              <span className="mr-0.5">←</span> Retour
+            </OutlineButton>
+          )}
+          {isLastStep ? (
+            <GradientButton onClick={handleSubmit} disabled={submitting}>
+              {submitting ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" />
+                  Enregistrement…
+                </>
+              ) : isEdit ? (
+                <>
+                  <Check size={16} />
+                  Enregistrer les modifications
+                </>
+              ) : (
+                <>
+                  <Check size={16} />
+                  Créer le produit
+                </>
+              )}
+            </GradientButton>
+          ) : (
+            <GradientButton onClick={next}>
+              Continuer <span className="ml-0.5">→</span>
+            </GradientButton>
+          )}
         </div>
+
+        {/* Confirm dialog overlay (for export toggle off) */}
+        <AnimatePresence>
+          {confirmExportOff && (
+            <ConfirmDialog
+              title="Désactiver l'export ?"
+              message="Vous êtes exportateur — êtes-vous sûr de vouloir créer un produit non-exportable ? Les informations d'export saisies seront effacées."
+              confirmLabel="Oui, désactiver"
+              cancelLabel="Annuler"
+              onConfirm={() => {
+                setIsExport(false);
+                setExportData({});
+                setConfirmExportOff(false);
+              }}
+              onCancel={() => setConfirmExportOff(false)}
+            />
+          )}
+        </AnimatePresence>
       </motion.div>
     </motion.div>
+  );
+}
+
+// ============================================================================
+// Summary helpers — small presentational sub-components for the résumé step
+// ============================================================================
+
+function SummarySection({
+  title,
+  onEdit,
+  children,
+}: {
+  title: string;
+  onEdit: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="rounded-xl border border-[#E5E7EB] bg-white p-4">
+      <div className="mb-3 flex items-center justify-between">
+        <h4 className="text-[13px] font-semibold text-[#111827]">{title}</h4>
+        <button
+          type="button"
+          onClick={onEdit}
+          className="inline-flex items-center gap-1 text-[12px] font-medium text-[#10B981] transition-colors hover:text-[#047857]"
+        >
+          <Pencil size={12} /> Modifier
+        </button>
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function SummaryRow({
+  label,
+  value,
+  fullWidth,
+}: {
+  label: string;
+  value: string;
+  fullWidth?: boolean;
+}) {
+  return (
+    <div className={fullWidth ? "sm:col-span-2" : ""}>
+      <dt className="text-[11px] font-medium uppercase tracking-wide text-[#9CA3AF]">
+        {label}
+      </dt>
+      <dd className="mt-0.5 break-words text-[13px] text-[#111827]">{value}</dd>
+    </div>
   );
 }

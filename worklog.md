@@ -3411,3 +3411,49 @@ Stage Summary:
 - API persists all V3 Phase 3 fields as JSON-encoded strings (SQLite-safe), auto-populates legacy `category` field from Category.name for backward compat
 - Database: 16 total categories (10 V3 + 6 legacy), all V3 categories seeded with full schema/exportSchema JSON
 - The system is extensible: adding a new category = adding an entry to PRODUCT_SCHEMAS + re-running seed — no code changes needed in the form or API
+
+---
+Task ID: 4
+Agent: wizard-form-refactor (Z.ai Code)
+Task: Refactor DynamicProductForm from 4-tab interface to guided 6-step wizard with vendor-type onboarding
+
+Work Log:
+- Read prior context: worklog (V3 Phase 1/2/3 complete), existing DynamicProductForm.tsx (1206 lines, 4 tabs), product-schemas.ts helpers (getActiveCategories/getCategoryFields/getProductSchema/groupFieldsByGroup), ProduitsPage.tsx wrapper (ProductModal translates Product → DynamicProductInitialData), ImageUploadWithPreview, ui.tsx (GradientButton/OutlineButton), fabricant-types.ts (ProductStatus = actif|brouillon|masque).
+- Designed 6-step wizard flow replacing the 4-tab interface:
+  1. Type de commerce (NEW — 4 vendor-type cards: Producteur local 🌱 / Transformateur artisanal 🏭 / Exportateur 🚢 / Distributeur 🛒)
+  2. Catégorie de produit (10 category cards, reused CategoryCard with phase badges)
+  3. Informations générales (name/brand/weight/description/image/status — reused ImageUploadWithPreview + StatusRadio)
+  4. Spécificités produit (dynamic category fields grouped by `group`, reused DynamicField with all 8 field types)
+  5. Export & Certifications (CONDITIONAL — toggle + export fields + certifications merged into one step)
+  6. Récapitulatif (NEW — summary with vendor badge, grouped key-value grid, "Modifier" links that jump back to relevant step)
+- Reused existing sub-components unchanged: DynamicField, CategoryCard, StatusRadio, ImageUploadWithPreview. No rewrite of field rendering logic.
+- New sub-components: VendorTypeCard (Step 1 card), Stepper (horizontal progress with completed-checkmark/active-emerald/upcoming-gray states + mobile compact "Étape X sur Y" bar), ConfirmDialog (Exportateur toggle-off confirmation), SummarySection + SummaryRow + formatFieldValue (récapitulatif display).
+- Wizard state: vendorType, currentStep (index into visibleSteps), direction (1/-1 for slide), showExportStep (vendorType-driven in create mode, always true in edit mode), isExport (defaults from vendorType), confirmExportOff.
+- visibleSteps computed via useMemo from isEdit + showExportStep — skips vendorType in edit mode, skips export when showExportStep is false. 5 or 6 visible steps depending on context.
+- Per-step validation (validateStep): vendorType set / categoryId set / name ≥3 chars / required category fields filled / required export fields + certifications (only when isExport=true). Blocks forward navigation with inline errors + scroll-to-first-error + toast "Veuillez remplir les champs obligatoires".
+- Auto-advance on Steps 1 & 2: useEffect with 400ms setTimeout, targets next step by id (goToStepById) to avoid stale currentStep closure. Shows emerald "Continuer →" hint pill on selection.
+- Direction-aware slide animation: framer-motion AnimatePresence mode="wait" with custom={direction}, stepVariants (enter x:±48 opacity:0 → center x:0 opacity:1 → exit x:∓48 opacity:0), 200ms easeInOut.
+- Vendor type drives defaults: Exportateur → isExport=true, export step shown; Transformateur → isExport=false, export step shown (optional); Producteur local → isExport=false, export step hidden; Distributeur → isExport=false, export step hidden.
+- Export toggle confirm: when vendorType==="exportateur" and user turns toggle off, ConfirmDialog appears ("Vous êtes exportateur — êtes-vous sûr de vouloir créer un produit non-exportable ?"). Confirm clears exportData + isExport=false; Cancel keeps isExport=true.
+- Summary "Activer l'export" button: for Producteur/Distributeur (showExportStep=false), the summary's export section shows an emerald button that flips showExportStep=true + isExport=true and jumps to the export step (computes new index synchronously — export is inserted before summary).
+- Edit mode: skips Step 1 (vendorType), starts at Step 2 if no categoryId or Step 3 if categoryId already set. Pre-fills all fields from initialData. showExportStep defaults to true so export step is always accessible for editing.
+- Submit (handleSubmit): runs validateStep across ALL visible steps, jumps to first errored step if any, then POST /api/products or PATCH /api/products/{id} with the SAME payload contract as before (name/brand/weight/description/imageUrl/isPublic/status/categoryId/isExport/categoryData/exportData/certifications) plus vendorType (sent but ignored by API). Calls refresh() + onClose() on success. Status mapping preserved: actif→isPublic:true+ACTIVE; brouillon→isPublic:false+ARCHIVED; masque→isPublic:false+ACTIVE.
+- Kept DynamicProductInitialData type signature unchanged (ProduitsPage wrapper depends on it). Kept onClose prop. Kept useFabricantData().refresh().
+- Mobile-first responsive: cards 1-col mobile / 2-3 cols sm+lg. Stepper collapses to compact progress bar on mobile. Modal max-w-[880px], max-h-[92vh] with body scroll. Footer wraps on small screens. ESC closes modal (disabled when ConfirmDialog open).
+- Initial lint had 1 warning (unused eslint-disable on auto-advance useEffect). Fixed by switching from goToStep(currentStep+1) to goToStepById("category"/"general") — removes the currentStep dependency so exhaustive-deps is satisfied without a disable directive.
+
+Verification:
+- bun run lint (full project) → 0 errors, 0 warnings.
+- bunx tsc --noEmit filtered to DynamicProductForm → 0 errors (pre-existing errors in unrelated files untouched: examples/, scripts/, skills/, admin pages, ProduitDetailPage.tsx, LoyaltyWidget.tsx, auth.ts, fabricant-server-data.ts).
+- Dev server (port 3000): "✓ Compiled in 587ms" + "✓ Compiled in 631ms" — no compile errors after changes.
+- curl -s -o /dev/null -w "%{http_code}" -L http://localhost:3000/dashboard → 200 (dashboard loads, ProduitsPage wraps DynamicProductForm cleanly).
+- curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/ → 200.
+- Work record written to /agent-ctx/4-wizard-form-refactor.md.
+
+Stage Summary:
+- 1 file modified: src/components/fabricant/DynamicProductForm.tsx (rewritten from 1206 → 1959 lines; increase from 6 fully-rendered step bodies + new Stepper/ConfirmDialog/VendorTypeCard/SummarySection/SummaryRow helpers + formatFieldValue).
+- Public API unchanged: same DynamicProductInitialData type, same DynamicProductForm named export, same {initialData?, onClose} props, same POST/PATCH contract. vendorType field sent in body but ignored by API.
+- 6-step guided wizard replaces the 4-tab interface: vendor onboarding → category → general info → specifics → export&certs (conditional) → summary. Users can no longer skip required category fields or certifications.
+- Per-step validation blocks forward navigation with inline errors + toast. Auto-advance on Steps 1 & 2 (400ms). Direction-aware framer-motion slide transitions. Mobile-first responsive stepper.
+- Edit mode skips Step 1, pre-fills all fields, always shows the export step for editing.
+- ESLint + TypeScript clean. Dev server compiles without errors. Dashboard returns 200.
