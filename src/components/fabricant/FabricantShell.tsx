@@ -11,6 +11,7 @@ import { ProduitDetailPage } from "./pages/ProduitDetailPage";
 import { LotsPage } from "./pages/LotsPage";
 import { LotDetailPage } from "./pages/LotDetailPage";
 import { QRCodesPage } from "./pages/QRCodesPage";
+import { BulkQRPage } from "./pages/BulkQRPage";
 import { StatistiquesPage } from "./pages/StatistiquesPage";
 import { ScorePage } from "./pages/ScorePage";
 import { AbonnementPage } from "./pages/AbonnementPage";
@@ -30,6 +31,8 @@ function renderPage(page: string) {
       return <LotDetailPage />;
     case "qr-codes":
       return <QRCodesPage />;
+    case "qr-masse":
+      return <BulkQRPage />;
     case "statistiques":
       return <StatistiquesPage />;
     case "score":

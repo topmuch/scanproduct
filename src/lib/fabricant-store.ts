@@ -9,6 +9,7 @@ export type FabricantPage =
   | "lots"
   | "lot-detail"
   | "qr-codes"
+  | "qr-masse"
   | "statistiques"
   | "score"
   | "abonnement"

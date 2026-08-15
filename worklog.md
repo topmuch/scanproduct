@@ -2533,3 +2533,48 @@ Stage Summary:
 - 5 new components + 2 modified files
 - All content preserved (ingredients, traceability, history, transparency, certifications, reviews) — only the visual wrapper upgraded
 - Responsive, accessible (prefers-reduced-motion respected), performant (4 server components + 1 client component)
+
+---
+Task ID: 5-b
+Agent: sub-agent (general-purpose)
+Task: Create two CSV export API routes for fabricants — products & lots
+
+Work Log:
+- Read /home/z/my-project/worklog.md for prior context (Task 1, 2-12, etc.)
+- Read reference route src/app/api/export/scans/route.ts to match CSV escaping pattern, Content-Disposition headers, error handling, and French error messages
+- Read prisma/schema.prisma to verify Product & Lot model field names (esp. the Product→Category relation is named `categoryRef`, not `category` — `category` is the legacy free-text string column)
+- Created directory src/app/api/export/products/ and src/app/api/export/lots/
+
+Files created:
+
+1. src/app/api/export/products/route.ts
+   - GET /api/export/products — FABRICANT auth via next-auth/jwt getToken
+   - Reads `period` query param (accepted for API symmetry, ignored — exports all products)
+   - Prisma query: db.product.findMany({ where: { fabricantId: token.sub }, include: { categoryRef: true }, orderBy: { createdAt: "desc" } })
+     (NOTE: schema relation is `categoryRef`, not `category` as the task description stated — using the actual schema relation name to avoid runtime Prisma errors)
+   - CSV columns: Nom, Marque, Categorie, Poids, Statut, Total Scans, Score Transparence, Moyenne Avis, Date Creation
+   - Categorie uses `categoryRef?.name || category || ""` (linked category preferred, legacy free-text fallback)
+   - Moyenne Avis formatted with `averageRating.toFixed(2)` (e.g. "4,50" → actually "4.50" because toFixed uses dot; noted as decimal, acceptable for CSV)
+   - CSV escaping: same as scans route — wrap in quotes if contains comma/quote/newline, escape " as ""
+   - Date Creation formatted as fr-FR locale string
+   - Response: text/csv; charset=utf-8, Content-Disposition: attachment; filename="produits-YYYY-MM-DD.csv", Content-Length set
+   - Error handling: 401 if no token, 500 with French message "Échec de l'export des produits"
+
+2. src/app/api/export/lots/route.ts
+   - GET /api/export/lots — FABRICANT auth via next-auth/jwt getToken
+   - Reads optional `productId` query param to filter lots by product
+   - Prisma query: db.lot.findMany({ where: { fabricantId: token.sub, ...(productId ? { productId } : {}) }, include: { product: { select: { name: true } } }, orderBy: { createdAt: "desc" } })
+   - CSV columns: Reference, Numero Lot, Produit, Quantite, Date Fabrication, Date Expiration, Statut, Lieu Fabrication, Total Scans, QR Codes Count, Score Transparence, Date Creation
+   - Date Fabrication / Date Expiration / Date Creation formatted as fr-FR locale strings (toLocaleDateString); empty string when date is null
+   - CSV escaping: identical pattern to scans/products route
+   - Response: text/csv; charset=utf-8, Content-Disposition: attachment; filename="lots-YYYY-MM-DD.csv", Content-Length set
+   - Error handling: 401 if no token, 500 with French message "Échec de l'export des lots"
+
+Verification:
+- `bun run lint` → passes with no errors (eslint . returned clean)
+- TypeScript throughout, NextRequest/NextResponse pattern, async/await, French error messages, fabricantId-scoped queries — all matching the scans route style
+
+Stage Summary:
+- Two new CSV export endpoints delivered: /api/export/products and /api/export/lots
+- Both are FABRICANT-scoped (token.sub filtering), follow the exact CSV escaping + Content-Disposition pattern of the existing /api/export/scans route, and pass ESLint cleanly
+- Ready for the dashboard UI to call these endpoints for product/lot CSV downloads

@@ -5,6 +5,7 @@ import {
   Package,
   Tag,
   QrCode,
+  Layers,
   BarChart3,
   Gem,
   CreditCard,
@@ -43,6 +44,7 @@ const NAV_SECTIONS: NavSection[] = [
       { key: "produits", page: "produits", label: "Produits", icon: Package, badge: { text: "0", color: "#EF4444" } },
       { key: "lots", page: "lots", label: "Lots", icon: Tag, badge: { text: "0", color: "#EF4444" } },
       { key: "qr-codes", page: "qr-codes", label: "QR Codes", icon: QrCode, badge: { text: "0", color: "#EF4444" } },
+      { key: "qr-masse", page: "qr-masse", label: "Génération en masse", icon: Layers },
     ],
   },
   {
@@ -68,6 +70,7 @@ const PAGE_TO_KEY: Record<FabricantPage, string> = {
   lots: "lots",
   "lot-detail": "lots",
   "qr-codes": "qr-codes",
+  "qr-masse": "qr-masse",
   statistiques: "statistiques",
   score: "score",
   abonnement: "abonnement",

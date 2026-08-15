@@ -21,6 +21,7 @@ const PAGE_TITLES: Record<FabricantPage, { title: string; breadcrumb: string }> 
   lots: { title: "Gestion des Lots", breadcrumb: "Dashboard / Lots" },
   "lot-detail": { title: "Détail Lot", breadcrumb: "Dashboard / Lots / Détail" },
   "qr-codes": { title: "Mes QR Codes", breadcrumb: "Dashboard / QR Codes" },
+  "qr-masse": { title: "Génération en masse", breadcrumb: "Dashboard / QR Codes / Génération en masse" },
   statistiques: { title: "Statistiques", breadcrumb: "Dashboard / Statistiques" },
   score: { title: "Score de Transparence", breadcrumb: "Dashboard / Score Transparence" },
   abonnement: { title: "Mon Abonnement", breadcrumb: "Dashboard / Abonnement" },

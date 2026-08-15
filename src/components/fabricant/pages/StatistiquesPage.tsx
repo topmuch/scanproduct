@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   AreaChart,
   Area,
@@ -25,7 +25,20 @@ import {
 } from "@/components/fabricant/ui";
 import { formatNombre } from "@/lib/fabricant-types";
 import { useFabricantData } from "../FabricantDataProvider";
-import { FileDown, TrendingUp, TrendingDown, ArrowRight } from "lucide-react";
+import {
+  FileDown,
+  TrendingUp,
+  TrendingDown,
+  ArrowRight,
+  ChevronDown,
+  Download,
+  Loader2,
+  FileSpreadsheet,
+  Package,
+  Tag,
+  QrCode,
+} from "lucide-react";
+import { toast } from "sonner";
 
 // ============================================================================
 // Types & constants
@@ -227,6 +240,72 @@ export function StatistiquesPage() {
   const { data } = useFabricantData();
   const { stats, products } = data;
 
+  // ── Export state ──────────────────────────────────────────────────
+  const [exportOpen, setExportOpen] = useState(false);
+  const [exporting, setExporting] = useState<string | null>(null);
+  const exportRef = useRef<HTMLDivElement>(null);
+
+  // Close export menu on outside click.
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (exportRef.current && !exportRef.current.contains(e.target as Node)) {
+        setExportOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  // Map the UI period to the API period format.
+  const periodToApi = (p: PeriodKey): string => {
+    switch (p) {
+      case "7j": return "7d";
+      case "30j": return "30d";
+      case "90j": return "90d";
+      case "12m": return "12m";
+      default: return "30d";
+    }
+  };
+
+  const triggerDownload = (url: string) => {
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
+  const handleExport = async (type: "scans" | "products" | "lots") => {
+    setExporting(type);
+    setExportOpen(false);
+    try {
+      let url: string;
+      if (type === "scans") {
+        url = `/api/export/scans?period=${periodToApi(period)}`;
+      } else if (type === "products") {
+        url = "/api/export/products";
+      } else {
+        url = "/api/export/lots";
+      }
+      // Fetch to check for errors, then trigger download.
+      const res = await fetch(url);
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}));
+        throw new Error(j.error || "Échec de l'export");
+      }
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      triggerDownload(blobUrl);
+      URL.revokeObjectURL(blobUrl);
+      toast.success(`Export ${type} téléchargé`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erreur d'export");
+    } finally {
+      setExporting(null);
+    }
+  };
+
   // Build the 6 KPI cards from the real stats context.
   const totalProducts = stats.totalProducts;
   const actifsProducts = stats.kpis.produits.actifs;
@@ -277,10 +356,54 @@ export function StatistiquesPage() {
       {/* ============================================================ */}
       <PageHeader title="Statistiques" subtitle="Analysez les performances de vos produits">
         <PillFilter options={PERIOD_OPTIONS} value={period} onChange={setPeriod} />
-        <OutlineButton onClick={() => undefined}>
-          <FileDown className="h-4 w-4" />
-          Exporter rapport PDF
-        </OutlineButton>
+        <div className="relative" ref={exportRef}>
+          <OutlineButton onClick={() => setExportOpen((v) => !v)}>
+            {exporting ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <FileDown className="h-4 w-4" />
+            )}
+            Exporter
+            <ChevronDown className="h-3 w-3" />
+          </OutlineButton>
+          {exportOpen && (
+            <div className="absolute right-0 top-full z-20 mt-1 w-56 rounded-lg border border-gray-200 bg-white py-1 shadow-xl">
+              <button
+                type="button"
+                onClick={() => handleExport("scans")}
+                className="flex w-full items-center gap-3 px-3 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50"
+              >
+                <Download className="h-4 w-4 text-[#2563EB]" />
+                <div className="text-left">
+                  <p className="font-medium">Scans (CSV)</p>
+                  <p className="text-[10px] text-gray-400">Historique des scans</p>
+                </div>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleExport("products")}
+                className="flex w-full items-center gap-3 px-3 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50"
+              >
+                <Package className="h-4 w-4 text-[#10B981]" />
+                <div className="text-left">
+                  <p className="font-medium">Produits (CSV)</p>
+                  <p className="text-[10px] text-gray-400">Liste des produits</p>
+                </div>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleExport("lots")}
+                className="flex w-full items-center gap-3 px-3 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50"
+              >
+                <Tag className="h-4 w-4 text-[#F59E0B]" />
+                <div className="text-left">
+                  <p className="font-medium">Lots (CSV)</p>
+                  <p className="text-[10px] text-gray-400">Historique des lots</p>
+                </div>
+              </button>
+            </div>
+          )}
+        </div>
       </PageHeader>
 
       {/* ============================================================ */}
