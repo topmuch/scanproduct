@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
+import { Store } from "lucide-react";
 
 import {
   getLotWithDetails,
@@ -19,6 +20,10 @@ import { FreshnessGlow } from "@/components/product/wow/FreshnessGlow";
 import { ContactOrb } from "@/components/product/wow/ContactOrb";
 import { WowAccordion } from "@/components/product/wow/WowAccordion";
 import { VerificationGlow } from "@/components/product/wow/VerificationGlow";
+
+// V3 modules — consumer loyalty widget + B2B inquiry modal
+import { LoyaltyWidget } from "@/components/loyalty/LoyaltyWidget";
+import { InquiryModal } from "@/components/marketplace/InquiryModal";
 
 // Content components (used inside accordions — keep the rich content, just upgrade the wrapper)
 import { CompactIngredients } from "@/components/product/compact/CompactIngredients";
@@ -196,8 +201,31 @@ export default async function ProductPage({
           manufactureDate={lot.manufactureDate}
         />
 
+        {/* 2b. FIDÉLITÉ CONSO — widget points/badges (V3 Module 5) */}
+        <LoyaltyWidget lotId={lot.id} productName={lot.product.name} />
+
         {/* 3. CONTACT ORB — boutons contact premium */}
         <ContactOrb fabricant={lot.fabricant} />
+
+        {/* 3b. DEMANDE DE DEVIS B2B — marketplace inquiry (V3 Module 2) */}
+        <div className="rounded-2xl border border-[#10B981]/20 bg-gradient-to-br from-emerald-50 to-white p-5 shadow-sm">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-[#10B981] text-white">
+                <Store className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="text-[15px] font-bold text-[#111827]">Vous êtes distributeur ?</h3>
+                <p className="text-[13px] text-[#6B7280]">Demandez un devis personnalisé pour ce produit. Réponse sous 48h.</p>
+              </div>
+            </div>
+            <InquiryModal
+              productId={lot.product.id}
+              productName={lot.product.name}
+              fabricantName={lot.fabricant?.companyName ?? lot.fabricant?.name ?? "Fabricant"}
+            />
+          </div>
+        </div>
 
         {/* 4. ACCORDÉONS WOW — sections repliables premium */}
         <div className="space-y-4">

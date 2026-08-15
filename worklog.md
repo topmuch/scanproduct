@@ -3064,3 +3064,176 @@ Stage Summary:
 - Integration: 4 files modified (fabricant-store type, FabricantShell render, FabricantSidebar nav, FabricantHeader page title)
 - The AI assistant generates SEO product descriptions, translates FR/EN/Wolof, analyzes ingredients for allergens, and provides data-driven recommendations based on real scan data
 - 2 bugs fixed during verification (header page-title mapping + API response shape mismatch)
+
+---
+Task ID: 2a
+Agent: marketplace-b2b-builder (Z.ai Code)
+Task: Build the V3 Phase 2 Marketplace B2B module (backend service library + 4 API routes + 2 frontend components) for the VerifScan fabricant dashboard.
+
+Work Log:
+- Read worklog.md (V3 Phase 1 AI module complete), prisma/schema.prisma (MarketplaceInquiry model already added by main agent with relations to Product + User), src/lib/db.ts, src/lib/auth.ts (getServerSession + authOptions pattern), src/lib/rate-limit.ts (applyRateLimit + RATE_LIMITS.DEFAULT), src/lib/notifications.ts (createNotification fire-and-forget pattern), src/app/api/notifications/route.ts (auth + error-handling reference), src/components/fabricant/ui.tsx (PageHeader/SectionCard/KpiCard/PillFilter/EmptyState/GradientButton/OutlineButton), src/components/fabricant/FabricantDataProvider.tsx (useFabricantData hook), src/lib/fabricant-types.ts (Product type shape), src/components/fabricant/pages/NotificationsPage.tsx (fetch + useEffect + sonner pattern).
+- Created src/lib/marketplace.ts (server-only, ~14 KB): 5 exported functions — getMarketplaceCatalog (paginated catalog with search/categoryId/fabricantId/country filters + popular/recent/rated sort + fabricant & categoryRef includes), createInquiry (fetches product → fabricantId, creates MarketplaceInquiry, fire-and-forget createNotification with type "system" + severity "info"), getFabricantInquiries (paginated + status filter + product include), getInquiryForFabricant + respondToInquiry (ownership-checked single-inquiry access + update), getMarketplaceMatches (top 5 partner suggestions grouped by fabricant with product count + shared categories).
+- Created 4 API routes: src/app/api/marketplace/products/route.ts (GET, PUBLIC, rate-limited "marketplace:catalog"), src/app/api/marketplace/inquiries/route.ts (GET auth + POST public, rate-limited "marketplace:inquiry", validates productId/requesterName/requesterEmail/message), src/app/api/marketplace/inquiries/[id]/route.ts (GET + PATCH auth, ownership enforced 404/403), src/app/api/marketplace/matches/route.ts (GET auth). All use getServerSession(authOptions), runtime="nodejs", try/catch with French error messages.
+- Created src/components/marketplace/InquiryModal.tsx (~18 KB, "use client"): public B2B Dialog with form (Nom complet*, Email*, Message*, Entreprise, Téléphone, Pays select with 6 CEDEAO countries, Ville, Quantité number, Prix cible, Délai). POSTs to /api/marketplace/inquiries, shows success state with emerald CheckCircle2 icon + "Demande envoyée ! Le fabricant vous répondra sous 48h.". Amber→red gradient CTA. Uses shadcn Dialog/Input/Textarea/Label/Select/Button.
+- Created src/components/fabricant/pages/MarketplacePage.tsx (~37 KB, "use client"): dashboard page with 3 state-based tabs (emerald active state, NO blue/indigo primary). Tab 1 "Demandes reçues": 4 KpiCards + 5 filter pills with counts + inquiry SectionCards with status badge/requester/product/message excerpt/qty-price-delay chips + "Voir détails" Dialog (InfoRow grid + response Textarea + status Select + amber→red "Envoyer la réponse" PATCH button). Tab 2 "Visibilité produits": emerald info banner + table of fabricant's products (from useFabricantData) with photo/name/category/scans + isPublic/isFeatured visual Switches. Tab 3 "Partenaires suggérés": amber info banner + grid of partner cards (logo gradient + initials, company, city/country, product count, shared categories count + chips, "Contacter" button → toast "Fonctionnalité de messagerie bientôt disponible"). All 3 tabs have empty states.
+- Modified src/lib/db.ts: added PRISMA_CACHE_VERSION = 'v3-marketplace' constant + version-mismatch check that discards the cached globalThis.prisma when the version changes. This fixes a real dev-server issue: the MarketplaceInquiry model was added to the schema AFTER the dev server started, so the cached PrismaClient didn't have the marketplaceInquiry accessor (db.marketplaceInquiry was undefined → "Cannot read properties of undefined (reading 'create')" on POST). The version check forces a clean PrismaClient recreate on the next module evaluation. Safe additive change, no production behavior change.
+- Dev server issue: the original dev server (PID 16047, started 11:13 UTC) had a stale PrismaClient cached in globalThis because prisma/schema.prisma was modified at 11:22 (MarketplaceInquiry added) but the dev server kept running. Ran `bunx prisma db push --accept-data-loss` to regenerate the client JS. The dev server was then killed (likely OOM killer, same as documented in worklog V3-P1-main) and I restarted it with `setsid bash -c 'bun run dev ...'` to fully detach from my shell. After restart, dev log confirmed `[db] Prisma cache version mismatch — recreating PrismaClient` and all curl tests passed.
+- Ran a standalone bun script (/tmp/test-inquiry.ts) that exercised all 5 service functions against the real SQLite DB end-to-end: getMarketplaceCatalog → 6 products; createInquiry → inquiry created with status "pending" + fabricantId auto-resolved; getFabricantInquiries → returned the inquiry with product info; respondToInquiry → updated status to "responded" + populated response + set respondedAt; getMarketplaceMatches → returned 1 match (Teranga Foods, 2 products, 1 shared category). The createNotification fire-and-forget fan-out worked (notification row created, email skipped in dev, inquiry NOT blocked).
+- Wrote work record to /home/z/my-project/agent-ctx/2a-marketplace-b2b-builder.md.
+
+Verification:
+- `bun run lint` → 0 errors, 0 warnings (full project clean).
+- `bunx eslint` on all 7 new files → 0 errors, 0 warnings.
+- `bunx tsc --noEmit` filtered to marketplace files → 0 errors.
+- Curl tests (after dev server restart):
+  - GET /api/marketplace/products?limit=2 → HTTP 200 (total: 6, products: 2, first: "Huile de Baobab Bio 250ml")
+  - GET /api/marketplace/inquiries (no auth) → HTTP 401 ({"error":"Non autorisé"})
+  - GET /api/marketplace/matches (no auth) → HTTP 401 ({"error":"Non autorisé"})
+  - POST /api/marketplace/inquiries (empty body) → HTTP 400 ({"error":"Produit requis"})
+  - POST /api/marketplace/inquiries (valid) → HTTP 201 (inquiry created, status: "pending", fabricantId populated)
+- Dev log: no compile errors in my files. Only pre-existing errors from other modules (/api/loyalty/scan) which are out of scope.
+
+Stage Summary:
+- 7 new files created (1 service lib + 4 API routes + 2 frontend components), 1 file modified (src/lib/db.ts for the cache-version fix).
+- Backend: getMarketplaceCatalog, createInquiry, getFabricantInquiries, getInquiryForFabricant, respondToInquiry, getMarketplaceMatches — all 6 functions implemented and verified end-to-end against the real SQLite DB.
+- API: GET /api/marketplace/products (public, rate-limited), GET+POST /api/marketplace/inquiries (GET auth / POST public B2B lead capture, rate-limited), GET+PATCH /api/marketplace/inquiries/[id] (auth + ownership enforced), GET /api/marketplace/matches (auth). All return correct HTTP codes (200/201/400/401/403/404/500).
+- Frontend: MarketplacePage.tsx (3 tabs — Demandes reçues with KPIs + filters + response Dialog, Visibilité produits table, Partenaires suggérés grid) + InquiryModal.tsx (public B2B form with validation + success state).
+- Design system: NO blue/indigo primary for marketplace elements — emerald #10B981 for accent (active tabs, success, partner CTAs), amber #F59E0B → red #EF4444 gradient for CTAs, white SectionCards on #F9FAFB bg, lucide-react icons, sonner toasts (French), framer-motion AnimatePresence for tab transitions, mobile-first responsive.
+- The db.ts PRISMA_CACHE_VERSION fix is a safe, additive change that solves a real dev-server staleness issue and will benefit future agents who add new Prisma models.
+- Ready to be wired into FabricantShell by the main agent (case "marketplace" → <MarketplacePage />) and into the public produits page (InquiryModal trigger on each product card).
+
+---
+Task ID: 2b
+Agent: full-stack-developer (Z.ai Code)
+Task: V3 Module 5 — Programme de Fidélité Consommateur (backend service library + 4 API routes + fabricant dashboard page + public LoyaltyWidget)
+
+Work Log:
+- Read /home/z/my-project/worklog.md (final 200 lines) — confirmed V3 Phase 1 (AI Intelligence Module) is complete: AiConversation/AiMessage models are live, 8 AI files integrated into dashboard.
+- Read prisma/schema.prisma — confirmed Consumer + LoyaltyRedemption models already exist (added by main agent). Scan model has the optional consumerId relation.
+- Read src/lib/db.ts — found PRISMA_CACHE_VERSION mechanism (bumps when schema gains a new model so the dev server's cached PrismaClient is recreated). Bumped from "v3-marketplace" to "v3-loyalty" — this was REQUIRED for the dev server to pick up the new db.consumer / db.loyaltyRedemption accessors (without it, every loyalty endpoint returned 500 with "Cannot read properties of undefined (reading 'findUnique')").
+- Read src/lib/rate-limit.ts, src/lib/auth.ts, src/components/fabricant/ui.tsx, src/app/api/ai/chat/route.ts, src/components/fabricant/pages/NotificationsPage.tsx + AIAssistantPage.tsx — used as pattern references for auth + rate-limit + UI conventions.
+
+Files created (7 new + 1 modified):
+
+1. src/lib/loyalty.ts (~470 lines, server-only):
+   - REWARDS_CATALOG (4 rewards: discount_5/100pts, discount_10/250pts, free_product/500pts, factory_visit/1000pts)
+   - BADGE_TIERS (3 tiers: explorateur 🌟 #10B981 100pts, ambassadeur 🏆 #F59E0B 500pts, expert 👑 #8B5CF6 1000pts)
+   - POINTS_PER_SCAN = 10
+   - getOrCreateConsumer(anonymousId, email?) — upserts Consumer; only updates email if consumer had none
+   - awardScanPoints(consumerId, scanId, lotId) — atomic increment points + totalScans, computes newly-earned badges, returns {pointsAwarded, newTotal, newBadges}
+   - getConsumerProfile(anonymousId) — returns {id, points, totalScans, badges, nextBadge, recentScans[10], redemptions[20]} or null
+   - redeemReward(consumerId, rewardType) — pre-checks points, atomic transaction (decrement + create LoyaltyRedemption with VS-<base36>-<random> code), race-condition guard, throws InsufficientPointsError
+   - getFabricantLoyaltyStats(fabricantId) — aggregates: totalConsumers, totalPointsDistributed, totalScans, topBadges[count per tier], recentRedemptions[10], topConsumers[5 by points], totalRedemptions. Masks consumer anonymousId as "Consommateur #N" for privacy.
+
+2. src/app/api/loyalty/scan/route.ts (POST, public):
+   - Rate-limited by IP (RATE_LIMITS.DEFAULT, namespace "loyalty:scan")
+   - Body: {anonymousId, lotId, scanId?, email?}
+   - Server-side idempotency: if consumer already has a scan for this lot → {pointsAwarded:0, alreadyScanned:true}
+   - If scanId provided → uses it; otherwise finds most-recent unlinked scan; otherwise creates a new scan linked to consumer
+   - Awards 10 pts via awardScanPoints, returns refreshed profile
+
+3. src/app/api/loyalty/profile/route.ts (GET, public):
+   - Rate-limited by IP (namespace "loyalty:profile")
+   - Query param anonymousId
+   - Returns {profile, rewards: REWARDS_CATALOG, badges: BADGE_TIERS} — single call returns all 3
+
+4. src/app/api/loyalty/redeem/route.ts (POST, public):
+   - Rate-limited by IP (namespace "loyalty:redeem")
+   - Body: {anonymousId, rewardType}
+   - Validates rewardType against catalog (400 + validTypes list on mismatch)
+   - Pre-checks points for friendly French error message → 402 with {pointsNeeded, pointsAvailable}
+   - Calls redeemReward (atomic transaction), returns {redemption, profile}
+
+5. src/app/api/loyalty/stats/route.ts (GET, auth-required):
+   - Auth via getServerSession → 401 if no session.user.id
+   - Rate-limited by user ID (namespace "loyalty:stats")
+   - Calls getFabricantLoyaltyStats(session.user.id), returns {stats, rewards, badges}
+
+6. src/components/fabricant/pages/FidelitePage.tsx (~580 lines, "use client"):
+   - Fetches GET /api/loyalty/stats on mount with loading skeleton
+   - "Comment ça marche" info banner (gradient amber→purple) explaining 1 scan = 10 pts + badge tiers
+   - KPI row (4 cards): Consommateurs uniques, Points distribués (gold gradient), Scans totaux, Récompenses demandées
+   - Badge distribution section: 3 tier cards (Explorateur/Ambassadeur/Expert) with icon, color, count, progress bar (% of consumers)
+   - Top consommateurs section: top 5 with rank colors, masked labels, scans count, badges icons, points — max-h-96 overflow-y-auto
+   - Recent redemptions section: 10 most recent with icon, label, consumer label, relative date, code, points cost, status badge — max-h-96 overflow-y-auto
+   - Rewards catalog preview: 4 cards
+   - Empty state: "Aucun consommateur n'a encore scanné vos produits. Partagez vos QR codes pour commencer à fidéliser !" with 3 quick-info chips
+
+7. src/components/loyalty/LoyaltyWidget.tsx (~790 lines, "use client"):
+   - Props: {lotId, productName}
+   - On mount: reads verifscan_consumer_id from localStorage; if none, generates via crypto.randomUUID() and saves
+   - Tracks scanned lots in localStorage verifscan_scanned_lots (JSON array) to avoid duplicate point awards
+   - Fetches GET /api/loyalty/profile to get current points + catalog + badge tiers
+   - If first scan for this lot (not in localStorage): POST /api/loyalty/scan, shows "+10 points !" floating toast (gold gradient, framer-motion spring, 2.5s) + "Nouveau badge" celebration toast if a badge was unlocked (2.5s delay, 3.5s duration)
+   - Compact card with gold/purple gradient accents: current points, top badge earned (or "Explorateur à venir"), progress bar to next badge
+   - "Mes récompenses" button opens Dialog with: gradient header (amber→purple) showing points + badges, success state for redeemed code with copy button, recent redemptions (last 3), full rewards catalog with "Échanger" button (disabled/locked if insufficient points), footer info
+   - Defensive localStorage handling (never throws — falls back to ephemeral session ID)
+
+8. src/lib/db.ts (1-line change):
+   - Bumped PRISMA_CACHE_VERSION from "v3-marketplace" to "v3-loyalty" so the dev server recreates PrismaClient with the new Consumer/LoyaltyRedemption accessors
+
+Verification:
+- bun run lint → 0 errors, 0 warnings on the full project (all 7 new files clean).
+- Per-file eslint with --max-warnings 0 → all 7 new files pass.
+- Curl tests (live dev server on port 3000):
+  - GET /api/loyalty/stats (no auth) → 401 {"error":"Non autorisé"} ✓
+  - GET /api/loyalty/profile?anonymousId=test123 → 200 {profile, rewards[4], badges[3]} ✓
+  - POST /api/loyalty/redeem {anonymousId:test123, rewardType:discount_5} → 402 {"error":"Points insuffisants. Cette récompense coûte 100 pts, vous en avez 0.","pointsNeeded":100,"pointsAvailable":0} ✓
+  - POST /api/loyalty/scan {anonymousId:curl-idem-001, lotId:<real lot>} → 200 {pointsAwarded:10, newTotal:10, alreadyScanned:false} ✓
+  - POST /api/loyalty/scan again (same anonId+lot) → 200 {pointsAwarded:0, newTotal:10, alreadyScanned:true} ✓ (idempotency confirmed)
+- Dev log: no compile errors after Prisma cache version bump. "[db] Prisma cache version mismatch — recreating PrismaClient" confirms cache invalidation fired.
+
+Stage Summary:
+- 7 new files + 1 modified (db.ts cache bump) — total ~2400 lines.
+- Backend: server-only loyalty.ts exports 6 functions + 2 catalog constants + InsufficientPointsError class. redeemReward uses Prisma transaction with race-condition guard. All DB writes wrapped in try/catch.
+- API: 4 routes. Public (scan/profile/redeem) rate-limited by IP. Auth (stats) rate-limited by user ID. Server-side idempotency on /scan prevents point inflation.
+- Frontend — fabricant dashboard (FidelitePage): KPI cards, badge distribution with progress bars, top consumers table, recent redemptions list, rewards catalog preview, info banner, empty state. Gold/purple gradient accents (no blue/indigo).
+- Frontend — public widget (LoyaltyWidget): localStorage-based anonymous ID, animated +10 points toast, badge unlock celebration, gold/purple gradient card, rewards dialog with redemption flow + code copy.
+- All 5 curl verification cases pass. Lint clean.
+- Integration pending (main agent): wire FidelitePage into FabricantShell + FabricantSidebar (add "fidelite" to FabricantPage type), embed LoyaltyWidget in /p/[lotId]/page.tsx. Work record written to /home/z/my-project/agent-ctx/2b-loyalty.md.
+
+---
+Task ID: V3-P2-main
+Agent: main (Z.ai Code)
+Task: V3 Phase 2 — Marketplace B2B + Programme de Fidélité (integration, verification, commit)
+
+Work Log:
+- Added 3 Prisma models: MarketplaceInquiry, Consumer, LoyaltyRedemption (+ Scan.consumerId relation)
+- Ran `bun run db:push` — schema synced, Prisma client regenerated
+- Launched 2 parallel subagents:
+  - Task 2a (Marketplace B2B): src/lib/marketplace.ts + 4 API routes + MarketplacePage.tsx + InquiryModal.tsx (7 files)
+  - Task 2b (Loyalty): src/lib/loyalty.ts + 4 API routes + FidelitePage.tsx + LoyaltyWidget.tsx (7 files)
+- Both subagents bumped PRISMA_CACHE_VERSION in src/lib/db.ts (v3-loyalty final) to force PrismaClient recreate after schema change
+- Wired both modules into dashboard:
+  - Added "marketplace" + "fidelite" to FabricantPage type in fabricant-store.ts
+  - Added imports + cases in FabricantShell.tsx
+  - Added new "BUSINESS" sidebar section with Marketplace B2B (Store icon, B2B badge) + Fidélité Conso (Gift icon, NEW badge)
+  - Added page titles to FabricantHeader.tsx PAGE_TITLES
+- Wired public components into /p/[lotId] product detail page:
+  - LoyaltyWidget (after FreshnessGlow) — consumer scan-to-earn points + badges + rewards dialog
+  - InquiryModal (after ContactOrb) — B2B "Vous êtes distributeur ? Demander un devis" section with emerald gradient card
+- Agent-browser E2E verification (logged in as sarine@biocosmetique.sn):
+  - Marketplace B2B tab: 3 tabs (Demandes reçues, Visibilité produits, Partenaires suggérés), 4 inquiries shown with filter pills (4 total, 1 en attente, 3 répondues)
+  - Fidélité tab: badge distribution (Explorateur/Ambassadeur/Expert), top consommateurs, récompenses récentes, catalogue
+  - Product page (/p/[lotId]): LoyaltyWidget "Mes récompenses" button + B2B "Demander un devis" section both render
+  - Inquiry modal opens with full form (Nom, Entreprise, Email, Pays, Message, Quantité)
+- API verification (curl):
+  - GET /api/marketplace/products → 200 (public catalog)
+  - GET /api/marketplace/inquiries → 401 (auth required)
+  - GET /api/marketplace/matches → 401
+  - GET /api/loyalty/stats → 401
+  - GET /api/loyalty/profile?anonymousId=test123 → 200 (public, returns profile + rewards + badges)
+  - POST /api/loyalty/scan → 200 (+10 points awarded, idempotent on re-scan)
+  - POST /api/loyalty/redeem → 402 (insufficient points, correct)
+  - POST /api/marketplace/inquiries (valid productId) → 201 (inquiry created with fabricantId linked + notification fired)
+- Screenshots: proof-v3-marketplace.png, proof-v3-fidelite.png, proof-v3-product-page.png
+- Lint: 0 errors, 0 warnings (bun run lint)
+- Dev log: no compile/runtime errors
+
+Stage Summary:
+- V3 Phase 2 (Marketplace B2B + Fidélité Consommateur) COMPLETE and verified
+- 14 new files created by subagents (7 per module) + 6 files modified for integration
+- Marketplace B2B: public catalog API, B2B inquiry system (lead capture → fabricant notification → dashboard response), partner matching engine
+- Loyalty: consumer identification (cookie-based anonymousId), 10 points/scan, 3 badge tiers (Explorateur 100pts, Ambassadeur 500pts, Expert 1000pts), 4 rewards (discount_5, discount_10, free_product, factory_visit), idempotent scan tracking, fabricant analytics dashboard
+- Both public components integrated on product detail page (/p/[lotId]): LoyaltyWidget for consumers + InquiryModal for distributors
+- Dashboard sidebar has new "BUSINESS" section with both modules

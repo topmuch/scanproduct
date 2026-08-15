@@ -75,6 +75,7 @@ model User {
   notificationPreference NotificationPreference?
   emailLogs       EmailLog[]    @relation("EmailLogUser")
   aiConversations AiConversation[]
+  inquiriesReceived MarketplaceInquiry[]
 
   @@index([role])
   @@index([status])
@@ -151,6 +152,7 @@ model Product {
 
   lots            Lot[]
   reviews         Review[]
+  inquiries       MarketplaceInquiry[]
 
   @@index([fabricantId])
   @@index([category])
@@ -298,6 +300,8 @@ model Scan {
   lot           Lot      @relation(fields: [lotId], references: [id], onDelete: Cascade)
   userId        String?
   user          User?    @relation(fields: [userId], references: [id])
+  consumerId    String?
+  consumer      Consumer? @relation(fields: [consumerId], references: [id])
 
   scannedAt     DateTime @default(now())
 
@@ -321,6 +325,7 @@ model Scan {
   @@index([scannedAt])
   @@index([country])
   @@index([userId])
+  @@index([consumerId])
 }
 
 // ============================================================================
@@ -596,4 +601,99 @@ model AiMessage {
 
   @@index([conversationId])
   @@index([createdAt])
+}
+
+// ============================================================================
+// V3 Module 2 — Marketplace B2B (demandes de devis distributeurs)
+// ============================================================================
+// Les distributeurs parcourent le catalogue public VerifScan et envoient des
+// demandes de devis aux fabricants. Chaque demande est liée à un produit et
+// un fabricant. Le fabricant répond depuis son dashboard.
+//
+// Status: "pending" | "responded" | "accepted" | "declined"
+model MarketplaceInquiry {
+  id              String   @id @default(cuid())
+  productId       String
+  product         Product  @relation(fields: [productId], references: [id])
+  fabricantId     String
+  fabricant       User     @relation(fields: [fabricantId], references: [id], onDelete: Cascade)
+
+  // Requester info (no account required — B2B lead capture)
+  requesterName       String
+  requesterCompany    String?
+  requesterEmail      String
+  requesterPhone      String?
+  requesterCountry    String?
+  requesterCity       String?
+
+  // Inquiry details
+  message         String
+  quantity        Int?
+  targetPrice     String?  // free text: "500 FCFA/unité"
+  deliveryDelay   String?  // requested delivery timeframe
+
+  // Status + response
+  status          String   @default("pending")
+  response        String?
+  respondedAt     DateTime?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([fabricantId])
+  @@index([productId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// ============================================================================
+// V3 Module 5 — Programme de Fidélité Consommateur
+// ============================================================================
+// Les consommateurs qui scannent des produits VerifScan accumulent des points.
+// Identifiés par cookie (anonymousId) jusqu'à inscription (email/phone).
+//
+// Badge tiers: "explorateur" (100 pts) | "ambassadeur" (500 pts) | "expert" (1000 pts)
+model Consumer {
+  id            String   @id @default(cuid())
+  anonymousId   String   @unique  // cookie-based ID (set on first scan)
+  email         String?
+  phone         String?
+  name          String?
+
+  points        Int      @default(0)
+  totalScans    Int      @default(0)
+  badges        String?  // JSON array of badge ids
+  favoriteFabricantIds String? // JSON array
+
+  scans         Scan[]
+  redemptions   LoyaltyRedemption[]
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([anonymousId])
+  @@index([email])
+}
+
+// Reward redemption — consumer spends points on a reward
+// Status: "pending" | "fulfilled" | "cancelled"
+model LoyaltyRedemption {
+  id          String   @id @default(cuid())
+  consumerId  String
+  consumer    Consumer @relation(fields: [consumerId], references: [id], onDelete: Cascade)
+  fabricantId String?  // who provides the reward (optional for platform rewards)
+  productId   String?  // optional product link
+
+  rewardType  String   // "discount_5" | "discount_10" | "free_product" | "factory_visit"
+  rewardLabel String   // human-readable: "Réduction 5%"
+  pointsCost  Int      // points spent
+  code        String?  // redemption code generated
+  status      String   @default("pending")
+
+  createdAt   DateTime @default(now())
+  fulfilledAt DateTime?
+
+  @@index([consumerId])
+  @@index([fabricantId])
+  @@index([status])
 }

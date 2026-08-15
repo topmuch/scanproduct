@@ -115,6 +115,8 @@ const PAGE_TITLES: Record<FabricantPage, { title: string; breadcrumb: string }> 
   statistiques: { title: "Statistiques", breadcrumb: "Dashboard / Statistiques" },
   notifications: { title: "Notifications", breadcrumb: "Dashboard / Notifications" },
   "ai-assistant": { title: "Assistant IA", breadcrumb: "Dashboard / Assistant IA" },
+  marketplace: { title: "Marketplace B2B", breadcrumb: "Dashboard / Marketplace B2B" },
+  fidelite: { title: "Fidélité Consommateur", breadcrumb: "Dashboard / Fidélité" },
   score: { title: "Score de Transparence", breadcrumb: "Dashboard / Score Transparence" },
   abonnement: { title: "Mon Abonnement", breadcrumb: "Dashboard / Abonnement" },
   parametres: { title: "Paramètres", breadcrumb: "Dashboard / Paramètres" },

@@ -13,6 +13,8 @@ export type FabricantPage =
   | "statistiques"
   | "notifications"
   | "ai-assistant"
+  | "marketplace"
+  | "fidelite"
   | "score"
   | "abonnement"
   | "parametres";

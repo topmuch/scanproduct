@@ -14,6 +14,8 @@ import {
   LogOut,
   ChevronUp,
   Sparkles,
+  Store,
+  Gift,
   X,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
@@ -58,6 +60,13 @@ const NAV_SECTIONS: NavSection[] = [
     ],
   },
   {
+    title: "BUSINESS",
+    items: [
+      { key: "marketplace", page: "marketplace", label: "Marketplace B2B", icon: Store, badge: { text: "B2B", color: "#10B981" } },
+      { key: "fidelite", page: "fidelite", label: "Fidélité Conso.", icon: Gift, badge: { text: "NEW", color: "#8B5CF6" } },
+    ],
+  },
+  {
     title: "COMPTE",
     items: [
       { key: "abonnement", page: "abonnement", label: "Abonnement", icon: CreditCard },
@@ -77,6 +86,8 @@ const PAGE_TO_KEY: Record<FabricantPage, string> = {
   statistiques: "statistiques",
   notifications: "notifications",
   "ai-assistant": "ai-assistant",
+  marketplace: "marketplace",
+  fidelite: "fidelite",
   score: "score",
   abonnement: "abonnement",
   parametres: "parametres",

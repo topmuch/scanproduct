@@ -15,6 +15,8 @@ import { BulkQRPage } from "./pages/BulkQRPage";
 import { StatistiquesPage } from "./pages/StatistiquesPage";
 import { NotificationsPage } from "./pages/NotificationsPage";
 import { AIAssistantPage } from "./pages/AIAssistantPage";
+import { MarketplacePage } from "./pages/MarketplacePage";
+import { FidelitePage } from "./pages/FidelitePage";
 import { ScorePage } from "./pages/ScorePage";
 import { AbonnementPage } from "./pages/AbonnementPage";
 import { ParametresPage } from "./pages/ParametresPage";
@@ -41,6 +43,10 @@ function renderPage(page: string) {
       return <NotificationsPage />;
     case "ai-assistant":
       return <AIAssistantPage />;
+    case "marketplace":
+      return <MarketplacePage />;
+    case "fidelite":
+      return <FidelitePage />;
     case "score":
       return <ScorePage />;
     case "abonnement":
