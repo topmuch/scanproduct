@@ -9,10 +9,11 @@ import { cn } from "@/lib/utils";
 
 const NAV_LINKS = [
   { label: "Accueil", href: "#accueil" },
-  { label: "Produits", href: "/produits" },
+  { label: "Fonctionnalités", href: "#fonctionnalites" },
   { label: "Le concept", href: "#concept" },
-  { label: "À propos", href: "#temoignages" },
-  { label: "Contact", href: "#contact" },
+  { label: "Catalogue", href: "#catalogue-slider" },
+  { label: "Métiers", href: "#metiers" },
+  { label: "Témoignages", href: "#temoignages" },
 ];
 
 export function Header() {

@@ -85,3 +85,6 @@ public/uploads/products/*
 Thumbs.db
 .idea/
 .vscode/.png
+
+# Debug screenshots (root level)
+*.png
