@@ -3776,3 +3776,34 @@ Stage Summary:
 - Chaque card ouvre un modal riche (défs + solutions + CTA) au lieu d'une route dédiée — respecte la contrainte "pas d'autres routes".
 - Design cohérent avec le reste du landing (SectionBadge, AnimatedSection, couleurs du projet).
 - Responsive mobile vérifié.
+
+---
+Task ID: 3
+Agent: main
+Task: Fix du dashboard qui tourne en boucle lors de la connexion (pas de redirection)
+
+Work Log:
+- Reproduction du bug avec agent-browser : login FABRICANT → URL reste sur /login même après POST callback 200 et GET session 200. Le log serveur montrait `GET /dashboard 200 in 4.5s` (rendu réussi côté serveur) mais l'URL navigateur ne changeait pas.
+- Analyse du log : deux requêtes GET /dashboard (une de handleSubmit, une du useEffect auto-redirect) → race condition entre router.push() et router.replace().
+- Cause racine identifiée : Next.js App Router `router.push()` peut silencieusement échouer (no-op) quand la route cible nécessite une compilation à froid (4-5s pour /dashboard). Le serveur retourne 200 mais le navigateur ne met pas à jour l'URL.
+- Cause secondaire : warning `⚠ Blocked cross-origin request from 127.0.0.1 to /_next/* resource` dans next.config.ts — allowedDevOrigins n'incluait pas 127.0.0.1/localhost, ce qui bloquait le chargement de ressources côté client.
+- Fix appliqué dans `src/app/login/page.tsx` :
+  * Remplacé `router.push(target); router.refresh();` par `window.location.href = target` (navigation hard qui force le navigateur à attendre le chargement complet de la page).
+  * Ajouté `submittingRef` (useRef) mis à true pendant handleSubmit, pour empêcher le useEffect auto-redirect de se déclencher en plein login (fix de la race condition).
+  * Ajouté `autoRedirectedRef` (useRef) pour que le useEffect ne se déclenche qu'UNE SEULE fois au montage (pas à chaque re-render).
+  * Le useEffect utilise aussi `window.location.href` au lieu de `router.replace()`.
+- Fix appliqué dans `next.config.ts` : ajouté `"localhost"` et `"127.0.0.1"` à `allowedDevOrigins` (en plus de `"*.space-z.ai"` existant).
+- Lint : 0 errors, 0 warnings.
+- Tests agent-browser (avec pré-compilation des routes pour éviter que le serveur ne meurt pendant le test) :
+  * FABRICANT (sarine@biocosmetique.sn) : /login → /dashboard en 3s ✓, dashboard rendu (Accueil, Produits, Lots, QR Codes)
+  * SUPERADMIN (admin@verifscan.sn) : /login → /superadmin en 3s ✓, dashboard rendu (Dashboard, Utilisateurs, Abonnements, Catégories, Paramètres)
+  * Log confirme : POST callback 200 → GET session 200 → GET /superadmin 200 (compile 4.7s)
+  * Plus de warning cross-origin dans le log.
+- Code poussé sur GitHub : commit 3ccb71b (e2df6cf..3ccb71b main -> main).
+
+Stage Summary:
+- Bug de boucle /dashboard résolu : `window.location.href` remplace `router.push + router.refresh` pour une navigation robuste qui ne silently-échoue pas pendant la compilation à froid.
+- Race condition fixée : `submittingRef` + `autoRedirectedRef` empêchent le useEffect de interférer avec handleSubmit.
+- Warning cross-origin résolu : `allowedDevOrigins` étendu.
+- Tests FABRICANT et SUPERADMIN réussis (login → dashboard correct en 3s).
+- Note : le serveur de dev meurt constamment entre les commandes bash dans ce sandbox (problème environnemental, pas de code). Les tests doivent être faits en une seule commande avec pré-compilation des routes.
