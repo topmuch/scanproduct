@@ -6,6 +6,7 @@ import { FabricantShell } from "@/components/fabricant/FabricantShell";
 import { getFabricantData } from "@/lib/fabricant-server-data";
 import type { FabricantData } from "@/lib/fabricant-types";
 import { DashboardLoadError } from "./DashboardLoadError";
+import { StripRetryParam } from "./StripRetryParam";
 
 export const dynamic = "force-dynamic";
 
@@ -56,5 +57,12 @@ export default async function DashboardPage() {
     return <DashboardLoadError />;
   }
 
-  return <FabricantShell initialData={initialData} />;
+  return (
+    <>
+      {/* Strip the ?_r= cache-buster param left by DashboardLoadError's retry
+          button so the URL stays clean after a successful reload. */}
+      <StripRetryParam />
+      <FabricantShell initialData={initialData} />
+    </>
+  );
 }

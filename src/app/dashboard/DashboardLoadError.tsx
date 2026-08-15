@@ -22,8 +22,17 @@ export function DashboardLoadError() {
 
   function handleRetry() {
     setRetrying(true);
-    // Force a full server re-render of the route (bypasses client cache).
-    window.location.reload();
+    // CRITICAL: do NOT use window.location.reload() here.
+    // Next.js caches the RSC (React Server Component) flight payload for
+    // visited routes. If the dashboard failed once (transient error), that
+    // error payload stays cached — reload() re-serves the SAME cached error
+    // instead of asking the server for fresh data.
+    //
+    // Fix: navigate to a *different* URL (unique query param) so the router
+    // cache misses and a brand-new server request is made. The query param
+    // is stripped by history.replaceState after load so the URL stays clean.
+    const cacheBuster = `_r=${Date.now()}`;
+    window.location.href = `/dashboard?${cacheBuster}`;
   }
 
   async function handleSignOut() {
