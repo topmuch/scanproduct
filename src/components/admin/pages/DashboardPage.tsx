@@ -8,12 +8,13 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Eye,
+  UserPlus,
 } from "lucide-react";
 import { useAdminNav } from "@/lib/admin-store";
 import { useAdminData } from "@/components/admin/AdminDataProvider";
 import { formatFCFA, type ActivityLog } from "@/lib/admin-server-data";
 import { CountUp } from "@/components/landing/CountUp";
-import { PageContainer, Card, CardHeader, Badge, Button } from "@/components/admin/ui";
+import { Card, CardHeader, Badge, Button, SectionTitle } from "@/components/admin/ui";
 import { AreaTrend, Donut, BarH, BarV } from "@/components/admin/charts";
 import { cn } from "@/lib/utils";
 
@@ -131,6 +132,11 @@ export function DashboardPage() {
 
   const signupsChartData = signups.map((d) => ({ label: d.label, value: d.value }));
   const planTotal = planDistribution.reduce((sum, d) => sum + d.value, 0);
+  const planCount = (name: string) =>
+    planDistribution.find((p) => p.name === name)?.value ?? 0;
+  const proCount = planCount("Pro");
+  const starterCount = planCount("Starter");
+  const enterpriseCount = planCount("Enterprise");
   const topMakersChartData = topMakers.map((d) => ({
     label: truncate(d.name, 22),
     value: d.scans,
@@ -140,8 +146,45 @@ export function DashboardPage() {
     value: Math.round(d.value / 1000),
   }));
 
+  const today = new Date().toLocaleDateString("fr-FR", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+
   return (
-    <PageContainer>
+    <div className="space-y-6">
+      <SectionTitle
+        title="Tableau de bord"
+        subtitle="Vue d'ensemble de la plateforme VerifScan"
+      />
+
+      {/* Welcome bar */}
+      <div className="flex flex-col gap-4 rounded-xl border border-[#E5E7EB] bg-gradient-to-br from-[#EFF6FF] to-[#F0FDF4] p-6 sm:flex-row sm:items-center sm:justify-between dark:border-white/10 dark:from-[#1E293B] dark:to-[#1E3A8A]">
+        <div>
+          <h1 className="font-display text-[24px] font-bold leading-tight text-[#111827] dark:text-white">
+            Bonjour, Admin 👋
+          </h1>
+          <p className="mt-1 text-[14px] text-[#6B7280] dark:text-white/70">
+            Voici un aperçu de votre activité aujourd&apos;hui
+          </p>
+          <p className="mt-1 text-[13px] text-[#9CA3AF] dark:text-white/50">
+            {today}
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-3">
+          <Button variant="gradient" onClick={() => setPage("users")}>
+            <UserPlus className="h-4 w-4" />
+            Ajouter un fabricant
+          </Button>
+          <Button variant="outline" onClick={() => setPage("support")}>
+            <LifeBuoy className="h-4 w-4" />
+            Voir les tickets
+          </Button>
+        </div>
+      </div>
+
       {/* KPI cards */}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
         <KpiCard
@@ -161,7 +204,7 @@ export function DashboardPage() {
           value={<CountUp end={GLOBAL_KPI.mrr} suffix=" FCFA" />}
           trend="+8.5% vs mois dernier"
           trendPositive
-          subtext="180 Pro · 65 Starter · 3 Enterprise"
+          subtext={`${proCount} Pro · ${starterCount} Starter · ${enterpriseCount} Enterprise`}
           gradient="from-[#10B981] to-[#34D399]"
         />
         <KpiCard
@@ -175,7 +218,7 @@ export function DashboardPage() {
           gradient="from-[#F59E0B] to-[#FBBF24]"
         />
         <KpiCard
-          icon={<LifeBuoy className="h-6 w-6 text-[#EF4444]" />}
+          icon={<LifeBuoy className="h-6 w-6 text-white" />}
           iconBg="#FEE2E2"
           title="Tickets Ouverts"
           value={<CountUp end={GLOBAL_KPI.openTickets} />}
@@ -187,7 +230,7 @@ export function DashboardPage() {
       </div>
 
       {/* Charts */}
-      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader title="Nouveaux fabricants" subtitle="12 derniers mois" />
           <div className="p-5">
@@ -205,7 +248,7 @@ export function DashboardPage() {
         <Card>
           <CardHeader title="Top fabricants" subtitle="Par nombre de scans" />
           <div className="p-5">
-            <BarH data={topMakersChartData} height={380} />
+            <BarH data={topMakersChartData} height={300} />
           </div>
         </Card>
 
@@ -218,7 +261,7 @@ export function DashboardPage() {
       </div>
 
       {/* Recent activity */}
-      <Card className="mt-6">
+      <Card>
         <CardHeader
           title="Activité récente"
           action={
@@ -273,13 +316,15 @@ export function DashboardPage() {
         </div>
 
         <div className="flex items-center justify-between border-t border-[#F3F4F6] px-5 py-3">
-          <p className="text-[13px] text-[#6B7280]">Affichage 1-8 sur 162</p>
+          <p className="text-[13px] text-[#6B7280]">
+            Affichage 1-{Math.min(8, ACTIVITY_LOGS.length)} sur {ACTIVITY_LOGS.length}
+          </p>
           <Button variant="outline" size="sm">
             Suivant
           </Button>
         </div>
       </Card>
-    </PageContainer>
+    </div>
   );
 }
 

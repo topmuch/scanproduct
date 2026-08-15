@@ -49,7 +49,11 @@ export function AdminShell({ initialData }: { initialData: AdminData }) {
         <AdminSidebar />
         <div className="lg:pl-[260px]">
           <AdminHeader />
-          <main className="min-h-[calc(100vh-70px)]">{renderPage(page)}</main>
+          <main className="min-h-[calc(100vh-70px)] bg-[#F9FAFB]">
+            <div className="mx-auto max-w-[1400px] px-4 py-6 lg:px-8 lg:py-8">
+              {renderPage(page)}
+            </div>
+          </main>
         </div>
       </div>
     </AdminDataProvider>

@@ -7,7 +7,8 @@ import { getAdminUsers } from "@/lib/admin-server-data";
 
 /**
  * GET /api/admin/users
- * SuperAdmin-only — returns the list of fabricants, with optional filters.
+ * SuperAdmin-only — returns the list of users (fabricants + super admins),
+ * with optional filters.
  *
  * Query params:
  *   search  — substring match on company / email / contact name
@@ -37,10 +38,11 @@ export async function GET(request: NextRequest) {
 }
 
 // ---------------------------------------------------------------------------
-// POST — create a new fabricant (used by the AddMakerModal in UsersPage)
+// POST — create a new user (fabricant or super admin) used by the AddMakerModal
 // ---------------------------------------------------------------------------
 
 const CreateMakerSchema = z.object({
+  role: z.enum(["FABRICANT", "SUPERADMIN"]).default("FABRICANT"),
   company: z.string().min(2).max(120),
   contactName: z.string().min(2).max(80),
   email: z.string().email().max(255),
@@ -88,14 +90,21 @@ export async function POST(request: NextRequest) {
     const tempPassword = Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
     const hashed = await bcrypt.hash(tempPassword, 10);
 
+    // Superadmins don't really have a "company" — fall back to a generic
+    // label so the NOT NULL companyName column still gets a sensible value.
+    const companyName =
+      data.role === "SUPERADMIN" && !data.company?.trim()
+        ? "VerifScan Admin"
+        : data.company;
+
     const user = await db.user.create({
       data: {
         email: data.email.toLowerCase(),
         name: data.contactName,
-        companyName: data.company,
+        companyName,
         phone: data.phone || null,
         address: data.address || null,
-        role: "FABRICANT",
+        role: data.role,
         status: dbStatus,
         brandColor: data.logoColor ?? "#2563EB",
         password: hashed,
@@ -109,7 +118,11 @@ export async function POST(request: NextRequest) {
         action: "CREATE_USER",
         entity: "User",
         entityId: user.id,
-        metadata: JSON.stringify({ email: user.email, companyName: user.companyName }),
+        metadata: JSON.stringify({
+          email: user.email,
+          companyName: user.companyName,
+          role: user.role,
+        }),
       },
     });
 
@@ -118,7 +131,8 @@ export async function POST(request: NextRequest) {
         id: user.id,
         email: user.email,
         companyName: user.companyName,
-        // Returned so the admin can hand the temp password to the new fabricant.
+        role: user.role,
+        // Returned so the admin can hand the temp password to the new user.
         // In production this would be sent via an invitation email instead.
         temporaryPassword: tempPassword,
       },

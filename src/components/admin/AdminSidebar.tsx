@@ -4,11 +4,9 @@ import {
   LayoutDashboard,
   Users,
   CreditCard,
-  Package,
   FolderTree,
   BarChart3,
   LifeBuoy,
-  ScrollText,
   Settings,
   LogOut,
   ShieldCheck,
@@ -16,15 +14,20 @@ import {
 import { signOut } from "next-auth/react";
 import { Logo } from "@/components/landing/Logo";
 import { useAdminNav, type AdminPage } from "@/lib/admin-store";
+import { useAdminData } from "@/components/admin/AdminDataProvider";
+import type { AdminData } from "@/lib/admin-server-data";
 import { cn } from "@/lib/utils";
 
 type NavItem = {
   page: AdminPage;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
-  badge?: { text: string; color: string };
   /** unique key to dedupe items that point to the same page */
   key: string;
+  /** optional badge color (defaults to #EF4444) */
+  badgeColor?: string;
+  /** returns the badge text from current admin data; undefined hides the badge */
+  badgeFromData?: (data: AdminData) => string | undefined;
 };
 
 type NavSection = {
@@ -37,9 +40,15 @@ const NAV_SECTIONS: NavSection[] = [
     title: "PRINCIPAL",
     items: [
       { key: "dashboard", page: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-      { key: "users", page: "users", label: "Utilisateurs", icon: Users, badge: { text: "12", color: "#EF4444" } },
+      {
+        key: "users",
+        page: "users",
+        label: "Utilisateurs",
+        icon: Users,
+        badgeColor: "#EF4444",
+        badgeFromData: (d) => (d.users.length > 0 ? String(d.users.length) : undefined),
+      },
       { key: "subscriptions", page: "subscriptions", label: "Abonnements", icon: CreditCard },
-      { key: "products", page: "categories", label: "Produits", icon: Package },
     ],
   },
   {
@@ -53,13 +62,22 @@ const NAV_SECTIONS: NavSection[] = [
     title: "ANALYTIQUE",
     items: [
       { key: "stats", page: "stats", label: "Statistiques", icon: BarChart3 },
-      { key: "logs", page: "support", label: "Logs & Audit", icon: ScrollText },
     ],
   },
   {
     title: "SUPPORT",
     items: [
-      { key: "tickets", page: "support", label: "Tickets", icon: LifeBuoy, badge: { text: "5", color: "#EF4444" } },
+      {
+        key: "tickets",
+        page: "support",
+        label: "Tickets",
+        icon: LifeBuoy,
+        badgeColor: "#EF4444",
+        badgeFromData: (d) => {
+          const openCount = d.tickets.filter((t) => t.status !== "Résolu").length;
+          return openCount > 0 ? String(openCount) : undefined;
+        },
+      },
     ],
   },
 ];
@@ -80,6 +98,7 @@ const PAGE_TO_KEY: Record<AdminPage, string> = {
 
 export function AdminSidebar() {
   const { page, setPage } = useAdminNav();
+  const data = useAdminData();
   const activeKey = PAGE_TO_KEY[page];
 
   return (
@@ -102,6 +121,7 @@ export function AdminSidebar() {
             <ul className="space-y-0.5 px-3">
               {section.items.map((item) => {
                 const isActive = activeKey === item.key;
+                const badgeText = item.badgeFromData?.(data);
                 return (
                   <li key={item.key}>
                     <button
@@ -119,12 +139,12 @@ export function AdminSidebar() {
                       )}
                       <item.icon className="h-5 w-5 flex-shrink-0" />
                       <span className="flex-1 text-left">{item.label}</span>
-                      {item.badge && (
+                      {badgeText && (
                         <span
                           className="flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1 text-[10px] font-bold text-white"
-                          style={{ backgroundColor: item.badge.color }}
+                          style={{ backgroundColor: item.badgeColor ?? "#EF4444" }}
                         >
-                          {item.badge.text}
+                          {badgeText}
                         </span>
                       )}
                     </button>

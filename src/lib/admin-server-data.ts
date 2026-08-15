@@ -19,6 +19,7 @@ import { db } from "@/lib/db";
 
 export type Plan = "Starter" | "Pro" | "Enterprise" | "Essai";
 export type UserStatus = "Actif" | "Inactif" | "Suspendu";
+export type UserRole = "FABRICANT" | "SUPERADMIN";
 
 export type MakerProduct = {
   name: string;
@@ -41,6 +42,7 @@ export type Maker = {
   address: string;
   plan: Plan;
   status: UserStatus;
+  role: UserRole;
   products: number;
   scans: number;
   scans30d: number[];
@@ -442,7 +444,11 @@ type UserFilters = {
 export async function getAdminUsers(filters: UserFilters = {}): Promise<Maker[]> {
   const limit = Math.min(filters.limit ?? 200, 500);
 
-  const where: { role: string; status?: string } = { role: "FABRICANT" };
+  // Include both FABRICANT and SUPERADMIN so the superadmin dashboard can
+  // list every account that was created from this panel.
+  const where: { role: { in: string[] }; status?: string } = {
+    role: { in: ["FABRICANT", "SUPERADMIN"] },
+  };
   if (filters.status && filters.status !== "Tous") {
     if (filters.status === "Actif") where.status = "ACTIVE";
     else if (filters.status === "Suspendu") where.status = "SUSPENDED";
@@ -490,6 +496,7 @@ export async function getAdminUsers(filters: UserFilters = {}): Promise<Maker[]>
       address: [u.address, u.city, u.country].filter(Boolean).join(", ") || "—",
       plan,
       status,
+      role: (u.role as UserRole) || "FABRICANT",
       products: productCount,
       scans,
       scans30d: Array.from({ length: 30 }, () => 0),
@@ -621,6 +628,7 @@ export async function getAdminUserDetail(userId: string): Promise<Maker | null> 
     address: [user.address, user.city, user.country].filter(Boolean).join(", ") || "—",
     plan,
     status,
+    role: (user.role as UserRole) || "FABRICANT",
     products: user._count.products,
     scans: user.totalScans ?? 0,
     scans30d: buckets,

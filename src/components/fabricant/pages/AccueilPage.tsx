@@ -11,6 +11,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { Lock } from "lucide-react";
 import {
   PageHeader,
   SectionCard,
@@ -108,10 +109,10 @@ export function AccueilPage() {
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.05 }}
-        className="flex flex-col gap-3 rounded-xl border border-[#E5E7EB] bg-white p-5 sm:flex-row sm:items-center sm:justify-between"
+        className="flex flex-col gap-3 rounded-xl border border-[#E5E7EB] bg-white p-5 sm:flex-row sm:items-center sm:justify-between dark:border-white/10 dark:bg-[#1E293B]"
       >
         <div className="flex-1">
-          <p className="mb-2 text-[13px] font-medium text-[#374151]">
+          <p className="mb-2 text-[13px] font-medium text-[#374151] dark:text-[#E5E7EB]">
             Complétez votre profil à 75%
           </p>
           <ProgressBar value={75} gradient="from-[#2563EB] to-[#10B981]" height="h-2" />
@@ -119,7 +120,7 @@ export function AccueilPage() {
         <button
           type="button"
           onClick={() => setPage("parametres")}
-          className="self-start text-[13px] font-semibold text-[#2563EB] hover:underline sm:self-auto"
+          className="self-start text-[13px] font-semibold text-[#2563EB] hover:underline sm:self-auto dark:text-[#60A5FA]"
         >
           Voir les détails
         </button>
@@ -240,11 +241,11 @@ export function AccueilPage() {
       {/* ====================================================================
           5. Activity feed + Top products (2-column)
           ==================================================================== */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
-        {/* ---- Left: Dernières actions (3/5) ---- */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        {/* ---- Left: Dernières actions (2/3) ---- */}
         <SectionCard
           title="Dernières actions"
-          className="lg:col-span-3"
+          className="lg:col-span-2"
           bodyClassName="p-0"
         >
           <ul className="divide-y divide-[#F3F4F6]">
@@ -281,10 +282,10 @@ export function AccueilPage() {
           </div>
         </SectionCard>
 
-        {/* ---- Right: Top 5 produits scannés (2/5) ---- */}
+        {/* ---- Right: Top 5 produits scannés (1/3) ---- */}
         <SectionCard
           title="Top 5 produits scannés"
-          className="lg:col-span-2"
+          className="lg:col-span-1"
           bodyClassName="p-0"
         >
           <ul className="divide-y divide-[#F3F4F6]">
@@ -447,17 +448,27 @@ export function AccueilPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: 0.04 * idx }}
               className={[
-                "flex flex-col items-center rounded-xl border border-[#E5E7EB] bg-white p-5 text-center",
-                badge.debloque ? "shadow-[0_0_0_1px_rgba(139,92,246,0.15),0_8px_24px_-12px_rgba(139,92,246,0.35)]" : "opacity-60",
+                "flex flex-col items-center rounded-xl border bg-white p-5 text-center",
+                badge.debloque
+                  ? "border-[#E5E7EB] shadow-[0_0_0_1px_rgba(139,92,246,0.15),0_8px_24px_-12px_rgba(139,92,246,0.35)]"
+                  : "border-dashed border-[#D1D5DB] opacity-50",
               ].join(" ")}
             >
               <div
                 className={[
                   "mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-[#F9FAFB] text-[48px] leading-none",
-                  !badge.debloque ? "grayscale" : "",
+                  !badge.debloque ? "relative" : "",
                 ].join(" ")}
               >
                 {badge.icon}
+                {!badge.debloque && (
+                  <span
+                    className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-[#D1D5DB] text-[#374151]"
+                    aria-label="Verrouillé"
+                  >
+                    <Lock className="h-3 w-3" />
+                  </span>
+                )}
               </div>
 
               <p className="text-[14px] font-semibold text-[#111827]">{badge.nom}</p>

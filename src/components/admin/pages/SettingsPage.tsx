@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Settings,
   Mail,
@@ -24,6 +24,7 @@ import {
   FileDown,
   Pencil,
   ExternalLink,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -272,6 +273,65 @@ function SettingsNav({
  * ========================================================== */
 
 function GeneralSection() {
+  // ── Favicon upload state ──────────────────────────────────────────
+  // The favicon is a dynamic site-wide asset: the superadmin uploads a new
+  // image, it gets saved to UPLOAD_DIR/site/favicon.<ext>, and the URL is
+  // stored in the Setting table. layout.tsx's generateMetadata() reads
+  // this URL and emits the correct <link rel="icon"> tags.
+  const [faviconUrl, setFaviconUrl] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [favError, setFavError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Fetch the current favicon URL on mount.
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/admin/settings/favicon")
+      .then((r) => (r.ok ? r.json() : { url: null }))
+      .then((data) => {
+        if (!cancelled && data?.url) setFaviconUrl(data.url);
+      })
+      .catch(() => {
+        /* non-fatal — default placeholder is shown */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  async function handleFaviconChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setFavError(null);
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/admin/settings/favicon", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.url) {
+        throw new Error(data.error || "Échec de l'upload du favicon.");
+      }
+      setFaviconUrl(data.url);
+      toast.success("Favicon mis à jour avec succès");
+      // Hard reload so the browser picks up the new <link rel="icon"> from
+      // generateMetadata(). A soft refresh often serves a cached favicon.
+      setTimeout(() => window.location.reload(), 800);
+    } catch (err) {
+      const msg =
+        err instanceof Error ? err.message : "Erreur lors de l'upload.";
+      setFavError(msg);
+      toast.error(msg);
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
+
   return (
     <Card>
       <CardHeader
@@ -312,15 +372,70 @@ function GeneralSection() {
           </div>
         </Field>
 
-        <Field label="Favicon" hint="32×32 px — PNG ou ICO">
-          <div className="inline-flex items-center gap-3 rounded-lg border-2 border-dashed border-[#E5E7EB] bg-[#F9FAFB] p-4">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded border border-[#E5E7EB] bg-white">
-              <span className="font-display text-[14px] font-bold text-[#2563EB]">
-                V
-              </span>
+        <Field
+          label="Favicon"
+          hint="32×32 px recommandé — PNG, ICO, SVG, WebP (2 MB max)"
+        >
+          {/* Hidden file input — triggered by the "Changer" button */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/png,image/x-icon,image/svg+xml,image/webp,image/jpeg,image/gif,.ico"
+            onChange={handleFaviconChange}
+            className="hidden"
+          />
+          <div className="flex flex-col gap-3 rounded-lg border-2 border-dashed border-[#E5E7EB] bg-[#F9FAFB] p-4 sm:flex-row sm:items-center">
+            {/* Favicon preview — shows the actual current favicon */}
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-[#E5E7EB] bg-white">
+              {faviconUrl ? (
+                <img
+                  src={faviconUrl}
+                  alt="Favicon actuel"
+                  className="h-full w-full object-contain"
+                  onError={(e) => {
+                    // If the custom favicon fails to load, hide the img so
+                    // the letter fallback (via CSS) shows instead.
+                    (e.currentTarget as HTMLImageElement).style.display = "none";
+                  }}
+                />
+              ) : (
+                <span className="font-display text-[18px] font-bold text-[#2563EB]">
+                  V
+                </span>
+              )}
             </div>
-            <Button variant="outline" size="sm">
-              <Upload className="h-4 w-4" /> Changer
+            <div className="flex-1">
+              <p className="text-[13px] font-medium text-[#111827]">
+                {faviconUrl
+                  ? "Favicon personnalisé actif"
+                  : "Favicon par défaut (lettre V)"}
+              </p>
+              <p className="mt-0.5 text-[12px] text-[#6B7280]">
+                {uploading
+                  ? "Upload en cours…"
+                  : "Cliquez sur « Changer » pour téléverser un nouveau favicon"}
+              </p>
+              {favError && (
+                <p className="mt-1 text-[12px] font-medium text-[#EF4444]">
+                  {favError}
+                </p>
+              )}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={uploading}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              {uploading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" /> Upload…
+                </>
+              ) : (
+                <>
+                  <Upload className="h-4 w-4" /> Changer
+                </>
+              )}
             </Button>
           </div>
         </Field>

@@ -87,6 +87,15 @@ export function FabricantSidebar() {
     score: `${data.score.global}/100`,
   };
 
+  // Avatar logo fallback: if the computed initials are empty (edge case where
+  // neither name nor companyName is set), fall back to the first letter of the
+  // company name, then to "F" (Fabricant). Prevents layout breaks when
+  // data.profile.logo is an empty string.
+  const logoInitial =
+    data.profile.logo?.trim() ||
+    data.profile.companyName?.charAt(0)?.toUpperCase() ||
+    "F";
+
   const sidebarContent = (
     <>
       {/* Logo */}
@@ -177,7 +186,7 @@ export function FabricantSidebar() {
       <div className="border-t border-white/10 p-4">
         <div className="flex items-center gap-3 rounded-lg p-2 hover:bg-white/10">
           <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-[#2563EB] to-[#10B981] font-display text-sm font-bold text-white">
-            {data.profile.logo}
+            {logoInitial}
           </span>
           <div className="min-w-0 flex-1 leading-tight">
             <p className="truncate text-[14px] font-semibold text-white">{data.profile.companyName}</p>

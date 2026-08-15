@@ -361,7 +361,7 @@ export function ProgressBar({
 }) {
   const pct = Math.min((value / max) * 100, 100);
   return (
-    <div className={cn("w-full overflow-hidden rounded-full bg-[#E5E7EB]", height)}>
+    <div className={cn("w-full overflow-hidden rounded-full bg-[#E5E7EB] dark:bg-[#374151]", height)}>
       <motion.div
         initial={{ width: 0 }}
         animate={{ width: `${pct}%` }}

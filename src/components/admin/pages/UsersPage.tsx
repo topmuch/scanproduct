@@ -14,6 +14,8 @@ import {
   MessageCircle,
   UserPlus,
   X,
+  Shield,
+  Package,
 } from "lucide-react";
 import { PageContainer, Card, Badge, SectionTitle, Button } from "@/components/admin/ui";
 import {
@@ -22,6 +24,7 @@ import {
   type Maker,
   type Plan,
   type UserStatus,
+  type UserRole,
 } from "@/lib/admin-server-data";
 import { useAdminData, useAdminMutations } from "@/components/admin/AdminDataProvider";
 import { useAdminNav } from "@/lib/admin-store";
@@ -41,6 +44,11 @@ const STATUS_BADGE: Record<UserStatus, PillColor> = {
   Actif: "green",
   Inactif: "gray",
   Suspendu: "red",
+};
+
+const ROLE_BADGE: Record<UserRole, { color: PillColor; label: string }> = {
+  FABRICANT: { color: "blue", label: "Fabricant" },
+  SUPERADMIN: { color: "purple", label: "Super Admin" },
 };
 
 const STATUS_FILTERS: { key: "Tous" | UserStatus; label: string }[] = [
@@ -257,6 +265,7 @@ export function UsersPage() {
                 </th>
                 <th className="px-4 py-3 font-semibold">Entreprise</th>
                 <th className="px-4 py-3 font-semibold">Contact</th>
+                <th className="px-4 py-3 font-semibold">Rôle</th>
                 <th className="px-4 py-3 font-semibold">Plan</th>
                 <th className="px-4 py-3 font-semibold">Statut</th>
                 <th className="px-4 py-3 text-right font-semibold">Produits</th>
@@ -303,6 +312,12 @@ export function UsersPage() {
                     <td className="px-4 py-3 align-middle">
                       <div className="text-[13px] font-medium text-[#111827]">{m.contactName}</div>
                       <div className="text-[12px] text-[#6B7280]">{m.email}</div>
+                    </td>
+                    <td className="px-4 py-3 align-middle">
+                      <Badge color={ROLE_BADGE[m.role].color}>
+                        {m.role === "SUPERADMIN" && <Shield className="h-3 w-3" />}
+                        {ROLE_BADGE[m.role].label}
+                      </Badge>
                     </td>
                     <td className="px-4 py-3 align-middle">
                       <Badge color={PLAN_BADGE[m.plan]}>{m.plan}</Badge>
@@ -422,7 +437,7 @@ export function UsersPage() {
 
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={9} className="px-4 py-16 text-center">
+                  <td colSpan={10} className="px-4 py-16 text-center">
                     <div className="mx-auto flex max-w-sm flex-col items-center gap-2">
                       <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#F3F4F6]">
                         <Search className="h-5 w-5 text-[#9CA3AF]" />
@@ -508,7 +523,11 @@ export function UsersPage() {
                 const err = (await res.json().catch(() => ({}))) as { error?: string };
                 throw new Error(err.error || "Échec de la création");
               }
-              toast.success(`Fabricant « ${data.company} » créé avec succès`);
+              toast.success(
+                data.role === "SUPERADMIN"
+                  ? `Super admin « ${data.contactName} » créé avec succès`
+                  : `Fabricant « ${data.company} » créé avec succès`
+              );
               setModalOpen(false);
               // Refresh server data so the new fabricant shows up
               if (typeof window !== "undefined") window.location.reload();
@@ -523,7 +542,8 @@ export function UsersPage() {
 }
 
 // ============================================================================
-// AddMakerModal — form to create a new fabricant from the superadmin panel.
+// AddMakerModal — form to create a new fabricant (or super admin) from the
+// superadmin panel.
 // ============================================================================
 const LOGO_COLORS = ["#2563EB", "#10B981", "#F59E0B", "#8B5CF6", "#EC4899", "#06B6D4"];
 
@@ -533,6 +553,7 @@ function AddMakerModal({
 }: {
   onClose: () => void;
   onSubmit: (data: {
+    role: UserRole;
     company: string;
     contactName: string;
     email: string;
@@ -543,6 +564,7 @@ function AddMakerModal({
     logoColor: string;
   }) => void;
 }) {
+  const [role, setRole] = useState<UserRole>("FABRICANT");
   const [company, setCompany] = useState("");
   const [contactName, setContactName] = useState("");
   const [email, setEmail] = useState("");
@@ -552,19 +574,27 @@ function AddMakerModal({
   const [status, setStatus] = useState<UserStatus>("Actif");
   const [logoColor, setLogoColor] = useState(LOGO_COLORS[0]);
 
+  const isSuperAdmin = role === "SUPERADMIN";
+  const companyLabel = isSuperAdmin ? "Département" : "Entreprise";
+  const companyPlaceholder = isSuperAdmin ? "Ex : Opérations" : "Ex : Sarine Bio";
+  const contactLabel = isSuperAdmin ? "Nom complet" : "Nom du contact";
+
   const canSubmit = Boolean(company.trim() && contactName.trim() && email.trim());
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!canSubmit) return;
     onSubmit({
+      role,
       company: company.trim(),
       contactName: contactName.trim(),
       email: email.trim(),
       phone: phone.trim(),
       address: address.trim(),
-      plan,
-      status,
+      // Superadmins have no plan / status — we still send sensible defaults
+      // so the API contract stays uniform, but the UI hides them.
+      plan: isSuperAdmin ? "Enterprise" : plan,
+      status: isSuperAdmin ? "Actif" : status,
       logoColor,
     });
   }
@@ -572,6 +602,29 @@ function AddMakerModal({
   const inputCls =
     "w-full rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-[14px] text-[#111827] placeholder:text-[#9CA3AF] focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 transition";
   const labelCls = "mb-1.5 block text-[13px] font-medium text-[#374151]";
+
+  const roleOptions: {
+    value: UserRole;
+    label: string;
+    description: string;
+    icon: typeof Package;
+    activeCls: string;
+  }[] = [
+    {
+      value: "FABRICANT",
+      label: "Fabricant",
+      description: "Compte entreprise",
+      icon: Package,
+      activeCls: "border-[#2563EB] bg-[#EFF6FF] text-[#1E40AF]",
+    },
+    {
+      value: "SUPERADMIN",
+      label: "Super Admin",
+      description: "Accès total",
+      icon: Shield,
+      activeCls: "border-[#7C3AED] bg-[#F5F3FF] text-[#5B21B6]",
+    },
+  ];
 
   return (
     <div
@@ -586,15 +639,24 @@ function AddMakerModal({
         {/* Header */}
         <div className="flex items-center justify-between border-b border-[#F3F4F6] px-6 py-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-[#2563EB] to-[#10B981] text-white">
-              <UserPlus className="h-5 w-5" />
+            <div
+              className={cn(
+                "flex h-9 w-9 items-center justify-center rounded-lg text-white",
+                isSuperAdmin
+                  ? "bg-gradient-to-br from-[#7C3AED] to-[#A855F7]"
+                  : "bg-gradient-to-br from-[#2563EB] to-[#10B981]"
+              )}
+            >
+              {isSuperAdmin ? <Shield className="h-5 w-5" /> : <UserPlus className="h-5 w-5" />}
             </div>
             <div>
               <h2 className="font-display text-[18px] font-bold text-[#111827]">
-                Ajouter un fabricant
+                {isSuperAdmin ? "Ajouter un super administrateur" : "Ajouter un fabricant"}
               </h2>
               <p className="text-[13px] text-[#6B7280]">
-                Créez un nouveau compte fabricant.
+                {isSuperAdmin
+                  ? "Créez un nouveau compte super admin."
+                  : "Créez un nouveau compte fabricant."}
               </p>
             </div>
           </div>
@@ -610,15 +672,60 @@ function AddMakerModal({
 
         {/* Body */}
         <div className="max-h-[calc(92vh-140px)] space-y-4 overflow-y-auto px-6 py-5">
+          {/* Role segmented control */}
+          <div>
+            <label className={labelCls}>Type de compte</label>
+            <div className="grid grid-cols-2 gap-3">
+              {roleOptions.map((opt) => {
+                const Icon = opt.icon;
+                const active = role === opt.value;
+                return (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setRole(opt.value)}
+                    className={cn(
+                      "flex items-center gap-2.5 rounded-xl border-2 px-3 py-2.5 text-left transition-all",
+                      active
+                        ? opt.activeCls
+                        : "border-[#E5E7EB] bg-white text-[#374151] hover:bg-[#F9FAFB]"
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg",
+                        active
+                          ? isSuperAdmin && opt.value === "SUPERADMIN"
+                            ? "bg-[#7C3AED] text-white"
+                            : "bg-[#2563EB] text-white"
+                          : "bg-[#F3F4F6] text-[#6B7280]"
+                      )}
+                    >
+                      <Icon className="h-4 w-4" />
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block text-[13px] font-semibold leading-tight">
+                        {opt.label}
+                      </span>
+                      <span className="block text-[11px] text-current/70 leading-tight">
+                        {opt.description}
+                      </span>
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           <div>
             <label className={labelCls}>
-              Entreprise <span className="text-[#EF4444]">*</span>
+              {companyLabel} <span className="text-[#EF4444]">*</span>
             </label>
             <input
               type="text"
               value={company}
               onChange={(e) => setCompany(e.target.value)}
-              placeholder="Ex : Sarine Bio"
+              placeholder={companyPlaceholder}
               className={inputCls}
               autoFocus
             />
@@ -627,7 +734,7 @@ function AddMakerModal({
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label className={labelCls}>
-                Nom du contact <span className="text-[#EF4444]">*</span>
+                {contactLabel} <span className="text-[#EF4444]">*</span>
               </label>
               <input
                 type="text"
@@ -674,55 +781,71 @@ function AddMakerModal({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div>
-              <label className={labelCls}>Plan</label>
-              <select
-                value={plan}
-                onChange={(e) => setPlan(e.target.value as Plan)}
-                className={inputCls}
-              >
-                <option value="Essai">Essai</option>
-                <option value="Starter">Starter</option>
-                <option value="Pro">Pro</option>
-                <option value="Enterprise">Enterprise</option>
-              </select>
+          {/* Plan + Status — only relevant for fabricants. Super admins are
+              forced to Actif and have no plan. */}
+          {!isSuperAdmin && (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <label className={labelCls}>Plan</label>
+                <select
+                  value={plan}
+                  onChange={(e) => setPlan(e.target.value as Plan)}
+                  className={inputCls}
+                >
+                  <option value="Essai">Essai</option>
+                  <option value="Starter">Starter</option>
+                  <option value="Pro">Pro</option>
+                  <option value="Enterprise">Enterprise</option>
+                </select>
+              </div>
+              <div>
+                <label className={labelCls}>Statut</label>
+                <select
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value as UserStatus)}
+                  className={inputCls}
+                >
+                  <option value="Actif">Actif</option>
+                  <option value="Inactif">Inactif</option>
+                  <option value="Suspendu">Suspendu</option>
+                </select>
+              </div>
             </div>
-            <div>
-              <label className={labelCls}>Statut</label>
-              <select
-                value={status}
-                onChange={(e) => setStatus(e.target.value as UserStatus)}
-                className={inputCls}
-              >
-                <option value="Actif">Actif</option>
-                <option value="Inactif">Inactif</option>
-                <option value="Suspendu">Suspendu</option>
-              </select>
-            </div>
-          </div>
+          )}
 
-          {/* Logo color picker */}
-          <div>
-            <label className={labelCls}>Couleur du logo</label>
-            <div className="flex flex-wrap gap-2">
-              {LOGO_COLORS.map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  onClick={() => setLogoColor(c)}
-                  className={cn(
-                    "h-9 w-9 rounded-lg border-2 transition-all",
-                    logoColor === c
-                      ? "border-[#111827] ring-2 ring-[#2563EB]/30"
-                      : "border-transparent hover:scale-110"
-                  )}
-                  style={{ backgroundColor: c }}
-                  aria-label={`Couleur ${c}`}
-                />
-              ))}
+          {isSuperAdmin && (
+            <div className="flex items-center gap-2 rounded-lg border border-[#EDE9FE] bg-[#F5F3FF] px-3 py-2 text-[12px] text-[#5B21B6]">
+              <Shield className="h-4 w-4 shrink-0" />
+              <span>
+                Le compte sera créé avec le statut <strong>Actif</strong> et un accès
+                administrateur complet au tableau de bord VerifScan.
+              </span>
             </div>
-          </div>
+          )}
+
+          {/* Logo color picker — only for fabricants */}
+          {!isSuperAdmin && (
+            <div>
+              <label className={labelCls}>Couleur du logo</label>
+              <div className="flex flex-wrap gap-2">
+                {LOGO_COLORS.map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setLogoColor(c)}
+                    className={cn(
+                      "h-9 w-9 rounded-lg border-2 transition-all",
+                      logoColor === c
+                        ? "border-[#111827] ring-2 ring-[#2563EB]/30"
+                        : "border-transparent hover:scale-110"
+                    )}
+                    style={{ backgroundColor: c }}
+                    aria-label={`Couleur ${c}`}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Footer */}
@@ -730,9 +853,15 @@ function AddMakerModal({
           <Button variant="outline" size="md" type="button" onClick={onClose}>
             Annuler
           </Button>
-          <Button variant="gradient" size="md" type="submit" disabled={!canSubmit}>
-            <UserPlus className="h-4 w-4" />
-            Créer le fabricant
+          <Button
+            variant={isSuperAdmin ? "primary" : "gradient"}
+            size="md"
+            type="submit"
+            disabled={!canSubmit}
+            className={isSuperAdmin ? "bg-[#7C3AED] hover:bg-[#6D28D9]" : undefined}
+          >
+            {isSuperAdmin ? <Shield className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}
+            {isSuperAdmin ? "Créer le super admin" : "Créer le fabricant"}
           </Button>
         </div>
       </form>

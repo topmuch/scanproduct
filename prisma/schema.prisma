@@ -436,3 +436,14 @@ model Ticket {
   @@index([userId])
   @@index([createdAt])
 }
+
+// ============================================================================
+// Site-wide settings (key/value store for superadmin-configurable options)
+// ============================================================================
+// Used for dynamic site config like favicon URL, site name, etc.
+// Stored as String values (JSON-encode complex values if needed).
+model Setting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}

@@ -5,11 +5,8 @@ import Link from "next/link";
 import { Logo } from "./Logo";
 
 // Each footer link maps to a real target:
-//   - Real pages use absolute paths ("/produits", "/register", "/login")
+//   - Real pages use absolute paths ("/produits", "/register", "/a-propos"…)
 //   - Sections on the landing page use "/#anchor"
-//   - Pages not yet implemented (Blog, Carrières, legal…) fall back to the
-//     contact section so the user always lands somewhere useful instead of
-//     a dead "#" anchor that just scrolls to the top.
 const COLUMNS: { title: string; links: { label: string; href: string }[] }[] = [
   {
     title: "Produit",
@@ -23,19 +20,19 @@ const COLUMNS: { title: string; links: { label: string; href: string }[] }[] = [
   {
     title: "Entreprise",
     links: [
-      { label: "À propos", href: "/#temoignages" },
+      { label: "À propos", href: "/a-propos" },
       { label: "Contact", href: "/#contact" },
-      { label: "Blog", href: "/#contact" },
-      { label: "Carrières", href: "/#contact" },
+      { label: "Blog", href: "/blog" },
+      { label: "Carrières", href: "/carrieres" },
     ],
   },
   {
     title: "Légal",
     links: [
-      { label: "Mentions légales", href: "/#contact" },
-      { label: "CGU", href: "/#contact" },
-      { label: "Politique de confidentialité", href: "/#contact" },
-      { label: "Cookies", href: "/#contact" },
+      { label: "Mentions légales", href: "/mentions-legales" },
+      { label: "CGU", href: "/cgu" },
+      { label: "Politique de confidentialité", href: "/politique-confidentialite" },
+      { label: "Cookies", href: "/cookies" },
     ],
   },
 ];
@@ -82,7 +79,9 @@ export function Footer() {
               <h3 className="font-display text-base font-semibold text-white">{col.title}</h3>
               <ul className="mt-4 space-y-2.5">
                 {col.links.map((link) => {
-                  const isInternal = link.href.startsWith("/#") || link.href === "/produits" || link.href === "/register" || link.href === "/login";
+                  // Any href starting with "/" is an internal route → use next/link.
+                  // (Covers both "/#anchor" and "/some-page".)
+                  const isInternal = link.href.startsWith("/");
                   return (
                     <li key={link.label}>
                       {isInternal ? (

@@ -39,7 +39,7 @@ export function PublicFooter() {
                 </Link>
               </li>
               <li>
-                <Link href="/#tarifs" className="text-white/70 hover:text-white">
+                <Link href="/#pricing" className="text-white/70 hover:text-white">
                   Tarifs
                 </Link>
               </li>
@@ -50,7 +50,7 @@ export function PublicFooter() {
             <h3 className="text-sm font-semibold text-white">Entreprise</h3>
             <ul className="mt-3 space-y-2 text-sm">
               <li>
-                <Link href="/#temoignages" className="text-white/70 hover:text-white">
+                <Link href="/a-propos" className="text-white/70 hover:text-white">
                   À propos
                 </Link>
               </li>
@@ -72,11 +72,15 @@ export function PublicFooter() {
             <ul className="mt-3 space-y-2 text-sm text-white/70">
               <li className="flex items-center gap-2">
                 <Mail className="h-4 w-4 text-white/50" />
-                contact@verifscan.sn
+                <a href="mailto:contact@verifscan.sn" className="hover:text-white">
+                  contact@verifscan.sn
+                </a>
               </li>
               <li className="flex items-center gap-2">
                 <Phone className="h-4 w-4 text-white/50" />
-                +221 33 800 00 00
+                <a href="tel:+221338000000" className="hover:text-white">
+                  +221 33 800 00 00
+                </a>
               </li>
               <li className="flex items-center gap-2">
                 <MapPin className="h-4 w-4 text-white/50" />
@@ -101,9 +105,9 @@ export function PublicFooter() {
             © {new Date().getFullYear()} VerifScan. Tous droits réservés.
           </p>
           <div className="flex gap-4 text-[13px] text-white/50">
-            <Link href="/#contact" className="hover:text-white">Mentions légales</Link>
-            <Link href="/#contact" className="hover:text-white">CGU</Link>
-            <Link href="/#contact" className="hover:text-white">Confidentialité</Link>
+            <Link href="/mentions-legales" className="hover:text-white">Mentions légales</Link>
+            <Link href="/cgu" className="hover:text-white">CGU</Link>
+            <Link href="/politique-confidentialite" className="hover:text-white">Confidentialité</Link>
           </div>
         </div>
       </div>
