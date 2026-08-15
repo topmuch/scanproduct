@@ -24,8 +24,23 @@ const ERROR_MESSAGES: Record<string, string> = {
   // the res.error value when authorize() throws new Error("suspended").
   suspended: "Votre compte a été suspendu. Contactez le support.",
   CredentialsSignin: "Email ou mot de passe incorrect.",
+  // Configuration = NEXTAUTH_SECRET missing or cookie/URL mismatch behind a
+  // reverse proxy. Happens on Coolify when env vars aren't set correctly.
+  Configuration:
+    "Erreur de configuration serveur (NEXTAUTH_SECRET). Contactez l'administrateur.",
+  // CSRF token mismatch — the csrf cookie wasn't sent back. Happens behind
+  // a proxy or after a server restart (csrf token rotated).
+  CallbackVerifyError:
+    "Session expirée ou jeton invalide. Rafraîchissez la page et réessayez.",
+  OAuthCallback: "La connexion via le fournisseur a échoué. Réessayez.",
   default: "Une erreur est survenue. Veuillez réessayer.",
 };
+
+// Message shown when the fetch itself fails (server unreachable / network
+// down). This is the most common cause of the generic error: the dev server
+// or the Coolify container is not running.
+const NETWORK_ERROR =
+  "Serveur indisponible. Le serveur est peut-être en cours de redémarrage — réessayez dans quelques secondes.";
 
 function LoginForm() {
   const router = useRouter();
@@ -49,14 +64,44 @@ function LoginForm() {
     setLoading(true);
     setError(null);
 
-    const res = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-    });
+    // signIn() can throw if the server is unreachable (dev server down,
+    // Coolify container restarting, network issue). We catch that and show
+    // a clear network-level message instead of the generic error.
+    let res: { error?: string; status?: number; ok?: boolean } | undefined;
+    try {
+      res = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
+    } catch {
+      setError(NETWORK_ERROR);
+      setLoading(false);
+      return;
+    }
 
     if (res?.error) {
-      setError(ERROR_MESSAGES[res.error] ?? ERROR_MESSAGES.default);
+      // If it's a CSRF error, the csrf cookie may be stale (e.g. after a
+      // server restart). Refresh the page to get a fresh csrf token, then
+      // let the user retry. This is better than showing an opaque error.
+      if (res.error === "CallbackVerifyError") {
+        setError(ERROR_MESSAGES.CallbackVerifyError);
+        setLoading(false);
+        // Auto-refresh csrf token after 1.5s so the next attempt works.
+        setTimeout(() => {
+          fetch("/api/auth/csrf").then(() => window.location.reload());
+        }, 1500);
+        return;
+      }
+
+      // Show the specific error message, or fall back to default but
+      // INCLUDE the error code so the user/admin can diagnose.
+      const msg = ERROR_MESSAGES[res.error];
+      if (msg) {
+        setError(msg);
+      } else {
+        setError(`Une erreur est survenue (${res.error}). Veuillez réessayer.`);
+      }
       setLoading(false);
       return;
     }
