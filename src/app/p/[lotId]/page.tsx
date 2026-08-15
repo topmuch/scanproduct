@@ -13,18 +13,20 @@ import { PublicFooter } from "@/components/public/PublicFooter";
 
 import { SimilarProducts } from "@/components/product/SimilarProducts";
 
-// Compact v2 components
-import { AuthenticityHero } from "@/components/product/compact/AuthenticityHero";
-import { FreshnessBar } from "@/components/product/compact/FreshnessBar";
-import { QuickContact } from "@/components/product/compact/QuickContact";
-import { AccordionSection } from "@/components/product/compact/AccordionSection";
+// WOW premium components
+import { WowHero } from "@/components/product/wow/WowHero";
+import { FreshnessGlow } from "@/components/product/wow/FreshnessGlow";
+import { ContactOrb } from "@/components/product/wow/ContactOrb";
+import { WowAccordion } from "@/components/product/wow/WowAccordion";
+import { VerificationGlow } from "@/components/product/wow/VerificationGlow";
+
+// Content components (used inside accordions — keep the rich content, just upgrade the wrapper)
 import { CompactIngredients } from "@/components/product/compact/CompactIngredients";
 import { CompactTraceability } from "@/components/product/compact/CompactTraceability";
 import { CompactHistory } from "@/components/product/compact/CompactHistory";
 import { TransparencyLite } from "@/components/product/compact/TransparencyLite";
 import { CompactCertifications } from "@/components/product/compact/CompactCertifications";
 import { CompactReviews } from "@/components/product/compact/CompactReviews";
-import { CompactVerificationFooter } from "@/components/product/compact/CompactVerificationFooter";
 
 // ---------------------------------------------------------------------------
 // Metadata (SEO)
@@ -160,52 +162,67 @@ export default async function ProductPage({
     (lot.lotCerts?.length ?? 0) + (lot.fabricantCerts?.length ?? 0);
 
   return (
-    <div className="flex min-h-screen flex-col bg-gradient-to-b from-gray-50 to-white">
+    <div className="relative flex min-h-screen flex-col bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50">
+      {/* ── Background decorations: floating colored blobs ───────────────
+          Three large blurred circles that slowly float around, creating
+          a dynamic, premium atmosphere. `pointer-events-none` so they
+          never interfere with clicks. `mix-blend-multiply` makes them
+          blend softly into the background. */}
+      <div className="pointer-events-none fixed inset-0 overflow-hidden">
+        <div className="wow-animate-float absolute -left-20 top-0 h-96 w-96 rounded-full bg-purple-300 opacity-20 mix-blend-multiply blur-3xl" />
+        <div
+          className="wow-animate-float absolute right-0 top-1/3 h-96 w-96 rounded-full bg-blue-300 opacity-20 mix-blend-multiply blur-3xl"
+          style={{ animationDelay: "2s" }}
+        />
+        <div
+          className="wow-animate-float absolute bottom-0 left-1/3 h-96 w-96 rounded-full bg-pink-300 opacity-20 mix-blend-multiply blur-3xl"
+          style={{ animationDelay: "4s" }}
+        />
+      </div>
+
       <PublicHeader />
 
-      <main className="mx-auto w-full max-w-2xl flex-1 space-y-4 px-4 py-6">
-        {/* 1. HERO COMPACT — visible without scrolling */}
-        <AuthenticityHero
+      <main className="relative mx-auto w-full max-w-2xl flex-1 space-y-6 px-4 py-6">
+        {/* 1. HERO WOW — bandeau authentique + carte produit + stats */}
+        <WowHero
           product={lot.product}
           lot={lot}
           fabricant={lot.fabricant}
-          status={lot.status}
-          verifiedAt={lot.verifiedAt}
         />
 
-        {/* 2. BARRE DE FRAÎCHEUR — visual freshness indicator */}
-        <FreshnessBar
+        {/* 2. FRAÎCHEUR GLOW — barre de fraîcheur animée */}
+        <FreshnessGlow
           expiryDate={lot.expiryDate}
           manufactureDate={lot.manufactureDate}
         />
 
-        {/* 3. BOUTONS CONTACT — prominent, always visible */}
-        <QuickContact fabricant={lot.fabricant} />
+        {/* 3. CONTACT ORB — boutons contact premium */}
+        <ContactOrb fabricant={lot.fabricant} />
 
-        {/* 4. SECTIONS REPLIABLES — accordions for curious users */}
-        <div className="space-y-3">
+        {/* 4. ACCORDÉONS WOW — sections repliables premium */}
+        <div className="space-y-4">
           {/* Ingrédients & Allergènes — OPEN by default (essential info) */}
-          <AccordionSection
+          <WowAccordion
             title="Ingrédients & Allergènes"
             icon="🌾"
             defaultOpen={true}
             color="green"
           >
             <CompactIngredients lot={lot} />
-          </AccordionSection>
+          </WowAccordion>
 
-          {/* Traçabilité complète — closed by default */}
-          <AccordionSection
+          {/* Traçabilité complète */}
+          <WowAccordion
             title="Traçabilité complète"
             icon="📍"
             defaultOpen={false}
             color="blue"
           >
             <CompactTraceability lot={lot} />
-          </AccordionSection>
+          </WowAccordion>
 
-          {/* Historique du lot — closed by default */}
-          <AccordionSection
+          {/* Historique du lot */}
+          <WowAccordion
             title="Historique du lot"
             icon="⏱️"
             defaultOpen={false}
@@ -217,10 +234,10 @@ export default async function ProductPage({
             }
           >
             <CompactHistory events={lot.historyEvents} />
-          </AccordionSection>
+          </WowAccordion>
 
-          {/* Score de transparence — light version */}
-          <AccordionSection
+          {/* Score de transparence */}
+          <WowAccordion
             title="Score de transparence"
             icon="💎"
             defaultOpen={false}
@@ -228,10 +245,10 @@ export default async function ProductPage({
             badge={`${lot.transparency.score}/${lot.transparency.maxScore}`}
           >
             <TransparencyLite transparency={lot.transparency} />
-          </AccordionSection>
+          </WowAccordion>
 
           {/* Certifications */}
-          <AccordionSection
+          <WowAccordion
             title="Certifications"
             icon="🏆"
             defaultOpen={false}
@@ -242,10 +259,10 @@ export default async function ProductPage({
               lotCerts={lot.lotCerts}
               fabricantCerts={lot.fabricantCerts}
             />
-          </AccordionSection>
+          </WowAccordion>
 
           {/* Avis consommateurs */}
-          <AccordionSection
+          <WowAccordion
             title="Avis consommateurs"
             icon="⭐"
             defaultOpen={false}
@@ -261,14 +278,14 @@ export default async function ProductPage({
               averageRating={lot.product.averageRating}
               totalReviews={lot.product.totalReviews}
             />
-          </AccordionSection>
+          </WowAccordion>
         </div>
 
         {/* Similar products (still full-width, outside accordions) */}
         {similar.length > 0 && <SimilarProducts products={similar} />}
 
-        {/* 5. FOOTER VÉRIFICATION — compact */}
-        <CompactVerificationFooter lot={lot} />
+        {/* 5. FOOTER VÉRIFICATION GLOW — spectacular verification footer */}
+        <VerificationGlow lot={lot} />
       </main>
 
       <PublicFooter />

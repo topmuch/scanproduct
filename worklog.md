@@ -2467,3 +2467,69 @@ Stage Summary:
 - All 5 tasks completed and verified: footer pages, site icons, favicon management, superadmin role creation, dashboard reorganization
 - The OOM issue (4GB RAM system) required testing with curl instead of agent-browser, but all functionality is confirmed working
 - The favicon management is fully dynamic: superadmin uploads → saved to UPLOAD_DIR/site/favicon.<ext> → URL stored in Setting table → generateMetadata() in layout.tsx reads it → browser picks up new <link rel="icon">
+
+---
+Task ID: wow-components
+Agent: general-purpose
+Task: Create WOW premium product page components
+
+Work Log:
+- Read worklog.md and explored existing product component structure (src/components/product/compact/) to align with established patterns (AuthenticityHero, FreshnessBar, QuickContact).
+- Read src/lib/public-data.ts (lines 22-152) to confirm exact LotWithDetails shape returned by getLotWithDetails() — product/fabricant/historyEvents/lotCerts/fabricantCerts/reviews/qrCode/scanCount/transparency fields all present.
+- Read src/lib/utils.ts — confirmed formatDate/formatDateShort/daysUntil/cn helpers and their signatures.
+- Read src/app/globals.css — verified the wow-* CSS utility classes (wow-animate-float/pulse-glow/slide-up/scale-in/shimmer, wow-shadow-glow-{green,blue,purple,orange,red}, wow-shadow-{soft,card,elevated}, wow-glass) are already defined.
+- Verified prisma schema for User model — phone/whatsapp/email/companyName/city/country/logoUrl/isVerified all nullable strings (except email which is unique).
+- Created src/components/product/wow/ directory with 5 components:
+  1. WowHero.tsx (server) — authenticity banner (green/red gradient + pulse glow + ping ring + date badge), glassmorphism product card with gradient blur behind + hover scale image + floating category badge + manufacturer info card + star rating, and 3 gradient stat cards (LOT/DLC/SCANS) with colored glow shadows and pulse animation on near-expiry DLC.
+  2. FreshnessGlow.tsx (server) — glassmorphism freshness card with shimmer background, animated icon box (ping ring + pulse glow), gradient progress bar with white highlight overlay + animated indicator dot, and contextual color/message based on daysLeft (>90 emerald / >30 blue / >7 amber / >0 red / ≤0 gray).
+  3. ContactOrb.tsx (server) — premium contact card with gradient blur behind, header (icon + "Une question ?" + manufacturer name), grid of up to 3 gradient contact buttons (WhatsApp green / Téléphone blue / Email purple) with hover lift + ring animation + decorative blur circle. Falls back to "Contact non disponible" message when no methods available.
+  4. WowAccordion.tsx (CLIENT — "use client") — glassmorphism accordion with useState, icon box (gradient + glow + hover scale-110 rotate-6), title + optional badge, chevron in circle that rotates 180° when open, animated content (max-h-0/opacity-0 → max-h-[2000px]/opacity-100, transition-all 500ms). Color map for green/blue/purple/amber/emerald/yellow.
+  5. VerificationGlow.tsx (server) — full-width dark gradient card (slate-900→blue-900→purple-900) with wow-shadow-elevated, decorative blurred circles, large shield icon in glassmorphism circle with pulse glow + ping ring, "Vérifié par VerifScan" title, blockchain hash (font-mono truncated), reference pill, 3 trust badges (🔒 Blockchain / ✓ Authentique / 📊 Traçable) in glassmorphism pills, footer "© 2026 VerifScan — La vérité au bout du scan".
+- Used lucide-react icons throughout (CheckCircle2, XCircle, Star, BadgeCheck, MessageCircle, Phone, Mail, HelpCircle, ChevronDown, ShieldCheck).
+- No next/image — only plain <img> tags as required.
+- All components handle null/undefined gracefully (optional fields, missing contact methods, no rating, no verifiedAt).
+- Ran `bun run lint` — passed with zero errors/warnings. Ran `bunx eslint src/components/product/wow/` — exit 0. Ran `bunx tsc --noEmit` — zero TypeScript errors in wow components (pre-existing errors in other files are unrelated).
+
+Stage Summary:
+- 5 WOW premium components delivered in src/components/product/wow/: WowHero, FreshnessGlow, ContactOrb, WowAccordion, VerificationGlow.
+- Design system fully respected: glassmorphism (wow-glass), colored glow shadows, gradient backgrounds (blue/emerald/purple/amber/red), pulse/scale/slide/shimmer animations, font-display for titles.
+- All components are mobile-first responsive with sm: breakpoints, container max-w-2xl assumed by parent.
+- Only WowAccordion is a client component (needs useState); the other 4 are server components.
+- Lint clean (0 errors), TypeScript clean for new files. Ready to be mounted in the /p/[lotId] product page.
+
+---
+Task ID: wow-product-page
+Agent: main (Z.ai Code)
+Task: Complete WOW redesign of the public product page (/p/[lotId])
+
+Work Log:
+- Added WOW CSS animations & utilities to src/app/globals.css:
+  - 5 keyframe animations: wow-float, wow-pulse-glow, wow-slide-up, wow-scale-in, wow-shimmer
+  - 8 shadow utilities: wow-shadow-glow-{green,blue,purple,orange,red}, wow-shadow-{soft,card,elevated}
+  - wow-glass (glassmorphism/frosted glass) and wow-text-gradient utilities
+  - prefers-reduced-motion support
+- Created 5 WOW components in src/components/product/wow/:
+  - WowHero.tsx (server): authenticity banner (gradient + glow + pulse icon + ping ring) + glassmorphism product card (gradient blur, hover-scale image, floating category badge, manufacturer info, star rating) + 3 gradient stat cards (LOT/DLC/SCANS) with colored glow
+  - FreshnessGlow.tsx (server): animated freshness bar with shimmer, 5-level color coding (emerald/blue/amber/red/gray), pulse-glow icon, animated progress indicator dot
+  - ContactOrb.tsx (server): premium contact card with 3 gradient buttons (WhatsApp green / Téléphone blue / Email purple), hover lift + ring animation
+  - WowAccordion.tsx (client): glassmorphism accordion with useState, gradient icon box (hover scale-110 rotate-6), animated content (max-h transition), 6 color variants
+  - VerificationGlow.tsx (server): dark gradient footer (slate-900→blue-900→purple-900) with shield icon, blockchain hash, 3 trust badges
+- Rewrote src/app/p/[lotId]/page.tsx:
+  - Replaced compact/* imports with wow/* imports
+  - Added floating background blobs (3 colored circles with mix-blend-multiply + blur-3xl + wow-animate-float)
+  - Background changed from flat gray-50 to gradient from-slate-50 via-blue-50 to-purple-50
+  - All 6 accordion sections now use WowAccordion wrapper (keeping CompactIngredients/Traceability/History/etc. as content)
+  - Spacing increased from space-y-4 to space-y-6 for more breathing room
+- Verified with curl: page returns HTTP 200, 410KB HTML containing all WOW elements:
+  - 26 glassmorphism cards
+  - 27 colored glow shadows (blue/green/orange/purple)
+  - 17 different gradient classes
+  - 6 floating animation instances
+  - All key content: "Produit authentique", "Vérifié par VerifScan", "Encore 335 jours", WhatsApp/Téléphone/Email, 6 accordions
+- Lint passes clean (0 errors)
+
+Stage Summary:
+- Product page transformed from flat/boring to premium/WOW with glassmorphism, glow effects, gradients, and animations
+- 5 new components + 2 modified files
+- All content preserved (ingredients, traceability, history, transparency, certifications, reviews) — only the visual wrapper upgraded
+- Responsive, accessible (prefers-reduced-motion respected), performant (4 server components + 1 client component)

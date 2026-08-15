@@ -251,3 +251,92 @@ html.dark { color-scheme: dark; }
     opacity: 1;
   }
 }
+
+/* ============================================================================
+   WOW Product Page — Premium animations & effects
+   ============================================================================ */
+
+/* Floating background blobs */
+@keyframes wow-float {
+  0%, 100% { transform: translateY(0px) translateX(0px); }
+  33% { transform: translateY(-30px) translateX(20px); }
+  66% { transform: translateY(20px) translateX(-15px); }
+}
+.wow-animate-float {
+  animation: wow-float 8s ease-in-out infinite;
+}
+
+/* Pulse glow — for badges & icons that should "breathe" */
+@keyframes wow-pulse-glow {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.85; transform: scale(1.05); }
+}
+.wow-animate-pulse-glow {
+  animation: wow-pulse-glow 2.5s ease-in-out infinite;
+}
+
+/* Slide up — entrance animation for cards */
+@keyframes wow-slide-up {
+  0% { transform: translateY(30px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+.wow-animate-slide-up {
+  animation: wow-slide-up 0.6s ease-out forwards;
+}
+
+/* Scale in — for modal-like entrances */
+@keyframes wow-scale-in {
+  0% { transform: scale(0.92); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.wow-animate-scale-in {
+  animation: wow-scale-in 0.5s ease-out forwards;
+}
+
+/* Shimmer — for progress bars */
+@keyframes wow-shimmer {
+  0% { background-position: -1000px 0; }
+  100% { background-position: 1000px 0; }
+}
+.wow-animate-shimmer {
+  background-size: 1000px 100%;
+  animation: wow-shimmer 2.5s linear infinite;
+}
+
+/* Glow shadows — colored soft shadows for premium depth */
+.wow-shadow-glow-green { box-shadow: 0 0 40px rgba(34, 197, 94, 0.3); }
+.wow-shadow-glow-blue { box-shadow: 0 0 40px rgba(59, 130, 246, 0.3); }
+.wow-shadow-glow-purple { box-shadow: 0 0 40px rgba(139, 92, 246, 0.3); }
+.wow-shadow-glow-orange { box-shadow: 0 0 40px rgba(249, 115, 22, 0.3); }
+.wow-shadow-glow-red { box-shadow: 0 0 40px rgba(239, 68, 68, 0.3); }
+.wow-shadow-soft { box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.1); }
+.wow-shadow-card { box-shadow: 0 20px 60px -15px rgba(0, 0, 0, 0.1); }
+.wow-shadow-elevated { box-shadow: 0 25px 80px -20px rgba(0, 0, 0, 0.15); }
+
+/* Glassmorphism utility — frosted glass effect */
+.wow-glass {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+/* Gradient text utility */
+.wow-text-gradient {
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .wow-animate-float,
+  .wow-animate-pulse-glow,
+  .wow-animate-slide-up,
+  .wow-animate-scale-in,
+  .wow-animate-shimmer {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
