@@ -1,21 +1,52 @@
 import type { Metadata } from "next";
-import { Poppins, Inter } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import { getFaviconUrl } from "@/lib/settings";
 
-const poppins = Poppins({
+/**
+ * Self-hosted fonts (next/font/local).
+ *
+ * WHY NOT next/font/google:
+ * `next/font/google` downloads font files from Google's CDN at BUILD time.
+ * In restricted build environments (Docker/Coolify with no outbound
+ * internet, or flaky network), this fails with "module-not-found" errors
+ * pointing at `[next]/internal/font/google/inter_*.module.css` and aborts
+ * the whole build. Self-hosting the woff2 files eliminates that runtime
+ * dependency entirely — the build works offline.
+ *
+ * The woff2 files in ./fonts/ were fetched once from fonts.gstatic.com
+ * (latin subset only, matching the previous `subsets: ["latin"]` config).
+ * Inter v20 is a variable font, so all four weights point to the same
+ * file — the browser picks the weight from the `wght` axis.
+ *
+ * To update a font: re-download from
+ *   https://fonts.gstatic.com/s/<family>/<v>/<hash>.woff2
+ * (URLs are visible in the Google Fonts CSS response) and replace the
+ * corresponding file in ./fonts/.
+ */
+const poppins = localFont({
+  src: [
+    { path: "./fonts/poppins-400.woff2", weight: "400", style: "normal" },
+    { path: "./fonts/poppins-500.woff2", weight: "500", style: "normal" },
+    { path: "./fonts/poppins-600.woff2", weight: "600", style: "normal" },
+    { path: "./fonts/poppins-700.woff2", weight: "700", style: "normal" },
+    { path: "./fonts/poppins-800.woff2", weight: "800", style: "normal" },
+  ],
   variable: "--font-poppins",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
   display: "swap",
 });
 
-const inter = Inter({
+const inter = localFont({
+  src: [
+    // Inter v20 is a variable font — same file serves all weights.
+    { path: "./fonts/inter-latin.woff2", weight: "400", style: "normal" },
+    { path: "./fonts/inter-latin.woff2", weight: "500", style: "normal" },
+    { path: "./fonts/inter-latin.woff2", weight: "600", style: "normal" },
+    { path: "./fonts/inter-latin.woff2", weight: "700", style: "normal" },
+  ],
   variable: "--font-inter",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
   display: "swap",
 });
 

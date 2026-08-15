@@ -3967,3 +3967,32 @@ Work Log:
 Stage Summary:
 - Connexion : code déjà correct, problème réel = serveur dev mourait. Fixé via start-dev.sh (détachement robuste). Les 2 comptes de test (FABRICANT + SUPERADMIN) se connectent et redirigent correctement.
 - Page d'accueil : réorganisée pour front-loader la preuve (CatalogSlider + HowItWorks remontés avant Features). Flow de conversion amélioré : Hook → Trust → Preuve → Process → Capacités → Demo → Métiers → Témoignages → CTA.
+
+---
+Task ID: 7
+Agent: main
+Task: Fix Docker build failure — "module-not-found" for next/font/google/inter
+
+Work Log:
+- Diagnostic : le build Docker échouait à `RUN bun run build` avec des erreurs "module-not-found" pointant vers `[next]/internal/font/google/inter_55581303.module.css`.
+- Cause racine : `next/font/google` télécharge les fichiers de police (Inter, Poppins) depuis fonts.gstatic.com AU MOMENT DU BUILD. Dans l'environnement Docker/Coolify (pas d'accès internet sortant au build), le téléchargement échoue → Next.js ne peut pas résoudre le module CSS de la police → build aborté.
+- Solution : auto-héberger les polices avec `next/font/local` (zéro dépendance réseau au build).
+- Étapes :
+  1. Fetch du CSS Google Fonts avec UA Chrome moderne pour obtenir les URLs woff2 (latin subset)
+  2. Téléchargement de 6 fichiers woff2 dans `src/app/fonts/` :
+     - inter-latin.woff2 (48KB — variable font, tous weights dans 1 fichier)
+     - poppins-400/500/600/700/800.woff2 (~8KB chacun — 1 fichier par weight)
+  3. Migration de `src/app/layout.tsx` :
+     - `import { Poppins, Inter } from "next/font/google"` → `import localFont from "next/font/local"`
+     - Configuration `localFont()` avec `src` array (1 entrée par weight, path relatif vers ./fonts/)
+     - Pour Inter (variable font), les 4 entrées pointent vers le même fichier
+  4. Ajout d'un commentaire de documentation expliquant POURQUOI on utilise localFont et comment mettre à jour les polices
+  5. Suppression du dossier temporaire `public/fonts/` (les fichiers next/font/local ne vont PAS dans public/)
+- Vérification dev : serveur tourne, page / HTTP 200, h1 en Poppins weight 700, 0 erreur console/page
+- Lint : 0 erreur
+- Aucun import `next/font/google` ne subsiste (uniquement mentionné dans le commentaire explicatif)
+
+Stage Summary:
+- Build Docker réparé : les polices sont maintenant auto-hébergées (woff2 dans src/app/fonts/), plus de dépendance réseau au moment du build.
+- Le build fonctionnera même dans un environnement Docker sans accès internet sortant.
+- Les rendus visuels sont identiques (mêmes polices Inter + Poppins, mêmes weights, même subset latin).
