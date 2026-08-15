@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect, useRef, Suspense } from "react";
+import { useState, Suspense } from "react";
 import { signIn } from "next-auth/react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
@@ -18,72 +18,17 @@ import {
   CheckCircle2,
 } from "lucide-react";
 
-/**
- * Resolve the post-login target URL based on the user's role AND the
- * `callbackUrl` from the query string.
- *
- * CRITICAL — this is what prevents the redirect loop:
- *   1. A logged-out user visits /dashboard  → middleware redirects to
- *      /login?callbackUrl=/dashboard.
- *   2. If that user is actually a SUPERADMIN, blindly honouring
- *      callbackUrl="/dashboard" sends them back to /dashboard, where the
- *      role-guard middleware blocks them → /login?error=unauthorized →
- *      they log in again → infinite loop.
- *
- * So: if the callbackUrl points to a route the user's role cannot access,
- * we drop it and fall back to the role-appropriate home. We also reject
- * absolute / non-relative callback URLs for safety (open-redirect guard).
- */
-function resolveTargetUrl(
-  role: string | undefined,
-  callbackUrl: string
-): string {
-  const isSuperadmin = role === "SUPERADMIN";
-  const roleHome = isSuperadmin ? "/superadmin" : "/dashboard";
-
-  // No callback URL → use role-based default.
-  if (!callbackUrl) return roleHome;
-
-  // Only allow relative same-origin URLs (prevent open redirect).
-  if (
-    !callbackUrl.startsWith("/") ||
-    callbackUrl.startsWith("//") ||
-    callbackUrl.includes(":")
-  ) {
-    return roleHome;
-  }
-
-  // Role-mismatch guard: don't send a SUPERADMIN to /dashboard or a
-  // FABRICANT to /superadmin, even if callbackUrl asks for it.
-  const cb = callbackUrl.toLowerCase();
-  if (isSuperadmin && cb.startsWith("/dashboard")) return "/superadmin";
-  if (!isSuperadmin && cb.startsWith("/superadmin")) return "/dashboard";
-
-  return callbackUrl;
-}
-
 const ERROR_MESSAGES: Record<string, string> = {
   unauthorized: "Vous n'êtes pas autorisé à accéder à cette page.",
   // "suspended" is used both as a URL query param (from middleware) and as
   // the res.error value when authorize() throws new Error("suspended").
   suspended: "Votre compte a été suspendu. Contactez le support.",
   CredentialsSignin: "Email ou mot de passe incorrect.",
-  // Configuration = NEXTAUTH_SECRET missing or cookie/URL mismatch behind a
-  // reverse proxy. Happens on Coolify when env vars aren't set correctly.
-  Configuration:
-    "Erreur de configuration serveur. Contactez l'administrateur.",
-  // OAuthCallback / OAuthCreateAccount etc. — surface a clear message.
-  OAuthCallback: "La connexion via le fournisseur a échoué. Réessayez.",
   default: "Une erreur est survenue. Veuillez réessayer.",
 };
 
-// Message shown when the fetch itself fails (server unreachable / network
-// down). This is the most common cause of the generic error: the dev server
-// or the Coolify container is not running.
-const NETWORK_ERROR =
-  "Serveur indisponible. Le serveur est peut-être en cours de redémarrage — réessayez dans quelques secondes.";
-
 function LoginForm() {
+  const router = useRouter();
   const params = useSearchParams();
   const callbackUrl = params.get("callbackUrl") || "";
   const errorParam = params.get("error");
@@ -95,55 +40,6 @@ function LoginForm() {
     errorParam ? ERROR_MESSAGES[errorParam] ?? ERROR_MESSAGES.default : null
   );
 
-  // ── Guards against race conditions ─────────────────────────────────
-  // `submittingRef` is set to true while handleSubmit is in flight, so the
-  // auto-redirect useEffect below doesn't fire mid-login and cause a
-  // double-navigation.
-  const submittingRef = useRef(false);
-
-  // ── Auto-redirect already-authenticated users ──────────────────────
-  // CRITICAL — redirect-loop prevention:
-  //
-  // The previous version auto-redirected on EVERY mount. When a logged-in
-  // user had a session cookie that the client-side /api/auth/session
-  // endpoint accepted but the server-side getServerSession() rejected
-  // (stale JWT, proxy cookie stripping, role mismatch), this created an
-  // infinite loop:
-  //
-  //   /login → auto-redirect → /dashboard → server redirect →
-  //   /login?callbackUrl=/dashboard → auto-redirect again → /dashboard →
-  //   … (infinite loop = "scintillement")
-  //
-  // Fix: only auto-redirect on a FRESH visit to /login — i.e. when there
-  // is NO `error` and NO `callbackUrl` query param. If either is present,
-  // the user was just bounced here by a protected route, so we must NOT
-  // redirect them back (that would re-trigger the bounce).
-  useEffect(() => {
-    // Bounce-back guard: if we arrived here via a redirect from a
-    // protected route, do NOT auto-redirect (would loop).
-    if (errorParam || callbackUrl) return;
-    if (submittingRef.current) return;
-
-    let cancelled = false;
-    fetch("/api/auth/session", { cache: "no-store" })
-      .then((r) => r.json())
-      .then((session) => {
-        if (cancelled || submittingRef.current) return;
-        if (session?.user?.role) {
-          const target = resolveTargetUrl(session.user.role, "");
-          if (target !== "/login") {
-            window.location.href = target;
-          }
-        }
-      })
-      .catch(() => {
-        /* not logged in — stay on the login form */
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [errorParam, callbackUrl]);
-
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!email || !password) {
@@ -152,66 +48,33 @@ function LoginForm() {
     }
     setLoading(true);
     setError(null);
-    submittingRef.current = true;
 
-    // signIn() can throw if the server is unreachable (dev server down,
-    // Coolify container restarting, network issue). We catch that and show
-    // a clear network-level message instead of the generic "Une erreur est
-    // survenue" which leaves the user guessing.
-    let res: { error?: string; status?: number; ok?: boolean } | undefined;
-    try {
-      res = await signIn("credentials", {
-        email,
-        password,
-        redirect: false,
-      });
-    } catch {
-      setError(NETWORK_ERROR);
-      setLoading(false);
-      submittingRef.current = false;
-      return;
-    }
+    const res = await signIn("credentials", {
+      email,
+      password,
+      redirect: false,
+    });
 
     if (res?.error) {
       setError(ERROR_MESSAGES[res.error] ?? ERROR_MESSAGES.default);
       setLoading(false);
-      submittingRef.current = false;
       return;
     }
 
-    // Fetch the session to learn the role and route accordingly.
-    // We use the role-aware resolver so a SUPERADMIN with
-    // callbackUrl=/dashboard (and vice-versa) doesn't get bounced back
-    // here by the role-guard middleware.
-    //
-    // RACE CONDITION FIX: after signIn() resolves, the Set-Cookie header
-    // has been processed by the browser, but the cookie may not be
-    // immediately visible to a follow-up fetch in some environments
-    // (reverse proxy, slow browser cookie store). We add a short delay +
-    // retry: if the first session fetch returns no role, wait 400ms and
-    // try once more before falling back.
-    const fetchSession = () =>
-      fetch("/api/auth/session", { cache: "no-store" }).then((r) => r.json());
-    let session: { user?: { role?: string } } | null = null;
+    // Fetch the session to learn the role and route accordingly
     try {
-      session = await fetchSession();
-      if (!session?.user?.role) {
-        // Cookie might not have settled yet — retry after a brief pause.
-        await new Promise((r) => setTimeout(r, 400));
-        session = await fetchSession();
-      }
+      const r = await fetch("/api/auth/session");
+      const session = await r.json();
+      const role = session?.user?.role;
+      const target =
+        callbackUrl ||
+        (role === "SUPERADMIN" ? "/superadmin" : "/dashboard");
+      router.push(target);
+      router.refresh();
     } catch {
-      /* network error — fall through to default */
+      router.push("/dashboard");
+      router.refresh();
     }
-
-    // Determine the redirect target from the session role (if we got one),
-    // otherwise fall back to /dashboard and let the server-side guard sort
-    // it out (it will redirect to /login with an error if the session is
-    // truly invalid — and our bounce-back guard will then show the form
-    // instead of looping).
-    const role = session?.user?.role;
-    const target = resolveTargetUrl(role, callbackUrl);
-    window.location.href = target;
   }
 
   return (

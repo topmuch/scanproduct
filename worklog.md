@@ -3996,3 +3996,47 @@ Stage Summary:
 - Build Docker réparé : les polices sont maintenant auto-hébergées (woff2 dans src/app/fonts/), plus de dépendance réseau au moment du build.
 - Le build fonctionnera même dans un environnement Docker sans accès internet sortant.
 - Les rendus visuels sont identiques (mêmes polices Inter + Poppins, mêmes weights, même subset latin).
+
+---
+Task ID: 8
+Agent: main
+Task: Comparer version actuelle avec release v.4 (où la connexion admin marche) et appliquer la version fonctionnelle
+
+Work Log:
+- Téléchargé la release v.4 depuis GitHub (tarball de https://github.com/topmuch/scanproduct/archive/refs/tags/v.4.tar.gz) dans /tmp/scanproduct-v4/
+- Comparaison des fichiers d'authentification entre v.4 et version actuelle :
+
+  DIFFÉRENCES IDENTIFIÉES DANS login/page.tsx :
+  - v.4 (SIMPLE, marche en prod) : useState + useRouter, signIn() simple, fetch session, router.push() + router.refresh()
+  - Version actuelle (COMPLEXE, cassait en prod) : useEffect auto-redirect avec bounce-back guard, submittingRef, retry 400ms, window.location.href, resolveTargetUrl() avec role-mismatch guard
+  - Conclusion : mes "fixes" précédents ont SUR-COMPLEXIFIÉ le login et cassé le flux en production
+
+  DIFFÉRENCES IDENTIFIÉES DANS lib/auth.ts :
+  - v.4 : PAS de bloc cookies: custom (NextAuth gère automatiquement, y compris __Secure- prefix en HTTPS)
+  - Version actuelle : bloc cookies: qui FORCE les noms sans __Secure- prefix
+  - Conclusion : en production HTTPS (Coolify/Caddy), le bloc cookies: custom empêchait NextAuth de poser le cookie avec le bon préfixe → cookie non relu → login silencieusement échoué
+
+  AUTRES DIFFÉRENCES (à CONSERVER) :
+  - Dockerfile : version actuelle crée /app/data AVANT build (fix build hang) → GARDER
+  - layout.tsx : version actuelle utilise next/font/local (fix build offline) → GARDER
+  - page.tsx : version actuelle a réorganisé l'ordre des sections → GARDER
+  - schema.prisma : version actuelle a ajouté barcode/offData/offLastSync → GARDER
+  - package.json : version actuelle a html5-qrcode → GARDER
+  - db.ts : version actuelle a PRISMA_CACHE_VERSION='v4-barcode-off' → GARDER
+
+- ACTION : restauré login/page.tsx et auth.ts depuis v.4 (les 2 fichiers qui causent le problème de connexion)
+- Vérifié : aucun import next/font/google ne subsite, polices locales OK, page d'accueil réorganisée OK
+- Lint : 0 erreur
+
+- TESTS COMPLETS (curl, en un seul appel bash car serveur dev instable entre appels) :
+  * FABRICANT sarine@biocosmetique.sn / Demo1234! → POST 200, session={role:FABRICANT}, GET /dashboard=200, GET /superadmin=307 redirect ✓
+  * SUPERADMIN admin@verifscan.sn / Admin123!2025 → POST 200, session={role:SUPERADMIN}, GET /superadmin=200, GET /dashboard=307 redirect ✓
+  * Wrong password → POST 401, session vide ✓
+  * Logout → session vidée ✓
+  * Aucune erreur dans dev.log ✓
+
+Stage Summary:
+- CONNEXION RÉPARÉE en restaurant la version v.4 (simple, fonctionnelle en production) de login/page.tsx et lib/auth.ts.
+- Cause racine du problème : le bloc cookies: custom dans auth.ts empêchait NextAuth de poser le cookie de session avec le bon préfixe __Secure- en HTTPS, ET le login/page.tsx sur-complexifié (auto-redirect useEffect + window.location.href) cassait le flux de navigation.
+- Les améliorations récentes (polices locales, réorg page d'accueil, fix Dockerfile) sont CONSERVÉES.
+- Prêt à pousser sur main.
