@@ -94,9 +94,9 @@ ENV NODE_OPTIONS="--max-old-space-size=4096"
 # NOTE: in production, uploaded images are served via the dedicated API
 # route /api/uploads/[...path] (not as static files from public/), so
 # the upload directory can live OUTSIDE public/ — it is configured via
-# the UPLOAD_DIR env var (set below to /app/uploads/products, matching
-# the Coolify persistent volume mount).
-RUN mkdir -p /app/public/uploads/products && \
+# the UPLOAD_DIR env var (set below to /app/public/uploads/product,
+# matching the Coolify persistent volume mount — singular "product").
+RUN mkdir -p /app/public/uploads/product && \
     chmod -R 777 /app/public/uploads
 RUN bun run build
 
@@ -104,25 +104,29 @@ RUN bun run build
 # permissions so the Node process can write SQLite + uploaded files
 # regardless of the user Coolify runs the container as.
 #
-# /app/uploads/products is where /api/upload writes at runtime
-# (UPLOAD_DIR env var points here). The dedicated serve route
-# /api/uploads/[...path] reads from this directory and streams files
-# with the correct Content-Type (detected from magic bytes), so we do
-# NOT need a symlink into the standalone's public/ folder — uploads
-# work even though the volume is outside public/.
-RUN mkdir -p /app/data /app/uploads/products && \
-    chmod -R 777 /app/uploads /app/data
+# /app/public/uploads/product is where /api/upload writes at runtime
+# (UPLOAD_DIR env var points here, singular "product"). This path
+# matches the Coolify persistent volume mount:
+#   SOURCE:      /var/lib/coolify/volumes/scanproduct-uploads/product
+#   DESTINATION: /app/public/uploads/product
+# The dedicated serve route /api/uploads/[...path] reads from this
+# directory and streams files with the correct Content-Type (detected
+# from magic bytes), so uploads persist across redeployments.
+RUN mkdir -p /app/data /app/public/uploads/product && \
+    chmod -R 777 /app/public/uploads /app/data
 
 EXPOSE 3000
 
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 ENV DATABASE_URL=file:/app/data/scanproduct.db
-# Upload directory — matches the Coolify persistent volume mount.
-# The /api/uploads/[...path] route serves files from here.
-ENV UPLOAD_DIR=/app/uploads/products
+# Upload directory — matches the Coolify persistent volume mount
+# (singular "product"). The /api/uploads/[...path] route serves files
+# from here. This MUST match the destination path configured in Coolify:
+#   /app/public/uploads/product
+ENV UPLOAD_DIR=/app/public/uploads/product
 
 # At runtime: re-ensure the uploads + data dirs exist (in case a fresh
 # empty volume is mounted), run DB migrations + seed, then start the
 # standalone Next.js server.
-CMD ["sh", "-c", "mkdir -p /app/data /app/uploads/products && chmod -R 777 /app/uploads /app/data && export DATABASE_URL=file:/app/data/scanproduct.db && export UPLOAD_DIR=/app/uploads/products && bunx prisma db push --skip-generate 2>/dev/null || true && bun run prisma/seed.ts 2>/dev/null || true && exec node .next/standalone/server.js"]
+CMD ["sh", "-c", "mkdir -p /app/data /app/public/uploads/product && chmod -R 777 /app/public/uploads /app/data && export DATABASE_URL=file:/app/data/scanproduct.db && export UPLOAD_DIR=/app/public/uploads/product && bunx prisma db push --skip-generate 2>/dev/null || true && bun run prisma/seed.ts 2>/dev/null || true && exec node .next/standalone/server.js"]
