@@ -3927,3 +3927,43 @@ Stage Summary:
 - Page d'accueil réorganisée selon le narratif de conversion SaaS (Hook → Trust → Features → How → Demo → Products → Industries → Testimonials → CTA)
 - Navigation Header mise à jour avec 6 ancres cohérentes
 - Serveur dev persistant sur port 3000
+
+---
+Task ID: 6
+Agent: main
+Task: 1/ Réorganiser la page d'accueil 2/ "la connexion ne marche pas" (ré-investigation)
+
+Work Log:
+- Lu /home/z/my-project/src/app/login/page.tsx : code de connexion intact (bounce-back guard + retry session fetch présents)
+- Lu /home/z/my-project/src/lib/auth.ts : config NextAuth correcte (trustHost:true, cookies pinés sans __Secure-, JWT strategy, authorize() avec bcrypt)
+- Vérifié DB : 3 users ACTIVE (admin@verifscan.sn SUPERADMIN, sarine@biocosmetique.sn FABRICANT, contact@teranga-foods.sn FABRICANT)
+- Vérifié .env : NEXTAUTH_SECRET set, DATABASE_URL=file:/home/z/my-project/db/custom.db
+- Pas de middleware.ts (optionnel, OK)
+- Diagnostiqué : le serveur dev mourait entre les appels bash → utilisateur voyait "Serveur indisponible" = "la connexion ne marche pas"
+- Créé /home/z/my-project/start-dev.sh : script de lancement robuste (setsid + nohup + double-fork, redirection complète des 3 std streams, disown)
+- Démarré serveur dev persistant (PID 7695, stable)
+- Test Agent Browser complet du flux de connexion :
+  * FABRICANT sarine@biocosmetique.sn / Demo1234! → /dashboard → "Bonjour, Sarine Bio Cosmétiques 👋" ✓
+  * Déconnexion → /login ✓
+  * SUPERADMIN admin@verifscan.sn / Admin123!2025 → /superadmin → "Tableau de bord" ✓
+  * Cookie next-auth.session-token correctement posé, 0 erreur console/page
+- Conclusion : le code de connexion ÉTAIT déjà correct. Le problème = serveur dev instable.
+
+- Page d'accueil : lu src/app/page.tsx (ordre actuel : Hero → Stats → Features → HowItWorks → Demo → Catalog → Industries → Testimonials → CTA)
+- Réorganisé selon principe "show, don't tell" — front-load la PREUVE :
+  1. Hero (hook)
+  2. StatsBanner (trust)
+  3. CatalogSlider ⬆️ (PREUVE : vrais produits scannables immédiatement)
+  4. HowItWorks ⬆️ (processus en 3 étapes — réduit la friction "comment ?")
+  5. Features ⬇️ (deep dive pour les intéressés)
+  6. DemoSection (démo interactive)
+  7. IndustryCards (cas d'usage par métier)
+  8. Testimonials (preuve sociale)
+  9. FinalCTA (conversion)
+- Ajouté commentaire de documentation dans page.tsx expliquant le flow de conversion
+- Vérification Agent Browser : nouvel ordre confirmé via les h2, 0 erreur, rendu ~150-220ms
+- Lint : 0 erreur
+
+Stage Summary:
+- Connexion : code déjà correct, problème réel = serveur dev mourait. Fixé via start-dev.sh (détachement robuste). Les 2 comptes de test (FABRICANT + SUPERADMIN) se connectent et redirigent correctement.
+- Page d'accueil : réorganisée pour front-loader la preuve (CatalogSlider + HowItWorks remontés avant Features). Flow de conversion amélioré : Hook → Trust → Preuve → Process → Capacités → Demo → Métiers → Témoignages → CTA.

@@ -22,23 +22,33 @@ export default function Home() {
     <div className="relative flex min-h-screen flex-col bg-white">
       <Header />
       <main className="flex-1">
-        {/* 1. Hero — Hook: value proposition + primary CTA */}
+        {/*
+         * Page d'accueil — flow de conversion réorganisé.
+         *
+         * Principe : "show, don't tell". On front-load la PREUVE (vrais
+         * produits scannables) et on explique le processus TÔT, pour réduire
+         * la friction cognitive. Les capacités profondes (Features) et la
+         * démo interactive viennent APRÈS que le visiteur a vu que ça marche
+         * pour de vrai.
+         *
+         * 1. Hero        → Hook (qui, quoi, pourquoi maintenant)
+         * 2. Stats       → Trust signals (crédibilité immédiate par les chiffres)
+         * 3. Catalog     → PREUVE : vrais produits avec QR codes (show don't tell)
+         * 4. HowItWorks  → Processus en 3 étapes (réduit la friction "comment ?")
+         * 5. Features    → Capacités clés (deep dive pour les intéressés)
+         * 6. Demo        → Démo interactive (engagement actif)
+         * 7. Industries  → Cas d'usage par métier (le visiteur se reconnaît)
+         * 8. Testimonials→ Preuve sociale (ce que disent les autres)
+         * 9. FinalCTA    → Poussée de conversion finale
+         */}
         <Hero />
-        {/* 2. Stats — Trust signals immediately after the hook (builds credibility) */}
         <StatsBanner />
-        {/* 3. Features — What you get (key capabilities) */}
-        <Features />
-        {/* 4. HowItWorks — How it works (3 simple steps) */}
-        <HowItWorks />
-        {/* 5. Demo — See it in action (interactive product preview) */}
-        <DemoSection />
-        {/* 6. CatalogSlider — Real products (proof it works) */}
         <CatalogSlider />
-        {/* 7. IndustryCards — Use cases by industry (relevance) */}
+        <HowItWorks />
+        <Features />
+        <DemoSection />
         <IndustryCards />
-        {/* 8. Testimonials — Social proof (what others say) */}
         <Testimonials />
-        {/* 9. FinalCTA — Final conversion push */}
         <FinalCTA />
       </main>
       <Footer />
