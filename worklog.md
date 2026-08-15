@@ -3487,3 +3487,26 @@ Stage Summary:
 - Export is opt-in (single checkbox at Step 3) — no more vendor-type-driven logic, no ConfirmDialog, no "Activer l'export" summary button.
 - Public API unchanged: same DynamicProductInitialData type (with optional businessType added + vendorType kept for retro-compat), same DynamicProductForm named export, same POST/PATCH contract.
 - ESLint + TypeScript clean. Dev server compiles without errors. Dashboard returns 200.
+
+---
+Task ID: 6
+Agent: full-stack-developer (logo+avis)
+Task: Logo fabricant + avis client auto sur page scannée
+
+Work Log:
+- Lecture du worklog + fichiers clés (WowHero.tsx, CompactReviews.tsx, /p/[lotId]/page.tsx, public-data.ts, schema.prisma) pour comprendre l'existant
+- WowHero.tsx (ligne 204-220) : remplacement du carré initiale par un bloc conditionnel — si `fabricant.logoUrl` existe, on rend un <img> dans un cadre blanc 10×10 (border-blue-100, shadow-md, object-contain, lazy) avec alt="Logo {companyName}"; sinon on garde le fallback existant (gradient bleu→violet + initiale). Le `fabricant` est déjà l'objet User complet retourné par Prisma (logoUrl inclus — vérifié public-data.ts ligne 54+143)
+- Création API POST /api/reviews (src/app/api/reviews/route.ts) : endpoint public, runtime nodejs, validation Zod (lotId required, rating 1-5, comment max 1000, authorName max 100), vérifie que le lot existe (404 sinon), log IP+User-Agent pour anti-spam, crée le Review avec isApproved=true + isVerified=true (auto-approve MVP), recalcule averageRating + totalReviews sur le Product, appelle revalidatePath sur /p/[lotId] et /p/[reference]
+- Création ReviewForm.tsx (src/components/product/ReviewForm.tsx) : client component, CTA "⭐ Laisser un avis" qui se déplie en formulaire — étoiles 1-5 interactives avec hover preview, champ nom optionnel (max 100), commentaire optionnel (max 1000, textarea), bouton Publier avec spinner Loader2, toast sonner pour feedback, window.location.reload() après succès pour voir l'avis
+- CompactReviews.tsx mis à jour : import ReviewForm, ajout de `lotId` + `productName` aux Props, <ReviewForm> rendu en tête de la div space-y-3 (avant le summary et la liste)
+- /p/[lotId]/page.tsx mis à jour : ajout `export const dynamic = "force-dynamic"` après les imports (page toujours fraîche), passage de `lotId={lot.id}` + `productName={lot.product.name}` au <CompactReviews>
+- Tests curl : POST valide → 200 {success:true, review:{id,rating}, stats:{totalReviews,averageRating}} ; rating=0 → 400 (Zod) ; lotId inexistant → 404 ; GET → 405 ; 3e avis (rating 3) sur lot avec 2 avis 5★ → averageRating=4.3 (recalcul correct arrondi à 1 décimale)
+- Vérification logo : set temporaire d'un logoUrl sur le fabricant "Sarine Bio Cosmétiques" → page /p/[lotId] rend bien <img src="..." alt="Logo Sarine Bio Cosmétiques" class="h-full w-full object-contain" loading="lazy"> dans la manufacturer info card. Revert du logoUrl ensuite pour ne pas polluer la DB.
+
+Stage Summary:
+- Fichiers créés : src/app/api/reviews/route.ts (POST endpoint public + revalidatePath), src/components/product/ReviewForm.tsx (formulaire avis client avec étoiles interactives)
+- Fichiers modifiés : src/components/product/wow/WowHero.tsx (logo fabricant conditionnel), src/components/product/compact/CompactReviews.tsx (intégration ReviewForm + Props lotId/productName), src/app/p/[lotId]/page.tsx (force-dynamic + passage lotId/productName)
+- Logo : s'affiche quand `fabricant.logoUrl` existe (cadre blanc 10×10, object-contain, lazy), fallback initiale bleu→violet sinon — vérifié via test DB temporaire
+- API reviews : testée via curl, retourne 200/400/404/405 correctement, recalcul averageRating/totalReviews OK, revalidatePath appelé sur /p/[lotId] + /p/[reference]
+- Formulaire : intégré en haut de CompactReviews, visible dans l'accordéon "Avis consommateurs" de la page scannée
+- Qualité : `bun run lint` → 0 errors, 0 warnings ; `bunx tsc --noEmit` → 0 errors sur les fichiers modifiés (erreurs pré-existantes dans autres fichiers non concernés) ; dev server compile sans erreur, GET /p/[lotId] → 200 (3.2s first compile, 391ms cached), POST /api/reviews → 200 (11ms)

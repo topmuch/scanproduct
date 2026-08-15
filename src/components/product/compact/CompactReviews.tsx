@@ -1,11 +1,13 @@
 import { Star, CheckCircle2 } from "lucide-react";
 import type { LotWithDetails } from "@/lib/public-data";
 import { formatDistanceToNow, formatDate } from "@/lib/utils";
+import { ReviewForm } from "@/components/product/ReviewForm";
 
 /**
  * CompactReviews — reviews content for the accordion (no outer card).
  *
- * Server component.
+ * Server component. Wraps the consumer-facing ReviewForm (client) at the
+ * top, followed by the summary + reviews list.
  */
 
 type Review = LotWithDetails["reviews"][number];
@@ -14,6 +16,8 @@ type Props = {
   reviews: Review[];
   averageRating: number;
   totalReviews: number;
+  lotId: string;
+  productName: string;
 };
 
 function Stars({ rating }: { rating: number }) {
@@ -37,12 +41,17 @@ export function CompactReviews({
   reviews,
   averageRating,
   totalReviews,
+  lotId,
+  productName,
 }: Props) {
   const rating = averageRating ?? 0;
   const count = totalReviews ?? reviews?.length ?? 0;
 
   return (
     <div className="space-y-3">
+      {/* Consumer review form (client component) */}
+      <ReviewForm lotId={lotId} productName={productName} />
+
       {/* Summary */}
       <div className="flex items-center gap-3 rounded-xl bg-gradient-to-r from-yellow-50 to-amber-50 p-3 ring-1 ring-yellow-200">
         <div className="text-center">

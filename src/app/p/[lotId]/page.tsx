@@ -34,6 +34,13 @@ import { CompactCertifications } from "@/components/product/compact/CompactCerti
 import { CompactReviews } from "@/components/product/compact/CompactReviews";
 
 // ---------------------------------------------------------------------------
+// Force dynamic rendering so the page always reflects the latest reviews
+// and product data. Without this, Next.js might cache the page and new
+// reviews wouldn't appear until manual revalidation.
+// ---------------------------------------------------------------------------
+export const dynamic = "force-dynamic";
+
+// ---------------------------------------------------------------------------
 // Metadata (SEO)
 // ---------------------------------------------------------------------------
 
@@ -305,6 +312,8 @@ export default async function ProductPage({
               reviews={lot.reviews}
               averageRating={lot.product.averageRating}
               totalReviews={lot.product.totalReviews}
+              lotId={lot.id}
+              productName={lot.product.name}
             />
           </WowAccordion>
         </div>

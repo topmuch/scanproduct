@@ -203,9 +203,20 @@ export function WowHero({ product, lot, fabricant }: Props) {
 
               {/* Manufacturer info card */}
               <div className="mt-3 flex items-center gap-3 rounded-2xl bg-gradient-to-r from-blue-50 to-purple-50 p-2.5">
-                <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 text-sm font-bold text-white shadow-md">
-                  {companyName.charAt(0).toUpperCase()}
-                </div>
+                {fabricant.logoUrl ? (
+                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-xl border border-blue-100 bg-white shadow-md">
+                    <img
+                      src={fabricant.logoUrl}
+                      alt={`Logo ${companyName}`}
+                      className="h-full w-full object-contain"
+                      loading="lazy"
+                    />
+                  </div>
+                ) : (
+                  <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 text-sm font-bold text-white shadow-md">
+                    {companyName.charAt(0).toUpperCase()}
+                  </div>
+                )}
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1">
                     <span className="truncate text-sm font-semibold text-gray-900">
