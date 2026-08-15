@@ -3890,3 +3890,40 @@ Stage Summary:
 - L'auto-redirect fonctionne toujours pour les visites fraîches (utilisateur connecté qui visite /login manuellement)
 - Le login FABRICANT et SUPERADMIN fonctionnent tous les deux
 - Le retry sur le fetch de session rend le handleSubmit robuste face aux race conditions de cookie
+
+---
+Task ID: 15
+Agent: main
+Task: 1/ Réorganiser la page d'accueil  2/ Réparer la connexion
+
+Work Log:
+=== CONNEXION (3 causes racines trouvées et corrigées) ===
+- Reproduction avec Agent Browser : POST /api/auth/callback/credentials → 401 (CredentialsSignin)
+- Diagnostic 1 : base de données vide — les users sarine@biocosmetique.sn et admin@verifscan.sn n'existaient plus (DB réinitialisée lors du git pull/rebase)
+  → Fix : bun run prisma/seed.ts → 3 users recréés (SUPERADMIN + 2 FABRICANT)
+- Diagnostic 2 : après seed, nouvelle erreur [next-auth][error][NO_SECRET] → redirect /login?error=Configuration
+  → Cause : .env ne contenait que DATABASE_URL (NEXTAUTH_SECRET et NEXTAUTH_URL avaient disparu)
+  → Fix : ajout de NEXTAUTH_SECRET + NEXTAUTH_URL dans .env + redémarrage serveur
+- Diagnostic 3 : /dashboard retourne 500 → module 'html5-qrcode' not found (package dans package.json mais non installé — node_modules désynchronisé après git pull, 95 packages manquants)
+  → Fix : bun add html5-qrcode (+ 95 packages installés)
+- Vérification Agent Browser :
+  * FABRICANT (sarine@biocosmetique.sn / Demo1234!) → /dashboard, "Bonjour, Sarine Bio Cosmétiques 👋" ✓
+  * SUPERADMIN (admin@verifscan.sn / Admin123!2025) → /superadmin, "Tableau de bord" ✓
+
+=== RÉORGANISATION PAGE D'ACCUEIL ===
+- Ordre précédent : Hero → Features → HowItWorks → CatalogSlider → DemoSection → IndustryCards → Testimonials → StatsBanner → FinalCTA
+- Nouvel ordre (narratif SaaS) : Hero → StatsBanner → Features → HowItWorks → DemoSection → CatalogSlider → IndustryCards → Testimonials → FinalCTA
+  * StatsBanner remonté en position 2 (trust signals juste après le hook = crédibilité immédiate)
+  * DemoSection déplacé avant CatalogSlider (montrer le concept, puis les vrais produits)
+- Header : nav links mis à jour de 5 (avec /produits et #contact cassés) à 6 ancres cohérentes :
+  Accueil, Fonctionnalités, Le concept, Catalogue, Métiers, Témoignages
+- .gitignore : exclusion des screenshots de debug racine (*.png)
+- Lint : 0 erreur
+- Vérification Agent Browser : sections dans le bon ordre, StatsBanner juste après Hero, 0 erreur console/page
+- Commit 89f7c76 poussé sur origin/main
+
+Stage Summary:
+- Connexion réparée : 3 causes racines (DB vide, NEXTAUTH_SECRET manquant, html5-qrcode non installé)
+- Page d'accueil réorganisée selon le narratif de conversion SaaS (Hook → Trust → Features → How → Demo → Products → Industries → Testimonials → CTA)
+- Navigation Header mise à jour avec 6 ancres cohérentes
+- Serveur dev persistant sur port 3000
