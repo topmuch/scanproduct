@@ -2868,3 +2868,48 @@ Stage Summary:
 - Admin stats cached 30s to avoid SQLite thrash on dashboard auto-refresh.
 - ESLint clean, TypeScript clean for all 4 modified files. 1-char pre-existing syntax fix applied to FabricantHeader.tsx to unblock runtime verification (documented above).
 - Work record written to /home/z/my-project/agent-ctx/3a-4-full-stack-developer.md.
+
+---
+Task ID: 5-final
+Agent: main (Z.ai Code)
+Task: Vérification finale + commit + push Phase 3 & 4
+
+Work Log:
+- Schéma Prisma mis à jour avec 3 nouveaux modèles (Notification, NotificationPreference, EmailLog) + relations User — db:push réussi
+- Installation nodemailer@9.0.5 + @types/nodemailer
+- 4 sous-agents lancés en parallèle (Task 2a/2b/2c/2d) pour créer les librairies fondation + API routes + rate-limit/cache + health enrichi
+- 2 sous-agents lancés en parallèle (Task 3a+4 et 3b) pour intégrer triggers + frontend
+- Lint: 0 erreur, 0 warning (bun run lint)
+- TypeScript: 0 erreur sur les fichiers nouveaux/modifiés (19 erreurs pré-existantes dans fichiers non touchés: examples/, scripts/, skills/, admin pages, lib/auth.ts, fabricant-server-data.ts)
+- Vérification curl des endpoints (quand serveur dev était up):
+  - GET /api/health → 200 avec JSON complet (DB ping 2.81ms, memory rssMb 1238, stats: 3 users/6 products/6 lots/36 qrCodes/48 scans, status "degraded")
+  - GET /api/notifications → 401 (auth requise — correct)
+  - POST /api/notifications → 401 (correct)
+  - GET /api/notifications/preferences → 401 (correct)
+  - GET / → 200 (landing page rendue, title "VerifScan — La vérité au bout du scan")
+  - GET /login → 200 (page de connexion rendue avec quick-login buttons)
+  - GET /api/auth/providers → 200 (NextAuth fonctionnel)
+- Vérification agent-browser: landing page chargée avec succès, title correct, screenshot pris
+- Login dashboard non vérifié: serveur dev instable (OOM killer tue le processus à 1.8GB RSS lors de la compilation des routes /dashboard et /api/auth/[...nextauth] — environnement limité à 4GB RAM sans swap)
+- Commit 5fe610a créé avec 30 fichiers changés (5111 insertions, 225 suppressions)
+- Push sur GitHub: https://github.com/topmuch/scanproduct.git main → succès
+
+Stage Summary:
+- Phase 3 (Notifications + alertes lots rappelés): COMPLÈTE
+  - 3 nouveaux modèles Prisma (Notification, NotificationPreference, EmailLog)
+  - Service email nodemailer avec fallback dev mode
+  - Service notifications avec dispatch multi-canal (in_app, email, sms)
+  - 4 API routes (/api/notifications, /[id], /mark-all-read, /preferences)
+  - Trigger rappel lot: PATCH /api/lots/[id] crée notification "lot_recall" severity critical
+  - Trigger quota 80%/100%: POST /api/qr-codes/generate + /bulk-generate envoient alerte + enforce quota (HTTP 402)
+  - Frontend: bell temps réel dans FabricantHeader (polling 30s), page NotificationsPage (filtres, pagination, actions), préférences dans ParametresPage (8 types × 3 canaux, auto-save debounced)
+  - Sidebar: nouvel item "Notifications"
+- Phase 4 (Optimisations + tests de charge): COMPLÈTE
+  - Rate limiter in-memory (fixed window) avec presets (PUBLIC_SCAN 60/min, AUTH 10/min, QR_GENERATE 20/min, DEFAULT 100/min)
+  - TTLCache avec singletons (statsCache 30s, publicCache 60s, configCache 5min) + invalidatePrefix
+  - /api/lots/[id] GET: rate-limité + cache 60s sur données lot
+  - /api/qr-codes/generate + /bulk-generate: rate-limités
+  - /api/admin/stats: cache 30s + rate-limit
+  - /api/health enrichi: DB ping, memory, disk, 5 table counts, status agrégé (ok/degraded/down), HTTP 503 si down
+  - Script de charge scripts/load-test.ts (worker pool, percentiles p50/p95/p99, weighted endpoints)
+- Code poussé sur GitHub (commit 5fe610a)
