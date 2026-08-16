@@ -4571,3 +4571,62 @@ Stage Summary:
 - Le badge "+10" est supprimé du header (desktop + mobile).
 - Le menu Catalogue du hero ouvre maintenant la vraie page /produits.
 - La page /contact est créée avec formulaire fonctionnel + carte Google.
+
+---
+Task ID: 21
+Agent: main
+Task: Notification visuelle avis après 10s + bouton "Signaler un produit périmé en rayon"
+
+Work Log:
+1. ReviewPrompt (src/components/product/ReviewPrompt.tsx) — notification visuelle flottante :
+   - Apparaît 10 secondes après l'arrivée du consommateur sur /p/[lotId]
+   - Carte slide-in animée (Framer Motion) en bas à droite (zone pouce mobile)
+   - Icône cœur + 5 étoiles + texte "Votre avis nous intéresse !"
+   - 2 actions : "Laisser un avis" (scroll vers la section avis + déplie l'accordéon) ou "Plus tard"
+   - Auto-masquage après 20s sans interaction
+   - Mémorise le rejet dans sessionStorage (ne re-apparaît pas pour le même produit dans la même session)
+   - Pause du timer quand l'onglet est masqué (visibilitychange) — ne compte pas le temps en arrière-plan
+   - Init paresseuse du state dismissed depuis sessionStorage (évite setState dans useEffect → règle react-hooks)
+
+2. ReportExpiredModal (src/components/product/ReportExpiredModal.tsx) — signalement produit périmé :
+   - Bouton CTA rouge visible sur chaque page scan, juste sous la barre de fraîcheur
+   - Modal avec 5 motifs (radio cards) :
+     * Produit périmé en rayon
+     * Emballage endommagé
+     * Suspicion de contrefaçon
+     * Problème de qualité
+     * Autre
+   - Description optionnelle (max 1000 chars) + email de contact optionnel
+   - Notice de confidentialité ("données jamais partagées avec des tiers")
+   - État de succès avec référence du ticket (ex: SGN-2026-2347)
+   - Animation Framer Motion (scale + fade)
+
+3. API /api/reports (src/app/api/reports/route.ts) — endpoint public :
+   - Crée un Ticket avec category="Signalement", priority basée sur le motif :
+     * expired_on_shelf + suspicious_counterfeit → "Haute"
+     * autres → "Normale"
+   - Crée une Notification pour le fabricant (severity "critical" pour Haute, "warning" pour Normale)
+   - Capture IP + User-Agent pour audit anti-spam
+   - Retourne la référence du ticket (SGN-YYYY-NNNN) pour suivi consommateur
+   - Validation Zod, revalidatePath sur la page scan
+
+4. Intégration dans /p/[lotId]/page.tsx :
+   - Import ReviewPrompt + ReportExpiredModal
+   - ReportExpiredModal placé après FreshnessGlow (logique : fraîcheur → signalement si périmé)
+   - ReviewPrompt placé après </main> (overlay global flottant)
+   - Ajout d'un <div id="avis-consommateurs"> autour de CompactReviews pour le scroll target
+
+- Vérification :
+  * Build Next.js : ✓ passe (routes /api/reports, /api/reviews, /p/[lotId] présentes)
+  * Lint : ✓ 0 erreur
+  * Page scan (curl) : HTTP 200, bouton "Signaler un produit périmé en rayon" présent, ancre avis-consommateurs présente
+  * API POST /api/reports : retourne {"success":true,"reference":"SGN-2026-2347"} ✓
+  * DB : Ticket créé avec category="Signalement", priority="Haute", subject lisible, description complète ✓
+  * DB : Notification créée pour le fabricant avec severity="critical", message clair ✓
+
+- Push : commit 28b48b0 sur origin/main
+
+Stage Summary:
+- Les deux fonctionnalités sont opérationnelles et intégrées à la page de scan produit.
+- Le consommateur voit maintenant une notification visuelle après 10s l'invitant à laisser un avis, et un bouton bien visible pour signaler un produit périmé en rayon.
+- Les signalements créent des tickets (visibles par le superadmin) + notifient le fabricant dans son dashboard.
