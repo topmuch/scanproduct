@@ -119,6 +119,22 @@ RUN bun run build
 RUN mkdir -p /app/data /app/public/uploads/product && \
     chmod -R 777 /app/public/uploads /app/data
 
+# The entrypoint script (docker-entrypoint.sh) was already extracted into
+# /app by the `tar xzf` step above (it's committed to the GitHub repo).
+# We just need to ensure it's executable — git doesn't always preserve
+# the executable bit across platforms / tarball extraction.
+#
+# This script:
+#   1. Runs `prisma db push` with `yes y |` piped to stdin to bypass
+#      confirmation prompts that `--accept-data-loss` doesn't always
+#      suppress (e.g. adding a UNIQUE constraint).
+#   2. VERIFIES the schema was applied by querying PRAGMA table_info
+#      for required columns (barcode, offData, etc.). This catches the
+#      silent-failure case where Prisma exits 0 without applying.
+#   3. Seeds the database (idempotent).
+#   4. Starts the Next.js standalone server.
+RUN chmod +x /app/docker-entrypoint.sh
+
 EXPOSE 3000
 
 ENV PORT=3000
@@ -130,22 +146,4 @@ ENV DATABASE_URL=file:/app/data/scanproduct.db
 #   /app/public/uploads/product
 ENV UPLOAD_DIR=/app/public/uploads/product
 
-# At runtime: re-ensure the uploads + data dirs exist (in case a fresh
-# empty volume is mounted), run DB migrations + seed, then start the
-# standalone Next.js server.
-#
-# IMPORTANT: `prisma db push` MUST run successfully for the app to work.
-# The previous version had `2>/dev/null || true` which masked migration
-# failures — the container started with a stale schema and every query
-# touching a new column (e.g. `barcode`, `offData`, `offLastSync`)
-# returned P2022 ("column does not exist") → HTTP 500 on product creation.
-#
-# We now:
-#   1. Use `--accept-data-loss` to avoid interactive prompts in CI (safe
-#      for additive schema changes — adding nullable columns/tables).
-#   2. Stream output to stdout/stderr (no `2>/dev/null`) so failures are
-#      visible in `docker logs` / Coolify logs.
-#   3. Still `|| true` so a migration failure doesn't block the deploy
-#      entirely (the server starts, but logs will show the schema issue).
-#   4. Seed is kept best-effort (idempotent — won't duplicate data).
-CMD ["sh", "-c", "mkdir -p /app/data /app/public/uploads/product && chmod -R 777 /app/public/uploads /app/data && export DATABASE_URL=file:/app/data/scanproduct.db && export UPLOAD_DIR=/app/public/uploads/product && echo '=== Running prisma db push ===' && bunx prisma db push --skip-generate --accept-data-loss 2>&1 || echo 'WARN: prisma db push failed — schema may be incomplete' && echo '=== Running seed ===' && bun run prisma/seed.ts 2>&1 || true && echo '=== Starting server ===' && exec node .next/standalone/server.js"]
+CMD ["/app/docker-entrypoint.sh"]

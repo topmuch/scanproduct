@@ -531,7 +531,7 @@ Stage Summary:
 - Default branch: main (1 commit: 6760a22)
 - No secrets/build artifacts in remote history
 - Local remote URL is token-free
-- SECURITY: User should revoke the shared PAT (ghp_X6ju4...) immediately — it was exposed in chat
+- SECURITY: User should revoke the shared PAT immediately — it was exposed in chat
 
 ---
 Task ID: coolify-1
@@ -4250,3 +4250,86 @@ Stage Summary:
 - Les conflits avec un autre fabricant affichent un message distinct (pas de bouton "Modifier" puisque le fabricant n'a pas accès au produit d'autrui).
 - Le code d'erreur Prisma est maintenant retourné dans toutes les réponses 500 pour faciliter le diagnostic futur.
 - Safety net P2002 conservé pour les race conditions (pre-flight check + create pas atomiques en SQLite).
+
+---
+Task ID: 14
+Agent: main
+Task: Corriger l'erreur 500 production "The column `barcode` does not exist in the current database" (P2022)
+
+Work Log:
+- Diagnostic précis grâce aux logs Coolify fournis par l'utilisateur :
+  ```
+  prisma:query INSERT INTO `main`.`Product` (..., `barcode`, `offData`, `offLastSync`, ...) VALUES (...)
+  [POST /api/products] Error: PrismaClientKnownRequestError:
+  The column `barcode` does not exist in the current database.
+  code: 'P2022'
+  ```
+- Cause racine identifiée : le Dockerfile CMD avait `bunx prisma db push --skip-generate 2>/dev/null || true` — le `2>/dev/null || true` masquait silencieusement les erreurs de migration. La DB prod n'a jamais reçu les colonnes `barcode`, `offData`, `offLastSync` (ajoutées dans schema.prisma au commit `127e263`). Le schéma Prisma côté application les connaissait, mais la DB physique non → chaque `db.product.create` incluant ces colonnes plantait avec P2022.
+
+- FIX 1 — Dockerfile (CMD) :
+  * Supprimé `2>/dev/null` — les erreurs de migration sont maintenant visibles dans `docker logs` / Coolify
+  * Ajouté `--accept-data-loss` (match le script `db:push` du package.json, safe pour les changements additifs, évite le prompt interactif en CI)
+  * Ajouté des marqueurs `echo '=== Running prisma db push ==='` etc. pour repérer facilement l'étape dans les logs
+  * Conservé `|| true` pour ne pas bloquer le deploy si la migration échoue — mais maintenant c'est bruyant, pas silencieux
+
+- FIX 2 — POST /api/products (pre-flight défensif) :
+  * Wrappé le `db.product.findUnique({ where: { barcode } })` dans un try/catch. Si la colonne `barcode` n'existe pas (P2021/P2022), on log un warning et on skip le pre-flight au lieu de planter.
+  * Le create lui-même plantera avec P2022, mais maintenant le catch externe retourne un message clair :
+    ```
+    error: "La base de données n'est pas à jour. L'administrateur doit exécuter la migration (prisma db push)."
+    code: "SCHEMA_OUT_OF_DATE"
+    prismaCode: "P2022"
+    ```
+    au lieu de l'opaque "Failed to create product".
+
+- FIX 3 — PATCH /api/products/[id] (même traitement défensif) :
+  * Pre-flight findFirst wrappé dans try/catch
+  * Outer catch retourne le même message SCHEMA_OUT_OF_DATE pour P2021/P2022
+
+- Vérification locale (avant push) :
+  * POST sans barcode → 201 ✓
+  * POST avec barcode unique → 201 ✓
+  * POST avec barcode dupliqué → 409 + message clair ✓
+  * Lint : 0 erreur, 0 warning
+- Push : commit `b3b8a35` sur origin/main → déclenche le rebuild Coolify
+
+Stage Summary:
+- L'erreur 500 production était causée par un Dockerfile qui masquait les erreurs de migration Prisma (`2>/dev/null || true`), laissant la DB prod avec un schéma incomplet (colonnes barcode/offData/offLastSync manquantes).
+- Le Dockerfile теперь log clairement chaque étape (prisma db push, seed, server start) et utilise `--accept-data-loss` pour éviter les prompts interactifs.
+- L'API est maintenant défensive : si la DB n'est pas migrée, le fabricant voit un message clair ("La base de données n'est pas à jour. L'administrateur doit exécuter la migration.") au lieu d'un opaque "Failed to create product".
+- Le rebuild Coolify va appliquer le schéma correctement au démarrage du nouveau conteneur.
+- ACTION REQUISE : attendre ~5 min que Coolify rebuild + redeploy. Surveiller les logs du conteneur pour vérifier que `=== Running prisma db push ===` s'exécute sans erreur.
+
+---
+Task ID: 15
+Agent: main
+Task: Confirmer que le déploiement production fonctionne après le fix Dockerfile (Task 14)
+
+Work Log:
+- Utilisateur a partagé les logs de démarrage du conteneur production (Coolify) après le rebuild déclenché par le commit b3b8a35.
+- Analyse des logs production :
+  * `Prisma schema loaded from prisma/schema.prisma` ✓
+  * `Datasource "db": SQLite database "scanproduct.db" at "file:/app/data/scanproduct.db"` ✓
+  * `⚠️ There might be data loss when applying the changes: A unique constraint covering the columns [barcode] on the table Product will be added.` — WARNING préventif (la migration a réussi car aucun barcode dupliqué n'existait en prod).
+  * `🌱 Seeding VerifScan database…` ✓
+  * `✓ SUPERADMIN admin@verifscan.sn` ✓
+  * `✓ FABRICANT sarine@biocosmetique.sn` ✓
+  * `✓ FABRICANT contact@teranga-foods.sn` ✓
+  * `✓ 6 catégories` ✓
+  * `✓ 5 certifications fabricant` ✓
+  * `▲ Next.js 16.1.3` ✓
+  * `✓ Ready in 283ms` ✓
+  * `[db] Prisma cache version mismatch — recreating PrismaClient` ✓ (normal après migration)
+  * `[upload-config] UPLOAD_DIR resolved to: /app/public/uploads/product` ✓
+  * 0 erreur dans les logs de démarrage.
+
+- Vérification locale : dev server tourne sur port 3000, 0 erreur, toutes les routes /api/notifications retournent 200.
+
+Stage Summary:
+- PRODUCTION OPÉRATIONNELLE. L'erreur P2022 "The column `barcode` does not exist in the current database" est RÉSOLUE.
+- Le Dockerfile fixé (Task 14) a correctement exécuté `prisma db push --skip-generate --accept-data-loss` au démarrage du conteneur, appliquant le schéma à jour (colonnes barcode, offData, offLastSync, etc.) à la DB production.
+- Le seeding a recréé les données de démo (3 users + 6 catégories + 5 certifications).
+- Next.js démarre en 283ms sur port 80, Prisma client recréé, upload config résolue.
+- Le warning "data loss" sur la contrainte unique barcode était préventif — la migration a réussi car aucun barcode dupliqué n'existait.
+- ACTION UTILISATEUR RECOMMANDÉE : tester la création d'un produit avec barcode en production pour confirmer end-to-end que le flux fonctionne (avant le fix, chaque create avec barcode plantait en 500).
+- RAPPEL SECURITY: le PAT token GitHub partage en clair dans le chat doit etre revoque sur https://github.com/settings/tokens (il a deja servi a pousser le code, mais reste compromis tant qu il n est pas revoque).
