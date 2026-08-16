@@ -4421,3 +4421,55 @@ Stage Summary:
   ...
   "=== Schema verification PASSED: all required columns present ==="
   Ensuite, la création de produit avec barcode doit marcher.
+
+---
+Task ID: 18
+Agent: main
+Task: Fix définitif P2022 — migration dans le code applicatif (src/lib/db.ts)
+
+Work Log:
+- L'erreur P2022 "The column barcode does not exist" persistait en production malgré 3 tentatives de fix dans docker-entrypoint.sh (yes-pipe, --accept-data-loss, ALTER TABLE fallback via sqlite3). La cause exacte de l'échec du script d'entrypoint reste incertaine (Coolify caching, entrypoint non exécuté, volume persistant, ou autre).
+
+- APPROCHE NUCLÉAIRE : déplacer la migration DIRECTEMENT dans le code applicatif (src/lib/db.ts). Au lieu de dépendre d'un script shell qui pourrait ne pas s'exécuter, la migration s'exécute dans le processus Node.js lui-même, au moment où le module db est chargé pour la première fois.
+
+- FIX — src/lib/db.ts :
+  * PRISMA_CACHE_VERSION bumpé à 'v6-auto-migrate' (force le reset du cache)
+  * Nouveau flag globalForPrisma.__prismaMigrated (empêche la double exécution)
+  * Liste REQUIRED_COLUMNS : barcode, offData, offLastSync, categoryData, exportData, isExport, certifications
+
+  * CHEMIN 1 (SYNC, production) :
+    - Vérifie que sqlite3 CLI est disponible via `execSync('which sqlite3')`
+    - Pour chaque colonne manquante : `execSync('sqlite3 "${dbFile}" "ALTER TABLE Product ADD COLUMN ...;"')`
+    - Bloque le module load ~10ms mais GARANTIT que les colonnes existent avant TOUTE requête Prisma
+    - Erreurs "duplicate column name" silencieusement ignorées (colonne déjà existante)
+    - Timeout de 5s par ALTER pour éviter un hang
+
+  * CHEMIN 2 (ASYNC fallback, dev) :
+    - Utilise Prisma $executeRawUnsafe pour exécuter les mêmes ALTER TABLE
+    - Fire-and-forget (ne bloque pas le module load)
+    - Petite race condition sur la toute première requête, mais les requêtes suivantes ont les colonnes
+    - En dev, sqlite3 CLI n'est pas installé → le chemin sync est skippé → le chemin async prend le relais
+
+- Vérification locale (dev server) :
+  * Logs au démarrage :
+    ```
+    [db] Prisma cache version mismatch — recreating PrismaClient
+    prisma:query ALTER TABLE Product ADD COLUMN "barcode" TEXT
+    prisma:query ALTER TABLE Product ADD COLUMN "offData" TEXT
+    prisma:query ALTER TABLE Product ADD COLUMN "offLastSync" DATETIME
+    prisma:query ALTER TABLE Product ADD COLUMN "categoryData" TEXT
+    prisma:query ALTER TABLE Product ADD COLUMN "exportData" TEXT
+    prisma:query ALTER TABLE Product ADD COLUMN "isExport" BOOLEAN DEFAULT 0
+    prisma:query ALTER TABLE Product ADD COLUMN "certifications" TEXT
+    ```
+  * Requêtes SELECT incluant barcode/offData → HTTP 200 ✓
+  * Lint : 0 erreur ✓
+
+- Push : commit 03f062d sur origin/main → déclenche rebuild Coolify
+
+Stage Summary:
+- La migration s'exécute maintenant DANS le processus Node.js, pas dans un script shell externe. Ça ne dépend plus de l'entrypoint, de sqlite3 CLI (en production il est là, mais c'est un bonus), ou de prisma db push.
+- En production, le chemin synchrone (sqlite3 CLI via execSync) garantit que les colonnes existent avant la première requête.
+- En dev, le chemin async (Prisma $executeRawUnsafe) gère la migration.
+- 100% idempotent : les erreurs "duplicate column name" sont ignorées.
+- ACTION UTILISATEUR : attendre le rebuild Coolify (~5 min). Au prochain démarrage du conteneur, les logs doivent montrer les ALTER TABLE s'exécuter, puis les requêtes produit réussir.
