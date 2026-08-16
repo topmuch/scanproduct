@@ -143,6 +143,16 @@ const EMERALD_SOFT = "#ECFDF5";
 const inputClass =
   "w-full rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-[14px] text-[#111827] placeholder:text-[#9CA3AF] focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 transition";
 
+/**
+ * Returns the input className with a red border + red focus ring when the
+ * field has a validation error. Makes required-but-empty fields immediately
+ * visible to the user instead of relying solely on the text message below.
+ */
+function inputClassWithError(error?: string) {
+  if (!error) return inputClass;
+  return `${inputClass} border-[#EF4444] focus:border-[#EF4444] focus:ring-[#EF4444]/20 bg-[#FEF2F2]`;
+}
+
 const BUSINESS_TYPES: {
   id: BusinessType;
   emoji: string;
@@ -301,7 +311,7 @@ function DynamicField({
             placeholder={field.placeholder}
             rows={3}
             maxLength={field.validation?.maxLength}
-            className={`${inputClass} resize-none`}
+            className={`${inputClassWithError(error)} resize-none`}
           />
           {errorMsg}
         </div>
@@ -329,7 +339,7 @@ function DynamicField({
             min={min}
             max={max}
             step={field.unit === "°C" || field.unit === "%" ? "0.1" : "1"}
-            className={inputClass}
+            className={inputClassWithError(error)}
           />
           {errorMsg}
         </div>
@@ -346,7 +356,7 @@ function DynamicField({
             type="date"
             value={(value as string) ?? ""}
             onChange={(e) => onChange(e.target.value)}
-            className={inputClass}
+            className={inputClassWithError(error)}
           />
           {errorMsg}
         </div>
@@ -362,7 +372,7 @@ function DynamicField({
               id={fieldId}
               value={(value as string) ?? ""}
               onChange={(e) => onChange(e.target.value)}
-              className={`${inputClass} appearance-none pr-9`}
+              className={`${inputClassWithError(error)} appearance-none pr-9`}
             >
               <option value="">
                 {field.placeholder ?? "— Sélectionner —"}
@@ -481,7 +491,7 @@ function DynamicField({
             onChange={(e) => onChange(e.target.value)}
             placeholder={field.placeholder}
             maxLength={field.validation?.maxLength}
-            className={inputClass}
+            className={inputClassWithError(error)}
           />
           {errorMsg}
         </div>
@@ -963,17 +973,26 @@ export function DynamicProductForm({
 
   function next() {
     const errs = validateStep(currentStepId);
-    if (Object.keys(errs).length > 0) {
+    const errKeys = Object.keys(errs);
+    if (errKeys.length > 0) {
       setErrors(errs);
-      // Scroll to first error.
-      const firstKey = Object.keys(errs)[0];
+      // Scroll to first error so the user immediately sees which field is
+      // missing — the red border + message make it obvious.
+      const firstKey = errKeys[0];
       const ref = errorRefs.current[firstKey];
       if (ref) {
         ref.scrollIntoView({ behavior: "smooth", block: "center" });
       } else {
         bodyRef.current?.scrollTo({ top: 0, behavior: "smooth" });
       }
-      toast.error("Veuillez remplir les champs obligatoires.");
+      // Include the first field name in the toast so the user knows exactly
+      // what to fix without having to scan the whole form.
+      const firstMsg = errs[firstKey];
+      toast.error(
+        errKeys.length === 1
+          ? firstMsg
+          : `${errKeys.length} champs obligatoires manquants. Premier : ${firstMsg}`,
+      );
       return;
     }
     setErrors({});
@@ -1401,7 +1420,7 @@ export function DynamicProductForm({
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Ex : Jus de Bissap Premium"
-                  className={inputClass}
+                  className={inputClassWithError(errors.name)}
                 />
                 <FieldError message={errors.name} />
               </div>
