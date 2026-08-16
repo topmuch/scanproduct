@@ -1,5 +1,4 @@
 import { PrismaClient } from '@prisma/client'
-import { execSync } from 'child_process'
 
 /**
  * Bump this constant whenever the Prisma schema gains a new model that the
@@ -37,31 +36,47 @@ export const db =
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = db
 
 // ─────────────────────────────────────────────────────────────────────────────
-// AUTO-MIGRATION (synchronous, runs at module load)
+// AUTO-MIGRATION (SERVER SIDE ONLY, async via Prisma — no Node.js built-ins)
 // ─────────────────────────────────────────────────────────────────────────────
 // This is a NUCLEAR SAFETY NET for when `prisma db push` fails in production.
-// Despite the docker-entrypoint.sh running `yes y | prisma db push` + ALTER
-// TABLE fallback, the production DB was STILL missing the `barcode` column
-// (P2022 error). This module-level migration runs SYNCHRONOUSLY before any
-// Prisma query can execute, using the sqlite3 CLI (installed in the Docker
-// image via `apt-get install sqlite3`).
+// The production DB was STILL missing the `barcode` column (P2022 error)
+// despite multiple docker-entrypoint.sh fix attempts. This migration runs
+// before any Prisma query can execute (async, fire-and-forget), adding
+// missing columns via ALTER TABLE through Prisma's own $executeRawUnsafe.
 //
-// It adds missing columns via `ALTER TABLE Product ADD COLUMN ...`. If a
-// column already exists, SQLite returns "duplicate column name" which we
-// silently ignore. This is 100% idempotent and safe to run on every startup.
+// WHY NO `child_process` / `sqlite3` CLI:
+//   db.ts is transitively imported by client components (via admin-server-data
+//   → AdminShell.tsx). Next.js's bundler tries to include it in the client
+//   bundle, where Node.js built-ins like `child_process` and `module` don't
+//   exist → build fails with "module not found". Using Prisma's
+//   $executeRawUnsafe avoids any Node.js built-in imports — Prisma handles
+//   the DB connection internally and is already properly bundled.
+//
+// TRADE-OFF: async means a small race condition on the very first request
+// after startup (migration may not have completed yet). This is acceptable:
+// the first request might get P2022, but a refresh will work. The
+// /api/products route also has a defensive P2022 handler that returns a
+// clear "retry" message.
+//
+// GUARDS:
+//   - `typeof window === 'undefined'` — skip in browser bundles
+//   - `!isBuildPhase` — skip during `next build` (NEXT_PHASE = 'phase-production-build')
 //
 // SQLite limitation: cannot add UNIQUE constraints via ALTER TABLE.
 // The barcode uniqueness is enforced in app code (pre-flight check in
 // /api/products/route.ts returns 409 before the insert).
-//
-// NOTE: in dev mode (local), sqlite3 CLI may not be installed. In that case,
-// the sync migration is skipped (the local DB already has the columns from
-// `bun run db:push`). The async fallback below handles any edge cases.
-if (!globalForPrisma.__prismaMigrated) {
-  globalForPrisma.__prismaMigrated = true
+const isBuildPhase =
+  typeof process !== 'undefined' &&
+  process.env.NEXT_PHASE === 'phase-production-build'
 
-  const dbUrl = process.env.DATABASE_URL || ''
-  const dbFile = dbUrl.replace(/^file:/, '') || '/app/data/scanproduct.db'
+const shouldMigrate =
+  !globalForPrisma.__prismaMigrated &&
+  typeof window === 'undefined' &&
+  typeof process !== 'undefined' &&
+  !isBuildPhase
+
+if (shouldMigrate) {
+  globalForPrisma.__prismaMigrated = true
 
   // Columns added in V3 Phase 3 that may be missing from older production DBs.
   // Format: [columnName, columnType, defaultValueClause]
@@ -75,71 +90,39 @@ if (!globalForPrisma.__prismaMigrated) {
     ['certifications', 'TEXT', ''],
   ]
 
-  // ── Attempt 1: synchronous migration via sqlite3 CLI ───────────────────
-  // This is the PREFERRED path — it blocks module load for ~10ms but
-  // GUARANTEES the columns exist before any Prisma query runs.
-  try {
-    // Check if sqlite3 is available
-    execSync('which sqlite3', { stdio: 'ignore' })
+  console.log('[db] Starting async schema migration (ALTER TABLE for missing columns)...')
 
-    if (dbFile) {
-      console.log(`[db] Running sync migration on ${dbFile}...`)
-
-      for (const [colName, colType, defaultClause] of REQUIRED_COLUMNS) {
-        const sql = `ALTER TABLE Product ADD COLUMN "${colName}" ${colType}${
-          defaultClause ? ' ' + defaultClause : ''
-        };`
-
-        try {
-          execSync(`sqlite3 "${dbFile}" "${sql}"`, {
-            stdio: 'ignore',
-            timeout: 5000,
-          })
-          console.log(`[db]   ✓ Added column: ${colName}`)
-        } catch {
-          // "duplicate column name" = column already exists (expected)
-          // Any other error (e.g. "no such table") is also non-fatal —
-          // prisma db push should have created the table, and if it didn't,
-          // the async fallback or the query itself will surface the error.
-        }
-      }
-      console.log('[db] Sync migration complete')
-    }
-  } catch {
-    // sqlite3 not available (dev mode) — skip sync migration.
-    // The local DB already has the columns from `bun run db:push`.
-    if (process.env.NODE_ENV === 'production') {
-      console.warn('[db] sqlite3 CLI not available — skipping sync migration')
-    }
-  }
-
-  // ── Attempt 2: async fallback via Prisma $executeRawUnsafe ─────────────
-  // This runs as a fire-and-forget promise. It catches any columns that the
-  // sync migration missed (e.g. if sqlite3 wasn't available). There's a
-  // small race condition on the very first request, but subsequent requests
-  // will have the columns. This is an acceptable tradeoff.
+  // Fire-and-forget: runs the migration asynchronously. Each ALTER TABLE is
+  // independent — if one fails with "duplicate column name", the others
+  // still execute. This is 100% idempotent and safe to run on every startup.
   ;(async () => {
-    try {
-      for (const [colName, colType, defaultClause] of REQUIRED_COLUMNS) {
-        const sql = `ALTER TABLE Product ADD COLUMN "${colName}" ${colType}${
-          defaultClause ? ' ' + defaultClause : ''
-        }`
-        try {
-          await db.$executeRawUnsafe(sql)
-          console.log(`[db]   ✓ Async fallback: added column ${colName}`)
-        } catch (e: unknown) {
-          const msg = (e as Error)?.message || String(e)
-          // Ignore "duplicate column" — column already exists
-          if (!msg.includes('duplicate column') && !msg.includes('already exists')) {
-            // Don't spam logs — only log unexpected errors
-            if (process.env.NODE_ENV === 'production') {
-              console.warn(`[db]   Async migration note for ${colName}: ${msg.substring(0, 100)}`)
-            }
-          }
+    let added = 0
+    let existing = 0
+    let failed = 0
+
+    for (const [colName, colType, defaultClause] of REQUIRED_COLUMNS) {
+      const sql = `ALTER TABLE Product ADD COLUMN "${colName}" ${colType}${
+        defaultClause ? ' ' + defaultClause : ''
+      }`
+      try {
+        await db.$executeRawUnsafe(sql)
+        console.log(`[db]   ✓ Added column: ${colName}`)
+        added++
+      } catch (e: unknown) {
+        const msg = (e as Error)?.message || String(e)
+        if (msg.includes('duplicate column') || msg.includes('already exists')) {
+          // Column already exists — expected on subsequent restarts
+          existing++
+        } else {
+          // Unexpected error (e.g. "no such table: Product") — log it but
+          // don't crash. The query itself will surface a clearer error.
+          console.warn(`[db]   ⚠ ${colName}: ${msg.substring(0, 120)}`)
+          failed++
         }
       }
-    } catch (e) {
-      console.error('[db] Async migration failed:', e)
     }
+    console.log(
+      `[db] Migration complete — added: ${added}, already existed: ${existing}, failed: ${failed}`,
+    )
   })()
 }
