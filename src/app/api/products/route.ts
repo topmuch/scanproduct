@@ -159,29 +159,47 @@ export async function POST(request: NextRequest) {
     // won't save. We check up-front and return a 409 Conflict identifying
     // the conflicting product, so the UI can offer "Edit the existing
     // product" instead of silently failing.
+    //
+    // DEFENSIVE: if the `barcode` column doesn't exist yet in the DB
+    // (Prisma P2021 "table does not exist" or P2022 "column does not
+    // exist" — happens when the prod DB hasn't been migrated), the
+    // findUnique throws. We catch it, log it, and skip the pre-flight
+    // check. The create below will then throw the same P2022, which the
+    // outer catch surfaces as a 500 with the Prisma code — at least
+    // visible to ops instead of crashing the pre-flight silently.
     if (barcode) {
-      const existing = await db.product.findUnique({
-        where: { barcode },
-        select: {
-          id: true,
-          name: true,
-          brand: true,
-          fabricantId: true,
-        },
-      });
-      if (existing) {
-        const isOwn = existing.fabricantId === user.id;
-        return NextResponse.json(
-          {
-            error: isOwn
-              ? `Ce code-barres (${barcode}) est déjà utilisé par votre produit « ${existing.name} ». Modifiez ce produit existant plutôt qu'en créer un nouveau.`
-              : `Ce code-barres (${barcode}) est déjà utilisé par un autre produit (« ${existing.name} »${existing.brand ? ` — ${existing.brand}` : ""}). Chaque code-barres doit être unique sur la plateforme.`,
-            code: "BARCODE_ALREADY_EXISTS",
-            conflictProductId: existing.id,
-            conflictProductName: existing.name,
-            own: isOwn,
+      try {
+        const existing = await db.product.findUnique({
+          where: { barcode },
+          select: {
+            id: true,
+            name: true,
+            brand: true,
+            fabricantId: true,
           },
-          { status: 409 },
+        });
+        if (existing) {
+          const isOwn = existing.fabricantId === user.id;
+          return NextResponse.json(
+            {
+              error: isOwn
+                ? `Ce code-barres (${barcode}) est déjà utilisé par votre produit « ${existing.name} ». Modifiez ce produit existant plutôt qu'en créer un nouveau.`
+                : `Ce code-barres (${barcode}) est déjà utilisé par un autre produit (« ${existing.name} »${existing.brand ? ` — ${existing.brand}` : ""}). Chaque code-barres doit être unique sur la plateforme.`,
+              code: "BARCODE_ALREADY_EXISTS",
+              conflictProductId: existing.id,
+              conflictProductName: existing.name,
+              own: isOwn,
+            },
+            { status: 409 },
+          );
+        }
+      } catch (preFlightError) {
+        // P2021 = table missing, P2022 = column missing. The DB schema
+        // hasn't been migrated — log and skip the check. The create will
+        // fail with a clear P2022 in the outer catch.
+        const preCode = (preFlightError as { code?: string })?.code;
+        console.warn(
+          `[POST /api/products] Pre-flight barcode check skipped (schema issue: ${preCode}). DB migration may be pending.`,
         );
       }
     }
@@ -256,6 +274,20 @@ export async function POST(request: NextRequest) {
     // looks identical ("Failed to create product") and diagnosis requires
     // reading server logs.
     const prismaCode = (error as { code?: string })?.code;
+    // P2021 (table missing) / P2022 (column missing) = the prod DB hasn't
+    // been migrated. Return a clear, actionable message so the fabricant
+    // understands it's an infrastructure issue, not their fault. The
+    // administrator needs to run `prisma db push` on the prod DB.
+    if (prismaCode === "P2021" || prismaCode === "P2022") {
+      return NextResponse.json(
+        {
+          error: "La base de données n'est pas à jour. L'administrateur doit exécuter la migration (prisma db push).",
+          code: "SCHEMA_OUT_OF_DATE",
+          prismaCode,
+        },
+        { status: 500 }
+      );
+    }
     return NextResponse.json(
       {
         error: "Failed to create product",

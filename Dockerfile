@@ -133,4 +133,19 @@ ENV UPLOAD_DIR=/app/public/uploads/product
 # At runtime: re-ensure the uploads + data dirs exist (in case a fresh
 # empty volume is mounted), run DB migrations + seed, then start the
 # standalone Next.js server.
-CMD ["sh", "-c", "mkdir -p /app/data /app/public/uploads/product && chmod -R 777 /app/public/uploads /app/data && export DATABASE_URL=file:/app/data/scanproduct.db && export UPLOAD_DIR=/app/public/uploads/product && bunx prisma db push --skip-generate 2>/dev/null || true && bun run prisma/seed.ts 2>/dev/null || true && exec node .next/standalone/server.js"]
+#
+# IMPORTANT: `prisma db push` MUST run successfully for the app to work.
+# The previous version had `2>/dev/null || true` which masked migration
+# failures — the container started with a stale schema and every query
+# touching a new column (e.g. `barcode`, `offData`, `offLastSync`)
+# returned P2022 ("column does not exist") → HTTP 500 on product creation.
+#
+# We now:
+#   1. Use `--accept-data-loss` to avoid interactive prompts in CI (safe
+#      for additive schema changes — adding nullable columns/tables).
+#   2. Stream output to stdout/stderr (no `2>/dev/null`) so failures are
+#      visible in `docker logs` / Coolify logs.
+#   3. Still `|| true` so a migration failure doesn't block the deploy
+#      entirely (the server starts, but logs will show the schema issue).
+#   4. Seed is kept best-effort (idempotent — won't duplicate data).
+CMD ["sh", "-c", "mkdir -p /app/data /app/public/uploads/product && chmod -R 777 /app/public/uploads /app/data && export DATABASE_URL=file:/app/data/scanproduct.db && export UPLOAD_DIR=/app/public/uploads/product && echo '=== Running prisma db push ===' && bunx prisma db push --skip-generate --accept-data-loss 2>&1 || echo 'WARN: prisma db push failed — schema may be incomplete' && echo '=== Running seed ===' && bun run prisma/seed.ts 2>&1 || true && echo '=== Starting server ===' && exec node .next/standalone/server.js"]

@@ -150,32 +150,44 @@ export async function PATCH(
     // We check up-front and return a 409 Conflict identifying the
     // conflicting product, so the fabricant gets an actionable message
     // instead of an opaque "Failed to update product" 500.
+    //
+    // DEFENSIVE: if the `barcode` column doesn't exist yet in the DB
+    // (P2021/P2022 — prod DB not migrated), the findFirst throws. We
+    // catch it, log it, and skip the pre-flight check. The update below
+    // will then throw the same P2022, handled by the outer catch.
     if (patch.barcode) {
-      const existing = await db.product.findFirst({
-        where: {
-          barcode: patch.barcode,
-          id: { not: id },
-        },
-        select: {
-          id: true,
-          name: true,
-          brand: true,
-          fabricantId: true,
-        },
-      });
-      if (existing) {
-        const isOwn = existing.fabricantId === token.sub;
-        return NextResponse.json(
-          {
-            error: isOwn
-              ? `Ce code-barres (${patch.barcode}) est déjà utilisé par votre produit « ${existing.name} ». Un code-barres ne peut être associé qu'à un seul produit.`
-              : `Ce code-barres (${patch.barcode}) est déjà utilisé par un autre produit (« ${existing.name} »${existing.brand ? ` — ${existing.brand}` : ""}). Chaque code-barres doit être unique sur la plateforme.`,
-            code: "BARCODE_ALREADY_EXISTS",
-            conflictProductId: existing.id,
-            conflictProductName: existing.name,
-            own: isOwn,
+      try {
+        const existing = await db.product.findFirst({
+          where: {
+            barcode: patch.barcode,
+            id: { not: id },
           },
-          { status: 409 },
+          select: {
+            id: true,
+            name: true,
+            brand: true,
+            fabricantId: true,
+          },
+        });
+        if (existing) {
+          const isOwn = existing.fabricantId === token.sub;
+          return NextResponse.json(
+            {
+              error: isOwn
+                ? `Ce code-barres (${patch.barcode}) est déjà utilisé par votre produit « ${existing.name} ». Un code-barres ne peut être associé qu'à un seul produit.`
+                : `Ce code-barres (${patch.barcode}) est déjà utilisé par un autre produit (« ${existing.name} »${existing.brand ? ` — ${existing.brand}` : ""}). Chaque code-barres doit être unique sur la plateforme.`,
+              code: "BARCODE_ALREADY_EXISTS",
+              conflictProductId: existing.id,
+              conflictProductName: existing.name,
+              own: isOwn,
+            },
+            { status: 409 },
+          );
+        }
+      } catch (preFlightError) {
+        const preCode = (preFlightError as { code?: string })?.code;
+        console.warn(
+          `[PATCH /api/products/[id]] Pre-flight barcode check skipped (schema issue: ${preCode}). DB migration may be pending.`,
         );
       }
     }
@@ -219,6 +231,18 @@ export async function PATCH(
   } catch (error) {
     console.error("[PATCH /api/products/[id]] Error:", error);
     const prismaCode = (error as { code?: string })?.code;
+    // P2021 (table missing) / P2022 (column missing) = prod DB not migrated.
+    // Same clear message as POST.
+    if (prismaCode === "P2021" || prismaCode === "P2022") {
+      return NextResponse.json(
+        {
+          error: "La base de données n'est pas à jour. L'administrateur doit exécuter la migration (prisma db push).",
+          code: "SCHEMA_OUT_OF_DATE",
+          prismaCode,
+        },
+        { status: 500 }
+      );
+    }
     return NextResponse.json(
       {
         error: "Failed to update product",
