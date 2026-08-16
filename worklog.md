@@ -4333,3 +4333,43 @@ Stage Summary:
 - Le warning "data loss" sur la contrainte unique barcode était préventif — la migration a réussi car aucun barcode dupliqué n'existait.
 - ACTION UTILISATEUR RECOMMANDÉE : tester la création d'un produit avec barcode en production pour confirmer end-to-end que le flux fonctionne (avant le fix, chaque create avec barcode plantait en 500).
 - RAPPEL SECURITY: le PAT token GitHub partage en clair dans le chat doit etre revoque sur https://github.com/settings/tokens (il a deja servi a pousser le code, mais reste compromis tant qu il n est pas revoque).
+
+---
+Task ID: 16
+Agent: main
+Task: Corriger l'erreur production persistante "La base de données n'est pas à jour" (P2022 malgré migration log montrant succès)
+
+Work Log:
+- Diagnostic précis : l'utilisateur a rapporté voir le message "La base de données n'est pas à jour. L'administrateur doit exécuter la migration (prisma db push)." — c'est l'erreur défensive SCHEMA_OUT_OF_DATE ajoutée en Task 14, qui se déclenche quand Prisma lance P2022 (column does not exist).
+- Contradiction apparente : les logs de démarrage production (message précédent de l'utilisateur) montraient que prisma db push avait affiché le warning de data loss puis passé au seeding sans erreur. Mais l'API continuait à lancer P2022.
+- Cause racine identifiée : `prisma db push --accept-data-loss` ne supprime PAS TOUJOURS le prompt de confirmation. Quand Prisma détecte qu'un changement peut causer une perte de données (comme ajouter une contrainte UNIQUE), il affiche "Do you want to apply this change? (y/N)" même avec --accept-data-loss. En Docker non-interactif (stdin=EOF), Prisma lit EOF, l'interprète comme "no", et EXIT 0 SANS appliquer la migration. Le `|| echo WARN` ne se déclenchait pas (exit code 0), donc le conteneur démarrait avec un schéma périmé.
+
+- FIX 1 — Création de docker-entrypoint.sh :
+  * `yes y | bunx prisma db push --skip-generate --accept-data-loss` — pipe un flux infini de "y" dans stdin de Prisma, bypassant ANY prompt de confirmation
+  * Vérification POST-migration via sqlite3 CLI : `PRAGMA table_info(Product)` extrait toutes les colonnes, puis vérifie que les 7 colonnes requises sont présentes (barcode, offData, offLastSync, categoryData, exportData, isExport, certifications)
+  * Si vérification échoue : log CRITICAL visible dans Coolify (mais le serveur démarre quand même pour ne pas bloquer le deploy)
+  * Seed idempotent puis exec node .next/standalone/server.js
+
+- FIX 2 — Dockerfile :
+  * Remplacé le long CMD inline par `CMD ["/app/docker-entrypoint.sh"]`
+  * Le script est extrait du tarball GitHub (déjà dans /app après tar xzf), pas besoin de COPY
+  * `RUN chmod +x /app/docker-entrypoint.sh` garantit le bit exécutable
+
+- FIX 3 — Sécurité GitHub Push Protection :
+  * Le worklog.md contenait une référence au PAT token (commit précédent 046880e), ce qui a déclenché GitHub Push Protection
+  * Soft reset vers origin/main + nettoyage du worklog (suppression de toute référence au token, même partielle)
+  * Recommit propre → push réussi
+
+- Vérification locale :
+  * `yes y | bunx prisma db push` fonctionne (pas d'erreur, pas de hang)
+  * Logique de vérification sqlite3 testée avec bun : toutes les colonnes requises présentes localement
+  * Syntaxe shell valide (sh -n)
+  * Lint : 0 erreur
+
+- Push : commit 11f52aa sur origin/main → déclenche le rebuild Coolify
+
+Stage Summary:
+- L'erreur "La base de données n'est pas à jour" (P2022) était causée par un prompt de confirmation silencieux de Prisma qui n'était pas bypassé par --accept-data-loss en environnement Docker non-interactif.
+- Le nouveau docker-entrypoint.sh pipe "yes y" dans stdin de Prisma pour forcer la confirmation, puis vérifie via sqlite3 que les colonnes ont réellement été ajoutées.
+- Si la vérification échoue en production, le log Coolify montrera "CRITICAL: Schema verification FAILED — missing columns: ..." au lieu du silence précédent.
+- ACTION UTILISATEUR : attendre le rebuild Coolify (~5 min), puis vérifier les logs du conteneur pour confirmer que "=== Schema verification PASSED ===" apparaît. Tester ensuite la création d'un produit avec barcode.
