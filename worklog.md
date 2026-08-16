@@ -4515,3 +4515,59 @@ Stage Summary:
 - La migration async via Prisma s'exécutera au démarrage du serveur Node.js en production, ajoutant les colonnes manquantes via ALTER TABLE.
 - En production, au premier démarrage : added: 7 (toutes les colonnes manquantes seront ajoutées). Ensuite : already existed: 7.
 - ACTION UTILISATEUR : attendre le rebuild Coolify (~5 min). Le build doit passer, puis le conteneur démarre. Au premier accès, les colonnes seront ajoutées. Si la toute première requête échoue avec P2022, rafraîchir la page (la migration aura terminé).
+
+---
+Task ID: 20
+Agent: main
+Task: Modifications UI demandées par l'utilisateur (favicon, footer, header, catalogue, page contact)
+
+Work Log:
+1. FAVICON — remplacé tous les fichiers d'icône par l'image fournie (iconh.png) :
+   - public/icon.png, favicon.ico, apple-icon.png, icon-16/32/48/192/512.png
+   - layout.tsx : fallback de /favicon.ico → /icon.png
+   - Vérifié : HTML head référence <link rel="icon" href="/icon.png"/>
+
+2. FOOTER (src/components/landing/Footer.tsx) — infos de contact mises à jour :
+   - Email : contact@verifscan.sn → contact@verifscan.com
+   - Téléphone : +221 33 800 00 00 → +221 78 485 88 22 (tel:+2217848588226)
+   - Adresse : Dakar, Sénégal (déjà correct, inchangé)
+   - Liens Contact/Marketplace B2B/réseaux sociaux : /#contact → /contact
+
+3. HEADER (src/components/landing/Header.tsx) — badge "+10" supprimé :
+   - Desktop : retiré le <span> badge "+10" + le <div className="relative"> wrapper
+   - Mobile drawer : retiré le texte "🎁 +10 points VerifScan à l'inscription"
+   - Import Gift supprimé (n'était plus utilisé)
+   - Lien Catalogue : #catalogue-slider → /produits (ouvre la vraie page catalogue)
+
+4. PAGE CATALOGUE — la page /produits existait déjà et fonctionnait. Le lien
+   nav "Catalogue" pointait vers #catalogue-slider (ancrage page d'accueil)
+   au lieu de la vraie page. Corrigé pour pointer vers /produits.
+
+5. PAGE CONTACT (src/app/contact/page.tsx + ContactForm.tsx) — nouvelle page :
+   - Hero avec dégradé bleu/vert + orbs décoratifs
+   - Barre info rapide (horaires, zone d'action, délai de réponse)
+   - Formulaire de contact (nom, email, téléphone, sujet, message) :
+     * Validation des champs requis
+     * État de chargement (spinner)
+     * Confirmation de succès avec bouton "envoyer un autre message"
+     * Toast sonner
+   - Carte Google Maps intégrée (iframe Dakar, Sénégal)
+   - Cartes info contact (email, téléphone, adresse) avec icônes colorées
+   - Section CTA "Devenir partenaire" / "Voir le catalogue"
+   - Utilise PublicHeader + PublicFooter pour cohérence visuelle
+
+- Vérification (curl + build) :
+  * Home page : contact@verifscan.com ✓, tel:+2217848588226 ✓, 0 badge "+10" ✓, href="/produits" ✓
+  * Contact page : 115KB, Google Map embed ✓, form fields (name/email/phone/subject/message) ✓, hero "Parlons de votre" ✓
+  * Build Next.js : ✓ passe proprement, route /contact (○ Static) + /produits (ƒ Dynamic)
+  * Lint : ✓ 0 erreur
+
+- Push : commit cde6127 sur origin/main
+
+Stage Summary:
+- Toutes les modifications demandées sont appliquées et vérifiées.
+- Le favicon est maintenant l'image fournie par l'utilisateur.
+- Le footer affiche les bons coordonnées (contact@verifscan.com, +221 78 485 88 22).
+- Le badge "+10" est supprimé du header (desktop + mobile).
+- Le menu Catalogue du hero ouvre maintenant la vraie page /produits.
+- La page /contact est créée avec formulaire fonctionnel + carte Google.
