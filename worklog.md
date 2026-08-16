@@ -4373,3 +4373,51 @@ Stage Summary:
 - Le nouveau docker-entrypoint.sh pipe "yes y" dans stdin de Prisma pour forcer la confirmation, puis vérifie via sqlite3 que les colonnes ont réellement été ajoutées.
 - Si la vérification échoue en production, le log Coolify montrera "CRITICAL: Schema verification FAILED — missing columns: ..." au lieu du silence précédent.
 - ACTION UTILISATEUR : attendre le rebuild Coolify (~5 min), puis vérifier les logs du conteneur pour confirmer que "=== Schema verification PASSED ===" apparaît. Tester ensuite la création d'un produit avec barcode.
+
+---
+Task ID: 17
+Agent: main
+Task: Fix définitif — prisma db push ne s'applique pas en prod malgré yes-pipe (P2022 persistant)
+
+Work Log:
+- L'utilisateur a rapporté que l'erreur P2022 persistait en production malgré le fix Task 16 (yes y | prisma db push). Les logs montraient :
+  * prisma.product.findMany() → P2022 "The column main.Product.barcode does not exist"
+  * prisma.product.create() → P2022 "The column barcode does not exist"
+  * Le dashboard fabricant plantait sur getFabricantData (section "products")
+  * La création de produit plantait avec "La base de données n'est pas à jour"
+- Cause racine : `prisma db push` continue de ne pas appliquer la migration en production, même avec `yes y |` pipé dans stdin. La cause exacte reste incertaine (possible: Prisma CLI v6 quirk, SQLite shadow DB, volume persistant avec métadonnées _prisma_migrations stale, ou prompt non-stdin).
+
+- FIX NUCLÉAIRE — docker-entrypoint.sh mis à jour :
+  * Après `prisma db push` (best-effort), exécute directement des `ALTER TABLE Product ADD COLUMN ...` via sqlite3 CLI sur le fichier DB
+  * Pour chaque colonne requise (barcode, offData, offLastSync, categoryData, exportData, isExport, certifications) :
+    - Vérifie si la colonne existe via PRAGMA table_info
+    - Si manquante : `ALTER TABLE Product ADD COLUMN <name> <type> [DEFAULT ...]`
+    - Si existe : skip (log "✓ already exists")
+    - Si l'ALTER échoue avec "duplicate column name" : ignoré (race condition safe)
+  * Vérification finale : PRAGMA table_info confirme que les 7 colonnes sont présentes
+  * Si vérification échoue : log CRITICAL visible dans Coolify
+
+- LIMITATION SQLite : impossible d'ajouter une contrainte UNIQUE via ALTER TABLE.
+  * L'unicité du barcode est enforce côté app (pre-flight check dans /api/products/route.ts retourne 409 avant l'insert)
+  * La contrainte DB-level unique est nice-to-have mais pas requise pour le fonctionnement
+
+- Test local (via bun + Prisma $executeRawUnsafe sur une DB de test simulée) :
+  * Création d'une table Product old-schema (sans barcode) ✓
+  * Ajout des 7 colonnes via ALTER TABLE ✓
+  * Insert avec barcode + offData + isExport ✓
+  * Idempotence : 2e run ALTER → tous "duplicate column name" → ignorés ✓
+  * colonnes finales : id, name, fabricantId, createdAt, updatedAt, barcode, offData, offLastSync, categoryData, exportData, isExport, certifications ✓
+
+- Push : commit 3f3ff47 sur origin/main → déclenche rebuild Coolify
+
+Stage Summary:
+- L'approche nucléaire contourne totalement Prisma pour la migration. Même si `prisma db push` échoue silencieusement (prompt, quirk, whatever), les colonnes seront ajoutées par SQL direct.
+- Le sqlite3 CLI est déjà installé dans l'image Docker (Dockerfile ligne 14: apt-get install sqlite3).
+- L'unicité du barcode est gérée côté application (pre-flight 409), pas côté DB.
+- ACTION UTILISATEUR : attendre le rebuild Coolify (~5 min). Les logs de démarrage doivent montrer :
+  "=== Running SQL fallback: ALTER TABLE for missing columns ==="
+  "  + Adding barcode (TEXT)..."
+  "  + Adding offData (TEXT)..."
+  ...
+  "=== Schema verification PASSED: all required columns present ==="
+  Ensuite, la création de produit avec barcode doit marcher.
