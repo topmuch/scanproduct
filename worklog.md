@@ -4103,3 +4103,47 @@ Stage Summary:
 - Le bouton "Réessayer" fait maintenant une navigation hard avec cache-busting (URL unique) au lieu d'un simple reload.
 - L'URL est automatiquement nettoyée après un retry réussi.
 - ACTION UTILISATEUR REQUISE : hard-refresh du navigateur (Ctrl+Shift+R / Cmd+Shift+R) pour vider le cache RSC stale et récupérer le nouveau code du bouton retry.
+
+---
+Task ID: 11
+Agent: main
+Task: 1/ Synchroniser local avec GitHub  2/ Diagnostic dashboard fabricant en panne (superadmin marche)
+
+Work Log:
+=== SYNCHRONISATION GITHUB ===
+- git fetch origin : 0 commit de différence (local = origin/main au niveau commits)
+- 1 fichier supprimé localement non-commité : src/app/api/upload/route.ts → restauré via git checkout origin/main
+- Statut final : working tree clean, local = origin/main
+
+=== DIAGNOSTIC DASHBOARD FABRICANT ===
+- Reproduction avec Agent Browser : login sarine@biocosmetique.sn → reste sur /login avec "Email ou mot de passe incorrect" (CredentialsSignin)
+- Test via curl : POST /api/auth/callback/credentials → 401 (CredentialsSignin)
+- Investigation DB : script check-auth.ts → 0 utilisateur en DB (DB complètement vide)
+- Investigation .env : ne contenait que DATABASE_URL — NEXTAUTH_SECRET et NEXTAUTH_URL avaient disparu (problème récurrent, déjà documenté Task 15)
+
+=== CAUSES RACINES IDENTIFIÉES ===
+1. **DB vide** : fichier db/custom.db recréé à 09:16 aujourd'hui (probablement lors d'un db:push --accept-data-loss ou git operation). Toutes les tables existent (21) mais 0 ligne dans chacune (0 users, 0 products, 0 lots...).
+2. **NEXTAUTH_SECRET manquant** : le .env ne contenait plus que DATABASE_URL. Sans NEXTAUTH_SECRET, NextAuth ne peut pas signer les JWT → erreur "Configuration" lors du login.
+
+=== POURQUOI LE SUPERADMIN "MARCHAIT" ===
+- Le superadmin a probablement été testé avec une session JWT valide d'avant le reset DB. Le JWT (strategy jwt, maxAge 7 jours) reste lisible côté client même si l'user n'existe plus en DB — jusqu'à ce que getServerSession vérifie.
+- OU : le dashboard superadmin affiche un état vide (0 users) sans planter, tandis que le login fabricant exige des credentials valides en DB.
+- En réalité, les 2 dashboards étaient cassés par la DB vide, mais le superadmin masquait mieux l'erreur.
+
+=== CORRECTIONS APPLIQUÉES ===
+1. **Re-seed DB** : `bun run db:seed` → 3 users recréés (SUPERADMIN admin@verifscan.sn, FABRICANT sarine@biocosmetique.sn, FABRICANT contact@teranga-foods.sn) + 6 produits + 6 lots + 30 QR codes + 6 catégories + 5 certifications. Mots de passe vérifiés avec bcrypt.compare : tous OK.
+2. **Restauration NEXTAUTH_SECRET** : généré un nouveau secret avec `openssl rand -base64 32`, ajouté au .env avec NEXTAUTH_URL="http://localhost:3000:3000".
+3. **Redémarrage serveur dev** : pour charger le nouveau .env.
+
+=== VÉRIFICATION END-TO-END (Agent Browser, 3 comptes) ===
+- Sarine Bio (FABRICANT, sarine@biocosmetique.sn / Demo1234!) → /dashboard : "FABRICANT", 4 produits, 4 lots, 20 QR codes ✓
+- Teranga Foods (FABRICANT, contact@teranga-foods.sn / Demo1234!) → /dashboard : "FABRICANT", 2 produits, 2 lots, 10 QR codes ✓
+- Admin (SUPERADMIN, admin@verifscan.sn / Admin123!2025) → /superadmin : "ADMIN", 3 utilisateurs ✓
+- 0 erreur page, 0 erreur console, dev.log propre (HTTP 200 sur toutes les routes)
+- Lint : 0 erreur
+
+Stage Summary:
+- DB re-seedée (3 users + données complètes) et NEXTAUTH_SECRET restauré dans .env.
+- Les 3 comptes de démonstration se connectent et leurs dashboards respectifs chargent avec les bonnes données.
+- NOTE PRODUCTION : le .env étant gitignored (.env*), NEXTAUTH_SECRET doit être injecté via les variables d'environnement Docker/Coolify au déploiement. Si le secret change entre déploiements, toutes les sessions JWT existantes seront invalidées (les users devront se reconnecter).
+- NOTE STABILITÉ : la DB a déjà été reset 2 fois (Task 15 + Task 11). Cause probable : `bun run db:push --accept-data-loss` ou un git pull qui écrase le fichier. À surveiller.
