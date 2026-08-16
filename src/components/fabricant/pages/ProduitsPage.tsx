@@ -27,6 +27,7 @@ import {
   type Product,
   type ProductStatus,
 } from "@/lib/fabricant-types";
+import type { ExtractedOffData } from "@/lib/openfoodfacts";
 import { useFabricantNav } from "@/lib/fabricant-store";
 import { useFabricantData } from "../FabricantDataProvider";
 import { ProductImage } from "@/components/fabricant/ProductImage";
@@ -238,8 +239,13 @@ function ProductModal({
         // Open Food Facts — round-trip the barcode + raw OFF payload so the
         // edit form pre-fills them. Without this, the fabricant would see an
         // empty barcode field when editing a product they previously scanned.
+        // Cast: Product.offData is typed as Record<string, unknown> (generic
+        // JSON from the DB), but DynamicProductForm expects ExtractedOffData
+        // (a specific shape). At runtime the data is the same — the cast
+        // just satisfies TypeScript. The form accesses only known fields and
+        // ignores unknown ones, so a stale/generic payload won't crash it.
         barcode: product.barcode ?? undefined,
-        offData: product.offData ?? undefined,
+        offData: (product.offData as ExtractedOffData | null) ?? undefined,
       }
     : undefined;
 
