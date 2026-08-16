@@ -13,14 +13,14 @@ const COLUMNS: { title: string; links: { label: string; href: string }[] }[] = [
     links: [
       { label: "Produits", href: "/produits" },
       { label: "Fonctionnalités", href: "/#fonctionnalites" },
-      { label: "Marketplace B2B", href: "/#contact" },
+      { label: "Marketplace B2B", href: "/contact" },
     ],
   },
   {
     title: "Entreprise",
     links: [
       { label: "À propos", href: "/a-propos" },
-      { label: "Contact", href: "/#contact" },
+      { label: "Contact", href: "/contact" },
       { label: "Blog", href: "/blog" },
       { label: "Carrières", href: "/carrieres" },
     ],
@@ -62,7 +62,7 @@ export function Footer() {
               {SOCIALS.map((s) => (
                 <a
                   key={s.label}
-                  href="/#contact"
+                  href="/contact"
                   aria-label={s.label}
                   className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/10 text-white/80 transition-all duration-300 hover:bg-white/20 hover:text-white"
                 >
@@ -111,14 +111,14 @@ export function Footer() {
             <ul className="mt-4 space-y-3">
               <li className="flex items-start gap-2.5 text-sm text-white/70">
                 <Mail className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#10B981]" />
-                <a href="mailto:contact@verifscan.sn" className="hover:text-white">
-                  contact@verifscan.sn
+                <a href="mailto:contact@verifscan.com" className="hover:text-white">
+                  contact@verifscan.com
                 </a>
               </li>
               <li className="flex items-start gap-2.5 text-sm text-white/70">
                 <Phone className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#10B981]" />
-                <a href="tel:+221338000000" className="hover:text-white">
-                  +221 33 800 00 00
+                <a href="tel:+2217848588226" className="hover:text-white">
+                  +221 78 485 88 22
                 </a>
               </li>
               <li className="flex items-start gap-2.5 text-sm text-white/70">

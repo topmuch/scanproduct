@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Gift, ArrowRight } from "lucide-react";
+import { Menu, X, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { Logo } from "./Logo";
 import { cn } from "@/lib/utils";
@@ -11,7 +11,7 @@ const NAV_LINKS = [
   { label: "Accueil", href: "#accueil" },
   { label: "Fonctionnalités", href: "#fonctionnalites" },
   { label: "Le concept", href: "#concept" },
-  { label: "Catalogue", href: "#catalogue-slider" },
+  { label: "Catalogue", href: "/produits" },
   { label: "Métiers", href: "#metiers" },
   { label: "Témoignages", href: "#temoignages" },
 ];
@@ -83,18 +83,12 @@ export function Header() {
 
         {/* Desktop CTAs */}
         <div className="hidden items-center gap-2 lg:flex">
-          {/* floating notification badge */}
-          <div className="relative">
-            <Link
-              href="/login"
-              className="rounded-md px-3 py-2 text-[15px] font-semibold text-[#2563EB] transition-colors hover:bg-[#EFF6FF]"
-            >
-              Connexion
-            </Link>
-            <span className="absolute -right-1 -top-1 flex items-center gap-1 rounded-full bg-[#D1FAE5] px-1.5 py-0.5 text-[10px] font-semibold text-[#065F46] shadow-sm">
-              <Gift className="h-2.5 w-2.5" /> +10
-            </span>
-          </div>
+          <Link
+            href="/login"
+            className="rounded-md px-3 py-2 text-[15px] font-semibold text-[#2563EB] transition-colors hover:bg-[#EFF6FF]"
+          >
+            Connexion
+          </Link>
           <Link
             href="/register"
             className="group inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-[#2563EB] to-[#10B981] px-5 py-2.5 text-[15px] font-semibold text-white shadow-md shadow-[#2563EB]/25 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-[#2563EB]/40"
@@ -193,9 +187,6 @@ export function Header() {
                   Devenir partenaire
                   <ArrowRight className="h-4 w-4" />
                 </Link>
-                <p className="pt-1 text-center text-xs text-[#6B7280]">
-                  🎁 +10 points VerifScan à l'inscription
-                </p>
               </div>
             </motion.aside>
           </>

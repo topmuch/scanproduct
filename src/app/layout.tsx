@@ -64,7 +64,7 @@ const inter = localFont({
  */
 export async function generateMetadata(): Promise<Metadata> {
   const faviconUrl = await getFaviconUrl();
-  const icon = faviconUrl || "/favicon.ico";
+  const icon = faviconUrl || "/icon.png";
 
   return {
     title:
