@@ -34,6 +34,11 @@ import { CompactCertifications } from "@/components/product/compact/CompactCerti
 import { CompactReviews } from "@/components/product/compact/CompactReviews";
 import { CertificationsSection } from "@/components/product/CertificationsSection";
 
+// Consumer engagement: review prompt (floating notification after 10s) +
+// expired-product report modal (consumer safety feature)
+import { ReviewPrompt } from "@/components/product/ReviewPrompt";
+import { ReportExpiredModal } from "@/components/product/ReportExpiredModal";
+
 // ---------------------------------------------------------------------------
 // Force dynamic rendering so the page always reflects the latest reviews
 // and product data. Without this, Next.js might cache the page and new
@@ -211,6 +216,14 @@ export default async function ProductPage({
           manufactureDate={lot.manufactureDate}
         />
 
+        {/* 2a. SIGNALEMENT PRODUIT PÉRIMÉ — bouton CTA visible (sécurité conso) */}
+        <ReportExpiredModal
+          lotId={lot.id}
+          productName={lot.product.name}
+          fabricantId={lot.fabricantId}
+          lotReference={lot.reference}
+        />
+
         {/* 2b. FIDÉLITÉ CONSO — widget points/badges (V3 Module 5) */}
         <LoyaltyWidget lotId={lot.id} productName={lot.product.name} />
 
@@ -322,13 +335,15 @@ export default async function ProductPage({
                 : undefined
             }
           >
-            <CompactReviews
-              reviews={lot.reviews}
-              averageRating={lot.product.averageRating}
-              totalReviews={lot.product.totalReviews}
-              lotId={lot.id}
-              productName={lot.product.name}
-            />
+            <div id="avis-consommateurs">
+              <CompactReviews
+                reviews={lot.reviews}
+                averageRating={lot.product.averageRating}
+                totalReviews={lot.product.totalReviews}
+                lotId={lot.id}
+                productName={lot.product.name}
+              />
+            </div>
           </WowAccordion>
         </div>
 
@@ -338,6 +353,12 @@ export default async function ProductPage({
         {/* 5. FOOTER VÉRIFICATION GLOW — spectacular verification footer */}
         <VerificationGlow lot={lot} />
       </main>
+
+      {/* Notification visuelle : propose de laisser un avis après 10s */}
+      <ReviewPrompt
+        productName={lot.product.name}
+        reviewSectionId="avis-consommateurs"
+      />
 
       <PublicFooter />
     </div>
