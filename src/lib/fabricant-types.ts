@@ -226,9 +226,12 @@ export type FabricantData = {
   products: Product[];
   lots: Lot[];
   qrCodes: QRCode[];
-  stats: FabricantStats;
-  score: FabricantScore;
-  abonnement: FabricantAbonnement;
+  // stats/score/abonnement can be null if their server-side computation failed
+  // (getFabricantData uses Promise.allSettled — these are non-critical and
+  // get safe null defaults so the dashboard still renders).
+  stats: FabricantStats | null;
+  score: FabricantScore | null;
+  abonnement: FabricantAbonnement | null;
   classement: ClassementFabricant[];
   badges: Badge[];
 };

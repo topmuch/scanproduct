@@ -71,6 +71,7 @@ function FeatureRow({ label, value }: { label: string; value: string }) {
 export function AbonnementPage() {
   const { data } = useFabricantData();
   const ABONNEMENT = data.abonnement;
+
   // No Payment model in the schema yet — show an empty state instead of
   // fake payment history.
   const PAIEMENTS: import("@/lib/fabricant-types").Payment[] = [];
@@ -102,6 +103,20 @@ export function AbonnementPage() {
   );
 
   const customQrPrice = Math.max(0, customQrQty) * 10;
+
+  // Abonnement data may be null if its server-side fetch failed.
+  // (placed AFTER all hooks to respect rules-of-hooks)
+  if (!ABONNEMENT) {
+    return (
+      <div className="flex items-center justify-center py-20 text-center">
+        <div>
+          <p className="text-sm text-[#6B7280]">
+            Les informations d&apos;abonnement ne sont pas disponibles pour le moment.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

@@ -256,6 +256,20 @@ export function StatistiquesPage() {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
+  // Stats may be null if the server-side stats computation failed.
+  // (placed AFTER all hooks to respect rules-of-hooks)
+  if (!stats) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center text-center">
+        <div className="max-w-md">
+          <p className="text-sm text-[#6B7280]">
+            Les statistiques ne sont pas disponibles pour le moment.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   // Map the UI period to the API period format.
   const periodToApi = (p: PeriodKey): string => {
     switch (p) {

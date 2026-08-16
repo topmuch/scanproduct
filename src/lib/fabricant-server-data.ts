@@ -1020,7 +1020,12 @@ export async function getFabricantAbonnement(userId: string): Promise<FabricantA
 // ---------------------------------------------------------------------------
 
 export async function getFabricantData(userId: string) {
-  const [profile, products, lots, qrCodes, stats, score, abonnement, classement, badges] = await Promise.all([
+  // Use Promise.allSettled instead of Promise.all so that a failure in ONE
+  // sub-query (e.g. stats aggregation, score calculation) does NOT bring down
+  // the entire dashboard. Each failed section gets a safe default and is
+  // logged server-side for diagnosis — the user sees partial data instead of
+  // a blank error page.
+  const results = await Promise.allSettled([
     getFabricantProfile(userId),
     getFabricantProducts(userId),
     getFabricantLots(userId),
@@ -1032,7 +1037,69 @@ export async function getFabricantData(userId: string) {
     getFabricantBadges(userId),
   ]);
 
-  return { profile, products, lots, qrCodes, stats, score, abonnement, classement, badges };
+  const labels = ["profile", "products", "lots", "qrCodes", "stats", "score", "abonnement", "classement", "badges"] as const;
+  const data: Record<string, unknown> = {};
+
+  for (let i = 0; i < results.length; i++) {
+    const label = labels[i];
+    const r = results[i];
+    if (r.status === "fulfilled") {
+      data[label] = r.value;
+    } else {
+      // Log the FULL error (message + stack) so the admin can diagnose which
+      // sub-query failed and why — this is the key diagnostic output.
+      const err = r.reason;
+      console.error(`[getFabricantData] "${label}" FAILED for user ${userId}:`, err instanceof Error ? err.message : err);
+      if (err instanceof Error && err.stack) {
+        console.error(`[getFabricantData] stack for "${label}":`, err.stack);
+      }
+
+      // Provide a safe default per field so the dashboard can still render.
+      switch (label) {
+        case "profile":
+          // profile is essential — if it fails, the caller (dashboard/page.tsx)
+          // will catch the thrown error below. We re-throw to preserve the
+          // "session_invalid" semantics (user not found).
+          throw err;
+        case "products":
+          data[label] = [];
+          break;
+        case "lots":
+          data[label] = [];
+          break;
+        case "qrCodes":
+          data[label] = [];
+          break;
+        case "stats":
+          data[label] = null;
+          break;
+        case "score":
+          data[label] = null;
+          break;
+        case "abonnement":
+          data[label] = null;
+          break;
+        case "classement":
+          data[label] = [];
+          break;
+        case "badges":
+          data[label] = [];
+          break;
+      }
+    }
+  }
+
+  return data as {
+    profile: NonNullable<Awaited<ReturnType<typeof getFabricantProfile>>>;
+    products: Awaited<ReturnType<typeof getFabricantProducts>>;
+    lots: Awaited<ReturnType<typeof getFabricantLots>>;
+    qrCodes: Awaited<ReturnType<typeof getFabricantQRCodes>>;
+    stats: Awaited<ReturnType<typeof getFabricantStats>> | null;
+    score: Awaited<ReturnType<typeof getFabricantScore>> | null;
+    abonnement: Awaited<ReturnType<typeof getFabricantAbonnement>> | null;
+    classement: Awaited<ReturnType<typeof getFabricantClassement>>;
+    badges: Awaited<ReturnType<typeof getFabricantBadges>>;
+  };
 }
 
 // Re-export the parseJsonArray helper for callers that need it

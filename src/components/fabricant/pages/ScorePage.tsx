@@ -250,6 +250,21 @@ function RecoCard({
 export function ScorePage() {
   const { data } = useFabricantData();
   const s = data.score;
+
+  // Score computation may have failed server-side (getFabricantData uses
+  // Promise.allSettled). Show a fallback message instead of crashing.
+  if (!s) {
+    return (
+      <div className="flex items-center justify-center py-20 text-center">
+        <div>
+          <p className="text-sm text-[#6B7280]">
+            Le score de transparence n&apos;est pas disponible pour le moment.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   const CLASSEMENT_FABRICANTS = data.classement;
   const scorePct = (s.global / 100) * 100;
 

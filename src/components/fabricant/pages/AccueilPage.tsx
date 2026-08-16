@@ -63,6 +63,25 @@ export function AccueilPage() {
   const { data } = useFabricantData();
   const { profile, stats, score, badges } = data;
 
+  // Stats may be null if the server-side stats computation failed
+  // (getFabricantData uses Promise.allSettled). Show a fallback instead of
+  // crashing the entire dashboard.
+  if (!stats) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center text-center">
+        <div className="max-w-md">
+          <h2 className="font-display text-lg font-semibold text-[#111827]">
+            Bonjour, {profile.nom} 👋
+          </h2>
+          <p className="mt-2 text-sm text-[#6B7280]">
+            Les statistiques sont temporairement indisponibles. Vos produits,
+            lots et QR codes restent accessibles via le menu de gauche.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   // Period selector — we only have 30 days of real scan data, so 7j slices
   // the last 7 entries and other periods keep the full set.
   const chartData =

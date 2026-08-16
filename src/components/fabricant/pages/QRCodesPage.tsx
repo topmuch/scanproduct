@@ -115,10 +115,12 @@ function GenerationModal({
   const [couleur, setCouleur] = useState("#000000");
   const [submitting, setSubmitting] = useState(false);
 
-  const quotaRestant = Math.max(
-    0,
-    data.abonnement.quota.qrCodes.limite - data.abonnement.quota.qrCodes.utilise,
-  );
+  const quotaRestant = data.abonnement
+    ? Math.max(
+        0,
+        data.abonnement.quota.qrCodes.limite - data.abonnement.quota.qrCodes.utilise,
+      )
+    : 0;
 
   if (!open) return null;
 
@@ -520,7 +522,7 @@ export function QRCodesPage() {
             <p className="text-[13px] font-medium text-[#111827]">
               {formatNombre(remaining)} restants
             </p>
-            <p className="text-[12px] text-[#9CA3AF]">Quota mensuel — Plan {abonnement.plan}</p>
+            <p className="text-[12px] text-[#9CA3AF]">Quota mensuel — Plan {abonnement?.plan ?? "—"}</p>
           </div>
         </div>
       </div>

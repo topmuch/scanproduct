@@ -103,7 +103,7 @@ export function FabricantSidebar() {
     produits: String(data.products.length),
     lots: String(data.lots.length),
     "qr-codes": String(data.qrCodes.length),
-    score: `${data.score.global}/100`,
+    score: data.score ? `${data.score.global}/100` : "—",
   };
 
   // Avatar logo fallback: if the computed initials are empty (edge case where

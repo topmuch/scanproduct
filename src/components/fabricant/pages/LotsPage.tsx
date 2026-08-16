@@ -166,10 +166,12 @@ export function LotsPage() {
   const { data, refresh } = useFabricantData();
   const produits = data.products;
   const lots = data.lots;
-  const quotaRestant = Math.max(
-    0,
-    data.abonnement.quota.qrCodes.limite - data.abonnement.quota.qrCodes.utilise,
-  );
+  const quotaRestant = data.abonnement
+    ? Math.max(
+        0,
+        data.abonnement.quota.qrCodes.limite - data.abonnement.quota.qrCodes.utilise,
+      )
+    : 0;
 
   // Filters state
   const [search, setSearch] = useState("");
@@ -974,10 +976,12 @@ function CreationModal({
 }) {
   const { data, refresh } = useFabricantData();
   const produits = data.products;
-  const quotaRestant = Math.max(
-    0,
-    data.abonnement.quota.qrCodes.limite - data.abonnement.quota.qrCodes.utilise,
-  );
+  const quotaRestant = data.abonnement
+    ? Math.max(
+        0,
+        data.abonnement.quota.qrCodes.limite - data.abonnement.quota.qrCodes.utilise,
+      )
+    : 0;
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [done, setDone] = useState(false);
   const [createdLotId, setCreatedLotId] = useState<string | null>(null);
