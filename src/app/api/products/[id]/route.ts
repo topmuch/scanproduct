@@ -143,10 +143,64 @@ export async function PATCH(
       }
     }
 
-    const updated = await db.product.update({
-      where: { id },
-      data: patch,
-    });
+    // ── Pre-flight: barcode uniqueness check (excluding current id) ──
+    // Same rationale as POST /api/products — the `barcode` column has a
+    // @unique constraint, so changing a product's barcode to one already
+    // used by ANOTHER product would throw Prisma P2002 inside `update`.
+    // We check up-front and return a 409 Conflict identifying the
+    // conflicting product, so the fabricant gets an actionable message
+    // instead of an opaque "Failed to update product" 500.
+    if (patch.barcode) {
+      const existing = await db.product.findFirst({
+        where: {
+          barcode: patch.barcode,
+          id: { not: id },
+        },
+        select: {
+          id: true,
+          name: true,
+          brand: true,
+          fabricantId: true,
+        },
+      });
+      if (existing) {
+        const isOwn = existing.fabricantId === token.sub;
+        return NextResponse.json(
+          {
+            error: isOwn
+              ? `Ce code-barres (${patch.barcode}) est déjà utilisé par votre produit « ${existing.name} ». Un code-barres ne peut être associé qu'à un seul produit.`
+              : `Ce code-barres (${patch.barcode}) est déjà utilisé par un autre produit (« ${existing.name} »${existing.brand ? ` — ${existing.brand}` : ""}). Chaque code-barres doit être unique sur la plateforme.`,
+            code: "BARCODE_ALREADY_EXISTS",
+            conflictProductId: existing.id,
+            conflictProductName: existing.name,
+            own: isOwn,
+          },
+          { status: 409 },
+        );
+      }
+    }
+
+    let updated;
+    try {
+      updated = await db.product.update({
+        where: { id },
+        data: patch,
+      });
+    } catch (updateError) {
+      // Race-condition safety net: P2002 if another request claimed the
+      // barcode between our pre-flight check and the update.
+      const code = (updateError as { code?: string })?.code;
+      if (code === "P2002") {
+        return NextResponse.json(
+          {
+            error: `Ce code-barres (${patch.barcode ?? ""}) vient d'être enregistré par un autre produit. Veuillez réessayer ou utiliser un autre code-barres.`,
+            code: "BARCODE_ALREADY_EXISTS",
+          },
+          { status: 409 },
+        );
+      }
+      throw updateError;
+    }
 
     // Audit log
     db.auditLog
@@ -164,7 +218,14 @@ export async function PATCH(
     return NextResponse.json(updated);
   } catch (error) {
     console.error("[PATCH /api/products/[id]] Error:", error);
-    return NextResponse.json({ error: "Failed to update product" }, { status: 500 });
+    const prismaCode = (error as { code?: string })?.code;
+    return NextResponse.json(
+      {
+        error: "Failed to update product",
+        code: prismaCode || "INTERNAL_ERROR",
+      },
+      { status: 500 }
+    );
   }
 }
 

@@ -211,9 +211,11 @@ function ProductCard({
 function ProductModal({
   product,
   onClose,
+  onEditExisting,
 }: {
   product?: Product;
   onClose: () => void;
+  onEditExisting?: (productId: string) => void;
 }) {
   // Translate the Product shape into DynamicProductForm's initialData.
   // V3 Phase 3: categoryId, isExport, categoryData, exportData, and
@@ -233,6 +235,11 @@ function ProductModal({
         categoryData: product.categoryData ?? undefined,
         exportData: product.exportData ?? undefined,
         certifications: product.certifications ?? undefined,
+        // Open Food Facts — round-trip the barcode + raw OFF payload so the
+        // edit form pre-fills them. Without this, the fabricant would see an
+        // empty barcode field when editing a product they previously scanned.
+        barcode: product.barcode ?? undefined,
+        offData: product.offData ?? undefined,
       }
     : undefined;
 
@@ -240,6 +247,7 @@ function ProductModal({
     <DynamicProductForm
       initialData={initialData}
       onClose={onClose}
+      onEditExisting={onEditExisting}
     />
   );
 }
@@ -375,6 +383,26 @@ export function ProduitsPage() {
     setEditingProduct(undefined);
   };
 
+  // ── "Edit existing product" shortcut (barcode conflict) ───────────
+  // When the DynamicProductForm detects a barcode conflict on a product
+  // that belongs to the current fabricant (HTTP 409 with own=true), it
+  // calls this handler with the conflicting product's id. We look it up
+  // in the local cache and open the edit modal so the user can fix the
+  // existing product instead of re-typing everything. If the product
+  // isn't in the cache yet (e.g. created by another tab/session), we
+  // trigger a refresh and inform the user.
+  const handleEditExisting = (productId: string) => {
+    const found = data.products.find((p) => p.id === productId);
+    if (found) {
+      openEdit(found);
+    } else {
+      toast.info("Produit conflictuel introuvable dans la liste locale. Rafraîchissement…", {
+        duration: 6000,
+      });
+      refresh();
+    }
+  };
+
   return (
     <div>
       <PageHeader title="Mes Produits" subtitle={`${produits.length} produits créés`}>
@@ -495,7 +523,17 @@ export function ProduitsPage() {
       {/* Modal */}
       <AnimatePresence>
         {modalOpen && (
-          <ProductModal product={editingProduct} onClose={closeModal} />
+          <ProductModal
+            // Force a fresh mount whenever the target product changes
+            // (create vs edit, or switching between products). Without this
+            // key, React reuses the same DynamicProductForm instance and its
+            // useState hooks (name, barcode, categoryData, …) keep their old
+            // values instead of re-initializing from `initialData`.
+            key={editingProduct?.id ?? "new"}
+            product={editingProduct}
+            onClose={closeModal}
+            onEditExisting={handleEditExisting}
+          />
         )}
       </AnimatePresence>
     </div>

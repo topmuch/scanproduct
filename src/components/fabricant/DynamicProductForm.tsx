@@ -96,6 +96,15 @@ export type DynamicProductInitialData = {
 type DynamicProductFormProps = {
   initialData?: DynamicProductInitialData;
   onClose: () => void;
+  /**
+   * Called when the user tries to create a product whose barcode is already
+   * used by ANOTHER product they own (HTTP 409 with `own: true`). The parent
+   * (ProduitsPage) opens the edit modal for the conflicting product so the
+   * user can fix it instead of re-typing everything. Optional — if omitted,
+   * the conflict toast still shows the clear error message, just without
+   * the "Modifier ce produit" shortcut.
+   */
+  onEditExisting?: (productId: string) => void;
 };
 
 /**
@@ -764,6 +773,7 @@ function formatFieldValue(field: FieldConfig, value: unknown): string {
 export function DynamicProductForm({
   initialData,
   onClose,
+  onEditExisting,
 }: DynamicProductFormProps) {
   const { data, refresh } = useFabricantData();
   const isEdit = Boolean(initialData?.id);
@@ -1182,6 +1192,37 @@ export function DynamicProductForm({
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
+        // Barcode conflict (HTTP 409) — the server returns a structured
+        // response with `code: "BARCODE_ALREADY_EXISTS"`, the conflicting
+        // product's id/name, and whether it belongs to the current user
+        // (`own: true`). When it's the user's own product, we offer a
+        // one-tap shortcut to edit that product instead of forcing them
+        // to navigate manually. The toast action uses a longer duration
+        // (10s) so the user has time to read the message and click.
+        if (res.status === 409 && err.code === "BARCODE_ALREADY_EXISTS") {
+          if (err.own && err.conflictProductId) {
+            toast.error(err.error, {
+              duration: 10000,
+              // Only show the "Modifier ce produit" shortcut when the parent
+              // provided an `onEditExisting` handler. Otherwise just show
+              // the clear error message.
+              action: onEditExisting
+                ? {
+                    label: "Modifier ce produit",
+                    onClick: () => {
+                      onClose();
+                      onEditExisting(err.conflictProductId);
+                    },
+                  }
+                : undefined,
+            });
+            return;
+          }
+          // Conflict with another fabricant's product — no edit shortcut,
+          // just show the clear error message.
+          toast.error(err.error, { duration: 10000 });
+          return;
+        }
         throw new Error(err.error || "Échec de la requête");
       }
       toast.success(

@@ -150,30 +150,86 @@ export async function POST(request: NextRequest) {
         : null;
     const offLastSync = offData ? new Date() : null;
 
-    const product = await db.product.create({
-      data: {
-        name: body.name,
-        brand: body.brand || user.companyName || null,
-        description: body.description || null,
-        category: resolvedCategoryName,
-        categoryId: resolvedCategoryId,
-        imageUrl: body.imageUrl || null,
-        weight: body.weight || null,
-        fabricantId: user.id,
-        isPublic: body.isPublic ?? true,
-        isFeatured: false,
-        status: body.status === "ARCHIVED" ? "ARCHIVED" : "ACTIVE",
-        // V3 Phase 3
-        isExport,
-        categoryData,
-        exportData,
-        certifications,
-        // Open Food Facts
-        barcode,
-        offData,
-        offLastSync,
-      },
-    });
+    // ── Pre-flight: barcode uniqueness check ────────────────────────
+    // The `barcode` column has a @unique constraint (schema.prisma). Without
+    // this pre-check, a duplicate barcode triggers a Prisma P2002 deep inside
+    // `db.product.create`, which the generic catch block below would surface
+    // as an opaque "Failed to create product" 500 — leaving the fabricant
+    // with no idea why their product (often scanned from Open Food Facts)
+    // won't save. We check up-front and return a 409 Conflict identifying
+    // the conflicting product, so the UI can offer "Edit the existing
+    // product" instead of silently failing.
+    if (barcode) {
+      const existing = await db.product.findUnique({
+        where: { barcode },
+        select: {
+          id: true,
+          name: true,
+          brand: true,
+          fabricantId: true,
+        },
+      });
+      if (existing) {
+        const isOwn = existing.fabricantId === user.id;
+        return NextResponse.json(
+          {
+            error: isOwn
+              ? `Ce code-barres (${barcode}) est déjà utilisé par votre produit « ${existing.name} ». Modifiez ce produit existant plutôt qu'en créer un nouveau.`
+              : `Ce code-barres (${barcode}) est déjà utilisé par un autre produit (« ${existing.name} »${existing.brand ? ` — ${existing.brand}` : ""}). Chaque code-barres doit être unique sur la plateforme.`,
+            code: "BARCODE_ALREADY_EXISTS",
+            conflictProductId: existing.id,
+            conflictProductName: existing.name,
+            own: isOwn,
+          },
+          { status: 409 },
+        );
+      }
+    }
+
+    let product;
+    try {
+      product = await db.product.create({
+        data: {
+          name: body.name,
+          brand: body.brand || user.companyName || null,
+          description: body.description || null,
+          category: resolvedCategoryName,
+          categoryId: resolvedCategoryId,
+          imageUrl: body.imageUrl || null,
+          weight: body.weight || null,
+          fabricantId: user.id,
+          isPublic: body.isPublic ?? true,
+          isFeatured: false,
+          status: body.status === "ARCHIVED" ? "ARCHIVED" : "ACTIVE",
+          // V3 Phase 3
+          isExport,
+          categoryData,
+          exportData,
+          certifications,
+          // Open Food Facts
+          barcode,
+          offData,
+          offLastSync,
+        },
+      });
+    } catch (createError) {
+      // Race-condition safety net: another request may have inserted the
+      // same barcode between our pre-flight check and the create. Detect
+      // Prisma's P2002 (unique constraint violation) and return the same
+      // 409 the pre-flight would have returned.
+      const code = (createError as { code?: string })?.code;
+      if (code === "P2002") {
+        return NextResponse.json(
+          {
+            error: `Ce code-barres (${barcode}) vient d'être enregistré par une autre requête. Veuillez réessayer ou utiliser un autre code-barres.`,
+            code: "BARCODE_ALREADY_EXISTS",
+          },
+          { status: 409 },
+        );
+      }
+      // Re-throw any other error so the outer catch handles it.
+      throw createError;
+    }
 
     // Audit log — record product creation
     db.auditLog
@@ -195,8 +251,16 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(product, { status: 201 });
   } catch (error) {
     console.error("[POST /api/products] Error:", error);
+    // Surface the Prisma error code when available so the client (and the
+    // developer reading dev.log) can act on it. Without this, every failure
+    // looks identical ("Failed to create product") and diagnosis requires
+    // reading server logs.
+    const prismaCode = (error as { code?: string })?.code;
     return NextResponse.json(
-      { error: "Failed to create product" },
+      {
+        error: "Failed to create product",
+        code: prismaCode || "INTERNAL_ERROR",
+      },
       { status: 500 }
     );
   }

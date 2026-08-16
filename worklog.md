@@ -4187,3 +4187,66 @@ Stage Summary:
 - Chaque échec est loggé serveur avec le nom de la section + stack trace pour diagnostic.
 - Le superadmin continue de fonctionner (non affecté par ces changements).
 - Serveur dev stable sur port 3000.
+
+---
+Task ID: 13
+Agent: main
+Task: Corriger l'erreur "Failed to create product" lors de la création d'un produit
+
+Work Log:
+- Reproduction du bug avec Agent Browser : login sarine@biocosmetique.sn → /dashboard → Produits → Nouveau produit. Le flux de base (Cosmétiques, sans barcode) fonctionne (HTTP 201, toast "Produit créé avec succès"). Le bug n'est pas reproductible sur le chemin simple.
+- Tests API directs (curl avec session cookie) sur 6 scénarios :
+  * Sans barcode → 201 ✓
+  * Avec exportData + certifications → 201 ✓
+  * Avec barcode unique → 201 ✓
+  * Avec barcode DUPLIQUÉ → **500 "Failed to create product"** ← BUG
+  * Avec exportData vide + isExport true → 201 ✓
+  * Avec categoryData imbriqué → 201 ✓
+- Confirmation dans dev.log : `[POST /api/products] Error: PrismaClientKnownRequestError: Unique constraint failed on the fields: (barcode) code: 'P2002'`
+- Cause racine identifiée : le champ `barcode` a une contrainte `@unique` dans le schema Prisma (pour qu'un même code-barres ne soit pas réclamé par 2 produits — logique pour le scan consommateur). Quand un fabricant scanne/saisit un barcode déjà utilisé (par lui-même ou un autre fabricant), `db.product.create` lance une P2002 → attrapée par le catch générique → retourne l'erreur opaque "Failed to create product" (HTTP 500) sans aucune indication au fabricant sur la cause réelle.
+
+- FIX 1 — POST /api/products (route.ts) :
+  * Ajout d'un pre-flight check : si un barcode est fourni, `db.product.findUnique({ where: { barcode } })` avant le create. Si un produit conflictuel existe, retourne HTTP 409 Conflict avec :
+    - `error` : message clair en français, différencié selon que le produit conflictuel appartient au fabricant courant (`own: true`) ou à un autre fabricant
+    - `code: "BARCODE_ALREADY_EXISTS"`
+    - `conflictProductId` + `conflictProductName` (pour offrir un raccourci "Modifier ce produit")
+    - `own: boolean`
+  * Safety net P2002 dans le catch du create (race condition entre le pre-flight et l'insert) → même réponse 409.
+  * Le catch externe retourne maintenant le code d'erreur Prisma dans la réponse (`code: prismaCode || "INTERNAL_ERROR"`) pour faciliter le diagnostic futur au lieu du message opaque "Failed to create product" seul.
+
+- FIX 2 — PATCH /api/products/[id] (route.ts) :
+  * Même pre-flight check mais avec `id: { not: id }` (exclut le produit courant — sinon on ne pourrait pas sauvegarder un produit sans changer son barcode).
+  * Même safety net P2002 + retour du code Prisma dans le catch externe.
+
+- FIX 3 — DynamicProductForm.tsx (frontend) :
+  * Détection de la réponse 409 + `code: "BARCODE_ALREADY_EXISTS"` :
+    - Si `own: true` + `conflictProductId` : toast.error avec `action: { label: "Modifier ce produit", onClick: ... }` (durée 10s pour laisser le temps de lire + cliquer). L'action appelle `onEditExisting(conflictProductId)`.
+    - Si conflit avec un autre fabricant : toast.error simple (durée 10s) avec le message clair.
+  * Nouveau prop optionnel `onEditExisting?: (productId: string) => void` sur DynamicProductForm — remplace une première implémentation via CustomEvent (qui avait un problème de timing : le listener useEffect ne captait pas l'événement à cause du cycle de vie AnimatePresence).
+
+- FIX 4 — ProduitsPage.tsx (frontend) :
+  * Implémentation de `handleEditExisting(productId)` : cherche le produit dans `data.products`, ouvre le modal d'édition via `openEdit(found)`. Si introuvable dans le cache → refresh + toast info.
+  * Passage du prop `onEditExisting={handleEditExisting}` au ProductModal → DynamicProductForm.
+  * Ajout d'un `key={editingProduct?.id ?? "new"}` sur le ProductModal pour forcer un remount propre quand on passe de create à edit ou entre produits. Sans ça, React réutilisait la même instance de DynamicProductForm et les useState (name, barcode, categoryData…) gardaient les valeurs de l'ancien formulaire au lieu de s'initialiser depuis `initialData`.
+
+- FIX 5 — ProduitsPage.tsx ProductModal (bonus, lié) :
+  * Ajout de `barcode` et `offData` au mapping `initialData` (ils étaient mappés côté DB → Product par `mapProduct()` mais oubliés dans le mapping Product → DynamicProductInitialData). Sans ça, le barcode était perdu à l'édition — le fabricant voyait un champ vide et ne comprenait pas quel barcode avait causé le conflit.
+
+- Vérification end-to-end (Agent Browser + curl) :
+  * POST /api/products sans barcode → 201 ✓
+  * POST /api/products avec barcode unique → 201 ✓
+  * POST /api/products avec barcode dupliqué → 409 + message clair + conflictProductId + own:true ✓
+  * POST /api/products avec barcode dupliqué + espaces/tirets (normalisation) → 409 (même barcode normalisé) ✓
+  * PATCH /api/products/[id] avec barcode utilisé par un autre produit → 409 ✓
+  * PATCH /api/products/[id] avec son propre barcode (inchangé) → 200 (pas de faux positif) ✓
+  * Flux UI complet : création produit avec barcode → succès → 2e création avec même barcode → toast "Ce code-barres (9999999999999) est déjà utilisé par votre produit « … ». Modifiez ce produit existant plutôt qu'en créer un nouveau." + bouton "Modifier ce produit" → clic → modal d'édition s'ouvre avec le bon produit (barcode + nom pré-remplis) ✓
+  * 0 erreur page, 0 erreur console, dev.log propre (HTTP 200/409 uniquement, plus de 500)
+- Lint : 0 erreur, 0 warning
+- Nettoyage : 9 produits de test supprimés (6 de diagnostic + 2 de vérification API + 1 de vérification UI). DB revenue à 6 produits (4 Sarine + 2 Teranga).
+
+Stage Summary:
+- L'erreur opaque "Failed to create product" (HTTP 500) est remplacée par une erreur claire et actionnable (HTTP 409 Conflict) quand un fabricant tente de créer/modifier un produit avec un code-barres déjà utilisé.
+- Le fabricant voit maintenant : "Ce code-barres (X) est déjà utilisé par votre produit « Y ». Modifiez ce produit existant plutôt qu'en créer un nouveau." + un bouton "Modifier ce produit" qui ouvre directement le formulaire d'édition pré-rempli (y compris le barcode, qui n'était pas round-trippé avant).
+- Les conflits avec un autre fabricant affichent un message distinct (pas de bouton "Modifier" puisque le fabricant n'a pas accès au produit d'autrui).
+- Le code d'erreur Prisma est maintenant retourné dans toutes les réponses 500 pour faciliter le diagnostic futur.
+- Safety net P2002 conservé pour les race conditions (pre-flight check + create pas atomiques en SQLite).
