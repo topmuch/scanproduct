@@ -4473,3 +4473,45 @@ Stage Summary:
 - En dev, le chemin async (Prisma $executeRawUnsafe) gère la migration.
 - 100% idempotent : les erreurs "duplicate column name" sont ignorées.
 - ACTION UTILISATEUR : attendre le rebuild Coolify (~5 min). Au prochain démarrage du conteneur, les logs doivent montrer les ALTER TABLE s'exécuter, puis les requêtes produit réussir.
+
+---
+Task ID: 19
+Agent: main
+Task: Fix build cassé par import child_process/module dans db.ts
+
+Work Log:
+- L'utilisateur a rapporté un échec de build Docker : "Module not found" au niveau de `./src/lib/db.ts:2:1` (l'import `child_process`). Le build Coolify échouait → aucun déploiement possible.
+- Cause racine : `db.ts` est importé transitivement par des composants client (admin-server-data.ts → AdminShell.tsx → composants client). Le bundler Next.js essaie d'inclure db.ts dans le bundle client, où les built-ins Node.js (`child_process`, `module`) n'existent pas → erreur "module not found".
+
+- Tentative 1 : `new Function('return require')()` → échec avec "ReferenceError: require is not defined" en contexte ESM
+- Tentative 2 : `createRequire(import.meta.url)` du module `module` → toujours l'erreur "module not found" car `module` est aussi un built-in Node.js
+
+- FIX FINAL — src/lib/db.ts :
+  * Supprimé TOUS les imports de built-ins Node.js (child_process ET module)
+  * Supprimé le chemin synchrone sqlite3 CLI (qui nécessitait child_process)
+  * Conservé UNIQUEMENT le chemin async via Prisma $executeRawUnsafe
+  * Prisma gère la connexion DB en interne et est déjà correctement bundlé → aucun built-in requis
+  * Guards conservés : typeof window === 'undefined' (skip browser) + NEXT_PHASE !== 'phase-production-build' (skip build)
+
+- Trade-off accepté : le chemin async a une petite race condition sur la toute première requête après démarrage (la migration peut ne pas être terminée). C'est acceptable car :
+  * La première requête peut obtenir P2022, mais un refresh fonctionne
+  * /api/products a un handler défensif P2022 qui retourne un message clair
+  * 100% idempotent — safe à chaque redémarrage
+
+- Vérification locale :
+  * Build Next.js (`bun run build`) : ✓ PASSE PROPREMENT (0 erreur, 0 warning)
+  * Dev server : ✓ démarre correctement
+  * Migration async : ✓ s'exécute au démarrage
+    ```
+    [db] Starting async schema migration (ALTER TABLE for missing columns)...
+    [db] Migration complete — added: 0, already existed: 7, failed: 0
+    ```
+  * Lint : ✓ 0 erreur
+
+- Push : commit 10391f2 sur origin/main → déclenche rebuild Coolify
+
+Stage Summary:
+- Le build Docker va maintenant PASSER (plus d'imports de built-ins Node.js dans db.ts).
+- La migration async via Prisma s'exécutera au démarrage du serveur Node.js en production, ajoutant les colonnes manquantes via ALTER TABLE.
+- En production, au premier démarrage : added: 7 (toutes les colonnes manquantes seront ajoutées). Ensuite : already existed: 7.
+- ACTION UTILISATEUR : attendre le rebuild Coolify (~5 min). Le build doit passer, puis le conteneur démarre. Au premier accès, les colonnes seront ajoutées. Si la toute première requête échoue avec P2022, rafraîchir la page (la migration aura terminé).
