@@ -4975,3 +4975,48 @@ Stage Summary:
 - 3 pages rubriques créées : /produits/authentiques (transparence ≥ Or), /produits/local (fabricants sénégalais), /produits/export (isExport=true). Chaque page a son hero coloré + grille filtrée.
 - Produits populaires : 3 colonnes desktop (au lieu de 4) → images encore plus grandes.
 - Note : le dev server est instable (crashe après quelques requêtes) — probablement lié à la recréation du PrismaClient lors des migrations async. Pas lié au code (lint passe, toutes les pages retournent 200 quand le serveur est up).
+
+---
+Task ID: qrcode-2cm-beside-product
+Agent: main
+Task: Ajouter un VRAI QR code scannable de 2cm à côté de chaque produit sur le catalogue (et non juste un bouton "Scanner le QR" texte). L'utilisateur a constaté que le vrai QR code visuel n'avait jamais été ajouté.
+
+Work Log:
+- Vérification du worklog précédent : confirmation que les cartes produit n'avaient qu'un bouton "Scanner le QR" avec icône lucide, PAS de vrai QR code rendu.
+- Vérification que `qrcode.react` v4.2.0 est déjà installé (package.json) + `qrcode` v1.5.4 + `html5-qrcode` v2.3.8.
+- Création de `src/components/landing/ProductQRCode.tsx` (composant client) :
+  - Utilise `QRCodeSVG` de `qrcode.react` (rendu vectoriel SVG, net à toute taille).
+  - Encode l'URL absolue `${window.location.origin}/p/[lotId]` (récupérée côté client après mount).
+  - Pendant l'hydration : URL relative `/p/[lotId]` pour éviter un mismatch de hydration.
+  - Taille par défaut : 76px (~2cm @ 96dpi, 1cm = 37.8px @ 96dpi).
+  - level="M" (correction d'erreur moyenne, bon compromis densité/scannabilité).
+  - marginSize=1 (quiet zone), fond blanc pur #FFFFFF, foreground noir pur #000000.
+  - Conteneur div avec role="img" + aria-label descriptif (accessibilité).
+- Intégration dans les 5 composants de cartes produit du catalogue :
+  1. PopularProductsGrid.tsx (76px) — QR cliquable (Link) + bouton "Scanner" côte à côte. Hérité automatiquement par RubricProducts (pages /produits/authentiques, /local, /export).
+  2. DiscoverSectionClient.tsx (68px) — QR cliquable + bouton "Scanner".
+  3. ExpiringProductsClient.tsx (68px) — QR cliquable + bouton "Scanner".
+  4. CatalogSliderClient.tsx (72px) — SliderCard restructurée : wrapper passé de <Link> à <div> pour permettre des sous-Links (image cliquable + titre cliquable + QR cliquable + bouton cliquable).
+  5. ProductTabsClient.tsx (56px mini) — l'icône décorative QrCode (lucide 32x32) remplacée par un vrai mini-QR non-cliquable (la row entière est déjà un Link). Import de QrCode lucide retiré (unused).
+- Lint : `bun run lint` — 0 erreur.
+- Dev server : instable (crashe après quelques requêtes — problème PrismaClient connu mentionné dans worklog précédent), mais rend correctement tant qu'il tourne. GET / 200, GET /produits 200, GET /produits/authentiques 200.
+- Vérification HTML rendu (curl + grep sur /tmp/produits.html, 478KB) :
+  * 36 QR codes rendus avec aria-label "QR code à scanner pour ouvrir le passeport numérique du produit [id]"
+  * 14 boutons "Scanner" (PopularProductsGrid 6 + DiscoverSectionClient 4 + ExpiringProductsClient 4)
+  * 192 éléments SVG au total (QR codes + icônes lucide + logos)
+  * 6 liens /p/[lotId] uniques
+  * QR SVG confirmé : viewBox="0 0 31 31" (QR M level), height=72 width=72, paths noirs sur fond blanc → scannable
+- Vérification page rubrique /produits/authentiques (155KB) :
+  * 6 QR codes (un par produit)
+  * 6 boutons "Scanner"
+  * 6 liens /p/[lotId] uniques
+- Aucune erreur runtime / hydration dans dev.log.
+- Agent Browser n'a pas pu être utilisé (sandbox réseau du conteneur agent-browser n'atteint pas localhost:3000 ni l'IP réseau 21.0.13.115). Vérification faite via curl + analyse HTML rendu côté serveur (les QR sont en SSR, pas besoin d'exécuter le JS client pour les voir).
+
+Stage Summary:
+- Composant ProductQRCode créé (client, qrcode.react, SVG vectoriel scannable).
+- 5 composants de cartes produit modifiés pour afficher le vrai QR code 2cm à côté du produit.
+- 36 QR codes rendus sur /produits, 6 sur chaque page rubrique.
+- Chaque carte propose maintenant DEUX façons d'accéder au passeport numérique du lot : scan physique du QR OU clic sur le bouton "Scanner".
+- Le QR encode l'URL absolue (origin + /p/[lotId]) → scannable depuis n'importe quel appareil photo, redirige vers le passeport numérique du lot.
+- Commit 670c0c5 poussé sur origin/main.
