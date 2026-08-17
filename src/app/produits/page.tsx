@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Header } from "@/components/landing/Header";
 import { Footer } from "@/components/landing/Footer";
+import { CatalogHero } from "@/components/landing/CatalogHero";
 import { TopCategories } from "@/components/landing/TopCategories";
 import { PromoBanners } from "@/components/landing/PromoBanners";
 import { CatalogSlider } from "@/components/landing/CatalogSlider";
@@ -36,6 +37,7 @@ export default function CatalogPage() {
         {/*
          * Page Catalogue — design marketplace (Nest grocery style).
          *
+         * Hero (slider image plein écran + bannière overlay) →
          * Top catégories → bannières promo → Nouveautés (carousel) →
          * Produits populaires → À découvrir → Bientôt périmés →
          * Listes par onglets → Features bar.
@@ -43,6 +45,7 @@ export default function CatalogPage() {
          * Chaque carte produit propose un bouton « Scanner le QR » qui
          * redirige vers /p/[lotId] (passeport numérique du lot).
          */}
+        <CatalogHero />
         <TopCategories />
         <PromoBanners />
         <CatalogSlider />

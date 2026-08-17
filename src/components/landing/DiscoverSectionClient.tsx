@@ -119,8 +119,8 @@ function DiscoverCard({ item }: { item: DiscoverItem }) {
 
   return (
     <div className="group flex flex-col overflow-hidden rounded-xl border border-[#ECECEC] bg-white transition-all duration-300 hover:-translate-y-1 hover:border-[#3BB77E]/30 hover:shadow-lg">
-      {/* Image + badges */}
-      <div className="relative aspect-square overflow-hidden bg-[#F7F8FA]">
+      {/* Image + badges — taller portrait (4:5) so the photo is more visible */}
+      <div className="relative aspect-[4/5] overflow-hidden bg-[#F7F8FA]">
         <span
           className={cn(
             "absolute right-2 top-2 z-10 inline-flex items-center gap-1 rounded-full border bg-white/95 px-2 py-0.5 text-[10px] font-bold shadow-sm",
@@ -135,13 +135,13 @@ function DiscoverCard({ item }: { item: DiscoverItem }) {
           <img
             src={item.imageUrl}
             alt={item.name}
-            className="relative z-[1] h-full w-full object-contain p-4 transition-transform duration-500 group-hover:scale-110"
+            className="relative z-[1] h-full w-full object-contain p-5 transition-transform duration-500 group-hover:scale-110 sm:p-6"
             loading="lazy"
           />
         ) : (
           <div className="relative z-[1] flex h-full w-full items-center justify-center">
             <span
-              className="text-4xl transition-transform duration-500 group-hover:scale-110"
+              className="text-5xl transition-transform duration-500 group-hover:scale-110"
               aria-hidden
             >
               {emoji}

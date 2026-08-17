@@ -4860,3 +4860,37 @@ Stage Summary:
 - Page catalogue `/produits` maintenant au design marketplace Nest (vert #3BB77E) avec : Top Catégories, 3 bannières promo, Nouveautés (carousel CatalogSlider), Produits populaires (grille 5 col + boutons "Scanner le QR" → /p/[lotId]), À découvrir, Bientôt périmés, Listes par onglets, Features bar. Utilise le Header/Footer landing.
 - Header mis à jour : ancres `/#xxx` (fonctionnent depuis / et /produits), usePathname() highlighte "Accueil" sur / et "Catalogue" sur /produits.
 - Anciens composants catalog/v2 (CatalogHero, CategoryFilters, ControlBar, ProductGrid) et public/PublicHeader/PublicFooter conservés en place mais non utilisés sur /produits (peuvent être supprimés plus tard si non référencés ailleurs).
+
+---
+Task ID: catalog-hero-and-bigger-images
+Agent: main
+Task: Sur la page /produits UNIQUEMENT (ne pas toucher à la page d'accueil) : 1/ ajouter un hero avec image en haut, 2/ augmenter la taille des images des cartes produits.
+
+Work Log:
+- Restauration de src/components/landing/Hero.tsx à son état d'origine (j'avais commencé à le modifier par erreur — la page d'accueil ne doit pas être touchée)
+- Vérification des images disponibles dans public/ → hero-slide-1/2/3.webp + .png (déjà optimisées, pertinentes pour le catalogue)
+- Création de src/components/landing/CatalogHero.tsx — nouveau composant hero dédié au catalogue :
+  - Slider plein écran avec 3 images (mêmes que l'accueil mais plus hautes : min-h 480px mobile → 560px sm → 640px lg)
+  - Bannière overlay centrée : badge "Catalogue authentique" + h1 "Scannez. Vérifiez. Faites confiance." + paragraphe + 2 CTA ("Découvrir les produits" → #produits-populaires, "Devenir partenaire" → /register)
+  - Gradient sombre pour lisibilité du texte sur l'image
+  - Flèches + dots navigation, autoplay 6s, pause on hover, respect prefers-reduced-motion
+  - Couleur accent vert #3BB77E (cohérent avec le reste du catalogue)
+- Ajout de CatalogHero en haut de src/app/produits/page.tsx (avant TopCategories)
+- Augmentation de la taille des images dans les 5 composants de cartes produits :
+  1. PopularProductsGrid.tsx : aspect-square → aspect-[4/5] (sm:aspect-[5/6]), padding p-4 → p-5 sm:p-6
+  2. DiscoverSectionClient.tsx (DiscoverCard) : aspect-square → aspect-[4/5], padding p-4 → p-5 sm:p-6, emoji text-4xl → text-5xl
+  3. ExpiringProductsClient.tsx (ExpiringCard) : aspect-square → aspect-[4/5], padding p-4 → p-5 sm:p-6
+  4. CatalogSliderClient.tsx (SliderCard) : aspect-[4/3] → aspect-square (plus grand), padding p-5 → p-7
+  5. ProductTabsClient.tsx (TabRow mini image) : 60x60 → 80x80, padding p-1.5 → p-2
+- Lint : `bun run lint` — 0 erreur
+- Dev log : GET /produits 200, GET / 200, aucune erreur runtime
+- Agent Browser vérifications :
+  - Page /produits : CatalogHero présent en haut (heading h1 "Scannez. Vérifiez. Faites confiance." + 2 CTA + slider 3 images + dots). Top Catégories, bannières promo, carousel Nouveautés, Produits populaires tous rendus après le hero. ✓
+  - Page / (accueil) : NON modifiée — toujours "Présentation VerifScan" (pas "Scannez. Vérifiez."). ✓
+  - Aucune erreur console. ✓
+
+Stage Summary:
+- Page d'accueil `/` RESTAURÉE et INTACTE (Hero original avec headline "Garantissez l'authenticité de vos produits en un scan" + aspect-[1956/804] + texte en dessous du slider, PAS d'overlay).
+- Page `/produits` : nouveau CatalogHero en haut (slider image plein écran PLUS HAUT 480-640px + bannière overlay avec h1 "Scannez. Vérifiez. Faites confiance." + CTA "Découvrir les produits" et "Devenir partenaire").
+- Images des cartes produits agrandies partout : PopularProductsGrid (4:5 portrait), DiscoverCard (4:5), ExpiringCard (4:5), SliderCard (carré 1:1 + padding p-7), TabRow mini-image (80x80 au lieu de 60x60).
+- Les photos produits sont maintenant beaucoup plus visibles et le hero du catalogue donne un impact visuel fort dès l'arrivée.

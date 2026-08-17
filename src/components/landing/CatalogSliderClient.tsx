@@ -234,8 +234,9 @@ function SliderCard({ item }: { item: CatalogSliderItem }) {
       className="group flex h-full flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1.5 hover:border-blue-200 hover:shadow-xl hover:shadow-blue-100/50"
       aria-label={`Voir le passeport numérique de ${item.name}`}
     >
-      {/* Image area — 4:3 aspect ratio */}
-      <div className="relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-gray-50 via-white to-blue-50/40">
+      {/* Image area — taller (1:1 square) so the product photo is more visible.
+          p-7 gives more breathing room around the image. */}
+      <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-gray-50 via-white to-blue-50/40">
         {/* Transparency badge (top-right) */}
         <span
           className={cn(
@@ -253,7 +254,7 @@ function SliderCard({ item }: { item: CatalogSliderItem }) {
           <img
             src={item.imageUrl}
             alt={item.name}
-            className="relative z-[1] h-full w-full object-contain p-5 transition-transform duration-500 group-hover:scale-110"
+            className="relative z-[1] h-full w-full object-contain p-7 transition-transform duration-500 group-hover:scale-110"
             loading="lazy"
           />
         ) : (

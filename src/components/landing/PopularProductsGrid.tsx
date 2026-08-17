@@ -146,8 +146,9 @@ function ProductCard({ item }: { item: PopularProductItem }) {
 
   return (
     <div className="group flex h-full flex-col overflow-hidden rounded-xl border border-[#ECECEC] bg-white transition-all duration-300 hover:-translate-y-1 hover:border-[#3BB77E]/30 hover:shadow-lg hover:shadow-[#3BB77E]/5">
-      {/* Image */}
-      <div className="relative aspect-square overflow-hidden bg-[#F7F8FA]">
+      {/* Image — taller than before (4:5 portrait) so the product photo
+          really shines. p-6 gives more breathing room around the image. */}
+      <div className="relative aspect-[4/5] overflow-hidden bg-[#F7F8FA] sm:aspect-[5/6]">
         {/* Badge top-left */}
         {badge && (
           <span
@@ -176,7 +177,7 @@ function ProductCard({ item }: { item: PopularProductItem }) {
           <img
             src={item.imageUrl}
             alt={item.name}
-            className="relative z-[1] h-full w-full object-contain p-4 transition-transform duration-500 group-hover:scale-110"
+            className="relative z-[1] h-full w-full object-contain p-5 transition-transform duration-500 group-hover:scale-110 sm:p-6"
             loading="lazy"
           />
         ) : (

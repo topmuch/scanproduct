@@ -115,13 +115,13 @@ function TabRow({ item }: { item: ProductTabItem }) {
         href={href}
         className="group flex items-center gap-3 rounded-lg p-1 transition-all hover:bg-[#F7F8FA]"
       >
-        {/* Mini image */}
-        <div className="relative flex h-[60px] w-[60px] flex-shrink-0 items-center justify-center overflow-hidden rounded-lg bg-[#F7F8FA]">
+        {/* Mini image — 80x80 (up from 60x60) so the product photo is bigger */}
+        <div className="relative flex h-[80px] w-[80px] flex-shrink-0 items-center justify-center overflow-hidden rounded-lg bg-[#F7F8FA]">
           {item.imageUrl ? (
             <img
               src={item.imageUrl}
               alt={item.name}
-              className="h-full w-full object-contain p-1.5"
+              className="h-full w-full object-contain p-2"
               loading="lazy"
             />
           ) : (
