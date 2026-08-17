@@ -25,43 +25,45 @@ RUN npm install -g bun@${BUN_VERSION} && \
 
 WORKDIR /app
 
-# Optional GitHub token — required if the repo is private.
+# Optional GitHub token — bypasses anonymous rate limits on codeload.github.com
+# (HTTP 429 too many requests) and is required for private repos.
 # In Coolify: set "GITHUB_TOKEN" as a Build Environment Variable.
-# For public repos, leave it unset.
 ARG GITHUB_TOKEN=""
+ARG GIT_BRANCH=main
+# Pass --build-arg CACHEBUST=<unique> (e.g. commit SHA or timestamp) to force
+# Docker to re-run the git clone layer and pick up the latest commit. Without
+# this, Docker may use a cached layer that contains stale code.
+ARG CACHEBUST="default"
 
-# Download source from GitHub tarball + install in one step.
-# Authenticates with the token if provided (private repos);
-# otherwise falls back to anonymous download (public repos only).
+# Clone source from GitHub using `git clone` instead of curl+tar.
+#
+# WHY: codeload.github.com (the tarball endpoint) rate-limits anonymous
+# downloads with HTTP 429 after a few requests. The 429 response body is
+# plain text, so `tar` fails with "invalid magic / short read". git clone
+# uses the github.com HTTPS endpoint (not codeload) which is more resilient
+# and also supports authentication via the URL when GITHUB_TOKEN is set.
 #
 # The install step uses --frozen-lockfile for reproducibility, with a
 # verbose fallback so the REAL error is surfaced if the frozen install
 # fails (otherwise BuildKit only shows the summary line).
-RUN echo "=== Downloading source ===" && \
+RUN echo "=== Cache bust: $CACHEBUST ===" && \
+    echo "=== Cloning source (branch=$GIT_BRANCH) ===" && \
+    rm -rf /app/* /app/.[!.]* 2>/dev/null || true && \
     if [ -n "$GITHUB_TOKEN" ]; then \
-      echo "  Using authenticated download (private repo)"; \
-      curl -sL -H "Authorization: token $GITHUB_TOKEN" \
-        -o /tmp/src.tar.gz \
-        https://github.com/topmuch/scanproduct/archive/refs/heads/main.tar.gz; \
+      echo "  Using authenticated clone (GITHUB_TOKEN set)"; \
+      git clone --depth 1 --branch "$GIT_BRANCH" \
+        "https://x-access-token:${GITHUB_TOKEN}@github.com/topmuch/scanproduct.git" \
+        /app-tmp; \
     else \
-      echo "  Using anonymous download (public repo)"; \
-      curl -sL \
-        -o /tmp/src.tar.gz \
-        https://github.com/topmuch/scanproduct/archive/refs/heads/main.tar.gz; \
+      echo "  Using anonymous clone (public repo)"; \
+      git clone --depth 1 --branch "$GIT_BRANCH" \
+        https://github.com/topmuch/scanproduct.git \
+        /app-tmp; \
     fi && \
-    echo "  Downloaded: $(file /tmp/src.tar.gz)" && \
-    if ! tar tzf /tmp/src.tar.gz > /dev/null 2>&1; then \
-      echo "==========================================" && \
-      echo "ERROR: downloaded file is NOT a valid tarball." && \
-      echo "If the repo is private, set GITHUB_TOKEN as a Build Environment Variable in Coolify." && \
-      echo "If it is public, check that the repo URL is correct." && \
-      echo "First 300 bytes of the response:" && \
-      head -c 300 /tmp/src.tar.gz; \
-      exit 1; \
-    fi && \
-    tar xzf /tmp/src.tar.gz --strip-components=1 -C /app && \
-    rm /tmp/src.tar.gz && \
-    echo "=== Download successful ===" && \
+    rm -rf /app-tmp/.git && \
+    sh -c 'cp -a /app-tmp/. /app/' && \
+    rm -rf /app-tmp && \
+    echo "=== Clone successful ===" && \
     ls -la package.json bun.lock && \
     echo "=== bun version ===" && \
     bun --version && \

@@ -4673,3 +4673,38 @@ Stage Summary:
   section "International" séparée, et le compteur global passe de 15 à 17.
 - Création produit : "Eau" est maintenant sélectionnable comme type de boisson (1ère option).
 - Aucune modification de schéma DB ni d'API requise — l'ajout est purement côté UI/constantes.
+
+---
+Task ID: 23
+Agent: main (Z.ai Code)
+Task: Fix Coolify build failure "tar: invalid magic / short read" — switch Dockerfile from curl+tar (codeload.github.com, rate-limited) to git clone (github.com HTTPS, more resilient).
+
+Work Log:
+- Diagnostic : le déploiement Coolify échouait avec `tar: invalid magic` car le
+  téléchargement anonyme de tarball GitHub via codeload.github.com est rate-limité
+  (HTTP 429). Le corps de la réponse 429 est du texte brut, donc `tar` ne peut pas
+  le parser. Vérifié en local :
+    curl -sIL https://github.com/topmuch/scanproduct/archive/refs/heads/main.tar.gz
+    → HTTP/2 302 → https://codeload.github.com/topmuch/scanproduct/tar.gz/refs/heads/main
+    → HTTP/2 429 (rate limited for anonymous)
+- Solution : remplacer le téléchargement `curl + tar` par un `git clone --depth 1`.
+  git clone utilise l'endpoint HTTPS github.com (pas codeload) qui est plus
+  résilient au rate limiting. Si GITHUB_TOKEN est fourni (Build Env Var dans Coolify),
+  il est passé dans l'URL (https://x-access-token:TOKEN@github.com/...) pour bypass
+  total du rate limit.
+- Ajout de 2 ARG :
+    * GIT_BRANCH=main (permet de pointer sur une autre branche si besoin)
+    * CACHEBUST="default" — Coolify peut passer --build-arg CACHEBUST=<sha/timestamp>
+      pour forcer le re-run du layer git clone et récupérer le dernier commit.
+      Sans ça, Docker pourrait réutiliser un layer cache contenant du code stale.
+- Testé `git clone --depth 1 --branch main https://github.com/topmuch/scanproduct.git`
+  en local (anonyme) → ✓ fonctionne, package.json + bun.lock bien récupérés.
+- Push du nouveau Dockerfile vers origin/main pour déclencher un nouveau build Coolify.
+
+Stage Summary:
+- Dockerfile ne dépend plus de codeload.github.com (qui rate-limit les anonymous).
+- git clone utilise github.com HTTPS + token optionnel → bypass du rate limit.
+- CACHEBUST arg permet à Coolify de forcer un rebuild propre à chaque commit.
+- IMPORTANT pour l'utilisateur : si le rate limit persiste en anonymous, configurer
+  GITHUB_TOKEN comme Build Environment Variable dans Coolify (Settings du service →
+  Environment Variables → Add → key=GITHUB_TOKEN, value=<PAT avec scope repo>).
