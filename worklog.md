@@ -5020,3 +5020,52 @@ Stage Summary:
 - Chaque carte propose maintenant DEUX façons d'accéder au passeport numérique du lot : scan physique du QR OU clic sur le bouton "Scanner".
 - Le QR encode l'URL absolue (origin + /p/[lotId]) → scannable depuis n'importe quel appareil photo, redirige vers le passeport numérique du lot.
 - Commit 670c0c5 poussé sur origin/main.
+
+---
+Task ID: pwa-icon-integration
+Agent: main
+Task: Intégrer l'icône officielle VerifScan (uploadée par l'utilisateur) sur TOUS les icônes du site, y compris la version PWA, pour qu'au scan d'un QR code on voie l'icône.
+
+Work Log:
+- Lecture de l'icône source uploadée : /home/z/my-project/upload/cfb04df8-11a4-4cb6-8dc0-43536cb6efef.png (1254×1254 RGBA, 1.4MB).
+- Analyse VLM (glm-5v-turbo) : icône officielle VerifScan — smartphone scannant QR + bouclier sécurité bleu + texte 'VerifScan'. Coins transparents (TL/TR/BL/BR = (0,0,0,0)).
+- Audit config existante :
+  * public/ : favicon.ico, icon.png (59×62), icon-16/32/48/192/512.png, apple-icon.png, manifest.json
+  * layout.tsx generateMetadata() référence /icon.png + /icon-16/32/48.png + /apple-icon.png + /manifest.json
+  * getFaviconUrl() lit la DB (table Setting) mais DB vide → fallback /icon.png
+  * manifest.json référençait icon-192.png + icon-512.png (purpose non spécifié = any par défaut)
+- Génération des icônes via PIL (Python) depuis la source 1254×1254 :
+  * Standard (resize LANCZOS, transparence conservée) :
+    - icon-16.png (16×16), icon-32.png (32×32), icon-48.png (48×48)
+    - icon-192.png (192×192), icon-512.png (512×512) — PWA 'any'
+    - apple-icon.png (180×180) — iOS
+    - icon.png (256×256) — favicon par défaut
+  * Maskable (nouveau, pour Android) : fond plein bleu #2563EB + icône centrée à 80% (safe zone maskable) :
+    - icon-192-maskable.png (192×192, 41KB)
+    - icon-512-maskable.png (512×512, 212KB)
+  * favicon.ico : multi-size (16/32/48 embarqués dans un seul fichier ICO, 970 bytes)
+- Mise à jour de public/manifest.json :
+  * 4 icônes déclarées : 2 'any' (icon-192/512.png) + 2 'maskable' (icon-192/512-maskable.png)
+  * Ajout de 'start_url': '/' et 'scope': '/' (PWA installable correctement)
+- Lint : `bun run lint` — 0 erreur.
+- Vérification serveur (curl HTTP 200 sur chaque asset) :
+  * /favicon.ico → 200, image/x-icon, 970 bytes, ICO 16×16 with PNG data
+  * /icon.png → 200, image/png, 96742 bytes, 256×256 RGBA
+  * /icon-192.png → 200, 60210 bytes, 192×192
+  * /icon-192-maskable.png → 200, 41377 bytes, 192×192
+  * /apple-icon.png → 200, 54093 bytes, 180×180
+  * /manifest.json → 200, JSON valide avec 4 icônes + purpose any/maskable
+- Vérification HTML head rendu (curl / → /tmp/home.html, 172KB) :
+  * <link rel="icon" href="/icon.png"> ✓
+  * <link rel="icon" href="/icon-16/32/48.png" sizes="..."> ✓ (3 tags)
+  * <link rel="shortcut icon" href="/icon.png"> ✓
+  * <link rel="apple-touch-icon" href="/apple-icon.png" sizes="180x180"> ✓
+  * <link rel="manifest" href="/manifest.json"> ✓
+- Note : .gitignore a une règle '*.png' (ligne 90, pour debug screenshots root). Les nouveaux fichiers maskable ont dû être ajoutés avec 'git add -f' (les autres PNG de public/ étaient déjà trackés).
+- Commit 73172e8 poussé sur origin/main (11 fichiers modifiés/créés).
+
+Stage Summary:
+- Icône officielle VerifScan (smartphone + QR + bouclier + texte) déployée sur TOUS les points d'icône du site : favicon.ico multi-size, icon.png 256, icon-16/32/48, icon-192/512 (PWA any), apple-icon 180 (iOS), et 2 NOUVELLES variantes maskable (192+512) pour Android home screen.
+- Manifest PWA mis à jour avec 4 icônes (any + maskable) + start_url + scope.
+- Quand un utilisateur scanne un QR code produit → arrive sur /p/[lotId] → voit l'icône VerifScan dans l'onglet navigateur (favicon) + barre adresse (si PWA installée, icône full-bleed sur écran d'accueil Android grace au maskable).
+- Configuration layout.tsx existante (generateMetadata) fonctionnelle sans modification — getFaviconUrl() retourne null (DB vide) → fallback /icon.png qui est maintenant la nouvelle icône.
