@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { CheckCircle2, Star, QrCode, ShieldCheck, Leaf } from "lucide-react";
+import { Star, QrCode, ShieldCheck, Leaf } from "lucide-react";
 import { cn, LEVEL_CONFIG, getLevelFromScore } from "@/lib/utils";
 import { ProductQRCode } from "@/components/landing/ProductQRCode";
 
@@ -10,8 +10,10 @@ import { ProductQRCode } from "@/components/landing/ProductQRCode";
  * DiscoverSectionClient — Nest "Daily Best Sells" style layout.
  *
  * Layout:
- *   - Left: large promo card with green menthe background + CTA "Shop now →"
- *   - Right: 4 small product cards with solid "Scanner le QR" button
+ *   - Left: large featured product card on green gradient background, with
+ *     the product photo, name, brand, transparency badge, QR code and a
+ *     "Scanner" CTA.
+ *   - Right: 4 small product cards with solid "Scanner le QR" button.
  */
 
 export type DiscoverItem = {
@@ -37,9 +39,10 @@ export type DiscoverItem = {
 
 type Props = {
   items: DiscoverItem[];
+  featured: DiscoverItem;
 };
 
-export function DiscoverSectionClient({ items }: Props) {
+export function DiscoverSectionClient({ items, featured }: Props) {
   return (
     <section
       id="a-decouvrir"
@@ -60,42 +63,8 @@ export function DiscoverSectionClient({ items }: Props) {
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:gap-5 lg:grid-cols-5">
-          {/* Large promo card — left side */}
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#3BB77E] via-[#2E7D32] to-[#1B5E20] p-6 sm:p-8 lg:col-span-2">
-            {/* Decorative leaf icons */}
-            <Leaf
-              className="pointer-events-none absolute -right-8 -top-8 h-40 w-40 text-white/10"
-              aria-hidden
-            />
-            <Leaf
-              className="pointer-events-none absolute -bottom-12 -left-8 h-32 w-32 rotate-180 text-white/10"
-              aria-hidden
-            />
-            <div className="relative z-10 flex h-full flex-col justify-between">
-              <div>
-                <span className="inline-flex items-center gap-1 rounded-full bg-white/20 px-3 py-1 text-[11px] font-semibold text-white backdrop-blur">
-                  <ShieldCheck className="h-3 w-3" aria-hidden />
-                  Top transparence
-                </span>
-                <h3 className="mt-4 font-display text-[24px] font-bold leading-tight text-white sm:text-[28px]">
-                  La transparence,
-                  <br />
-                  au bout du scan
-                </h3>
-                <p className="mt-3 max-w-xs text-[13px] text-white/90">
-                  Chaque produit vérifié possède un passeport numérique complet :
-                  origine, lot, certifications, allergènes.
-                </p>
-              </div>
-              <Link
-                href="/produits?sort=transparency"
-                className="mt-6 inline-flex w-fit items-center gap-2 rounded-lg bg-white px-5 py-2.5 text-[13px] font-bold text-[#2E7D32] transition-all hover:gap-3 hover:bg-[#F1F8E9]"
-              >
-                Explorer
-                <span aria-hidden>→</span>
-              </Link>
-            </div>
-          </div>
+          {/* Large featured product card — left side (green gradient) */}
+          <FeaturedProductCard item={featured} />
 
           {/* 4 small product cards — right side */}
           <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:col-span-3 lg:grid-cols-2">
@@ -106,6 +75,117 @@ export function DiscoverSectionClient({ items }: Props) {
         </div>
       </div>
     </section>
+  );
+}
+
+/**
+ * FeaturedProductCard — the large green promo card on the left, now showing
+ * a real product (the one with the highest transparency score).
+ *
+ * Keeps the green gradient background + decorative leaves so the visual
+ * identity of the section is preserved, but overlays a real product with
+ * photo, name, brand, QR code and a "Scanner" CTA.
+ */
+function FeaturedProductCard({ item }: { item: DiscoverItem }) {
+  const score = item.transparencyScore;
+  const level = getLevelFromScore(score);
+  const cfg = LEVEL_CONFIG[level];
+  const emoji = item.categoryEmoji ?? "📦";
+  const href = item.latestLotId ? `/p/${item.latestLotId}` : `/p/${item.id}`;
+  const fabricantName =
+    item.fabricant?.companyName ?? item.fabricant?.name ?? "Fabricant";
+
+  return (
+    <div className="group relative flex flex-col overflow-hidden rounded-2xl bg-gradient-to-br from-[#3BB77E] via-[#2E7D32] to-[#1B5E20] p-5 sm:p-6 lg:col-span-2">
+      {/* Decorative leaf icons */}
+      <Leaf
+        className="pointer-events-none absolute -right-8 -top-8 h-40 w-40 text-white/10"
+        aria-hidden
+      />
+      <Leaf
+        className="pointer-events-none absolute -bottom-12 -left-8 h-32 w-32 rotate-180 text-white/10"
+        aria-hidden
+      />
+
+      <div className="relative z-10 flex h-full flex-col">
+        {/* Header row: badge + category */}
+        <div className="flex items-center justify-between gap-2">
+          <span className="inline-flex items-center gap-1 rounded-full bg-white/20 px-3 py-1 text-[11px] font-semibold text-white backdrop-blur">
+            <ShieldCheck className="h-3 w-3" aria-hidden />
+            Top transparence
+          </span>
+          <span
+            className={cn(
+              "inline-flex items-center gap-1 rounded-full border bg-white/95 px-2 py-0.5 text-[10px] font-bold shadow-sm",
+              cfg.borderColor,
+              cfg.textColor,
+            )}
+          >
+            <span aria-hidden>{cfg.icon}</span>
+            <span className="capitalize">{level}</span>
+          </span>
+        </div>
+
+        {/* Product image */}
+        <div className="mt-3 flex flex-1 items-center justify-center">
+          {item.imageUrl ? (
+            <img
+              src={item.imageUrl}
+              alt={item.name}
+              className="h-40 w-full max-w-[200px] object-contain drop-shadow-[0_8px_24px_rgba(0,0,0,0.25)] transition-transform duration-500 group-hover:scale-105 sm:h-48"
+              loading="lazy"
+            />
+          ) : (
+            <span
+              className="text-6xl transition-transform duration-500 group-hover:scale-110"
+              aria-hidden
+            >
+              {emoji}
+            </span>
+          )}
+        </div>
+
+        {/* Product info */}
+        <div className="mt-3">
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-white/80">
+            {item.category ?? "Produit"}
+          </span>
+          <h3 className="mt-0.5 line-clamp-2 text-[18px] font-bold leading-tight text-white sm:text-[20px]">
+            {item.name}
+          </h3>
+          <div className="mt-1 flex items-center gap-1 text-[12px] text-white/85">
+            <Star className="h-3 w-3 fill-[#FBA545] text-[#FBA545]" aria-hidden />
+            <span className="font-bold text-white">
+              {item.averageRating.toFixed(1)}
+            </span>
+            <span className="text-white/70">({item.totalReviews})</span>
+            <span className="ml-auto truncate">{fabricantName}</span>
+          </div>
+        </div>
+
+        {/* QR code + Scanner CTA */}
+        <div className="mt-4 flex items-center gap-2">
+          <Link
+            href={href}
+            aria-label={`Scanner le QR code de ${item.name}`}
+            className="shrink-0 rounded-md bg-white p-1 transition-transform hover:scale-105 active:scale-95"
+          >
+            <ProductQRCode
+              lotId={item.latestLotId ?? item.id}
+              productId={item.id}
+              size={68}
+            />
+          </Link>
+          <Link
+            href={href}
+            className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg bg-white px-4 py-2.5 text-[13px] font-bold text-[#2E7D32] shadow-md transition-all hover:gap-3 hover:bg-[#F1F8E9] active:scale-[0.98]"
+          >
+            <QrCode className="h-4 w-4" aria-hidden />
+            Scanner le QR
+          </Link>
+        </div>
+      </div>
+    </div>
   );
 }
 

@@ -37,7 +37,7 @@ export function VerificationGlow({ lot }: Props) {
         {/* Large shield/check icon in glassmorphism circle */}
         <div className="relative">
           <span className="absolute inset-0 animate-ping rounded-full bg-white/20" />
-          <div className="wow-glass wow-animate-pulse-glow relative flex h-16 w-16 items-center justify-center rounded-full sm:h-20 sm:w-20">
+          <div className="wow-glass-dark wow-animate-pulse-glow relative flex h-16 w-16 items-center justify-center rounded-full sm:h-20 sm:w-20">
             <ShieldCheck className="h-8 w-8 text-emerald-400 drop-shadow-lg sm:h-10 sm:w-10" />
           </div>
         </div>
@@ -61,7 +61,7 @@ export function VerificationGlow({ lot }: Props) {
 
         {/* Reference number */}
         {reference && (
-          <div className="wow-glass rounded-full px-4 py-1.5">
+          <div className="wow-glass-dark rounded-full px-4 py-1.5">
             <span className="text-xs font-semibold text-white/90">
               Réf: <span className="font-mono">{reference}</span>
             </span>
@@ -73,7 +73,7 @@ export function VerificationGlow({ lot }: Props) {
           {TRUST_BADGES.map((badge) => (
             <div
               key={badge.label}
-              className="wow-glass flex items-center gap-1.5 rounded-full px-3 py-1.5"
+              className="wow-glass-dark flex items-center gap-1.5 rounded-full px-3 py-1.5"
             >
               <span className="text-sm" aria-hidden>
                 {badge.emoji}

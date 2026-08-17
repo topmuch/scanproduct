@@ -5153,3 +5153,38 @@ Work Log:
 Stage Summary:
 - Le menu de la page catalogue est maintenant visible : le hero sombre s'étend sous le header fixe (comme sur la homepage), le texte blanc du menu est lisible
 - Structure alignée avec la homepage (pt-16 lg:pt-20 interne au hero, pas de pt-20 sur le main)
+
+---
+Task ID: discover-featured-product + verification-glass-fix
+Agent: main
+Task: (A) Mettre un produit vedette dans la bannière verte "À découvrir" + (B) Rendre visibles les écritures (Réf, Blockchain, Authentique, Traçable) du bloc "Vérifié par VerifScan" en bas de page produit
+
+Work Log:
+Option A — Produit vedette dans la bannière verte "À découvrir" :
+- src/components/landing/DiscoverSection.tsx : fetch 5 produits (au lieu de 4) triés par transparence ; le 1er devient "featured", les 4 suivants restent les petites cartes
+- src/components/landing/DiscoverSectionClient.tsx :
+  - Ajout prop `featured: DiscoverItem` au composant
+  - Création sous-composant `FeaturedProductCard` qui remplace la carte promo décorative
+  - La carte garde le fond vert gradient (#3BB77E→#2E7D32→#1B5E20) + feuilles décoratives (identité visuelle préservée)
+  - Affiche : badge "Top transparence", badge niveau transparence, photo produit, catégorie, nom, note + fabricant, QR code 68px + bouton "Scanner le QR"
+  - Retrait de l'ancien texte marketing ("La transparence, au bout du scan") et du bouton "Explorer"
+  - Nettoyage import inutilisé (CheckCircle2)
+
+Option B — Textes visibles dans le bloc "Vérifié par VerifScan" :
+- Cause racine : la classe utilitaire `.wow-glass` (globals.css ligne 317) a un fond BLANC à 80% (rgba(255,255,255,0.8)), conçue pour du texte foncé. Dans VerificationGlow (fond sombre slate-900→blue-900→purple-900), les badges utilisaient `wow-glass` + `text-white/90` → blanc sur blanc = invisible
+- src/app/globals.css : ajout nouvelle classe `.wow-glass-dark` (fond rgba(15,23,42,0.4) slate sombre + bordure blanche subtile rgba(255,255,255,0.15) + blur 20px) — variante sombre pour texte blanc sur fond sombre. La classe `.wow-glass` originale est INTACTE (utilisée par 4 autres composants wow)
+- src/components/product/wow/VerificationGlow.tsx : remplacement des 3 occurrences `wow-glass` → `wow-glass-dark` :
+  1. Cercle du bouclier (ligne 40)
+  2. Pastille "Réf: LOT-..." (ligne 64)
+  3. 3 badges de confiance 🔒 Blockchain / ✓ Authentique / 📊 Traçable (ligne 76, rendu via .map)
+- Les autres composants (WowHero, FreshnessGlow, ContactOrb, WowAccordion) gardent `wow-glass` — non touchés
+
+Vérifications :
+- Lint propre
+- GET / 200, GET /produits 200, GET /p/[lotId] 200
+- Catalogue : "Top transparence" présent (1), ancien promo text GONE (0), section "À découvrir" présente (1), gradient vert préservé
+- Page produit : 5 occurrences wow-glass-dark (cercle bouclier + pastille Réf + 3 badges), les autres wow-glass des composants non touchés intacts
+
+Stage Summary:
+- Option A : la bannière verte "À découvrir" affiche maintenant le produit n°1 en transparence (photo, nom, marque, QR code, bouton Scanner) au lieu du texte marketing
+- Option B : les textes Réf / Blockchain / Authentique / Traçable sont maintenant visibles (glass sombre au lieu de blanc) sur le bloc de vérification en bas de page produit

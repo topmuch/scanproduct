@@ -313,12 +313,24 @@ html.dark { color-scheme: dark; }
 .wow-shadow-card { box-shadow: 0 20px 60px -15px rgba(0, 0, 0, 0.1); }
 .wow-shadow-elevated { box-shadow: 0 25px 80px -20px rgba(0, 0, 0, 0.15); }
 
-/* Glassmorphism utility — frosted glass effect */
+/* Glassmorphism utility — frosted glass effect (light, for dark text) */
 .wow-glass {
   background: rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+/* Glassmorphism utility — dark variant (for white text on dark backgrounds).
+   Use this when a glassmorphism element sits on a dark/gradient background
+   and its text is white. The light `.wow-glass` would make white text
+   invisible; this variant keeps a dark frosted glass so the white text
+   remains legible. */
+.wow-glass-dark {
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 /* Gradient text utility */

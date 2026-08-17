@@ -4,15 +4,17 @@ import { DiscoverSectionClient } from "./DiscoverSectionClient";
 /**
  * DiscoverSection — Server Component.
  *
- * Fetches 4 products to feature alongside a large promo card (Nest "Daily
- * Best Sells" style). Each small card has a solid "Scanner le QR" CTA.
+ * Fetches 5 products sorted by transparency:
+ *   - The first (highest transparency) becomes the "featured" product shown
+ *     inside the large green promo card on the left.
+ *   - The next 4 fill the small product cards on the right.
  */
 export async function DiscoverSection() {
   let products: Awaited<ReturnType<typeof getAllProducts>>["products"] = [];
 
   try {
-    // Use transparency sort to feature the best products
-    const result = await getAllProducts({ sort: "transparency", limit: 4, page: 1 });
+    // Fetch 5 so we have 1 featured + 4 small cards.
+    const result = await getAllProducts({ sort: "transparency", limit: 5, page: 1 });
     products = result.products;
   } catch (e) {
     console.error("[DiscoverSection] failed to fetch:", e);
@@ -21,7 +23,7 @@ export async function DiscoverSection() {
 
   if (products.length === 0) return null;
 
-  const items = products.map((p) => ({
+  const mapItem = (p: (typeof products)[number]) => ({
     id: p.id,
     name: p.name,
     brand: p.brand ?? null,
@@ -42,7 +44,13 @@ export async function DiscoverSection() {
         }
       : null,
     latestLotId: p.latestLot?.id ?? null,
-  }));
+  });
 
-  return <DiscoverSectionClient items={items} />;
+  // First product → featured (goes in the large green promo card).
+  // Remaining products → small cards (up to 4).
+  const [featuredRaw, ...rest] = products;
+  const featured = mapItem(featuredRaw);
+  const items = rest.slice(0, 4).map(mapItem);
+
+  return <DiscoverSectionClient items={items} featured={featured} />;
 }
