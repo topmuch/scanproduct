@@ -1,5 +1,6 @@
 import { Header } from "@/components/landing/Header";
 import { Hero } from "@/components/landing/Hero";
+import { CatalogSlider } from "@/components/landing/CatalogSlider";
 import { StatsBanner } from "@/components/landing/StatsBanner";
 import { HowItWorks } from "@/components/landing/HowItWorks";
 import { Features } from "@/components/landing/Features";
@@ -34,6 +35,7 @@ export default function Home() {
          * produits populaires…) a été déplacé vers /produits.
          */}
         <Hero />
+        <CatalogSlider />
         <StatsBanner />
         <HowItWorks />
         <Features />

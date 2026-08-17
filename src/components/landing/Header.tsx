@@ -60,7 +60,7 @@ export function Header() {
       <div className="mx-auto flex h-20 max-w-[1400px] items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo */}
         <Link href="/" className="group" aria-label="VerifScan accueil">
-          <Logo />
+          <Logo variant={scrolled ? "default" : "light"} />
         </Link>
 
         {/* Desktop nav */}
@@ -69,14 +69,21 @@ export function Header() {
             const active = isActive(link);
             const className = cn(
               "group relative rounded-md px-3 py-2 text-[15px] font-medium transition-colors",
-              active ? "text-[#2563EB]" : "text-[#374151] hover:text-[#2563EB]"
+              scrolled
+                ? active
+                  ? "text-[#2563EB]"
+                  : "text-[#374151] hover:text-[#2563EB]"
+                : active
+                  ? "text-white"
+                  : "text-white/90 hover:text-white"
             );
             const content = (
               <>
                 {link.label}
                 <span
                   className={cn(
-                    "absolute bottom-1 left-3 right-3 h-0.5 rounded-full bg-[#2563EB] transition-all duration-300",
+                    "absolute bottom-1 left-3 right-3 h-0.5 rounded-full transition-all duration-300",
+                    scrolled ? "bg-[#2563EB]" : "bg-white",
                     active ? "opacity-100" : "opacity-0 group-hover:opacity-100"
                   )}
                 />
@@ -94,7 +101,12 @@ export function Header() {
         <div className="hidden items-center gap-2 lg:flex">
           <Link
             href="/login"
-            className="rounded-md px-3 py-2 text-[15px] font-semibold text-[#2563EB] transition-colors hover:bg-[#EFF6FF]"
+            className={cn(
+              "rounded-md px-3 py-2 text-[15px] font-semibold transition-colors",
+              scrolled
+                ? "text-[#2563EB] hover:bg-[#EFF6FF]"
+                : "text-white hover:bg-white/10"
+            )}
           >
             Connexion
           </Link>
@@ -111,7 +123,12 @@ export function Header() {
         <button
           type="button"
           onClick={() => setMobileOpen(true)}
-          className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-[#111827] transition-colors hover:bg-[#F3F4F6] lg:hidden"
+          className={cn(
+            "inline-flex h-10 w-10 items-center justify-center rounded-lg transition-colors lg:hidden",
+            scrolled
+              ? "text-[#111827] hover:bg-[#F3F4F6]"
+              : "text-white hover:bg-white/10"
+          )}
           aria-label="Ouvrir le menu"
         >
           <Menu className="h-6 w-6" />
