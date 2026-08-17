@@ -4708,3 +4708,46 @@ Stage Summary:
 - IMPORTANT pour l'utilisateur : si le rate limit persiste en anonymous, configurer
   GITHUB_TOKEN comme Build Environment Variable dans Coolify (Settings du service →
   Environment Variables → Add → key=GITHUB_TOKEN, value=<PAT avec scope repo>).
+
+---
+Task ID: 24
+Agent: main (Z.ai Code)
+Task: Optimiser le polling des notifications — réduire la charge DB sur la table Notification (3 queries/poll → 2 queries/poll, et 30s → 60s avec pause quand le tab est caché).
+
+Work Log:
+- Diagnostic du log serveur : chaque 30s, l'en-tête du dashboard fabricant
+  déclenche 3 requêtes sur la table Notification (list + unreadCount + total),
+  répétées en boucle. Le `total` COUNT(*) n'est jamais affiché par le header
+  bell (seulement par NotificationsPage pour la pagination).
+- Optimisation 1 — `/api/notifications` (src/app/api/notifications/route.ts) :
+  * Ajout du paramètre `?includeTotal=true` (default false).
+  * Quand `includeTotal` n'est pas demandé, on skip le COUNT(*) total et on
+    renvoie un objet `Promise.resolve(null)` à la place → économise 1 requête
+    DB par poll.
+  * Le champ `total` est omis de la réponse JSON quand non demandé.
+  * Compatibilité arrière : NotificationsPage continue à fonctionner en
+    passant `includeTotal=true` dans ses params.
+- Optimisation 2 — `FabricantHeader` (src/components/fabricant/FabricantHeader.tsx) :
+  * Polling interval : 30_000 ms → 60_000 ms (2x moins de polls).
+  * Pause quand le tab est hidden (visibilitychange) : si document.hidden,
+    on ne fire pas la requête → économie 100% des polls quand l'utilisateur
+    n'est pas sur le tab.
+  * Re-fetch immédiat quand le tab redevient visible : l'utilisateur voit
+    toujours les notifications à jour dès qu'il revient sur le dashboard.
+- Optimisation 3 — `NotificationsPage` (src/components/fabricant/pages/NotificationsPage.tsx) :
+  * Ajout de `includeTotal: "true"` dans les params du fetch → conserve le
+    comportement pagination "load more" sans casser.
+- Lint : ✓ 0 erreur.
+- Vérification Agent Browser : login fabricant → /dashboard → bell dropdown
+  affiche correctement "Toutes lues" (aucune notification en base seedée).
+  Requêtes API toujours fonctionnelles.
+
+Stage Summary:
+- Charge DB divisée par ~3 sur la table Notification en condition nominale :
+  * 2x moins de polls (60s au lieu de 30s).
+  * 1 requête économisée par poll (skip du COUNT(*) total).
+  * Plus aucun poll quand le tab est caché (cas fréquent : utilisateur sur
+    un autre onglet).
+- API rétro-compatible : `total` reste disponible via `?includeTotal=true`
+  pour NotificationsPage. Tous les autres callers (FabricantHeader) n'ont
+  pas besoin de changer.

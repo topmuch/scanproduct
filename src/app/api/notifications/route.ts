@@ -55,11 +55,20 @@ export async function GET(request: NextRequest) {
     const limit = Math.min(Math.max(parseInt(sp.get("limit") || "50", 10) || 50, 1), 100);
     const offset = Math.max(parseInt(sp.get("offset") || "0", 10) || 0, 0);
     const unreadOnly = sp.get("unreadOnly") === "true";
+    // `total` is only needed by the NotificationsPage pagination. The header
+    // bell polls every 30-60s and never displays the total count — skip the
+    // extra COUNT(*) query when the caller doesn't ask for it.
+    const includeTotal = sp.get("includeTotal") === "true";
 
+    // Always run list + unreadCount in parallel (cheap, both indexed by userId).
+    // Conditionally include the total COUNT (saves one DB round-trip for the
+    // header bell polling pattern, which is the most frequent caller).
     const [rawNotifications, unreadCount, total] = await Promise.all([
       listNotifications(token.sub, { limit, offset, unreadOnly }),
       getUnreadCount(token.sub),
-      db.notification.count({ where: { userId: token.sub } }),
+      includeTotal
+        ? db.notification.count({ where: { userId: token.sub } })
+        : Promise.resolve<number | null>(null),
     ]);
 
     // Normalize each notification: parse the JSON-encoded `data` and
@@ -78,7 +87,12 @@ export async function GET(request: NextRequest) {
       emailedAt: n.emailedAt,
     }));
 
-    return NextResponse.json({ notifications, unreadCount, total });
+    const body: { notifications: typeof notifications; unreadCount: number; total?: number } = {
+      notifications,
+      unreadCount,
+    };
+    if (total !== null) body.total = total;
+    return NextResponse.json(body);
   } catch (error) {
     console.error("[GET /api/notifications] Error:", error);
     return NextResponse.json(

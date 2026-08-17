@@ -437,6 +437,8 @@ export function NotificationsPage() {
       const params = new URLSearchParams({
         limit: String(PAGE_SIZE),
         offset: String(newOffset),
+        // Request the total count — needed for pagination "load more" button.
+        includeTotal: "true",
       });
       if (filter === "unread") params.set("unreadOnly", "true");
       const res = await fetch(`/api/notifications?${params.toString()}`, { cache: "no-store" });

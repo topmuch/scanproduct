@@ -146,6 +146,8 @@ export function FabricantHeader() {
 
   const fetchNotifications = useCallback(async () => {
     try {
+      // The header bell never displays the total count — skip it to save
+      // one COUNT(*) query per poll (and there are many polls).
       const res = await fetch("/api/notifications?limit=20", { cache: "no-store" });
       if (!res.ok) return;
       const json = await res.json();
@@ -158,13 +160,27 @@ export function FabricantHeader() {
     }
   }, []);
 
-  // Initial fetch + 30s polling interval.
+  // Initial fetch + 60s polling interval. Pause when the tab is hidden
+  // (no point burning DB queries when the user is not looking at the page).
+  // Re-fetch immediately when the tab becomes visible again so the badge
+  // updates without waiting for the next tick.
   useEffect(() => {
     fetchNotifications();
     const interval = setInterval(() => {
-      fetchNotifications();
-    }, 30_000);
-    return () => clearInterval(interval);
+      if (typeof document !== "undefined" && document.visibilityState === "visible") {
+        fetchNotifications();
+      }
+    }, 60_000);
+    const onVisibility = () => {
+      if (typeof document !== "undefined" && document.visibilityState === "visible") {
+        fetchNotifications();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
   }, [fetchNotifications]);
 
   // Refresh when the dropdown opens so the user always sees fresh data.
