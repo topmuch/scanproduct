@@ -51,6 +51,16 @@ export type PopularProductItem = {
 
 type Props = {
   items: PopularProductItem[];
+  /** Optional: override the section title (default: "Produits populaires") */
+  title?: string;
+  /** Optional: override the section subtitle */
+  subtitle?: string;
+  /** Optional: override the section id (default: "produits-populaires") */
+  sectionId?: string;
+  /** Optional: hide the "Voir tout" link (default: visible, links to /produits) */
+  showViewAll?: boolean;
+  /** Optional: empty-state message when items is empty */
+  emptyMessage?: string;
 };
 
 // Pick a badge for the card based on heuristics. Stable per product (hash id).
@@ -84,53 +94,73 @@ function badgeFor(item: PopularProductItem): {
   return null;
 }
 
-export function PopularProductsGrid({ items }: Props) {
+export function PopularProductsGrid({
+  items,
+  title = "Produits populaires",
+  subtitle = "Les plus scannés par la communauté VerifScan",
+  sectionId = "produits-populaires",
+  showViewAll = true,
+  emptyMessage = "Aucun produit dans cette sélection pour le moment.",
+}: Props) {
+  const titleId = `${sectionId}-title`;
   return (
     <section
-      id="produits-populaires"
+      id={sectionId}
       className="bg-[#F7F8FA] py-12 sm:py-16"
-      aria-labelledby="popular-products-title"
+      aria-labelledby={titleId}
     >
       <div className="mx-auto max-w-[1320px] px-4 sm:px-6 lg:px-8">
         <div className="mb-6 flex items-end justify-between">
           <div>
             <h2
-              id="popular-products-title"
+              id={titleId}
               className="font-display text-[24px] font-bold text-[#1A1A1A] sm:text-[28px]"
             >
-              Produits populaires
+              {title}
             </h2>
-            <p className="mt-1 text-sm text-[#7A7A7A]">
-              Les plus scannés par la communauté VerifScan
-            </p>
+            {subtitle && (
+              <p className="mt-1 text-sm text-[#7A7A7A]">{subtitle}</p>
+            )}
           </div>
-          <Link
-            href="/produits"
-            className="hidden items-center gap-1 text-sm font-semibold text-[#3BB77E] hover:underline sm:inline-flex"
-          >
-            Voir tout
-            <span aria-hidden>→</span>
-          </Link>
+          {showViewAll && (
+            <Link
+              href="/produits"
+              className="hidden items-center gap-1 text-sm font-semibold text-[#3BB77E] hover:underline sm:inline-flex"
+            >
+              Voir tout
+              <span aria-hidden>→</span>
+            </Link>
+          )}
         </div>
 
-        {/* Bigger cards: 2 cols mobile, 3 sm, 4 lg (down from 5) with
-            larger gap so each card + image is visibly bigger. */}
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4 lg:gap-6">
-          {items.map((item) => (
-            <ProductCard key={item.id} item={item} />
-          ))}
-        </div>
+        {items.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-[#E0E0E0] bg-white py-16 text-center">
+            <p className="text-sm text-[#7A7A7A]">{emptyMessage}</p>
+          </div>
+        ) : (
+          <>
+            {/* 3 cols on desktop (down from 4) for even bigger images.
+                2 cols mobile, 3 sm + lg. */}
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-5 lg:grid-cols-3 lg:gap-6">
+              {items.map((item) => (
+                <ProductCard key={item.id} item={item} />
+              ))}
+            </div>
 
-        {/* Mobile CTA */}
-        <div className="mt-6 text-center sm:hidden">
-          <Link
-            href="/produits"
-            className="inline-flex items-center gap-1 rounded-lg border border-[#3BB77E] px-6 py-2.5 text-sm font-semibold text-[#3BB77E]"
-          >
-            Voir tout le catalogue
-            <span aria-hidden>→</span>
-          </Link>
-        </div>
+            {/* Mobile CTA */}
+            {showViewAll && (
+              <div className="mt-6 text-center sm:hidden">
+                <Link
+                  href="/produits"
+                  className="inline-flex items-center gap-1 rounded-lg border border-[#3BB77E] px-6 py-2.5 text-sm font-semibold text-[#3BB77E]"
+                >
+                  Voir tout le catalogue
+                  <span aria-hidden>→</span>
+                </Link>
+              </div>
+            )}
+          </>
+        )}
       </div>
     </section>
   );

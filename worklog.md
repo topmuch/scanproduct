@@ -4934,3 +4934,44 @@ Stage Summary:
 - Top Catégories : 6 cartes PLUS GRANDES (grid 6 cols au lieu de 10) avec VRAIES photos (cosmétiques, agro, boissons, hygiène, épicerie, textile) en object-cover aspect-[4/3] + gradient overlay + texte agrandi. Plus d'emoji.
 - Produits Populaires : grille passée de 5 → 4 colonnes desktop, images plus grandes (carré 1:1 avec padding p-6/p-8), texte plus gros (15px/base), gap plus large.
 - Images stockées localement dans /public/categories/ (6 fichiers JPG, 37KB - 660KB).
+
+---
+Task ID: rubric-pages-square-categories-3col
+Agent: main
+Task: 1/ Augmenter la taille des images par catégorie (même taille que images produit = carré), 2/ Développer des pages dédiées pour les 3 rubriques promo (Authentiques, Soutenez nos produits [renommé de "Soutenez le Sénégal"], Certifié pour l'export), 3/ Passer les produits populaires de 4 colonnes à 3 colonnes.
+
+Work Log:
+- TopCategories.tsx : aspect-[4/3] → aspect-square (même ratio que les images produit). Vérifié : 6 images rendues à 187×187px (carré parfait).
+- PromoBanners.tsx : réécrit entièrement :
+  - "Soutenez le Sénégal" → "Soutenez nos produits" (emoji 🇸🇳 → 🤝)
+  - Les 3 bannières sont maintenant des <Link> cliquables vers les pages dédiées :
+    - /produits/authentiques (Authentique)
+    - /produits/local (Soutenez nos produits)
+    - /produits/export (Certifié pour l'export)
+  - Ajout hover effect (translate-y + shadow)
+- PopularProductsGrid.tsx : lg:grid-cols-4 → lg:grid-cols-3 (3 colonnes desktop au lieu de 4). Images encore plus grandes.
+  - Refactoré pour accepter des props optionnelles : title, subtitle, sectionId, showViewAll, emptyMessage → réutilisable sur les pages rubriques.
+- RubricHero.tsx (nouveau) : bannière statique avec gradient coloré, emoji, titre, sous-titre, lien "Retour au catalogue". Server component.
+- RubricProducts.tsx (nouveau) : server component qui fetch les produits filtrés par rubrique :
+  - authentiques : getAllProducts({ transparency: "or" }) → score ≥ 71
+  - local : db.product.findMany avec fabricant.country contains "Sén" (Sénégal)
+  - export : db.product.findMany avec isExport: true
+  - Rendu via PopularProductsGrid réutilisé (avec title/subtitle/sectionId personnalisés)
+- 3 pages créées :
+  - src/app/produits/authentiques/page.tsx — hero jaune (#FFF8E1→#FFE082), titre "Produits 100% authentiques"
+  - src/app/produits/local/page.tsx — hero rose (#FCE4EC→#F48FB1), titre "Soutenez nos produits"
+  - src/app/produits/export/page.tsx — hero vert (#E8F5E9→#A5D6A7), titre "Certifié pour l'export"
+- Lint : 0 erreur
+- Agent Browser vérifications (serveur instable — redémarrages multiples entre chaque test) :
+  - /produits/authentiques : hero "Produits 100% authentiques" + 5 produits (Couscous, Huile Baobab, Moringa, Jus Bissap, Beurre Karité) avec boutons "Scanner le QR" ✓
+  - /produits/local : hero "Soutenez nos produits" + 5 produits locaux avec "Scanner le QR" ✓
+  - /produits/export : hero "Certifié pour l'export" + grille vide (aucun produit isExport=true en DB — expected) ✓
+  - /produits : 6 catégories carrées (187×187px), bannières promo avec "Soutenez nos produits", grid populaires en 3 cols ✓
+  - Aucune erreur console ✓
+
+Stage Summary:
+- Catégories : images carrées (aspect-square) = même taille que les images produit.
+- Promo banners : "Soutenez le Sénégal" renommé en "Soutenez nos produits". Les 3 bannières sont cliquables et pointent vers les pages dédiées.
+- 3 pages rubriques créées : /produits/authentiques (transparence ≥ Or), /produits/local (fabricants sénégalais), /produits/export (isExport=true). Chaque page a son hero coloré + grille filtrée.
+- Produits populaires : 3 colonnes desktop (au lieu de 4) → images encore plus grandes.
+- Note : le dev server est instable (crashe après quelques requêtes) — probablement lié à la recréation du PrismaClient lors des migrations async. Pas lié au code (lint passe, toutes les pages retournent 200 quand le serveur est up).

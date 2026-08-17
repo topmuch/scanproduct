@@ -78,8 +78,8 @@ export async function TopCategories() {
                 href={`/produits?category=${encodeURIComponent(cat.slug)}`}
                 className="group flex flex-col overflow-hidden rounded-xl border border-[#ECECEC] bg-white transition-all duration-200 hover:-translate-y-1.5 hover:border-[#3BB77E]/40 hover:shadow-lg hover:shadow-[#3BB77E]/10"
               >
-                {/* Real image — taller aspect (4:3) so the photo is visible */}
-                <div className="relative aspect-[4/3] w-full overflow-hidden bg-[#F7F8FA]">
+                {/* Real image — same size as product images (1:1 square) */}
+                <div className="relative aspect-square w-full overflow-hidden bg-[#F7F8FA]">
                   {img ? (
                     <img
                       src={img}
