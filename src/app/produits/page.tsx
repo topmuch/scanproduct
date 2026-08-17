@@ -29,11 +29,12 @@ export const metadata: Metadata = {
 };
 
 export default function CatalogPage() {
-  // pt-20 compensates the fixed landing Header (h-20 = 80px).
+  // No top padding here — CatalogHero has its own pt-16 lg:pt-20 so the dark
+  // hero extends under the fixed Header (white text remains visible on dark).
   return (
     <div className="relative flex min-h-screen flex-col bg-white">
       <Header />
-      <main className="flex-1 pt-20 lg:pt-20">
+      <main className="flex-1">
         {/*
          * Page Catalogue — design marketplace (Nest grocery style).
          *

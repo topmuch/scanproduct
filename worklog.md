@@ -5131,3 +5131,25 @@ Stage Summary:
 - Imports ChevronLeft/ChevronRight nettoyés
 - Dots, autoplay et navigation clavier conservés
 - Pas de regression: les 2 pages retournent 200 et le lint est propre
+
+---
+Task ID: fix-catalog-menu-white
+Agent: main
+Task: Le menu de la page catalogue (/produits) n'est pas visible — il s'affiche en blanc sur fond blanc
+
+Work Log:
+- Analyse du composant Header.tsx : le header fixed affiche du texte blanc quand non-scrollé (top de page), texte foncé quand scrollé
+- Comparaison homepage vs catalogue :
+  - Homepage (src/app/page.tsx) : <main class="flex-1"> SANS pt-20, et Hero.tsx a pt-16 lg:pt-20 INTERNE → le hero sombre s'étend sous le header fixe → texte blanc visible
+  - Catalogue (src/app/produits/page.tsx) : <main class="flex-1 pt-20 lg:pt-20"> AVEC pt-20, et CatalogHero.tsx SANS pt interne → 80px de fond BLANC entre le header et le hero sombre → texte blanc invisible sur blanc
+- Fix appliqué :
+  1. src/app/produits/page.tsx : <main className="flex-1 pt-20 lg:pt-20"> → <main className="flex-1"> (suppression du pt-20)
+  2. src/components/landing/CatalogHero.tsx : ajout de pt-16 lg:pt-20 sur la section pour que le hero sombre s'étende sous le header fixe
+  3. Mise à jour du commentaire explicatif
+- Lint propre, GET /produits → 200, GET / → 200
+- Vérification HTML : le CatalogHero a maintenant class="relative w-full overflow-hidden bg-[#0a0a0a] pt-16 lg:pt-20", et le main du catalogue est "flex-1" (sans pt-20)
+- 14 occurrences de text-white dans le HTML du catalogue (nav links + CTAs du header) — le texte blanc est maintenant sur fond sombre = visible
+
+Stage Summary:
+- Le menu de la page catalogue est maintenant visible : le hero sombre s'étend sous le header fixe (comme sur la homepage), le texte blanc du menu est lisible
+- Structure alignée avec la homepage (pt-16 lg:pt-20 interne au hero, pas de pt-20 sur le main)

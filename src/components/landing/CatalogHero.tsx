@@ -98,7 +98,7 @@ export function CatalogHero() {
 
   return (
     <section
-      className="relative w-full overflow-hidden bg-[#0a0a0a]"
+      className="relative w-full overflow-hidden bg-[#0a0a0a] pt-16 lg:pt-20"
       aria-roledescription="carousel"
       aria-label="Catalogue VerifScan"
     >
