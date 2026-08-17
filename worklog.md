@@ -4894,3 +4894,43 @@ Stage Summary:
 - Page `/produits` : nouveau CatalogHero en haut (slider image plein écran PLUS HAUT 480-640px + bannière overlay avec h1 "Scannez. Vérifiez. Faites confiance." + CTA "Découvrir les produits" et "Devenir partenaire").
 - Images des cartes produits agrandies partout : PopularProductsGrid (4:5 portrait), DiscoverCard (4:5), ExpiringCard (4:5), SliderCard (carré 1:1 + padding p-7), TabRow mini-image (80x80 au lieu de 60x60).
 - Les photos produits sont maintenant beaucoup plus visibles et le hero du catalogue donne un impact visuel fort dès l'arrivée.
+
+---
+Task ID: bigger-categories-real-images-popular
+Agent: main
+Task: Sur la page /produits : 1/ augmenter la taille des catégories, 2/ mettre de VRAIES images sur les catégories (pas d'emoji), 3/ augmenter la taille des produits populaires.
+
+Work Log:
+- Recherche d'images réelles via image-search skill (z-ai CLI) pour les 6 catégories :
+  - Cosmétiques → photo de produits cosmétiques/skincare
+  - Agro-alimentaire → photo de cultures/légumes frais
+  - Boissons → photo de boissons/jus
+  - Hygiène → photo de savon/produits d'hygiène
+  - Épicerie → photo de produits d'épicerie
+  - Textile → photo de tissu africain
+  - Première tentative : 6 requêtes en parallèle → 429 (rate limit) sur 4 d'entre elles
+  - Retry séquentiel avec délais de 8s → 6/6 succès
+- Téléchargement des 6 images vers public/categories/<slug>.jpg (curl -sL)
+- Réécriture de src/components/landing/TopCategories.tsx :
+  - Ajout d'une map CATEGORY_IMAGE[slug] → /categories/<slug>.jpg
+  - Cartes PLUS GRANDES : grid passé de lg:grid-cols-10 → lg:grid-cols-6 (6 catégories au lieu de 10)
+  - VRAIE IMAGE : <img object-cover> dans un aspect-[4/3] avec gradient overlay pour la lisibilité
+  - Fallback emoji si pas d'image pour le slug
+  - Padding texte augmenté : p-3 → p-3 sm:p-4
+  - Texte nom catégorie plus gros : text-[11px] → text-[13px] sm:text-sm font-bold
+- Agrandissement des Produits Populaires (PopularProductsGrid.tsx) :
+  - Grid : lg:grid-cols-5 → lg:grid-cols-4 (cartes plus larges), gap-3/4 → gap-4/5/6
+  - Image : aspect-[4/5] → aspect-square (plus grand), padding p-5/sm:p-6 → p-6/sm:p-8
+  - Body : p-3 sm:p-4 → p-4 sm:p-5, gap-1.5 → gap-2
+  - Titre produit : text-[13px] sm:text-sm → text-[15px] sm:text-base
+- Lint : `bun run lint` — 0 erreur
+- Agent Browser vérifications :
+  - 6 cartes catégories avec vraies images (naturalWidth 800-2048px, complete=true pour les 6) ✓
+  - Section "Produits populaires" rendue avec cartes plus grandes ✓
+  - Aucune erreur console ✓
+  - GET /produits 200, aucune erreur runtime ✓
+
+Stage Summary:
+- Top Catégories : 6 cartes PLUS GRANDES (grid 6 cols au lieu de 10) avec VRAIES photos (cosmétiques, agro, boissons, hygiène, épicerie, textile) en object-cover aspect-[4/3] + gradient overlay + texte agrandi. Plus d'emoji.
+- Produits Populaires : grille passée de 5 → 4 colonnes desktop, images plus grandes (carré 1:1 avec padding p-6/p-8), texte plus gros (15px/base), gap plus large.
+- Images stockées localement dans /public/categories/ (6 fichiers JPG, 37KB - 660KB).

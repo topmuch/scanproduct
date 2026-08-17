@@ -113,7 +113,9 @@ export function PopularProductsGrid({ items }: Props) {
           </Link>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-5">
+        {/* Bigger cards: 2 cols mobile, 3 sm, 4 lg (down from 5) with
+            larger gap so each card + image is visibly bigger. */}
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4 lg:gap-6">
           {items.map((item) => (
             <ProductCard key={item.id} item={item} />
           ))}
@@ -146,9 +148,9 @@ function ProductCard({ item }: { item: PopularProductItem }) {
 
   return (
     <div className="group flex h-full flex-col overflow-hidden rounded-xl border border-[#ECECEC] bg-white transition-all duration-300 hover:-translate-y-1 hover:border-[#3BB77E]/30 hover:shadow-lg hover:shadow-[#3BB77E]/5">
-      {/* Image — taller than before (4:5 portrait) so the product photo
-          really shines. p-6 gives more breathing room around the image. */}
-      <div className="relative aspect-[4/5] overflow-hidden bg-[#F7F8FA] sm:aspect-[5/6]">
+      {/* Image — bigger area: 1:1 square with generous padding so the
+          product photo is clearly visible (cards are now 4 cols, not 5). */}
+      <div className="relative aspect-square overflow-hidden bg-[#F7F8FA]">
         {/* Badge top-left */}
         {badge && (
           <span
@@ -177,7 +179,7 @@ function ProductCard({ item }: { item: PopularProductItem }) {
           <img
             src={item.imageUrl}
             alt={item.name}
-            className="relative z-[1] h-full w-full object-contain p-5 transition-transform duration-500 group-hover:scale-110 sm:p-6"
+            className="relative z-[1] h-full w-full object-contain p-6 transition-transform duration-500 group-hover:scale-110 sm:p-8"
             loading="lazy"
           />
         ) : (
@@ -192,15 +194,15 @@ function ProductCard({ item }: { item: PopularProductItem }) {
         )}
       </div>
 
-      {/* Body */}
-      <div className="flex flex-1 flex-col gap-1.5 p-3 sm:p-4">
+      {/* Body — more padding + bigger text now that cards are larger */}
+      <div className="flex flex-1 flex-col gap-2 p-4 sm:p-5">
         {/* Category */}
         <span className="text-[10px] font-semibold uppercase tracking-wide text-[#3BB77E]">
           {item.category ?? "Produit"}
         </span>
 
-        {/* Name */}
-        <h3 className="line-clamp-2 text-[13px] font-bold leading-snug text-[#1A1A1A] sm:text-sm">
+        {/* Name — bigger text (was 13px/sm) */}
+        <h3 className="line-clamp-2 text-[15px] font-bold leading-snug text-[#1A1A1A] sm:text-base">
           {item.name}
         </h3>
 
