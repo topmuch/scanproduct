@@ -5211,3 +5211,71 @@ Stage Summary:
 - La barre d'adresse du navigateur mobile sera maintenant bleue VerifScan (#2563EB) sur toutes les pages, y compris quand quelqu'un scanne un QR code et atterrit sur /p/[lotId]
 - Effet app-like même sans installation PWA
 - Le theme_color du manifest.json (#2563EB) était déjà en place pour la PWA installée ; maintenant le navigateur mobile l'applique aussi en mode navigation
+
+---
+Task ID: pwa-improved
+Agent: main
+Task: Option 2 — Améliorer la PWA VerifScan (sans appli native) : service worker offline, manifest enrichi, bannière d'installation, page offline
+
+Work Log:
+1. Service Worker (public/sw.js, 168 lignes) :
+   - Cache versionné (verifscan-v1-20260817)
+   - App shell pré-cacheé à l'install : /, /produits, /offline, manifest, icones (10 ressources)
+   - Stratégies :
+     * Navigation (HTML) : network-first → cache → page /offline
+     * API (/api/*) : network-first avec fallback cache
+     * Assets same-origin (_next/static, fonts) : stale-while-revalidate
+     * Images cross-origin : cache-first
+   - skipWaiting + clients.claim pour updates immédiats
+   - Message handler "SKIP_WAITING"
+
+2. ServiceWorkerRegister (src/components/pwa/ServiceWorkerRegister.tsx) :
+   - Composant client, monté dans layout.tsx
+   - Enregistre /sw.js avec scope "/"
+   - Vérifie les mises à jour toutes les heures (reg.update)
+   - Attend le load event en dev pour ne pas ralentir Turbopack
+
+3. InstallPrompt (src/components/pwa/InstallPrompt.tsx, ~200 lignes) :
+   - Chrome/Edge/Android : capte beforeinstallprompt → bannière "Installer VerifScan" avec bouton prompt()
+   - iOS Safari : détecte iOS + Safari (non standalone) → instructions "Partager → Sur l'écran d'accueil"
+   - Déjà installé (display-mode: standalone ou navigator.standalone) → n'affiche rien
+   - Dismiss avec localStorage (7 jours, clé "verifscan_pwa_dismissed")
+   - Animation Framer Motion, accent gradient bleu→vert en haut
+   - Délais d'apparition (4s Android, 6s iOS) pour ne pas être intrusif
+
+4. Manifest enrichi (public/manifest.json) :
+   - Ajout id: "/"
+   - Ajout categories: ["shopping", "lifestyle", "utilities"]
+   - Ajout lang: "fr", dir: "ltr"
+   - Ajout display_override: ["standalone", "minimal-ui"]
+   - Ajout orientation: "portrait-primary"
+   - Ajout start_url: "/?source=pwa" (tracking installations PWA)
+   - Ajout 3 shortcuts (actions rapides long-press icône) :
+     * Catalogue → /produits
+     * Mes scans → /?scans=1
+     * Devenir partenaire → /register
+   - Ajout 1 screenshot (hero-slide-1.webp, form_factor wide) pour install prompt riche
+
+5. Page offline (src/app/offline/page.tsx) :
+   - force-static (pré-rendue à la build, dispo depuis le cache SW)
+   - Icône WifiOff, titre "Vous êtes hors ligne"
+   - Boutons "Réessayer" + "Voir le catalogue"
+   - Astuce installation PWA pour accès hors ligne
+
+6. layout.tsx :
+   - Monté ServiceWorkerRegister + InstallPrompt dans <body>
+   - viewport themeColor "#2563EB" (déjà ajouté au commit précédent)
+
+Vérifications :
+- Lint propre
+- GET / 200, GET /sw.js 200 (7255 bytes, content-type application/javascript), GET /manifest.json 200 (JSON valide), GET /offline 200
+- Manifest : 4 icônes (2 any + 2 maskable), 3 shortcuts, 1 screenshot, display_override, orientation, start_url avec tracking
+- SW : stratégies multiples (navigation/API/assets/images), cache versionné, auto-update
+
+Stage Summary:
+- PWA VerifScan maintenant installable + offline
+- L'utilisateur peut installer l'app via bannière (Android/Chrome) ou instructions iOS
+- Le service worker cache l'app shell + pages visitées → navigation hors ligne possible
+- 3 raccourcis (Catalogue, Mes scans, Partenaire) accessibles via long-press sur l'icône
+- Page offline dédiée avec bouton retry
+- Pas de backend push encore (nécessiterait VAPID + service push) — possible évolution future

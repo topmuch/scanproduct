@@ -4,6 +4,8 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import { getFaviconUrl } from "@/lib/settings";
+import { ServiceWorkerRegister } from "@/components/pwa/ServiceWorkerRegister";
+import { InstallPrompt } from "@/components/pwa/InstallPrompt";
 
 /**
  * Self-hosted fonts (next/font/local).
@@ -135,6 +137,8 @@ export default function RootLayout({
         className={`${poppins.variable} ${inter.variable} font-sans antialiased bg-white text-[#111827]`}
       >
         {children}
+        <ServiceWorkerRegister />
+        <InstallPrompt />
         <Toaster />
         <SonnerToaster position="top-right" richColors closeButton />
       </body>

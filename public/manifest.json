@@ -1,7 +1,11 @@
 {
-  "name": "VerifScan",
+  "id": "/",
+  "name": "VerifScan — Traçabilité alimentaire",
   "short_name": "VerifScan",
-  "description": "Traçabilité alimentaire par QR code",
+  "description": "Passeport numérique pour vos produits. Scannez un QR code pour vérifier l'authenticité, la traçabilité et l'origine de vos produits alimentaires.",
+  "categories": ["shopping", "lifestyle", "utilities"],
+  "lang": "fr",
+  "dir": "ltr",
   "icons": [
     {
       "src": "/icon-192.png",
@@ -28,9 +32,43 @@
       "purpose": "maskable"
     }
   ],
+  "screenshots": [
+    {
+      "src": "/hero-slide-1.webp",
+      "sizes": "1956x804",
+      "type": "image/webp",
+      "form_factor": "wide",
+      "label": "Scan d'un produit VerifScan"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Catalogue",
+      "short_name": "Catalogue",
+      "description": "Parcourez les produits authentiques vérifiés",
+      "url": "/produits",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Mes scans",
+      "short_name": "Scans",
+      "description": "Historique de vos produits scannés",
+      "url": "/?scans=1",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Devenir partenaire",
+      "short_name": "Partenaire",
+      "description": "Créez un compte fabricant",
+      "url": "/register",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    }
+  ],
   "theme_color": "#2563EB",
   "background_color": "#ffffff",
   "display": "standalone",
-  "start_url": "/",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "portrait-primary",
+  "start_url": "/?source=pwa",
   "scope": "/"
 }
