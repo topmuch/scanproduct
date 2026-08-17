@@ -4630,3 +4630,46 @@ Stage Summary:
 - Les deux fonctionnalités sont opérationnelles et intégrées à la page de scan produit.
 - Le consommateur voit maintenant une notification visuelle après 10s l'invitant à laisser un avis, et un bouton bien visible pour signaler un produit périmé en rayon.
 - Les signalements créent des tickets (visibles par le superadmin) + notifient le fabricant dans son dashboard.
+
+---
+Task ID: 22
+Agent: main (Z.ai Code)
+Task: Synchroniser version GitHub et locale + ajouter pays Europe/Amérique du Nord dans la création de LOT + ajouter "Eau" dans la catégorie Boisson (création produit).
+
+Work Log:
+- `git fetch origin` puis comparaison : le HEAD local (9e3a9f4) avait divergé de origin/main (7784dcb).
+  Le commit local supprimait `src/app/api/upload/route.ts` qui est encore nécessaire en production
+  (servir les images via /api/uploads ET conserver /api/upload pour compat). Décision : la version
+  GitHub est l'historique de référence (Tasks 16-21 détaillées) car c'est ce qui est déployé.
+- `git reset --hard origin/main` → local maintenant à 7784dcb, sync parfait avec GitHub.
+- Modification 1 — Pays de vente étendus dans le formulaire LOT :
+  * `src/lib/fabricant-types.ts` : ajout de `PAYS_INTERNATIONAUX = ["Europe", "Amérique du Nord"]`
+    et de `PAYS_VENTE = [...PAYS_CEDEAO, ...PAYS_INTERNATIONAUX]` (17 pays au total).
+    Aucune validation stricte côté API — `Lot.salesCountries` reste un JSON string array, donc
+    la liste peut être étendue sans modifier le schéma Prisma.
+  * `src/components/fabricant/pages/LotsPage.tsx` :
+    - Import mis à jour : `PAYS_CEDEAO, PAYS_INTERNATIONAUX, PAYS_VENTE`
+    - `onSelectAllPays` utilise maintenant `PAYS_VENTE` (sélectionne 17 au lieu de 15)
+    - Compteur "X / 17 sélectionnés" (au lieu de "X / 15")
+    - Grille des pays scindée en 2 sections visuelles :
+      > "CEDEAO (Afrique de l'Ouest)" : 15 pays
+      > "International" : Europe, Amérique du Nord
+- Modification 2 — Ajout de "Eau" comme option dans le select `beverageType`
+  du schéma `Boissons & Jus` (`src/lib/product-schemas.ts`).
+  L'option "Eau" est placée en première position (valeur `"eau"`) devant Jus, Soda, etc.
+- Lint : `bun run lint` → ✓ 0 erreur
+- Vérification via Agent Browser (avec seed DB + NextAuth_SECRET configuré en local) :
+  * Login fabricant (sarine@biocosmetique.sn) → ✓ redirection /dashboard
+  * Création LOT → étape "Informations" → section "Pays de vente *" affiche :
+    - "CEDEAO (AFRIQUE DE L'OUEST)" + 15 cases
+    - "INTERNATIONAL" + cases "Europe" et "Amérique du Nord"
+    - Compteur "3 / 17 sélectionnés" au chargement, passe à "17 / 17" après "Tout sélectionner" ✓
+  * Création produit → métier "Boissons & Jus" → étape "Spécificités" → select "Type de boisson"
+    affiche maintenant : Eau, Jus, Soda, Boisson énergisante, Thé, Café, Boisson lactée ✓
+
+Stage Summary:
+- Local resynchronisé avec origin/main (HEAD 7784dcb) — plus de divergence.
+- Formulaire de LOT : 2 nouvelles régions (Europe, Amérique du Nord) disponibles dans une
+  section "International" séparée, et le compteur global passe de 15 à 17.
+- Création produit : "Eau" est maintenant sélectionnable comme type de boisson (1ère option).
+- Aucune modification de schéma DB ni d'API requise — l'ajout est purement côté UI/constantes.

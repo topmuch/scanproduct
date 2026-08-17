@@ -21,6 +21,8 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import {
   PAYS_CEDEAO,
+  PAYS_INTERNATIONAUX,
+  PAYS_VENTE,
   formatNombre,
   type Lot,
   type Product,
@@ -1156,7 +1158,7 @@ function CreationModal({
                   }}
                   paysVente={paysVente}
                   onTogglePays={togglePays}
-                  onSelectAllPays={() => setPaysVente(new Set(PAYS_CEDEAO))}
+                  onSelectAllPays={() => setPaysVente(new Set(PAYS_VENTE))}
                   onDeselectAllPays={() => setPaysVente(new Set())}
                   notes={notes}
                   onNotes={setNotes}
@@ -1612,27 +1614,60 @@ function Step2Info(props: {
             Tout désélectionner
           </button>
           <span className="ml-auto text-[12px] text-[#6B7280]">
-            {props.paysVente.size} / {PAYS_CEDEAO.length} sélectionnés
+            {props.paysVente.size} / {PAYS_VENTE.length} sélectionnés
           </span>
         </div>
-        <div className="grid grid-cols-2 gap-2 rounded-lg border border-[#E5E7EB] p-3 sm:grid-cols-3">
-          {PAYS_CEDEAO.map((p) => {
-            const checked = props.paysVente.has(p);
-            return (
-              <label
-                key={p}
-                className="flex cursor-pointer items-center gap-2 text-[13px] text-[#374151]"
-              >
-                <input
-                  type="checkbox"
-                  checked={checked}
-                  onChange={() => props.onTogglePays(p)}
-                  className="h-4 w-4 rounded border-[#D1D5DB] text-[#2563EB] focus:ring-[#2563EB]"
-                />
-                {p}
-              </label>
-            );
-          })}
+        <div className="space-y-3">
+          {/* CEDEAO */}
+          <div>
+            <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-[#6B7280]">
+              CEDEAO (Afrique de l'Ouest)
+            </p>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+              {PAYS_CEDEAO.map((p) => {
+                const checked = props.paysVente.has(p);
+                return (
+                  <label
+                    key={p}
+                    className="flex cursor-pointer items-center gap-2 text-[13px] text-[#374151]"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => props.onTogglePays(p)}
+                      className="h-4 w-4 rounded border-[#D1D5DB] text-[#2563EB] focus:ring-[#2563EB]"
+                    />
+                    {p}
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+          {/* International */}
+          <div>
+            <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-[#6B7280]">
+              International
+            </p>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+              {PAYS_INTERNATIONAUX.map((p) => {
+                const checked = props.paysVente.has(p);
+                return (
+                  <label
+                    key={p}
+                    className="flex cursor-pointer items-center gap-2 text-[13px] text-[#374151]"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => props.onTogglePays(p)}
+                      className="h-4 w-4 rounded border-[#D1D5DB] text-[#2563EB] focus:ring-[#2563EB]"
+                    />
+                    {p}
+                  </label>
+                );
+              })}
+            </div>
+          </div>
         </div>
       </Field>
 

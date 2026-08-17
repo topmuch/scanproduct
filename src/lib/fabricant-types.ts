@@ -259,6 +259,18 @@ export const PAYS_CEDEAO = [
   "Togo", "Sierra Leone", "Liberia", "Cap-Vert", "Ghana",
 ];
 
+// Régions internationales disponibles à la vente (en plus de la CEDEAO).
+// Stockées telles quelles dans Lot.salesCountries — pas de validation stricte
+// côté API, ce qui permet d'étendre la liste sans modifier le schéma.
+export const PAYS_INTERNATIONAUX = [
+  "Europe",
+  "Amérique du Nord",
+];
+
+// Liste combinée utilisée par le formulaire de création de LOT pour le
+// sélecteur « Tout sélectionner » et le compteur global.
+export const PAYS_VENTE = [...PAYS_CEDEAO, ...PAYS_INTERNATIONAUX];
+
 export const PLANS = [
   { id: "starter", nom: "Starter", prixMensuel: 10000, prixAnnuel: 100000, produits: "5", qrCodes: "500/mois", statistiques: "Basiques", support: "Email", fonctionnalites: [] as string[], actuel: false },
   { id: "pro", nom: "Pro", prixMensuel: 25000, prixAnnuel: 252000, produits: "Illimités", qrCodes: "5 000/mois", statistiques: "Avancées", support: "Prioritaire", fonctionnalites: [] as string[], actuel: true },

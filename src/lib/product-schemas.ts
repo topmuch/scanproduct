@@ -2380,6 +2380,7 @@ const BOISSONS: ProductSchema = {
       type: "select",
       required: true,
       options: [
+        { value: "eau", label: "Eau" },
         { value: "jus", label: "Jus" },
         { value: "soda", label: "Soda" },
         { value: "boisson-energisante", label: "Boisson énergisante" },
