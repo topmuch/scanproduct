@@ -5069,3 +5069,44 @@ Stage Summary:
 - Manifest PWA mis à jour avec 4 icônes (any + maskable) + start_url + scope.
 - Quand un utilisateur scanne un QR code produit → arrive sur /p/[lotId] → voit l'icône VerifScan dans l'onglet navigateur (favicon) + barre adresse (si PWA installée, icône full-bleed sur écran d'accueil Android grace au maskable).
 - Configuration layout.tsx existante (generateMetadata) fonctionnelle sans modification — getFaviconUrl() retourne null (DB vide) → fallback /icon.png qui est maintenant la nouvelle icône.
+
+---
+Task ID: homepage-hero-overlay-like-catalog
+Agent: main
+Task: Rendre la bannière (Hero) de la page d'accueil identique à celle du catalogue /produits (CatalogHero) : même taille, même design avec overlay et les écritures.
+
+Work Log:
+- Lecture de src/components/landing/Hero.tsx (accueil) : ancien design avec aspect-[1956/804] (très large/plat ~2.4:1) + texte EN DESSOUS du slider dans un div séparé py-12 + 1 seul CTA bleu.
+- Lecture de src/components/landing/CatalogHero.tsx (catalogue, cible) : design overlay avec min-h-[480px] sm:min-h-[560px] lg:min-h-[640px] + gradient sombre from-black/80 via-black/35 to-black/25 + badge + h1 + paragraphe + 2 CTAs centrés sur l'image.
+- Réécriture complète de Hero.tsx pour adopter EXACTEMENT la structure de CatalogHero :
+  * Section : bg-[#0a0a0a] + pt-16 lg:pt-20 (pour clear le header fixed) + overflow-hidden
+  * Slider : min-h-[480px] sm:min-h-[560px] lg:min-h-[640px] (IDENTIQUE à CatalogHero)
+  * Gradient overlay : from-black/80 via-black/35 to-black/25 (IDENTIQUE à CatalogHero)
+  * Overlay div z-[4] avec pointer-events-none + inner pointer-events-auto max-w-3xl text-center
+  * Badge : 'Passeport numérique' avec icône ShieldCheck (vs 'Catalogue authentique' + QrCode sur le catalogue)
+  * h1 : 'Garantissez l'authenticité de vos produits en un scan' (conservé) avec classes IDENTIQUES à CatalogHero (mt-5 font-display text-[30px] sm:text-[40px] lg:text-[52px] text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.45)])
+  * Paragraphe : 'Le passeport numérique qui renforce la confiance...' (conservé) avec classes IDENTIQUES (text-white/90 drop-shadow-[0_1px_8px_rgba(0,0,0,0.5)] sm:text-[18px] lg:text-[20px])
+  * 2 CTAs (comme CatalogHero) :
+    - Primaire : 'Créer votre compte gratuit' → /register (bleu #2563EB, conservé homepage identity)
+    - Secondaire : 'Découvrir le catalogue' → /produits (NOUVEAU, transparent bordé white/40 backdrop-blur)
+  * Mêmes animations Framer Motion (fade + translate y avec mêmes delays 0.05/0.15/0.3/0.45)
+  * Flèches + dots IDENTIQUES à CatalogHero (même positionnement, même styling)
+- Imports mis à jour : ajout de ShieldCheck et QrCode (lucide-react) pour les badges/CTAs.
+- Lint : `bun run lint` — 0 erreur.
+- Vérification HTML rendu (curl / → /tmp/home.html, 174KB) :
+  * <section id="accueil" class="relative w-full overflow-hidden bg-[#0a0a0a] pt-16 lg:pt-20"> ✓
+  * Badge 'Passeport numérique' présent ✓
+  * <h1> avec classes mt-5 font-display text-[30px] sm:text-[40px] lg:text-[52px] text-white drop-shadow ✓
+  * min-h-[480px] sm:min-h-[560px] lg:min-h-[640px] (IDENTIQUE à CatalogHero) ✓
+  * Gradient from-black/80 via-black/35 to-black/25 (IDENTIQUE) ✓
+  * 'Créer votre compte gratuit' présent (CTA primaire) ✓
+  * 'Découvrir le catalogue' présent (CTA secondaire, nouveau) ✓
+  * Aucune erreur runtime/hydration dans dev.log ✓
+- Commit 628d017 poussé sur origin/main.
+
+Stage Summary:
+- Hero de la page d'accueil RÉÉCRIT pour adopter EXACTEMENT le design de CatalogHero : même hauteur (480/560/640px), même overlay gradient sombre, même structure (badge + h1 + paragraphe + 2 CTAs centrés sur l'image), mêmes animations.
+- Le texte est maintenant en OVERLAY sur l'image (au lieu d'être en dessous dans un div séparé).
+- Contenu SaaS conservé (badge 'Passeport numérique', h1 'Garantissez l'authenticité...', CTA 'Créer votre compte gratuit' → /register).
+- Ajout d'un 2e CTA 'Découvrir le catalogue' → /produits (cohérent avec la séparation SaaS/catalogue).
+- Les 2 pages (accueil + catalogue) partagent maintenant le même langage visuel hero.
