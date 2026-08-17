@@ -5188,3 +5188,26 @@ Vérifications :
 Stage Summary:
 - Option A : la bannière verte "À découvrir" affiche maintenant le produit n°1 en transparence (photo, nom, marque, QR code, bouton Scanner) au lieu du texte marketing
 - Option B : les textes Réf / Blockchain / Authentique / Traçable sont maintenant visibles (glass sombre au lieu de blanc) sur le bloc de vérification en bas de page produit
+
+---
+Task ID: theme-color-browser-bar
+Agent: main
+Task: Ajouter le theme-color au niveau navigateur (barre d'adresse mobile colorée en bleu VerifScan) après confirmation utilisateur
+
+Work Log:
+- src/app/layout.tsx : ajout import de `Viewport` depuis "next"
+- Ajout de l'export `viewport` (Next.js 16 App Router — séparation metadata/viewport) :
+  - themeColor: "#2563EB" (bleu VerifScan)
+  - width: "device-width"
+  - initialScale: 1, maximumScale: 5
+- Le meta `<meta name="theme-color" content="#2563EB">` s'applique à TOUTES les pages car layout.tsx est le layout racine — y compris /p/[lotId] (page atteinte via scan QR)
+- Nettoyage du commentaire dupliqué (déplacement du bloc viewport avant le bloc generateMetadata)
+- Lint propre
+- Vérification HTML rendu :
+  - Homepage : <meta name="theme-color" content="#2563EB"/> présent ✓
+  - Page produit /p/[lotId] : <meta name="theme-color" content="#2563EB"/> présent ✓
+
+Stage Summary:
+- La barre d'adresse du navigateur mobile sera maintenant bleue VerifScan (#2563EB) sur toutes les pages, y compris quand quelqu'un scanne un QR code et atterrit sur /p/[lotId]
+- Effet app-like même sans installation PWA
+- Le theme_color du manifest.json (#2563EB) était déjà en place pour la PWA installée ; maintenant le navigateur mobile l'applique aussi en mode navigation

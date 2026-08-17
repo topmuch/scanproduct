@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
@@ -49,6 +49,19 @@ const inter = localFont({
   variable: "--font-inter",
   display: "swap",
 });
+
+/**
+ * Viewport — sets the browser address bar color on mobile so it matches the
+ * VerifScan blue brand. This applies on EVERY page (homepage, /produits and
+ * /p/[lotId] reached by scanning a QR code), giving an app-like feel even
+ * before the user installs the PWA.
+ */
+export const viewport: Viewport = {
+  themeColor: "#2563EB",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+};
 
 /**
  * Dynamic metadata — reads the custom favicon URL (if any) from the Setting
