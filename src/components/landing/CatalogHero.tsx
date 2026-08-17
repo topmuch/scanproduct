@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { ArrowRight, ChevronLeft, ChevronRight, QrCode, ShieldCheck } from "lucide-react";
+import { ArrowRight, QrCode, ShieldCheck } from "lucide-react";
 
 /**
  * CatalogHero — full-bleed banner with an auto-playing image slider.
@@ -202,24 +202,6 @@ export function CatalogHero() {
             </motion.div>
           </div>
         </div>
-
-        {/* Arrows */}
-        <button
-          type="button"
-          onClick={prev}
-          aria-label="Image précédente"
-          className="absolute left-3 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/80 text-[#111827] shadow-md backdrop-blur-sm transition-all duration-200 hover:bg-white hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3BB77E] focus-visible:ring-offset-2 sm:left-5 sm:h-12 sm:w-12 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
-        >
-          <ChevronLeft className="h-5 w-5" />
-        </button>
-        <button
-          type="button"
-          onClick={next}
-          aria-label="Image suivante"
-          className="absolute right-3 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/80 text-[#111827] shadow-md backdrop-blur-sm transition-all duration-200 hover:bg-white hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3BB77E] focus-visible:ring-offset-2 sm:right-5 sm:h-12 sm:w-12 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
-        >
-          <ChevronRight className="h-5 w-5" />
-        </button>
 
         {/* Dots */}
         <div

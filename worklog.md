@@ -5110,3 +5110,24 @@ Stage Summary:
 - Contenu SaaS conservé (badge 'Passeport numérique', h1 'Garantissez l'authenticité...', CTA 'Créer votre compte gratuit' → /register).
 - Ajout d'un 2e CTA 'Découvrir le catalogue' → /produits (cohérent avec la séparation SaaS/catalogue).
 - Les 2 pages (accueil + catalogue) partagent maintenant le même langage visuel hero.
+
+---
+Task ID: latest
+Agent: main
+Task: Enlever les flèches de défilement du slide du hero de la page d'accueil et de la page catalogue
+
+Work Log:
+- Lecture de src/components/landing/Hero.tsx — identification des 2 boutons flèches (ChevronLeft/ChevronRight) avec aria-label "Image précédente" / "Image suivante"
+- Lecture de src/components/landing/CatalogHero.tsx — même structure de 2 boutons flèches
+- Suppression des 2 boutons flèches dans Hero.tsx (lignes 224-240) + retrait de ChevronLeft/ChevronRight des imports lucide-react
+- Suppression des 2 boutons flèches dans CatalogHero.tsx (lignes 206-222) + retrait de ChevronLeft/ChevronRight des imports lucide-react
+- Conservation des dots (indicateurs de pagination), de l'autoplay et de la navigation clavier (flèches gauche/droite au clavier via onKeyDown)
+- Lint passé sans erreur
+- Vérification HTTP: GET / 200, GET /produits 200
+- Vérification contenu: grep "Image précédente" retourne 0 dans les 2 pages (flèches supprimées), grep "Sélectionner une image" retourne 1 dans les 2 pages (dots conservés)
+
+Stage Summary:
+- Flèches de navigation supprimées du hero homepage (Hero.tsx) et du hero catalogue (CatalogHero.tsx)
+- Imports ChevronLeft/ChevronRight nettoyés
+- Dots, autoplay et navigation clavier conservés
+- Pas de regression: les 2 pages retournent 200 et le lint est propre
