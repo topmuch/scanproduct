@@ -1,12 +1,5 @@
 import { Header } from "@/components/landing/Header";
 import { Hero } from "@/components/landing/Hero";
-import { TopCategories } from "@/components/landing/TopCategories";
-import { PromoBanners } from "@/components/landing/PromoBanners";
-import { CatalogSlider } from "@/components/landing/CatalogSlider";
-import { PopularProducts } from "@/components/landing/PopularProducts";
-import { DiscoverSection } from "@/components/landing/DiscoverSection";
-import { ExpiringSection } from "@/components/landing/ExpiringSection";
-import { ProductTabsSection } from "@/components/landing/ProductTabsSection";
 import { StatsBanner } from "@/components/landing/StatsBanner";
 import { HowItWorks } from "@/components/landing/HowItWorks";
 import { Features } from "@/components/landing/Features";
@@ -30,27 +23,17 @@ export default function Home() {
       <Header />
       <main className="flex-1">
         {/*
-         * Page d'accueil — hybride marketplace + SaaS.
+         * Page d'accueil — présentation SaaS de VerifScan.
          *
-         * Partie 1 — Marketplace (Nest grocery style) : Hero, catégories,
-         * bannières, nouveautés carousel, produits populaires, à découvrir,
-         * bientôt périmés, tabs listes. Donnent tout de suite accès aux vrais
-         * produits scannables, comme demandé (Option B).
+         * Le hero (slider d'images + proposition de valeur + CTA) attire
+         * l'attention, puis les sections suivantes expliquent le concept :
+         * chiffres clés, fonctionnement, fonctionnalités, démo interactive,
+         * métiers ciblés, témoignages, newsletter et appel final.
          *
-         * Partie 2 — SaaS explicatif : Stats, HowItWorks, Features, Demo,
-         * Industries, Testimonials. Expliquent ce que VerifScan apporte au-delà
-         * d'un simple catalogue.
-         *
-         * Partie 3 — Conversion : Newsletter, Features Bar, Final CTA.
+         * Le catalogue marketplace (catégories, bannières promo, nouveautés,
+         * produits populaires…) a été déplacé vers /produits.
          */}
         <Hero />
-        <TopCategories />
-        <PromoBanners />
-        <CatalogSlider />
-        <PopularProducts />
-        <DiscoverSection />
-        <ExpiringSection />
-        <ProductTabsSection />
         <StatsBanner />
         <HowItWorks />
         <Features />

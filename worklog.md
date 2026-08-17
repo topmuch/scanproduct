@@ -4830,3 +4830,33 @@ Stage Summary:
 - Compteurs à rebours live sur la section "péremption" (pause quand tab caché).
 - Toutes les données proviennent de la DB réelle (getAllProducts, lots
   expirants, catégories avec counts).
+
+---
+Task ID: homepage-split
+Agent: main
+Task: Séparer la page d'accueil (SaaS) du catalogue (marketplace). L'utilisateur a constaté que la page d'accueil avait été remplacée par la page produits (marketplace Nest). Il voulait : 1/ restaurer la page d'accueil SaaS, 2/ mettre les sections marketplace (Nouveautés inclus) sur /catalogue (route /produits), 3/ supprimer l'ancienne page combinée.
+
+Work Log:
+- Lecture de src/app/page.tsx — confirmé que la page combinait marketplace (TopCategories, PromoBanners, CatalogSlider, PopularProducts, DiscoverSection, ExpiringSection, ProductTabsSection) + SaaS (StatsBanner, HowItWorks, Features, DemoSection, IndustryCards, Testimonials, NewsletterBanner, FeaturesBar, FinalCTA)
+- Lecture de src/app/produits/page.tsx — confirmé que /produits était un catalogue séparé avec PublicHeader/PublicFooter + composants catalog/v2 (CatalogHero, CategoryFilters, ControlBar, ProductGrid)
+- Lecture de src/components/landing/Header.tsx — nav utilisait ancres `#accueil` (ne fonctionne que depuis /) + index 0 toujours actif
+- Vérification des types de composants (server vs client) via head -1
+- Étape 1 : Réécrit src/app/page.tsx — homepage SaaS uniquement (Hero + Stats + HowItWorks + Features + Demo + Industries + Testimonials + Newsletter + FeaturesBar + FinalCTA). Sections marketplace supprimées.
+- Étape 2 : Réécrit src/app/produits/page.tsx — page catalogue marketplace (Header + Footer landing + TopCategories + PromoBanners + CatalogSlider/Nouveautés + PopularProducts + DiscoverSection + ExpiringSection + ProductTabsSection + FeaturesBar). pt-20 sur main pour compenser le header fixed (h-20).
+- Étape 3 : Réécrit src/components/landing/Header.tsx — ancres changées de `#xxx` vers `/#xxx` (fonctionnent depuis n'importe quelle page), usePathname() pour highlight actif (Accueil sur /, Catalogue sur /produits), logo en Link href="/"
+- Lint : `bun run lint` — 0 erreur
+- Dev log : GET / 200 et GET /produits 200, aucune erreur runtime
+- Agent Browser vérifications :
+  - Homepage / : Hero (slider + headline + CTA) → Stats → HowItWorks → Features → Demo → Industries. Aucune section marketplace. ✓
+  - Catalogue /produits : Top Catégories → Bannières promo → Nouveautés carousel (pagination) → Produits populaires (boutons "Scanner le QR") → À découvrir → Bientôt périmés. ✓
+  - Clic "Scanner le QR" → redirige vers /p/[lotId] (ex: /p/cmsxae89h000mtr0mme2rf7ks). ✓
+  - Clic nav "Catalogue" depuis / → navigue vers /produits. ✓
+  - Vue mobile 390x844 : menu hamburger, grilles responsives. ✓
+  - Footer sticky en bas (colonnes Produit/Entreprise/Légal/Contact + réseaux sociaux). ✓
+  - Aucune erreur console. ✓
+
+Stage Summary:
+- Page d'accueil `/` restaurée en SaaS pur (Hero image slider + proposition de valeur + CTA "Créer votre compte gratuit", puis Stats, HowItWorks, Features, Demo, Industries, Testimonials, Newsletter, FeaturesBar, FinalCTA). Plus aucune section marketplace.
+- Page catalogue `/produits` maintenant au design marketplace Nest (vert #3BB77E) avec : Top Catégories, 3 bannières promo, Nouveautés (carousel CatalogSlider), Produits populaires (grille 5 col + boutons "Scanner le QR" → /p/[lotId]), À découvrir, Bientôt périmés, Listes par onglets, Features bar. Utilise le Header/Footer landing.
+- Header mis à jour : ancres `/#xxx` (fonctionnent depuis / et /produits), usePathname() highlighte "Accueil" sur / et "Catalogue" sur /produits.
+- Anciens composants catalog/v2 (CatalogHero, CategoryFilters, ControlBar, ProductGrid) et public/PublicHeader/PublicFooter conservés en place mais non utilisés sur /produits (peuvent être supprimés plus tard si non référencés ailleurs).

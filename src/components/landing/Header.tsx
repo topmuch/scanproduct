@@ -1,22 +1,27 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { Logo } from "./Logo";
 import { cn } from "@/lib/utils";
 
+// Anchor links use "/#anchor" so they work from any page (homepage and
+// /produits). When on "/", Next.js Link scrolls to the anchor without a
+// full reload. When on another page, it navigates to "/" then scrolls.
 const NAV_LINKS = [
-  { label: "Accueil", href: "#accueil" },
-  { label: "Fonctionnalités", href: "#fonctionnalites" },
-  { label: "Le concept", href: "#concept" },
-  { label: "Catalogue", href: "/produits" },
-  { label: "Métiers", href: "#metiers" },
-  { label: "Témoignages", href: "#temoignages" },
+  { label: "Accueil", href: "/#accueil", match: "/" },
+  { label: "Fonctionnalités", href: "/#fonctionnalites" },
+  { label: "Le concept", href: "/#concept" },
+  { label: "Catalogue", href: "/produits", match: "/produits" },
+  { label: "Métiers", href: "/#metiers" },
+  { label: "Témoignages", href: "/#temoignages" },
 ];
 
 export function Header() {
+  const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -35,6 +40,14 @@ export function Header() {
     };
   }, [mobileOpen]);
 
+  // Determine which nav link is active based on the current pathname.
+  const isActive = (link: (typeof NAV_LINKS)[number]) => {
+    if (link.match) return pathname === link.match;
+    // On the homepage, the first link ("Accueil") is active.
+    if (pathname === "/" && link.href === "/#accueil") return true;
+    return false;
+  };
+
   return (
     <header
       className={cn(
@@ -46,17 +59,17 @@ export function Header() {
     >
       <div className="mx-auto flex h-20 max-w-[1400px] items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo */}
-        <a href="#accueil" className="group" aria-label="VerifScan accueil">
+        <Link href="/" className="group" aria-label="VerifScan accueil">
           <Logo />
-        </a>
+        </Link>
 
         {/* Desktop nav */}
         <nav className="hidden items-center gap-1 lg:flex" aria-label="Navigation principale">
-          {NAV_LINKS.map((link, i) => {
-            const isInternal = link.href.startsWith("/");
+          {NAV_LINKS.map((link) => {
+            const active = isActive(link);
             const className = cn(
               "group relative rounded-md px-3 py-2 text-[15px] font-medium transition-colors",
-              i === 0 ? "text-[#2563EB]" : "text-[#374151] hover:text-[#2563EB]"
+              active ? "text-[#2563EB]" : "text-[#374151] hover:text-[#2563EB]"
             );
             const content = (
               <>
@@ -64,19 +77,15 @@ export function Header() {
                 <span
                   className={cn(
                     "absolute bottom-1 left-3 right-3 h-0.5 rounded-full bg-[#2563EB] transition-all duration-300",
-                    i === 0 ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                    active ? "opacity-100" : "opacity-0 group-hover:opacity-100"
                   )}
                 />
               </>
             );
-            return isInternal ? (
+            return (
               <Link key={link.href} href={link.href} className={className}>
                 {content}
               </Link>
-            ) : (
-              <a key={link.href} href={link.href} className={className}>
-                {content}
-              </a>
             );
           })}
         </nav>
@@ -141,15 +150,15 @@ export function Header() {
               </div>
 
               <nav className="flex flex-col gap-1 px-5 py-6" aria-label="Navigation mobile">
-                {NAV_LINKS.map((link, i) => {
-                  const isInternal = link.href.startsWith("/");
+                {NAV_LINKS.map((link) => {
+                  const active = isActive(link);
                   const className = cn(
                     "rounded-lg px-4 py-3 text-base font-medium transition-colors",
-                    i === 0
+                    active
                       ? "bg-[#EFF6FF] text-[#2563EB]"
                       : "text-[#374151] hover:bg-[#F9FAFB]"
                   );
-                  return isInternal ? (
+                  return (
                     <Link
                       key={link.href}
                       href={link.href}
@@ -158,15 +167,6 @@ export function Header() {
                     >
                       {link.label}
                     </Link>
-                  ) : (
-                    <a
-                      key={link.href}
-                      href={link.href}
-                      onClick={() => setMobileOpen(false)}
-                      className={className}
-                    >
-                      {link.label}
-                    </a>
                   );
                 })}
               </nav>
