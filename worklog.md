@@ -4751,3 +4751,82 @@ Stage Summary:
 - API rétro-compatible : `total` reste disponible via `?includeTotal=true`
   pour NotificationsPage. Tous les autres callers (FabricantHeader) n'ont
   pas besoin de changer.
+
+---
+Task ID: 25
+Agent: main (Z.ai Code)
+Task: Refonte de la page d'accueil en marketplace hybride Nest-like (Option B) avec palette vert émeraude/menthe + bouton "Scanner le QR" + conservation du carousel en "Nouveautés".
+
+Work Log:
+- Capture d'écran utilisateur analysée via VLM (glm-5v-turbo) : maquette Nest
+  grocery e-commerce avec 5 colonnes de cartes produit, badges (-26%/Hot/New),
+  rating, prix barré, bouton "Add", sections multiples (Top Categories, 3 Banners,
+  Popular Products, Daily Best Sells, Deals Of The Day avec countdown, 4 tabs
+  lists, Newsletter, Features Bar).
+- Décision utilisateur : Option B (refonte complète) + palette Nest
+  (#2E7D32 emeraude + #E8F5E9 menthe) + bouton "Scanner le QR" → /p/[lotId]
+  + garder le carousel actuel comme section "Nouveautés".
+
+Sections créées (10 nouveaux fichiers) :
+1. TopCategories.tsx (RSC) — grille 10 catégories depuis DB, emoji + count
+2. PromoBanners.tsx — 3 bannières (Authentique/Local/Export) en pastel
+3. PopularProducts.tsx (RSC) + PopularProductsGrid.tsx (client) — grille 5 cols
+   "Produits populaires" avec badges (Vérifié/Hot/Platine), image, catégorie,
+   fabricant vérifié, rating, "Scanner le QR" CTA
+4. DiscoverSection.tsx (RSC) + DiscoverSectionClient.tsx — "À découvrir" style
+   Daily Best Sells (grande carte promo verte + 4 petites cartes)
+5. ExpiringSection.tsx (RSC) + ExpiringProductsClient.tsx — "À scanner avant
+   péremption" avec countdown live (Jours/Heures/Min/Sec) jusqu'à expiryDate.
+   Spécifique VerifScan : utilise les vrais lots expirants de la DB.
+6. ProductTabsSection.tsx (RSC) + ProductTabsClient.tsx — 4 colonnes listes
+   (Top scannés / Tendance / Récents / Top transparence), 4 produits chacune
+7. NewsletterBanner.tsx — bannière inscription fond menthe + formulaire
+8. FeaturesBar.tsx — 5 features (Transparence/Scan gratuit/Alertes/Catalogue/Sans engagement)
+
+page.tsx mise à jour :
+- Hero existant conservé
+- TopCategories (NEW)
+- PromoBanners (NEW)
+- CatalogSlider existant conservé comme section "Nouveautés" (carousel)
+- PopularProducts (NEW)
+- DiscoverSection (NEW)
+- ExpiringSection (NEW)
+- ProductTabsSection (NEW)
+- StatsBanner, HowItWorks, Features, DemoSection, IndustryCards, Testimonials
+  existants conservés (SaaS explicatif)
+- NewsletterBanner (NEW)
+- FeaturesBar (NEW)
+- FinalCTA + Footer existants
+
+Adaptations VerifScan (pas un e-commerce) :
+- Bouton "Add" → "Scanner le QR" (redirige /p/[lotId])
+- Prix → Score transparence /100 (avec badges Bronze/Argent/Or/Platine)
+- "Deals" → Lots bientôt périmés avec countdown réel
+- Bannières promo → Authentique/Local/Export (axes VerifScan)
+- Top Categories → catégories réelles de la DB (Boissons, Épices, etc.)
+
+Vérifications :
+- Lint : ✓ 0 erreur (1 fix : JSX dans try/catch → déclaré avant return)
+- Dev log : ✓ aucune erreur runtime
+- Agent Browser :
+  * Page se charge en HTTP 200, pas d'erreur console
+  * Toutes les sections rendent dans le DOM (vérifié via eval)
+  * Images produits se chargent (complete=true, naturalW=1024)
+  * Section "À découvrir" : 4 cartes + 1 carte promo verte, boutons "Scanner le QR" verts ✓
+  * Section "À scanner avant péremption" : 4 cartes avec countdown live
+    (82 jours 20h 33min 37sec au moment du test) ✓
+  * Section "Parcourir par popularité" : 4 colonnes avec listes compactes ✓
+  * Popular Products grid : 5 cartes visibles avec images + boutons ✓
+- Vérifié via VLM (glm-5v-turbo) : sections bien rendues, images chargées,
+  boutons verts "Scanner le QR" visibles.
+
+Stage Summary:
+- Page d'accueil transformée en marketplace hybride Nest-like avec 8 nouvelles
+  sections marketplace au-dessus des sections SaaS existantes.
+- Palette Nest verte (#3BB77E primary + #2E7D32 hover + #E8F5E9 menthe)
+  appliquée partout sur les nouvelles sections.
+- Bouton "Scanner le QR" présent sur chaque carte produit (5 sections),
+  redirige vers /p/[lotId] — le passeport numérique du lot.
+- Compteurs à rebours live sur la section "péremption" (pause quand tab caché).
+- Toutes les données proviennent de la DB réelle (getAllProducts, lots
+  expirants, catégories avec counts).
