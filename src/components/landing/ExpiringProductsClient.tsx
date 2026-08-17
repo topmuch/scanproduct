@@ -4,6 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { Star, QrCode, Clock, AlertTriangle } from "lucide-react";
 import { cn, LEVEL_CONFIG, getLevelFromScore } from "@/lib/utils";
+import { ProductQRCode } from "@/components/landing/ProductQRCode";
 
 /**
  * ExpiringProductsClient — Nest "Deals Of The Day" style with live countdown.
@@ -194,14 +195,23 @@ function ExpiringCard({ item }: { item: ExpiringProductItem }) {
           )}
         </div>
 
-        {/* CTA */}
-        <Link
-          href={`/p/${item.lotId}`}
-          className="mt-2 inline-flex items-center justify-center gap-1.5 rounded-lg bg-[#3BB77E] px-3 py-2 text-[12px] font-bold text-white transition-all hover:bg-[#2E7D32] active:scale-[0.98]"
-        >
-          <QrCode className="h-3.5 w-3.5" aria-hidden />
-          Scanner le QR
-        </Link>
+        {/* QR code scannable (≈2cm) + bouton "Scanner" côte à côte */}
+        <div className="mt-2 flex items-center gap-2">
+          <Link
+            href={`/p/${item.lotId}`}
+            aria-label={`Scanner le QR code de ${item.productName}`}
+            className="shrink-0 transition-transform hover:scale-105 active:scale-95"
+          >
+            <ProductQRCode lotId={item.lotId} size={68} />
+          </Link>
+          <Link
+            href={`/p/${item.lotId}`}
+            className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg bg-[#3BB77E] px-3 py-2 text-[12px] font-bold text-white transition-all hover:bg-[#2E7D32] active:scale-[0.98]"
+          >
+            <QrCode className="h-3.5 w-3.5" aria-hidden />
+            Scanner
+          </Link>
+        </div>
       </div>
     </div>
   );

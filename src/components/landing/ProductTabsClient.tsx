@@ -2,8 +2,9 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Star, Search, ShieldCheck, QrCode } from "lucide-react";
+import { Star, Search, ShieldCheck } from "lucide-react";
 import { cn, LEVEL_CONFIG, getLevelFromScore } from "@/lib/utils";
+import { ProductQRCode } from "@/components/landing/ProductQRCode";
 
 /**
  * ProductTabsClient — 4-column tabbed product lists (Nest style).
@@ -152,12 +153,15 @@ function TabRow({ item }: { item: ProductTabItem }) {
           </div>
         </div>
 
-        {/* Scanner icon */}
-        <span
-          aria-hidden
-          className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[#F2FCEC] text-[#3BB77E] transition-all group-hover:bg-[#3BB77E] group-hover:text-white"
-        >
-          <QrCode className="h-4 w-4" />
+        {/* Mini QR code scannable (~1.5cm) — la row entière est un Link,
+            donc le QR est non-cliquable (visuel uniquement, mais scannable
+            physiquement par n'importe quel lecteur de QR). */}
+        <span aria-hidden className="shrink-0">
+          <ProductQRCode
+            lotId={item.latestLotId ?? item.id}
+            productId={item.id}
+            size={56}
+          />
         </span>
       </Link>
     </li>

@@ -4,6 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { CheckCircle2, Star, QrCode, ShieldCheck, Leaf } from "lucide-react";
 import { cn, LEVEL_CONFIG, getLevelFromScore } from "@/lib/utils";
+import { ProductQRCode } from "@/components/landing/ProductQRCode";
 
 /**
  * DiscoverSectionClient — Nest "Daily Best Sells" style layout.
@@ -169,14 +170,27 @@ function DiscoverCard({ item }: { item: DiscoverItem }) {
           </span>
         </div>
 
-        {/* "Scanner le QR" — solid green button */}
-        <Link
-          href={href}
-          className="mt-2 inline-flex items-center justify-center gap-1.5 rounded-lg bg-[#3BB77E] px-3 py-2 text-[12px] font-bold text-white transition-all hover:bg-[#2E7D32] active:scale-[0.98]"
-        >
-          <QrCode className="h-3.5 w-3.5" aria-hidden />
-          Scanner le QR
-        </Link>
+        {/* QR code scannable (≈2cm) + bouton "Scanner" côte à côte */}
+        <div className="mt-2 flex items-center gap-2">
+          <Link
+            href={href}
+            aria-label={`Scanner le QR code de ${item.name}`}
+            className="shrink-0 transition-transform hover:scale-105 active:scale-95"
+          >
+            <ProductQRCode
+              lotId={item.latestLotId ?? item.id}
+              productId={item.id}
+              size={68}
+            />
+          </Link>
+          <Link
+            href={href}
+            className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg bg-[#3BB77E] px-3 py-2 text-[12px] font-bold text-white transition-all hover:bg-[#2E7D32] active:scale-[0.98]"
+          >
+            <QrCode className="h-3.5 w-3.5" aria-hidden />
+            Scanner
+          </Link>
+        </div>
       </div>
     </div>
   );

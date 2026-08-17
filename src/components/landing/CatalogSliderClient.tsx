@@ -12,6 +12,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Package,
+  QrCode,
 } from "lucide-react";
 import {
   Carousel,
@@ -20,6 +21,7 @@ import {
   type CarouselApi,
 } from "@/components/ui/carousel";
 import { cn, LEVEL_CONFIG, getLevelFromScore } from "@/lib/utils";
+import { ProductQRCode } from "@/components/landing/ProductQRCode";
 
 /**
  * CatalogSliderClient — auto-scrolling carousel of real catalog products.
@@ -229,14 +231,16 @@ function SliderCard({ item }: { item: CatalogSliderItem }) {
     item.fabricant?.companyName ?? item.fabricant?.name ?? "Fabricant";
 
   return (
-    <Link
-      href={href}
+    <div
       className="group flex h-full flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1.5 hover:border-blue-200 hover:shadow-xl hover:shadow-blue-100/50"
-      aria-label={`Voir le passeport numérique de ${item.name}`}
     >
       {/* Image area — taller (1:1 square) so the product photo is more visible.
-          p-7 gives more breathing room around the image. */}
-      <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-gray-50 via-white to-blue-50/40">
+          p-7 gives more breathing room around the image. Wrapped in a Link. */}
+      <Link
+        href={href}
+        aria-label={`Voir le passeport numérique de ${item.name}`}
+        className="relative block aspect-square overflow-hidden bg-gradient-to-br from-gray-50 via-white to-blue-50/40"
+      >
         {/* Transparency badge (top-right) */}
         <span
           className={cn(
@@ -267,7 +271,7 @@ function SliderCard({ item }: { item: CatalogSliderItem }) {
             </span>
           </div>
         )}
-      </div>
+      </Link>
 
       {/* Body */}
       <div className="flex flex-1 flex-col gap-2 p-4">
@@ -283,9 +287,11 @@ function SliderCard({ item }: { item: CatalogSliderItem }) {
         </div>
 
         {/* Name */}
-        <h3 className="line-clamp-2 text-sm font-bold leading-snug text-gray-900 transition-colors group-hover:text-[#2563EB]">
-          {item.name}
-        </h3>
+        <Link href={href} className="block">
+          <h3 className="line-clamp-2 text-sm font-bold leading-snug text-gray-900 transition-colors group-hover:text-[#2563EB]">
+            {item.name}
+          </h3>
+        </Link>
 
         {/* Brand */}
         {item.brand && (
@@ -357,8 +363,30 @@ function SliderCard({ item }: { item: CatalogSliderItem }) {
             />
           </div>
         </div>
+
+        {/* QR code scannable (≈2cm) + bouton "Scanner" côte à côte */}
+        <div className="mt-2 flex items-center gap-2 border-t border-gray-100 pt-2">
+          <Link
+            href={href}
+            aria-label={`Scanner le QR code de ${item.name}`}
+            className="shrink-0 transition-transform hover:scale-105 active:scale-95"
+          >
+            <ProductQRCode
+              lotId={item.latestLotId ?? item.id}
+              productId={item.id}
+              size={72}
+            />
+          </Link>
+          <Link
+            href={href}
+            className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg bg-[#3BB77E] px-3 py-2 text-[12px] font-bold text-white transition-all hover:bg-[#2E7D32] active:scale-[0.98]"
+          >
+            <QrCode className="h-3.5 w-3.5" aria-hidden />
+            Scanner le QR
+          </Link>
+        </div>
       </div>
-    </Link>
+    </div>
   );
 }
 
