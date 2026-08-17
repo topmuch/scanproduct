@@ -3,28 +3,35 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  ArrowRight,
+  ChevronLeft,
+  ChevronRight,
+  ShieldCheck,
+  QrCode,
+} from "lucide-react";
 
 /**
- * Hero — full-width banner with an auto-playing image slider.
+ * Hero — full-bleed banner with an auto-playing image slider + overlaid copy.
  *
- * Layout:
- *   1. A full-bleed carousel of 3 promotional images (edge-to-edge, no padding).
- *      Slides crossfade every 6s, pause on hover, with dot navigation + arrows.
- *   2. Right below the carousel, a centered text block explaining what the
- *      site is for, plus the primary CTA button.
+ * Mirrors the CatalogHero design (same height min-h 480→560→640px, same
+ * gradient scrim overlay, same centered badge + h1 + paragraph + 2 CTAs)
+ * so the homepage and the catalog page share a consistent visual language.
  *
- * Image strategy:
- *   - Each slide renders BOTH a <picture> with a WebP source (≈110-145 KB,
- *     92-94% smaller than the original PNG) and a PNG fallback. Modern
- *     browsers load WebP; legacy ones fall back to PNG.
+ * Homepage-specific copy:
+ *   - Badge: "Passeport numérique"
+ *   - Headline: "Garantissez l'authenticité de vos produits en un scan"
+ *   - Primary CTA → /register ("Créer votre compte gratuit")
+ *   - Secondary CTA → /produits ("Découvrir le catalogue")
  *
- * Transition strategy (no white gap):
- *   - All slides are stacked in the DOM at all times (no AnimatePresence
- *     enter/exit). The active slide has opacity:1 + z-index:2; inactive
- *     slides have opacity:0 + z-index:1. Both layers fade simultaneously,
- *     so the crossfade is seamless — there is NEVER a moment where the
- *     container shows its background.
+ * The primary CTA keeps the homepage blue accent (#2563EB) to preserve the
+ * SaaS landing page identity (the catalog page uses green #3BB77E).
+ *
+ * Transition strategy (no white gap): all slides are stacked in the DOM at
+ * all times (no AnimatePresence enter/exit). The active slide has opacity:1
+ * + z-index:2; inactive slides have opacity:0 + z-index:1. Both layers fade
+ * simultaneously, so the crossfade is seamless — the container background
+ * is never visible.
  *
  * Accessibility:
  *   - Each slide has a descriptive alt text.
@@ -108,13 +115,13 @@ export function Hero() {
   return (
     <section
       id="accueil"
-      className="relative w-full bg-white pt-16 lg:pt-20"
+      className="relative w-full overflow-hidden bg-[#0a0a0a] pt-16 lg:pt-20"
       aria-roledescription="carousel"
       aria-label="Présentation VerifScan"
     >
       {/* ── Slider ─────────────────────────────────────────────── */}
       <div
-        className="group relative w-full overflow-hidden"
+        className="group relative w-full"
         onMouseEnter={() => setPaused(true)}
         onMouseLeave={() => setPaused(false)}
         onFocus={() => setPaused(true)}
@@ -124,8 +131,8 @@ export function Hero() {
         role="region"
         aria-label="Carrousel d'images, utilisez les flèches gauche et droite pour naviguer"
       >
-        {/* Slides — all stacked, crossfade via opacity (no exit/enter gap) */}
-        <div className="relative aspect-[1956/804] w-full bg-[#0a0a0a]">
+        {/* Slides — same height as CatalogHero (480→560→640px) */}
+        <div className="relative min-h-[480px] w-full sm:min-h-[560px] lg:min-h-[640px]">
           {SLIDES.map((slide, i) => {
             const isActive = i === index;
             return (
@@ -151,11 +158,67 @@ export function Hero() {
             );
           })}
 
-          {/* Subtle gradient overlay for legibility of controls */}
+          {/* Gradient scrim for overlay legibility (same as CatalogHero) */}
           <div
-            className="pointer-events-none absolute inset-0 z-[3] bg-gradient-to-t from-black/15 via-transparent to-transparent"
+            className="pointer-events-none absolute inset-0 z-[3] bg-gradient-to-t from-black/80 via-black/35 to-black/25"
             aria-hidden
           />
+        </div>
+
+        {/* ── Overlaid banner — same layout as CatalogHero ────── */}
+        <div className="pointer-events-none absolute inset-0 z-[4] flex items-center justify-center px-4 sm:px-6">
+          <div className="pointer-events-auto mx-auto max-w-3xl text-center">
+            <motion.span
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.05, ease: [0.4, 0, 0.2, 1] }}
+              className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-white backdrop-blur-md sm:text-sm"
+            >
+              <ShieldCheck className="h-4 w-4" />
+              Passeport numérique
+            </motion.span>
+
+            <motion.h1
+              initial={{ opacity: 0, y: 18 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.15, ease: [0.4, 0, 0.2, 1] }}
+              className="mt-5 font-display text-[30px] font-bold leading-[1.1] text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.45)] sm:text-[40px] lg:text-[52px]"
+            >
+              Garantissez l&apos;authenticité de vos produits en un scan
+            </motion.h1>
+
+            <motion.p
+              initial={{ opacity: 0, y: 18 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.3, ease: [0.4, 0, 0.2, 1] }}
+              className="mx-auto mt-5 max-w-2xl text-[16px] leading-relaxed text-white/90 drop-shadow-[0_1px_8px_rgba(0,0,0,0.5)] sm:text-[18px] lg:text-[20px]"
+            >
+              Le passeport numérique qui renforce la confiance de vos clients et
+              protège votre marque contre la contrefaçon.
+            </motion.p>
+
+            <motion.div
+              initial={{ opacity: 0, y: 18 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.45, ease: [0.4, 0, 0.2, 1] }}
+              className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row"
+            >
+              <Link
+                href="/register"
+                className="group inline-flex w-full items-center justify-center gap-2 rounded-[10px] bg-[#2563EB] px-7 py-3.5 text-base font-semibold text-white shadow-lg shadow-black/30 transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#1D4ED8] hover:shadow-xl sm:w-auto"
+              >
+                Créer votre compte gratuit
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </Link>
+              <Link
+                href="/produits"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-[10px] border border-white/40 bg-white/10 px-7 py-3.5 text-base font-semibold text-white backdrop-blur-md transition-all duration-300 hover:bg-white/20 sm:w-auto"
+              >
+                <QrCode className="h-4 w-4" />
+                Découvrir le catalogue
+              </Link>
+            </motion.div>
+          </div>
         </div>
 
         {/* Arrows — appear on hover/focus, always visible on touch */}
@@ -178,7 +241,7 @@ export function Hero() {
 
         {/* Dots */}
         <div
-          className="absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 items-center gap-2 sm:bottom-4"
+          className="absolute bottom-5 left-1/2 z-10 flex -translate-x-1/2 items-center gap-2 sm:bottom-6"
           role="tablist"
           aria-label="Sélectionner une image"
         >
@@ -203,43 +266,6 @@ export function Hero() {
         <span className="sr-only" aria-live="polite">
           Image {index + 1} sur {SLIDES.length}
         </span>
-      </div>
-
-      {/* ── Headline + value proposition ───────────────────────── */}
-      <div className="mx-auto max-w-3xl px-4 py-12 text-center sm:px-6 sm:py-14 lg:py-16">
-        <motion.h1
-          initial={{ opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.15, ease: [0.4, 0, 0.2, 1] }}
-          className="font-display text-[28px] font-bold leading-[1.15] text-[#111827] sm:text-[36px] lg:text-[44px]"
-        >
-          Garantissez l&apos;authenticité de vos produits en un scan
-        </motion.h1>
-
-        <motion.p
-          initial={{ opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.3, ease: [0.4, 0, 0.2, 1] }}
-          className="mx-auto mt-4 max-w-2xl text-[16px] leading-relaxed text-[#4B5563] sm:text-[18px]"
-        >
-          Le passeport numérique qui renforce la confiance de vos clients et
-          protège votre marque contre la contrefaçon.
-        </motion.p>
-
-        <motion.div
-          initial={{ opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.45, ease: [0.4, 0, 0.2, 1] }}
-          className="mt-8"
-        >
-          <Link
-            href="/register"
-            className="group inline-flex items-center justify-center gap-2 rounded-[10px] bg-[#2563EB] px-7 py-3.5 text-base font-semibold text-white shadow-lg shadow-[#2563EB]/25 transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#1D4ED8] hover:shadow-xl hover:shadow-[#2563EB]/40"
-          >
-            Créer votre compte gratuit
-            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-          </Link>
-        </motion.div>
       </div>
     </section>
   );
