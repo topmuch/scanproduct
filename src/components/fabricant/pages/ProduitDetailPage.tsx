@@ -418,14 +418,15 @@ export function ProduitDetailPage() {
   // → GS1 Digital Link URI (/01/<GTIN>/10/<LOT>, or GTIN-only when the
   // product has no lot yet); otherwise the classic /p/<lotId> passport URL
   // (product id fallback resolves to the friendly "not found" page —
-  // never a raw 404).
+  // never a raw 404). The format is surfaced as a badge under the QR,
+  // consistent with LotDetailPage / QRCodesPage / BulkQRPage.
   const qrLot = productLots[0];
   const qrLotId = qrLot?.id ?? product.id;
-  const scanUrl = construireUrlQrClient({
+  const { url: scanUrl, format: formatQrProduit } = construireUrlQrClient({
     barcode: product.barcode,
     numeroLot: qrLot?.numero ?? "",
     lotId: qrLotId,
-  }).url;
+  });
 
   function handleDownloadQR() {
     downloadQRCode(scanUrl, `qr-${product!.nom.replace(/\s+/g, "-").toLowerCase()}.png`);
@@ -441,7 +442,10 @@ export function ProduitDetailPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           isPublic: newStatus !== "masque",
-          status: newStatus === "brouillon" ? "ARCHIVED" : "ACTIVE",
+          // La visibilité bascule via isPublic ; le statut DB reste ACTIVE
+          // (l'ancien ternaire « newStatus === "brouillon" » était mort :
+          // newStatus vaut toujours "actif" | "masque").
+          status: "ACTIVE",
         }),
       });
       if (!res.ok) throw new Error("Échec de la mise à jour");
@@ -671,7 +675,17 @@ export function ProduitDetailPage() {
                   bgColor="#FFFFFF"
                 />
               </div>
-              <p className="mt-3 break-all text-center text-[11px] text-[#6B7280]">
+              <span
+                className={
+                  "mt-3 inline-block rounded px-1.5 py-px text-[9px] font-semibold " +
+                  (formatQrProduit === "GS1"
+                    ? "bg-[#ECFDF5] text-[#047857]"
+                    : "bg-[#EFF6FF] text-[#1D4ED8]")
+                }
+              >
+                {formatQrProduit === "GS1" ? "GS1 Digital Link" : "Standard"}
+              </span>
+              <p className="mt-2 break-all text-center text-[11px] text-[#6B7280]">
                 {scanUrl}
               </p>
               <p className="mt-1 text-[12px] text-[#6B7280]">

@@ -18,8 +18,10 @@ import { NextResponse } from "next/server";
 // ---------------------------------------------------------------------------
 
 export interface RateLimitOptions {
-  /** Identifier for the bucket (usually IP or userId). */
-  key: string;
+  /** Identifier for the bucket (usually IP or userId). Optional:
+   *  `applyRateLimit` always derives it from the request (IP) and overrides
+   *  whatever is provided here. Only direct `rateLimit()` callers need it. */
+  key?: string;
   /** Window size in milliseconds. */
   windowMs: number;
   /** Max requests per window. */

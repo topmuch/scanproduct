@@ -276,25 +276,27 @@ export function genererUrlGs1(
   // 2) Lot (AI 10) — optionnel mais validé si présent.
   let lot: string | undefined;
   if (params.lot !== undefined && params.lot !== "") {
-    lot = validerLot(params.lot);
-    if (!lot) {
+    const lotValide = validerLot(params.lot);
+    if (!lotValide) {
       throw new ErreurGs1(
         "LOT_INVALIDE",
         "Numéro de lot invalide : 20 caractères max, caractères alphanumériques et - _ . / + $ % espace uniquement."
       );
     }
+    lot = lotValide;
   }
 
   // 3) Série (AI 21) — optionnelle mais validée si présente.
   let serie: string | undefined;
   if (params.serie !== undefined && params.serie !== "") {
-    serie = validerSerie(params.serie);
-    if (!serie) {
+    const serieValide = validerSerie(params.serie);
+    if (!serieValide) {
       throw new ErreurGs1(
         "SERIE_INVALIDE",
         "Numéro de série invalide : 20 caractères max, caractères alphanumériques et - _ . / + $ % espace uniquement."
       );
     }
+    serie = serieValide;
   }
 
   // 4) Assemblage de l'URI dans l'ordre canonique du standard : 01, 10, 21.
@@ -459,14 +461,17 @@ function parserSegments(segments: string[]): Gs1Decodage | null {
       const valeur = reste[i + 1];
       if (ai === GS1_AI.LOT) {
         if (lot) throw new ErreurGs1("AI_DUPLIQUE", "AI 10 présent deux fois.");
-        lot = validerLot(valeur);
-        if (!lot) throw new ErreurGs1("LOT_INVALIDE", "Numéro de lot invalide.");
+        const lotValide = validerLot(valeur);
+        if (!lotValide)
+          throw new ErreurGs1("LOT_INVALIDE", "Numéro de lot invalide.");
+        lot = lotValide;
       } else if (ai === GS1_AI.SERIE) {
         if (serie)
           throw new ErreurGs1("AI_DUPLIQUE", "AI 21 présent deux fois.");
-        serie = validerSerie(valeur);
-        if (!serie)
+        const serieValide = validerSerie(valeur);
+        if (!serieValide)
           throw new ErreurGs1("SERIE_INVALIDE", "Numéro de série invalide.");
+        serie = serieValide;
       } else {
         // AI non supporté par VerifScan → on ignore proprement la paire
         // (le standard autorise la présence d'AIs additionnels: ex 17=DLUO).
@@ -490,12 +495,15 @@ function parserSegments(segments: string[]): Gs1Decodage | null {
       const mot = reste[i];
       const valeur = reste[i + 1];
       if (mot === GS1_MOTS_CLES["10"]) {
-        lot = validerLot(valeur);
-        if (!lot) throw new ErreurGs1("LOT_INVALIDE", "Numéro de lot invalide.");
+        const lotValide = validerLot(valeur);
+        if (!lotValide)
+          throw new ErreurGs1("LOT_INVALIDE", "Numéro de lot invalide.");
+        lot = lotValide;
       } else if (mot === GS1_MOTS_CLES["21"]) {
-        serie = validerSerie(valeur);
-        if (!serie)
+        const serieValide = validerSerie(valeur);
+        if (!serieValide)
           throw new ErreurGs1("SERIE_INVALIDE", "Numéro de série invalide.");
+        serie = serieValide;
       }
     }
     return construireDecodage(gtin, lot, serie);
