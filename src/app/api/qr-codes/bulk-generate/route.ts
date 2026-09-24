@@ -5,6 +5,8 @@ import { renderAndSaveQR, resolveLogoPath } from "@/lib/qr-server";
 import { applyRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { canGenerateQr, getFabricantQrUsage } from "@/lib/plan-limits";
 import { createNotification } from "@/lib/notifications";
+import { construireUrlQrPourLot } from "@/lib/gs1-resolver";
+import { genererNumeroSerie, ErreurGs1 } from "@/lib/gs1";
 
 /**
  * POST /api/qr-codes/bulk-generate
@@ -96,13 +98,14 @@ export async function POST(request: NextRequest) {
     }
 
     // ── Fetch all lots + fabricant logo in one query ────────────
+    // (product.barcode inclus : détermine le standard du QR — GS1 ou standard)
     const lots = await db.lot.findMany({
       where: {
         id: { in: lotIds },
         fabricantId: token.sub, // ownership guard
       },
       include: {
-        product: { select: { name: true } },
+        product: { select: { name: true, barcode: true, id: true } },
       },
     });
 
@@ -133,13 +136,23 @@ export async function POST(request: NextRequest) {
       lotNumber: string | null;
       productName: string;
       count: number;
-      qrCodes: Array<{ id: string; imageUrl: string; publicUrl: string }>;
+      qrCodes: Array<{
+        id: string;
+        imageUrl: string;
+        publicUrl: string;
+        format: "GS1" | "STANDARD";
+      }>;
     }> = [];
 
     let totalGenerated = 0;
 
     for (const lot of lots) {
-      const lotQrCodes: Array<{ id: string; imageUrl: string; publicUrl: string }> = [];
+      const lotQrCodes: Array<{
+        id: string;
+        imageUrl: string;
+        publicUrl: string;
+        format: "GS1" | "STANDARD";
+      }> = [];
 
       for (let i = 0; i < qtyPerLot; i++) {
         const uniqueCode = `${lot.lotNumber || lot.reference}-${Date.now()}-${i}-${Math.random()
@@ -147,7 +160,42 @@ export async function POST(request: NextRequest) {
           .slice(2, 8)
           .toUpperCase()}`;
 
+        // ── Choix automatique du standard (GS1 ou standard) ──────────
+        // Identique à /generate : GTIN valide → URI GS1 Digital Link avec
+        // série AI 21 courte ; sinon comportement historique /p/?code=.
+        const serie = genererNumeroSerie(i);
+        let scanUrl: string;
+        let format: "GS1" | "STANDARD";
+        let codeImprime: string;
+        try {
+          const construit = construireUrlQrPourLot({
+            produit: lot.product,
+            lot: { lotNumber: lot.lotNumber, reference: lot.reference },
+            serie,
+            fallbackUrl: `${
+              process.env.NEXT_PUBLIC_SCAN_URL?.replace(/\/$/, "") ||
+              "https://verifscan.sn"
+            }/p/${lot.id}?code=${uniqueCode}`,
+          });
+          scanUrl = construit.url;
+          format = construit.format;
+          codeImprime = format === "GS1" ? serie : uniqueCode;
+        } catch (e) {
+          // LotNumber hors CSET 82 → repli standard sûr.
+          if (!(e instanceof ErreurGs1)) throw e;
+          console.warn(
+            `[bulk-generate] Lot ${lot.reference} incompatible GS1, repli standard`
+          );
+          scanUrl = `${
+            process.env.NEXT_PUBLIC_SCAN_URL?.replace(/\/$/, "") ||
+            "https://verifscan.sn"
+          }/p/${lot.id}?code=${uniqueCode}`;
+          format = "STANDARD";
+          codeImprime = uniqueCode;
+        }
+
         // Render the PNG server-side and save to disk.
+        // (scanUrl override : le PNG encode l'URI GS1 pour les clients GS1.)
         const rendered = await renderAndSaveQR(lot.id, uniqueCode, {
           size: options.size || 512,
           color: qrColor,
@@ -156,12 +204,13 @@ export async function POST(request: NextRequest) {
           productName:
             options.includeProductName !== false ? lot.product?.name : null,
           errorCorrectionLevel: logoPath ? "H" : "M",
+          scanUrl,
         });
 
         // Persist the QR code row WITH the image URL.
         const qrCode = await db.qRCode.create({
           data: {
-            code: uniqueCode,
+            code: codeImprime,
             lotId: lot.id,
             fabricantId: token.sub,
             imageUrl: rendered.publicUrl,
@@ -177,7 +226,8 @@ export async function POST(request: NextRequest) {
         lotQrCodes.push({
           id: qrCode.id,
           imageUrl: rendered.publicUrl,
-          publicUrl: `${process.env.NEXT_PUBLIC_SCAN_URL?.replace(/\/$/, "") || "https://verifscan.sn"}/p/${lot.id}?code=${uniqueCode}`,
+          publicUrl: scanUrl,
+          format,
         });
         totalGenerated++;
       }

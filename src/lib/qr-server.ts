@@ -45,6 +45,12 @@ export interface QRRenderOptions {
   productName?: string | null;
   /** Include a quiet-zone (white margin) around the QR. Default 4 modules. */
   margin?: number;
+  /**
+   * URL personnalisée à encoder (override). Par défaut, renderAndSaveQR
+   * encode `${getScanUrl(lotId)}?code=${uniqueCode}` ; pour les clients
+   * GS1 on passe ici l'URI GS1 Digital Link complète.
+   */
+  scanUrl?: string;
 }
 
 export interface QRRenderResult {
@@ -237,7 +243,9 @@ export async function renderAndSaveQR(
   uniqueCode: string,
   options: QRRenderOptions = {}
 ): Promise<QRRenderResult> {
-  const scanUrl = `${getScanUrl(lotId)}?code=${uniqueCode}`;
+  // URL encodée : override explicite (URI GS1 Digital Link) ou comportement
+  // historique /p/<lotId>?code=<uniqueCode>.
+  const scanUrl = options.scanUrl ?? `${getScanUrl(lotId)}?code=${uniqueCode}`;
   const rendered = await renderQRBuffer(scanUrl, options);
 
   // Ensure upload dir exists.

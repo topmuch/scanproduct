@@ -4,6 +4,10 @@ import { db } from "@/lib/db";
 import { applyRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { canGenerateQr, getFabricantQrUsage } from "@/lib/plan-limits";
 import { createNotification } from "@/lib/notifications";
+import {
+  construireUrlQrPourLot,
+} from "@/lib/gs1-resolver";
+import { genererNumeroSerie, ErreurGs1 } from "@/lib/gs1";
 
 /**
  * POST /api/qr-codes/generate
@@ -64,10 +68,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify the lot belongs to the authenticated fabricant
+    // (barcode inclus : détermine le standard du QR — GS1 ou standard).
     const lot = await db.lot.findUnique({
       where: { id: lotId },
       include: {
-        product: { select: { fabricantId: true, name: true } },
+        product: {
+          select: { fabricantId: true, name: true, barcode: true, id: true },
+        },
       },
     });
 
@@ -90,7 +97,12 @@ export async function POST(request: NextRequest) {
     // Pre-existing TypeScript inference: `const qrCodes = []` is inferred as
     // `never[]`, which then rejects the `.push(...)` below. Annotate the
     // array explicitly so the push type-checks cleanly.
-    const qrCodes: Array<Awaited<ReturnType<typeof db.qRCode.create>> & { publicUrl: string }> = [];
+    const qrCodes: Array<
+      Awaited<ReturnType<typeof db.qRCode.create>> & {
+        publicUrl: string;
+        format: "GS1" | "STANDARD";
+      }
+    > = [];
 
     for (let i = 0; i < qty; i++) {
       // Generate a unique code (stored in DB for tracking/analytics)
@@ -98,12 +110,43 @@ export async function POST(request: NextRequest) {
         .toString(36)
         .slice(2, 8)
         .toUpperCase()}`;
-      // The scannable URL points to the public route `/p/[lotId]`.
-      const publicUrl = `${baseUrl}/p/${lot.id}?code=${uniqueCode}`;
+
+      // ── Choix automatique du standard (GS1 Digital Link ou standard) ──
+      // Produit avec GTIN valide → URI GS1 /01/<GTIN>/10/<LOT>/21/<SERIE>
+      //   (série courte conforme AI 21, stockée dans QRCode.code afin que le
+      //    resolver puisse rattacher chaque scan à ce QR précis) ;
+      // Produit sans GTIN (ou lotNumber hors standard GS1) → comportement
+      // historique /p/<lotId>?code=<code> (analytics conservées).
+      const serie = genererNumeroSerie(i);
+      let publicUrl: string;
+      let format: "GS1" | "STANDARD";
+      try {
+        const construit = construireUrlQrPourLot({
+          produit: lot.product,
+          lot: { lotNumber: lot.lotNumber, reference: lot.reference },
+          serie,
+          fallbackUrl: `${baseUrl}/p/${lot.id}?code=${uniqueCode}`,
+        });
+        publicUrl = construit.url;
+        format = construit.format;
+      } catch (e) {
+        // ErreurGs1 (ex: lotNumber avec caractères hors CSET 82) → repli
+        // sûr sur l'URL standard plutôt que d'échouer la génération.
+        if (!(e instanceof ErreurGs1)) throw e;
+        console.warn(
+          "[POST /api/qr-codes/generate] LotNumber incompatible GS1, repli standard :",
+          e.message
+        );
+        publicUrl = `${baseUrl}/p/${lot.id}?code=${uniqueCode}`;
+        format = "STANDARD";
+      }
+      // Pour un QR GS1, le code d'impression stocké = la série AI 21 (le
+      // resolver l'utilise pour l'attribution analytics par unité).
+      const codeImprime = format === "GS1" ? serie : uniqueCode;
 
       const qrCode = await db.qRCode.create({
         data: {
-          code: uniqueCode,
+          code: codeImprime,
           lotId: lot.id,
           fabricantId: token.sub,
           size: options.size || 300,
@@ -118,6 +161,7 @@ export async function POST(request: NextRequest) {
       qrCodes.push({
         ...qrCode,
         publicUrl,
+        format,
       });
     }
 

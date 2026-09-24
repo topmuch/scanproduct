@@ -3,6 +3,8 @@ import { getToken } from "next-auth/jwt";
 import { db } from "@/lib/db";
 import { jsPDF } from "jspdf";
 import { renderQRBuffer, resolveLogoPath } from "@/lib/qr-server";
+import { construireUrlQrPourLot } from "@/lib/gs1-resolver";
+import { ErreurGs1 } from "@/lib/gs1";
 
 /**
  * POST /api/qr-codes/labels-pdf
@@ -10,6 +12,12 @@ import { renderQRBuffer, resolveLogoPath } from "@/lib/qr-server";
  * Generates an A4 PDF label sheet containing multiple QR codes with
  * product name + lot number under each label. Returns the PDF as a
  * binary download (application/pdf).
+ *
+ * ── Standard GS1 ────────────────────────────────────────────────
+ * Comme /generate et /bulk-generate : si le produit porte un GTIN
+ * valide (Product.barcode), chaque étiquette encode l'URI GS1 Digital
+ * Link /01/<GTIN>/10/<LOT> (sans AI 21 — voir commentaire en aval) ;
+ * sinon l'URL historique /p/<lotId>?code=… est conservée.
  *
  * ── Body ────────────────────────────────────────────────────────
  *   lotIds         — string[]  (lots to include; generates 1 QR per lot
@@ -63,12 +71,13 @@ export async function POST(request: NextRequest) {
     }
 
     // ── Fetch lots (ownership-guarded) ──────────────────────────
+    // (product.barcode inclus : détermine le standard du QR — GS1 ou standard)
     const lots = await db.lot.findMany({
       where: {
         id: { in: lotIds },
         fabricantId: token.sub,
       },
-      include: { product: { select: { name: true } } },
+      include: { product: { select: { name: true, barcode: true, id: true } } },
     });
 
     if (lots.length === 0) {
@@ -126,11 +135,39 @@ export async function POST(request: NextRequest) {
 
     // Pre-generate ALL QR PNG buffers (parallelizable but sequential
     // here to avoid memory spikes with 500 QRs).
+    //
+    // ── Choix automatique du standard (GS1 ou standard) ────────────
+    // Produit avec GTIN valide → URI GS1 Digital Link /01/<GTIN>/10/<LOT>
+    // SANS AI 21 : ce route n'enregistre PAS de lignes QRCode (feuille
+    // d'impression générique), donc une série non persistée serait
+    // signalée « serieInconnue » au scan — un faux signal anti-contrefaçon
+    // pour de vrais consommateurs. GTIN + lot seul est pleinement conforme
+    // au standard GS1 Digital Link (l'AI 21 y est optionnel).
+    // Produit sans GTIN → comportement historique /p/<lotId>?code=….
+    const baseUrl =
+      process.env.NEXT_PUBLIC_SCAN_URL?.replace(/\/$/, "") || "https://verifscan.sn";
+    const lotParId = new Map(lots.map((l) => [l.id, l]));
     const qrBuffers: Buffer[] = [];
     for (const label of labels) {
-      const scanUrl = `${
-        process.env.NEXT_PUBLIC_SCAN_URL?.replace(/\/$/, "") || "https://verifscan.sn"
-      }/p/${label.lotId}?code=${label.lotNumber || label.lotId}-${label.index}`;
+      const lot = lotParId.get(label.lotId);
+      let scanUrl = `${baseUrl}/p/${label.lotId}?code=${
+        label.lotNumber || label.lotId
+      }-${label.index}`;
+      if (lot) {
+        try {
+          scanUrl = construireUrlQrPourLot({
+            produit: lot.product,
+            lot: { lotNumber: lot.lotNumber, reference: lot.reference },
+            fallbackUrl: scanUrl,
+          }).url;
+        } catch (e) {
+          // LotNumber hors CSET 82 → repli standard sûr (déjà initialisé).
+          if (!(e instanceof ErreurGs1)) throw e;
+          console.warn(
+            `[labels-pdf] Lot ${lot.reference} incompatible GS1, repli standard`
+          );
+        }
+      }
       const rendered = await renderQRBuffer(scanUrl, {
         size: 400,
         color: qrColor,

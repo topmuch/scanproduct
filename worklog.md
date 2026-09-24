@@ -5279,3 +5279,57 @@ Stage Summary:
 - 3 raccourcis (Catalogue, Mes scans, Partenaire) accessibles via long-press sur l'icône
 - Page offline dédiée avec bouton retry
 - Pas de backend push encore (nécessiterait VAPID + service push) — possible évolution future
+
+---
+Task ID: gs1-integration
+Agent: Super Z (main)
+Task: Intégration du standard GS1 Digital Link dans VerifScan — génération d'URL QR (GS1 + standard) et resolver d'aiguillage avec redirection 302.
+
+Work Log:
+- Créé src/lib/gs1.ts : bibliothèque pure GS1 Digital Link (normalisation GTIN-14 + check digit Modulo 10, validation CSET 82 restreint lot/série, génération URL standard /r/<id> et GS1 /01/<GTIN>/10/<LOT>/21/<SERIE>, parser 4 formes : numérique, mots-clés, query params, segments Next.js)
+- Créé src/lib/gs1-resolver.ts : logique serveur partagée (rate limit 60/min, anti-bot, résolution DB GTIN→Product.barcode / LOT→Lot.lotNumber|reference, redirection 302 vers /p/<lotId>, page 404 anti-contrefaçon HTML échappée, audit GS1 dans Scan.metadata)
+- Créé routes : src/app/r/[[...path]]/route.ts (resolver universel) + src/app/[...gs1]/route.ts (resolver racine conforme GS1)
+- Étendu recordScan (src/lib/public-data.ts) avec champ metadata optionnel
+- Créé scripts/test-gs1.ts (38 tests unitaires, tous verts) + scripts/setup-e2e-gs1.ts
+- Fix sécurité : qrCodeId est une FK → audit GS1 déplacé vers Scan.metadata ; rejet séquences ".." ; gestion URL absolues dans le parser
+- Tests E2E live : 302 OK (standard + GS1 racine + mots-clés), 404 anti-contrefaçon OK (GTIN inconnu, lot falsifié, traversal), 405 POST, scans journalisés avec metadata GS1
+
+Stage Summary:
+- Nouveau standard GS1 Digital Link intégré : clients industriels (GTIN/lot/série) + petits producteurs (QR standard), conformité GS1 v1.3 (formes numérique/mots-clés/query)
+- Fichiers : src/lib/gs1.ts, src/lib/gs1-resolver.ts, src/app/r/[[...path]]/route.ts, src/app/[...gs1]/route.ts, scripts/test-gs1.ts, scripts/setup-e2e-gs1.ts
+- Produit de test : Huile de Baobab Bio 250ml, GTIN 4006381333931, lot SAR-BAO-250-001 → /01/04006381333931/10/SAR-BAO-250-001/21/<serie> redirige 302 vers /p/cmufxevn4000mkwx0icbe2bgs
+- Config : GS1_DOMAIN (optionnel) pour le domaine des URI GS1 ; NEXT_PUBLIC_SCAN_URL pour le QR standard
+
+---
+Task ID: gs1-next-steps
+Agent: Super Z (main)
+Task: 1) Brancher le choix GS1/standard automatique dans les routes de génération QR ; 2) Ajouter GS1_DOMAIN aux fichiers env ; 3) Permettre le test réel au téléphone.
+
+Work Log:
+- src/lib/gs1.ts : ajout genererNumeroSerie(index) — série AI 21 unique ≤20 car. (horodatage base36 + index + aléatoire, CSET 82)
+- src/lib/gs1-resolver.ts : construireUrlQrPourLot() pure et synchrone (GTIN valide → URI GS1, sinon fallbackUrl analytics /p/?code= conservé) ; resoudreGs1 rattache maintenant la série AI 21 à la ligne QRCode (code=serie) → Scan.qrCodeId réel ; série inconnue → metadata.serieInconnue=true (signal anti-contrefaçon)
+- src/lib/qr-server.ts : option QRRenderOptions.scanUrl — le PNG encode l'URI GS1 pour les clients GS1
+- /api/qr-codes/generate + /api/qr-codes/bulk-generate : choix automatique du standard par produit, QRCode.code = série AI 21 pour GS1, repli standard sûr si lotNumber hors CSET 82 (try/catch ErreurGs1), réponse API enrichie (format: GS1|STANDARD)
+- .env + .env.example : GS1_DOMAIN ajouté (doc complète)
+- Nouvelle page /test-qr + composant gs1/TestQrPanel : QR réels générés depuis la DB pointant vers l'origine courante (test téléphone sans config), useSyncExternalStore pour l'origine client (lint React 19)
+- scripts/test-gs1.ts : +5 tests (séries, choix auto) → 43/43 verts ; scripts/setup-e2e-gs1-2.ts, scripts/gen-qr-exemples.cjs
+- E2E validé : série connue → Scan.qrCodeId rempli ; série inconnue → serieInconnue:true ; /test-qr 200 ; 3 QR PNG dans /home/z/my-project/download/qrs-verifscan/ ; zéro régression
+
+Stage Summary:
+- Génération QR entièrement GS1-aware : le standard (GS1 vs standard) est choisi automatiquement selon Product.barcode, avec analytics par unité préservées et repli sûr
+- Test téléphone immédiat : page /test-qr (QRs sur l'origine courante) + 3 PNG prod dans download/qrs-verifscan/
+
+---
+Task ID: gtin-form-field
+Agent: Super Z (main)
+Task: Champ GTIN avec validation temps réel (check digit GS1) dans le formulaire produit fabricant + validation serveur POST/PATCH.
+
+Work Log:
+- DynamicProductForm.tsx : import verifierCheckDigitGtin (@/lib/gs1, isomorphe) ; état dérivé gtinStatut (vide/valide/invalide) ; validation d'étape "general" bloquante avec erreur explicite ; feedback temps réel sous le champ code-barres existant (bordure verte + message GS1 Digital Link si valide, bordure rouge + AlertTriangle si chiffre de contrôle faux, hint si vide) ; errorRef barcode pour scroll-to-error ; FieldError câblé
+- POST /api/products : rejet 400 GTIN_INVALIDE si barcode fourni avec check digit faux (après normalisation chiffres)
+- PATCH /api/products/[id] : même validation quand body.barcode est une string
+- scripts/e2e-gs1-api.sh : E2E authentifié (login NextAuth credentials) — PATCH GTIN faux → 400 GTIN_INVALIDE, GTIN valide → 200, DB inchangée
+- Vérifié : 43/43 tests unitaires, lint propre, dashboard 307 (guard auth normal), aucun erreur de compilation
+
+Stage Summary:
+- Le GTIN est désormais saisi avec vérification du chiffre de contrôle GS1 en temps réel côté client ET serveur ; un GTIN valide active automatiquement les QR GS1 Digital Link (choix automatique déjà branché dans les routes QR)

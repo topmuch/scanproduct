@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getAllProducts, type CatalogFilters } from "@/lib/public-data";
 import { getToken } from "next-auth/jwt";
+import { verifierCheckDigitGtin } from "@/lib/gs1";
 
 /**
  * GET /api/products
@@ -144,6 +145,21 @@ export async function POST(request: NextRequest) {
       typeof body.barcode === "string" && body.barcode.trim()
         ? body.barcode.replace(/[\s-]/g, "")
         : null;
+
+    // ── Validation GS1 : le GTIN (si fourni) doit être mathématiquement
+    // valide (check digit Modulo 10). Double filet avec la validation temps
+    // réel du formulaire — indispensable car le GTIN conditionne le standard
+    // des QR Codes générés (GS1 Digital Link vs standard).
+    if (barcode && !verifierCheckDigitGtin(barcode)) {
+      return NextResponse.json(
+        {
+          error:
+            "Code-barres (GTIN) invalide : le chiffre de contrôle GS1 ne correspond pas. Vérifiez la saisie (8 à 14 chiffres).",
+          code: "GTIN_INVALIDE",
+        },
+        { status: 400 }
+      );
+    }
     const offData =
       body.offData && typeof body.offData === "object"
         ? JSON.stringify(body.offData)

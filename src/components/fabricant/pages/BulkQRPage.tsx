@@ -21,7 +21,7 @@ import {
 } from "@/components/fabricant/ui";
 import { formatNombre } from "@/lib/fabricant-types";
 import { useFabricantData } from "../FabricantDataProvider";
-import { getScanUrl } from "@/lib/qr-utils";
+import { construireUrlQrClient } from "@/lib/qr-url";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -191,6 +191,18 @@ export function BulkQRPage() {
 
   // ── Preview QR (first selected lot) ───────────────────────────────
   const previewLot = selectedLots[0];
+
+  // Aperçu fidèle : même URL que celle qui sera encodée côté serveur par
+  // /api/qr-codes/bulk-generate (GS1 Digital Link si le produit porte un
+  // GTIN valide, sinon /p/<lotId>).
+  const apercuQr = previewLot
+    ? construireUrlQrClient({
+        barcode: data.products.find((p) => p.id === previewLot.produitId)
+          ?.barcode,
+        numeroLot: previewLot.numero,
+        lotId: previewLot.id,
+      })
+    : null;
 
   return (
     <div className="space-y-6">
@@ -413,13 +425,13 @@ export function BulkQRPage() {
           </div>
 
           {/* Preview */}
-          {previewLot && (
+          {previewLot && apercuQr && (
             <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
               <h3 className="mb-3 text-sm font-bold text-gray-900">Aperçu</h3>
               <div className="flex flex-col items-center gap-2">
                 <div className="rounded-lg border border-gray-100 bg-white p-3">
                   <QRCodeCanvas
-                    value={getScanUrl(previewLot.id)}
+                    value={apercuQr.url}
                     size={160}
                     fgColor={color}
                     bgColor="#FFFFFF"
@@ -431,6 +443,16 @@ export function BulkQRPage() {
                   {previewLot.produitNom}
                 </p>
                 <p className="text-[11px] text-gray-400">Lot {previewLot.numero}</p>
+                <span
+                  className={
+                    "rounded px-1.5 py-px text-[9px] font-semibold " +
+                    (apercuQr.format === "GS1"
+                      ? "bg-[#ECFDF5] text-[#047857]"
+                      : "bg-[#EFF6FF] text-[#1D4ED8]")
+                  }
+                >
+                  {apercuQr.format === "GS1" ? "GS1 Digital Link" : "Standard"}
+                </span>
               </div>
             </div>
           )}

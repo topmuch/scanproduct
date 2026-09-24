@@ -25,28 +25,28 @@ import {
 } from "@/components/fabricant/ui";
 import { formatNombre } from "@/lib/fabricant-types";
 import { useFabricantData } from "../FabricantDataProvider";
-import { downloadQRCode, getScanUrl } from "@/lib/qr-utils";
+import { downloadQRCode } from "@/lib/qr-utils";
+import { construireUrlQrClient } from "@/lib/qr-url";
 import { toast } from "sonner";
 
 // ============================================================================
 // QRCodeDisplay — real scannable QR code using qrcode.react.
-// Encodes the public scan URL `${origin}/p/<lotId>` (built by getScanUrl from
-// @/lib/qr-utils) so every QR is fully functional and resolves to the lot's
-// digital passport page.
+// Encodes the URL built by `construireUrlQrClient` (same GS1/standard choice
+// as the generation APIs): GTIN products → GS1 Digital Link URI, others →
+// the classic `/p/<lotId>` passport URL.
 // ============================================================================
 function QRCodeDisplay({
-  lotId,
+  value,
   size = 150,
   color = "#000000",
 }: {
-  lotId: string;
+  value: string;
   size?: number;
   color?: string;
 }) {
-  const url = getScanUrl(lotId);
   return (
     <QRCodeCanvas
-      value={url}
+      value={value}
       size={size}
       fgColor={color}
       bgColor="#FFFFFF"
@@ -121,6 +121,18 @@ function GenerationModal({
         data.abonnement.quota.qrCodes.limite - data.abonnement.quota.qrCodes.utilise,
       )
     : 0;
+
+  // Aperçu fidèle : même URL que celle qui sera générée côté serveur
+  // (GS1 Digital Link si le produit du lot porte un GTIN valide).
+  const lotSelectionne = lots.find((l) => l.id === lotId);
+  const produitSelectionne = lotSelectionne
+    ? data.products.find((p) => p.id === lotSelectionne.produitId)
+    : undefined;
+  const apercuQr = construireUrlQrClient({
+    barcode: produitSelectionne?.barcode,
+    numeroLot: lotSelectionne?.numero ?? "",
+    lotId: lotId || "preview",
+  });
 
   if (!open) return null;
 
@@ -341,7 +353,7 @@ function GenerationModal({
             <div>
               <label className="mb-1.5 block text-[13px] font-semibold text-[#374151]">Aperçu</label>
               <div className="flex flex-col items-center rounded-lg border border-[#E5E7EB] bg-white p-3">
-                <QRCodeDisplay lotId="preview" size={120} color={couleur} />
+                <QRCodeDisplay value={apercuQr.url} size={120} color={couleur} />
                 {options.lot && (
                   <p className="mt-2 font-mono text-[10px] text-[#6B7280]">{lots.find((l) => l.id === lotId)?.numero ?? "—"}</p>
                 )}
@@ -422,6 +434,25 @@ export function QRCodesPage() {
     const set = new Set(qrCodes.map((q) => q.lotNumero));
     return Array.from(set);
   }, [qrCodes]);
+
+  // ── URL scannable d'un QR (même choix GS1/standard que la génération) ──
+  // Lookup lot → produit pour récupérer le barcode (GTIN) ; reconstruit
+  // l'URI GS1 /01/<GTIN>/10/<LOT>/21/<code> quand le QR est unitaire
+  // (code d'impression ≤ 20 car. = série AI 21), sinon URL standard.
+  const urlQrDe = useMemo(() => {
+    const lotParId = new Map(data.lots.map((l) => [l.id, l]));
+    const produitParId = new Map(data.products.map((p) => [p.id, p]));
+    return (q: { lotId: string; code: string }) => {
+      const lot = lotParId.get(q.lotId);
+      const produit = lot ? produitParId.get(lot.produitId) : undefined;
+      return construireUrlQrClient({
+        barcode: produit?.barcode,
+        numeroLot: lot?.numero ?? "",
+        lotId: q.lotId,
+        code: q.code,
+      });
+    };
+  }, [data.lots, data.products]);
 
   const filtered = useMemo(() => {
     let list = qrCodes.filter((q) => {
@@ -617,7 +648,7 @@ export function QRCodesPage() {
                 const selected = qrCodes.filter((q) => selectedIds.has(q.id));
                 for (let i = 0; i < selected.length; i++) {
                   await downloadQRCode(
-                    getScanUrl(selected[i].lotId),
+                    urlQrDe(selected[i]).url,
                     `qr-${selected[i].code}.png`
                   );
                   if (i < selected.length - 1) {
@@ -731,13 +762,23 @@ export function QRCodesPage() {
                 {/* QR image */}
                 <div className="flex justify-center pt-2">
                   <div className="rounded-md border border-[#F3F4F6] p-2">
-                    <QRCodeDisplay lotId={q.lotId} size={150} />
+                    <QRCodeDisplay value={urlQrDe(q).url} size={150} />
                   </div>
                 </div>
 
                 {/* Meta */}
                 <div className="mt-3 text-center">
-                  <p className="truncate font-mono text-[12px] text-[#6B7280]" title={q.code}>
+                  <span
+                    className={
+                      "inline-block rounded px-1.5 py-px text-[9px] font-semibold " +
+                      (urlQrDe(q).format === "GS1"
+                        ? "bg-[#ECFDF5] text-[#047857]"
+                        : "bg-[#EFF6FF] text-[#1D4ED8]")
+                    }
+                  >
+                    {urlQrDe(q).format === "GS1" ? "GS1 Digital Link" : "Standard"}
+                  </span>
+                  <p className="mt-1 truncate font-mono text-[12px] text-[#6B7280]" title={q.code}>
                     {q.code}
                   </p>
                   <p className="mt-0.5 truncate text-[13px] font-semibold text-[#111827]" title={q.lotNumero}>
@@ -761,8 +802,13 @@ export function QRCodesPage() {
                     type="button"
                     title="Télécharger"
                     onClick={() => {
-                      downloadQRCode(getScanUrl(q.lotId), `qr-${q.code}.png`);
-                      toast.success(`QR code ${q.code} téléchargé`);
+                      const qr = urlQrDe(q);
+                      downloadQRCode(qr.url, `qr-${q.code}.png`);
+                      toast.success(
+                        qr.format === "GS1"
+                          ? `QR code GS1 ${q.code} téléchargé`
+                          : `QR code ${q.code} téléchargé`
+                      );
                     }}
                     className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[#E5E7EB] bg-white text-[#374151] transition-colors hover:bg-[#F9FAFB]"
                   >

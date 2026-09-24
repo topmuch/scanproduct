@@ -32,6 +32,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
+  AlertTriangle,
   Check,
   CheckCircle2,
   ChevronDown,
@@ -46,6 +47,10 @@ import {
   X,
 } from "lucide-react";
 import { toast } from "sonner";
+
+// Validation GS1 (check digit Modulo 10) — pure et isomorphe, utilisée
+// à la fois pour le feedback temps réel et la validation d'étape.
+import { verifierCheckDigitGtin } from "@/lib/gs1";
 
 import {
   getActiveCategories,
@@ -804,6 +809,14 @@ export function DynamicProductForm({
   // or via the BarcodeScanner modal. `offData` holds the normalized OFF
   // payload so we can show a preview + persist it for the scan page.
   const [barcode, setBarcode] = useState<string>(initialData?.barcode ?? "");
+  // ── Validation GS1 temps réel du GTIN (check digit Modulo 10) ─────
+  // "vide" (optionnel) | "valide" → QR en standard GS1 | "invalide" →
+  // la soumission est bloquée (un GTIN erroné produirait des QR hors standard).
+  const gtinStatut: "vide" | "valide" | "invalide" = !barcode.trim()
+    ? "vide"
+    : verifierCheckDigitGtin(barcode.trim())
+      ? "valide"
+      : "invalide";
   const [offData, setOffData] = useState<ExtractedOffData | null>(
     initialData?.offData ?? null,
   );
@@ -931,6 +944,13 @@ export function DynamicProductForm({
     if (stepId === "general") {
       if (!name.trim()) errs.name = "Le nom du produit est requis.";
       else if (name.trim().length < 3) errs.name = "Le nom doit faire au moins 3 caractères.";
+      // ── GTIN (code-barres) : optionnel mais DOIT être GS1-valide ──
+      // Un chiffre de contrôle erroné = faute de saisie quasi certaine ;
+      // on bloque tôt avec un message explicite (l'API revalide côté serveur).
+      if (barcode.trim() && gtinStatut === "invalide") {
+        errs.barcode =
+          "Chiffre de contrôle GS1 invalide — vérifiez la saisie du code-barres (GTIN-8, 12, 13 ou 14 chiffres).";
+      }
     }
     if (stepId === "specifics") {
       for (const f of categoryFields) {
@@ -1415,15 +1435,51 @@ export function DynamicProductForm({
                   <ScanLine size={14} /> Scanner
                 </button>
               </div>
-              <div className="mt-3">
+              <div className="mt-3" ref={(el) => { errorRefs.current.barcode = el; }}>
                 <input
                   type="text"
                   inputMode="numeric"
                   value={barcode}
                   onChange={(e) => setBarcode(e.target.value.replace(/[^\d]/g, ""))}
                   placeholder="Ex : 3017620422003"
-                  className="w-full rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 font-mono text-[13px] text-[#111827] placeholder:text-[#9CA3AF] focus:border-[#10B981] focus:outline-none focus:ring-2 focus:ring-[#10B981]/20"
+                  className={
+                    gtinStatut === "invalide"
+                      ? "w-full rounded-lg border border-red-300 bg-white px-3 py-2 font-mono text-[13px] text-[#111827] placeholder:text-[#9CA3AF] focus:border-red-400 focus:outline-none focus:ring-2 focus:ring-red-400/20"
+                      : gtinStatut === "valide"
+                        ? "w-full rounded-lg border border-[#10B981] bg-white px-3 py-2 font-mono text-[13px] text-[#111827] placeholder:text-[#9CA3AF] focus:border-[#10B981] focus:outline-none focus:ring-2 focus:ring-[#10B981]/20"
+                        : "w-full rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 font-mono text-[13px] text-[#111827] placeholder:text-[#9CA3AF] focus:border-[#10B981] focus:outline-none focus:ring-2 focus:ring-[#10B981]/20"
+                  }
                 />
+
+                {/* ── Validation GS1 temps réel (check digit Modulo 10) ── */}
+                {gtinStatut === "valide" && (
+                  <div className="mt-2 flex items-start gap-1.5 text-[#047857]">
+                    <CheckCircle2 size={14} className="mt-0.5 shrink-0" />
+                    <p className="text-[11px] leading-relaxed">
+                      <span className="font-semibold">GTIN valide</span> — vos
+                      QR Codes utiliseront le standard GS1 Digital Link :
+                      <span className="font-mono"> /01/&lt;GTIN&gt;/10/&lt;lot&gt;/21/&lt;série&gt;</span>
+                    </p>
+                  </div>
+                )}
+                {gtinStatut === "invalide" && (
+                  <div className="mt-2 flex items-start gap-1.5 text-red-600">
+                    <AlertTriangle size={14} className="mt-0.5 shrink-0" />
+                    <p className="text-[11px] leading-relaxed">
+                      <span className="font-semibold">Chiffre de contrôle GS1 invalide</span> —
+                      vérifiez la saisie (GTIN-8, 12, 13 ou 14 chiffres). Sans correction,
+                      la génération du produit sera bloquée.
+                    </p>
+                  </div>
+                )}
+                {gtinStatut === "vide" && (
+                  <p className="mt-2 text-[11px] text-[#9CA3AF]">
+                    Optionnel — si renseigné, le code doit être un GTIN GS1 valide
+                    (8 à 14 chiffres, chiffre de contrôle vérifié automatiquement).
+                  </p>
+                )}
+
+                <FieldError message={errors.barcode} />
               </div>
               {offData && (
                 <div className="mt-3 rounded-lg border border-[#10B981]/30 bg-white p-3">

@@ -434,6 +434,8 @@ export async function recordScan(
     userAgent?: string;
     ipAddress?: string;
     qrCodeId?: string;
+    /** Métadonnées libres (JSON encodé) — ex: audit GS1 { gtin, lot, serie }. */
+    metadata?: string;
   } = {}
 ) {
   try {

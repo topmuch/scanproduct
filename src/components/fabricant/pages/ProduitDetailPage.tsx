@@ -39,7 +39,8 @@ import {
 import { useFabricantNav } from "@/lib/fabricant-store";
 import { useFabricantData } from "../FabricantDataProvider";
 import { ProductImage } from "@/components/fabricant/ProductImage";
-import { getScanUrl, downloadQRCode } from "@/lib/qr-utils";
+import { downloadQRCode } from "@/lib/qr-utils";
+import { construireUrlQrClient } from "@/lib/qr-url";
 import { toast } from "sonner";
 
 // ============================================================================
@@ -412,12 +413,19 @@ export function ProduitDetailPage() {
 
   const productLots = lots.filter((l) => l.produitId === product.id);
 
-  // The QR code encodes the public scan URL for this product. We use the
-  // product's first lot id when available (so scanning opens a real lot
-  // passport), otherwise fall back to the product id (which resolves to the
-  // friendly "not found" page — never a raw 404).
-  const qrLotId = productLots[0]?.id ?? product.id;
-  const scanUrl = getScanUrl(qrLotId);
+  // The QR code encodes the scannable URL for this product, built with the
+  // SAME GS1/standard choice as the generation APIs: a valid GTIN barcode
+  // → GS1 Digital Link URI (/01/<GTIN>/10/<LOT>, or GTIN-only when the
+  // product has no lot yet); otherwise the classic /p/<lotId> passport URL
+  // (product id fallback resolves to the friendly "not found" page —
+  // never a raw 404).
+  const qrLot = productLots[0];
+  const qrLotId = qrLot?.id ?? product.id;
+  const scanUrl = construireUrlQrClient({
+    barcode: product.barcode,
+    numeroLot: qrLot?.numero ?? "",
+    lotId: qrLotId,
+  }).url;
 
   function handleDownloadQR() {
     downloadQRCode(scanUrl, `qr-${product!.nom.replace(/\s+/g, "-").toLowerCase()}.png`);

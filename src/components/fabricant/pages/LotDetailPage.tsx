@@ -19,7 +19,8 @@ import { QRCodeCanvas } from "qrcode.react";
 import { formatNombre } from "@/lib/fabricant-types";
 import { useFabricantNav } from "@/lib/fabricant-store";
 import { useFabricantData } from "../FabricantDataProvider";
-import { downloadQRCode, getScanUrl } from "@/lib/qr-utils";
+import { downloadQRCode } from "@/lib/qr-utils";
+import { construireUrlQrClient } from "@/lib/qr-url";
 import { ProductImage } from "@/components/fabricant/ProductImage";
 import { toast } from "sonner";
 import {
@@ -57,6 +58,29 @@ export function LotDetailPage() {
 
   // Real QR codes from the store that belong to this lot.
   const lotQrCodes = lot ? qrCodes.filter((q) => q.lotId === lot.id) : [];
+
+  // Produit parent (barcode → choix automatique GS1 / standard des QR).
+  const produitDuLot = lot
+    ? produits.find((p) => p.id === lot.produitId)
+    : undefined;
+
+  /**
+   * URL scannable d'un QR de ce lot — même logique que les routes de
+   * génération : GTIN valide → URI GS1 Digital Link (avec la série AI 21
+   * du QR quand un code d'impression court est fourni) ; sinon URL
+   * standard /p/<lotId> (+ ?code= pour l'attribution analytics).
+   */
+  function urlQrDuLot(codeImpression?: string | null): {
+    url: string;
+    format: "GS1" | "STANDARD";
+  } {
+    return construireUrlQrClient({
+      barcode: produitDuLot?.barcode,
+      numeroLot: lot!.numero,
+      lotId: lot!.id,
+      code: codeImpression,
+    });
+  }
 
   // If a lot id was selected but it no longer exists in the store (e.g. it
   // was deleted), redirect back to the lots list. We render nothing while
@@ -98,7 +122,9 @@ export function LotDetailPage() {
   const scansParJour = Math.max(1, Math.round(lot.scans / 30));
 
   function copyLink() {
-    const link = getScanUrl(lot!.id);
+    // Même URL que celle encodée dans le QR affiché (WYSIWYG : ce que
+    // l'utilisateur copie est ce qu'un téléphone scanne).
+    const link = urlQrDuLot().url;
     if (navigator.clipboard) {
       navigator.clipboard.writeText(link).catch(() => {});
     }
@@ -107,9 +133,16 @@ export function LotDetailPage() {
   }
 
   function handleDownloadQR() {
-    // Encode the real public scan URL so the downloaded QR is scannable.
-    downloadQRCode(getScanUrl(lot!.id), `${lot!.numero}-qr.png`);
-    toast.success(`QR code de ${lot!.numero} téléchargé`);
+    // Encode la même URL publique que la génération serveur (GS1 ou
+    // standard selon le barcode du produit) pour un QR téléchargé
+    // identique à ce qui est imprimé.
+    const qr = urlQrDuLot();
+    downloadQRCode(qr.url, `${lot!.numero}-qr${qr.format === "GS1" ? "-gs1" : ""}.png`);
+    toast.success(
+      qr.format === "GS1"
+        ? `QR code GS1 de ${lot!.numero} téléchargé`
+        : `QR code de ${lot!.numero} téléchargé`
+    );
   }
 
   async function handleGenerateQR() {
@@ -271,20 +304,33 @@ export function LotDetailPage() {
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                {lotQrCodes.slice(0, 8).map((q) => (
-                  <div
-                    key={q.id}
-                    className="flex flex-col items-center rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] p-3"
-                  >
-                    <RealMiniQR lotId={lot.id} />
-                    <span className="mt-2 truncate font-mono text-[10px] text-[#6B7280]" title={q.code}>
-                      {q.code}
-                    </span>
-                    <span className="text-[10px] text-[#9CA3AF]">
-                      {formatNombre(q.scans)} scans
-                    </span>
-                  </div>
-                ))}
+                {lotQrCodes.slice(0, 8).map((q) => {
+                  const qr = urlQrDuLot(q.code);
+                  return (
+                    <div
+                      key={q.id}
+                      className="flex flex-col items-center rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] p-3"
+                    >
+                      <RealMiniQR value={qr.url} />
+                      <span className="mt-2 truncate font-mono text-[10px] text-[#6B7280]" title={q.code}>
+                        {q.code}
+                      </span>
+                      <span
+                        className={
+                          "mt-0.5 rounded px-1.5 py-px text-[9px] font-semibold " +
+                          (qr.format === "GS1"
+                            ? "bg-[#ECFDF5] text-[#047857]"
+                            : "bg-[#EFF6FF] text-[#1D4ED8]")
+                        }
+                      >
+                        {qr.format === "GS1" ? "GS1" : "Standard"}
+                      </span>
+                      <span className="mt-1 text-[10px] text-[#9CA3AF]">
+                        {formatNombre(q.scans)} scans
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
             )}
             {lotQrCodes.length > 8 && (
@@ -479,10 +525,10 @@ function ActionButton({
   );
 }
 
-function RealMiniQR({ lotId }: { lotId: string }) {
+function RealMiniQR({ value }: { value: string }) {
   return (
     <QRCodeCanvas
-      value={getScanUrl(lotId)}
+      value={value}
       size={84}
       level="M"
       marginSize={0}
