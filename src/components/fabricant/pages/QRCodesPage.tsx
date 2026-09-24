@@ -505,10 +505,12 @@ export function QRCodesPage() {
   };
   const clearSelection = () => setSelectedIds(new Set());
 
-  const totalQuota = abonnement.quota.qrCodes.limite;
+  // Graceful degradation: no abonnement → zero quota (UI shows exhausted
+  // state instead of crashing).
+  const totalQuota = abonnement?.quota.qrCodes.limite ?? 0;
   // Real usage from the abonnement context — reflects the actual QR code
   // count from the database.
-  const usedQuota = abonnement.quota.qrCodes.utilise;
+  const usedQuota = abonnement?.quota.qrCodes.utilise ?? 0;
   const remaining = totalQuota - usedQuota;
 
   const allVisibleSelected = paged.length > 0 && paged.every((q) => selectedIds.has(q.id));

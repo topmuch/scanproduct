@@ -330,7 +330,7 @@ async function getScansByDay(userId: string, days = 30) {
     prevCounts.set(key, (prevCounts.get(key) ?? 0) + 1);
   }
 
-  const out = [];
+  const out: { jour: string; scans: number; precedent: number }[] = [];
   for (const [key, value] of counts.entries()) {
     const [y, m, d] = key.split("-");
     out.push({

@@ -355,7 +355,7 @@ function GeneralSection() {
           <div className="rounded-lg border-2 border-dashed border-[#E5E7EB] bg-[#F9FAFB] p-6">
             <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:text-left">
               <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg border border-[#E5E7EB] bg-white">
-                <Logo showText={false} />
+                <Logo />
               </div>
               <div className="flex-1">
                 <p className="text-[14px] font-medium text-[#111827]">
@@ -1244,7 +1244,7 @@ function AppearanceSection() {
           <div className="rounded-lg border-2 border-dashed border-[#E5E7EB] bg-[#F9FAFB] p-6">
             <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:text-left">
               <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg border border-[#E5E7EB] bg-white">
-                <Logo showText={false} />
+                <Logo />
               </div>
               <div className="flex-1">
                 <p className="text-[14px] font-medium text-[#111827]">

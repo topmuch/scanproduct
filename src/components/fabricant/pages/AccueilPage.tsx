@@ -358,6 +358,7 @@ export function AccueilPage() {
       {/* ====================================================================
           6. Transparency Score
           ==================================================================== */}
+      {score && (
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
@@ -445,6 +446,7 @@ export function AccueilPage() {
           </button>
         </div>
       </motion.div>
+      )}
 
       {/* ====================================================================
           7. Badges / Gamification

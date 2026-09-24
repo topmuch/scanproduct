@@ -73,7 +73,7 @@ function LoginForm() {
     // signIn() can throw if the server is unreachable (dev server down,
     // Coolify container restarting, network issue). We catch that and show
     // a clear network-level message instead of the generic error.
-    let res: { error?: string; status?: number; ok?: boolean } | undefined;
+    let res: Awaited<ReturnType<typeof signIn>> | undefined;
     try {
       res = await signIn("credentials", {
         email,

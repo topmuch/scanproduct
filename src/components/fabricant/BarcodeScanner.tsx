@@ -127,7 +127,8 @@ export function BarcodeScanner({ onBarcodeScanned, onClose }: Props) {
       scannerRef.current = null;
       if (s) {
         // Best-effort stop — swallow errors (scanner may already be stopped).
-        s.stop().then(() => s.clear().catch(() => undefined)).catch(() => undefined);
+        // clear() is synchronous (void): exceptions land in the shared catch.
+        s.stop().then(() => s.clear()).catch(() => undefined);
       }
     };
   }, [mode, doLookup]);

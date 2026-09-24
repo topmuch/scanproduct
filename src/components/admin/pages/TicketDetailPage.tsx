@@ -142,7 +142,7 @@ export function TicketDetailPage() {
         <div className="space-y-6">
           <InfoCard ticket={ticket} />
           <InternalNotesCard ticket={ticket} />
-          <ActionsCard ticket={ticket} />
+          <ActionsCard ticket={ticket} updateTicket={updateTicket} />
         </div>
       </div>
     </PageContainer>
@@ -352,7 +352,13 @@ function InternalNotesCard({ ticket }: { ticket: Ticket }) {
   );
 }
 
-function ActionsCard({ ticket }: { ticket: Ticket }) {
+function ActionsCard({
+  ticket,
+  updateTicket,
+}: {
+  ticket: Ticket;
+  updateTicket: (id: string, patch: Partial<Ticket>) => void | Promise<void>;
+}) {
   return (
     <Card>
       <CardHeader title="Actions" />

@@ -396,7 +396,7 @@ export function LoyaltyWidget({
     if (!anonymousId) return;
     let cancelled = false;
 
-    async function init() {
+    async function init(id: string) {
       setLoading(true);
 
       // 1. Fetch current profile (so we have points + catalog even if this
@@ -404,7 +404,7 @@ export function LoyaltyWidget({
       let fetchedBadges: BadgeTier[] = [];
       try {
         const profileRes = await fetch(
-          `/api/loyalty/profile?anonymousId=${encodeURIComponent(anonymousId)}`,
+          `/api/loyalty/profile?anonymousId=${encodeURIComponent(id)}`,
           { cache: "no-store" },
         );
         if (!cancelled && profileRes.ok) {
@@ -429,7 +429,7 @@ export function LoyaltyWidget({
           const scanRes = await fetch("/api/loyalty/scan", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ anonymousId, lotId }),
+            body: JSON.stringify({ anonymousId: id, lotId }),
           });
           if (!cancelled && scanRes.ok) {
             const scanData = (await scanRes.json()) as ScanResponse;
@@ -470,7 +470,7 @@ export function LoyaltyWidget({
       if (!cancelled) setLoading(false);
     }
 
-    void init();
+    void init(anonymousId);
     return () => {
       cancelled = true;
     };

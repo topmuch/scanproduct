@@ -54,7 +54,9 @@ export async function ExpiringSection() {
         return {
           lotId: l.id,
           lotReference: l.reference,
-          expiryDate: l.expiryDate.toISOString(),
+          // The `where: { expiryDate: { gte } }` clause above already
+          // excludes NULL expiry dates, so the non-null assertion is safe.
+          expiryDate: l.expiryDate!.toISOString(),
           productName: product.name,
           productBrand: product.brand ?? null,
           productImage: product.imageUrl ?? null,

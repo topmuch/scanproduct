@@ -13,12 +13,11 @@ import { db } from "@/lib/db";
  * - Status check: SUSPENDED accounts cannot sign in
  */
 export const authOptions: NextAuthOptions = {
-  // Trust the incoming request's Host header. Required when running behind a
-  // reverse proxy / gateway (e.g. the preview panel) so NextAuth uses the
-  // public URL the browser sees, not the internal `localhost:3000`.
-  // Without this, the session cookie's domain/SameSite check fails and the
-  // user sees "Une erreur est survenue. Veuillez réessayer." on every login.
-  trustHost: true,
+  // Trust-host note: this project uses NextAuth v4, which has no `trustHost`
+  // option (that's v5). Behind a reverse proxy, v4 relies on `NEXTAUTH_URL`
+  // matching the public URL the browser sees — make sure it is set correctly
+  // in the deployment environment (e.g. Coolify), otherwise login fails with
+  // "Une erreur est survenue. Veuillez réessayer.".
   session: {
     strategy: "jwt",
     maxAge: 60 * 60 * 24 * 7, // 7 days

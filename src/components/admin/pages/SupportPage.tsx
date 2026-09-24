@@ -168,7 +168,12 @@ export function SupportPage() {
                 </tr>
               )}
               {filtered.map((t) => (
-                <TicketRow key={t.id} ticket={t} onView={() => openDetail("ticket-detail", t.id)} />
+                <TicketRow
+                  key={t.id}
+                  ticket={t}
+                  onView={() => openDetail("ticket-detail", t.id)}
+                  updateTicket={updateTicket}
+                />
               ))}
             </tbody>
           </table>
@@ -258,7 +263,15 @@ function FilterRow({
   );
 }
 
-function TicketRow({ ticket, onView }: { ticket: Ticket; onView: () => void }) {
+function TicketRow({
+  ticket,
+  onView,
+  updateTicket,
+}: {
+  ticket: Ticket;
+  onView: () => void;
+  updateTicket: (id: string, patch: Partial<Ticket>) => void | Promise<void>;
+}) {
   return (
     <tr className="h-16 border-b border-[#F3F4F6] text-[14px] transition-colors last:border-b-0 hover:bg-[#F9FAFB]">
       <td className="px-4 py-3">
