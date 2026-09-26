@@ -1,6 +1,7 @@
 import { CheckCircle2, XCircle, Star, BadgeCheck } from "lucide-react";
 import type { LotWithDetails } from "@/lib/public-data";
 import { formatDate, formatDateShort, daysUntil, cn } from "@/lib/utils";
+import { ZoomableProductImage } from "@/components/product/wow/ZoomableProductImage";
 
 /**
  * WowHero — spectacular hero section for the premium product page.
@@ -159,22 +160,22 @@ export function WowHero({ product, lot, fabricant }: Props) {
         <div className="absolute -inset-1 rounded-[2rem] bg-gradient-to-br from-blue-400 via-purple-400 to-pink-400 opacity-20 blur-2xl transition-opacity duration-500 group-hover:opacity-40" />
 
         <div className="wow-glass wow-shadow-card relative overflow-hidden rounded-3xl p-4 sm:p-5">
-          <div className="flex gap-4">
-            {/* Product image */}
-            <div className="relative flex-shrink-0">
+          <div className="flex flex-col gap-4 sm:flex-row">
+            {/* Product image — large, aspect ratio preserved, tap to zoom */}
+            <div className="relative mx-auto w-full max-w-[260px] flex-shrink-0 sm:mx-0 sm:w-44 sm:max-w-none">
               {/* Gradient blur behind image */}
               <div className="absolute -inset-2 rounded-3xl bg-gradient-to-br from-blue-300 via-purple-300 to-pink-300 opacity-50 blur-lg" />
 
-              <div className="relative h-28 w-28 sm:h-32 sm:w-32">
-                <div className="relative h-full w-full overflow-hidden rounded-2xl border-4 border-white shadow-xl">
+              <div className="relative h-48 w-full sm:h-44 sm:w-44">
+                <div className="relative h-full w-full overflow-hidden rounded-2xl border-4 border-white bg-white shadow-xl">
                   {product.imageUrl ? (
-                    <img
+                    <ZoomableProductImage
                       src={product.imageUrl}
                       alt={product.name}
-                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      className="h-full w-full"
                     />
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50 text-5xl">
+                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50 text-6xl">
                       {emoji}
                     </div>
                   )}
@@ -182,7 +183,7 @@ export function WowHero({ product, lot, fabricant }: Props) {
 
                 {/* Floating category badge top-right */}
                 {product.category && (
-                  <div className="absolute -right-2 -top-2 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 px-2.5 py-1 text-[10px] font-bold text-white shadow-lg sm:text-xs">
+                  <div className="absolute -right-2 -top-2 z-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 px-2.5 py-1 text-[10px] font-bold text-white shadow-lg sm:text-xs">
                     {emoji} {product.category}
                   </div>
                 )}
