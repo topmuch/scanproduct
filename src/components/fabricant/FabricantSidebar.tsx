@@ -80,6 +80,7 @@ const PAGE_TO_KEY: Record<FabricantPage, string> = {
   produits: "produits",
   "produit-detail": "produits",
   lots: "lots",
+  "lot-create": "lots",
   "lot-detail": "lots",
   "qr-codes": "qr-codes",
   "qr-masse": "qr-masse",

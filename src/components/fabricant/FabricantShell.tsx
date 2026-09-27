@@ -9,6 +9,7 @@ import { AccueilPage } from "./pages/AccueilPage";
 import { ProduitsPage } from "./pages/ProduitsPage";
 import { ProduitDetailPage } from "./pages/ProduitDetailPage";
 import { LotsPage } from "./pages/LotsPage";
+import { LotCreatePage } from "./pages/LotCreatePage";
 import { LotDetailPage } from "./pages/LotDetailPage";
 import { QRCodesPage } from "./pages/QRCodesPage";
 import { BulkQRPage } from "./pages/BulkQRPage";
@@ -31,6 +32,8 @@ function renderPage(page: string) {
       return <ProduitDetailPage />;
     case "lots":
       return <LotsPage />;
+    case "lot-create":
+      return <LotCreatePage />;
     case "lot-detail":
       return <LotDetailPage />;
     case "qr-codes":

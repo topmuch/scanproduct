@@ -7,6 +7,7 @@ export type FabricantPage =
   | "produits"
   | "produit-detail"
   | "lots"
+  | "lot-create"
   | "lot-detail"
   | "qr-codes"
   | "qr-masse"

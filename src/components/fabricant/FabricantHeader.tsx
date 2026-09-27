@@ -118,6 +118,7 @@ const PAGE_TITLES: Record<FabricantPage, { title: string; breadcrumb: string }> 
   produits: { title: "Mes Produits", breadcrumb: "Dashboard / Produits" },
   "produit-detail": { title: "Détail Produit", breadcrumb: "Dashboard / Produits / Détail" },
   lots: { title: "Gestion des Lots", breadcrumb: "Dashboard / Lots" },
+  "lot-create": { title: "Créer un Lot", breadcrumb: "Dashboard / Lots / Création" },
   "lot-detail": { title: "Détail Lot", breadcrumb: "Dashboard / Lots / Détail" },
   "qr-codes": { title: "Mes QR Codes", breadcrumb: "Dashboard / QR Codes" },
   "qr-masse": { title: "Génération en masse", breadcrumb: "Dashboard / QR Codes / Génération en masse" },
