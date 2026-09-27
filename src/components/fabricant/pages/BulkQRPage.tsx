@@ -226,7 +226,7 @@ export function BulkQRPage() {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Rechercher un lot ou produit..."
-                  className="h-10 w-full rounded-lg border border-gray-200 pl-9 pr-3 text-sm outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20"
+                  className="h-10 w-full rounded-lg border border-gray-200 pl-9 pr-3 text-sm outline-none focus:border-[#022150] focus:ring-2 focus:ring-[#022150]/20"
                 />
               </div>
               <button
@@ -235,7 +235,7 @@ export function BulkQRPage() {
                 className="flex h-10 items-center gap-2 rounded-lg border border-gray-200 px-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
               >
                 {selectedIds.size === filteredLots.length && filteredLots.length > 0 ? (
-                  <CheckSquare className="h-4 w-4 text-[#2563EB]" />
+                  <CheckSquare className="h-4 w-4 text-[#022150]" />
                 ) : (
                   <Square className="h-4 w-4 text-gray-400" />
                 )}
@@ -267,7 +267,7 @@ export function BulkQRPage() {
                       key={lot.id}
                       className={cn(
                         "flex cursor-pointer items-center gap-3 p-3 transition-colors hover:bg-gray-50",
-                        isSelected && "bg-[#2563EB]/5"
+                        isSelected && "bg-[#022150]/5"
                       )}
                     >
                       <button
@@ -277,7 +277,7 @@ export function BulkQRPage() {
                         aria-label={isSelected ? "Désélectionner" : "Sélectionner"}
                       >
                         {isSelected ? (
-                          <CheckSquare className="h-5 w-5 text-[#2563EB]" />
+                          <CheckSquare className="h-5 w-5 text-[#022150]" />
                         ) : (
                           <Square className="h-5 w-5 text-gray-300" />
                         )}
@@ -329,7 +329,7 @@ export function BulkQRPage() {
           {/* Options */}
           <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
             <div className="mb-3 flex items-center gap-2">
-              <Settings2 className="h-4 w-4 text-[#2563EB]" />
+              <Settings2 className="h-4 w-4 text-[#022150]" />
               <h3 className="text-sm font-bold text-gray-900">Personnalisation</h3>
             </div>
 
@@ -344,7 +344,7 @@ export function BulkQRPage() {
                 max={500}
                 value={perLot}
                 onChange={(e) => setPerLot(Math.min(500, Math.max(1, parseInt(e.target.value) || 1)))}
-                className="h-9 w-full rounded-lg border border-gray-200 px-3 text-sm outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20"
+                className="h-9 w-full rounded-lg border border-gray-200 px-3 text-sm outline-none focus:border-[#022150] focus:ring-2 focus:ring-[#022150]/20"
               />
               <p className="mt-1 text-[11px] text-gray-400">
                 Total: {formatNombre(totalQRCodes)} QR codes
@@ -367,7 +367,7 @@ export function BulkQRPage() {
                   type="text"
                   value={color}
                   onChange={(e) => setColor(e.target.value)}
-                  className="h-9 flex-1 rounded-lg border border-gray-200 px-3 text-sm font-mono outline-none focus:border-[#2563EB]"
+                  className="h-9 flex-1 rounded-lg border border-gray-200 px-3 text-sm font-mono outline-none focus:border-[#022150]"
                 />
               </div>
             </div>
@@ -408,7 +408,7 @@ export function BulkQRPage() {
               <select
                 value={labelsPerRow}
                 onChange={(e) => setLabelsPerRow(parseInt(e.target.value))}
-                className="h-9 w-full rounded-lg border border-gray-200 px-2 text-sm outline-none focus:border-[#2563EB]"
+                className="h-9 w-full rounded-lg border border-gray-200 px-2 text-sm outline-none focus:border-[#022150]"
               >
                 <option value={2}>2 (grand format)</option>
                 <option value={3}>3 (standard)</option>
@@ -448,7 +448,7 @@ export function BulkQRPage() {
                     "rounded px-1.5 py-px text-[9px] font-semibold " +
                     (apercuQr.format === "GS1"
                       ? "bg-[#ECFDF5] text-[#047857]"
-                      : "bg-[#EFF6FF] text-[#1D4ED8]")
+                      : "bg-[#F0F4F9] text-[#011D46]")
                   }
                 >
                   {apercuQr.format === "GS1" ? "GS1 Digital Link" : "Standard"}
@@ -463,7 +463,7 @@ export function BulkQRPage() {
               type="button"
               onClick={handleGenerate}
               disabled={generating || selectedIds.size === 0}
-              className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#2563EB] px-4 text-sm font-semibold text-white shadow-md shadow-[#2563EB]/25 transition-all hover:bg-[#1D4ED8] disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#022150] px-4 text-sm font-semibold text-white shadow-md shadow-[#022150]/25 transition-all hover:bg-[#011D46] disabled:cursor-not-allowed disabled:opacity-50"
             >
               {generating ? (
                 <>
@@ -563,7 +563,7 @@ export function BulkQRPage() {
             ))}
           </div>
 
-          <div className="mt-3 flex items-center gap-2 rounded-lg bg-blue-50 p-3 text-xs text-blue-700">
+          <div className="mt-3 flex items-center gap-2 rounded-lg bg-[#F0F4F9] p-3 text-xs text-[#011D46]">
             <AlertCircle className="h-4 w-4 flex-shrink-0" />
             <span>
               Les QR codes sont aussi disponibles dans la section{" "}
@@ -615,7 +615,7 @@ function ToggleRow({
         onClick={() => onChange(!checked)}
         className={cn(
           "relative h-5 w-9 flex-shrink-0 rounded-full transition-colors",
-          checked ? "bg-[#2563EB]" : "bg-gray-300"
+          checked ? "bg-[#022150]" : "bg-gray-300"
         )}
       >
         <span

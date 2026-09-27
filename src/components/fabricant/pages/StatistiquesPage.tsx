@@ -55,7 +55,7 @@ const PERIOD_OPTIONS: { value: PeriodKey; label: string }[] = [
 
 // Visual config for each KPI card (icon + colored background per design spec)
 const KPI_VISUALS: { icon: string; iconBg: string }[] = [
-  { icon: "📊", iconBg: "#EFF6FF" },
+  { icon: "📊", iconBg: "#F0F4F9" },
   { icon: "📱", iconBg: "#F0FDF4" },
   { icon: "📈", iconBg: "#FFFBEB" },
   { icon: "📦", iconBg: "#F3E8FF" },
@@ -106,7 +106,7 @@ function ChartTooltip({
   label,
   suffix = "",
   unit = "",
-  color = "#2563EB",
+  color = "#022150",
   labelFormatter,
 }: {
   active?: boolean;
@@ -387,7 +387,7 @@ export function StatistiquesPage() {
                 onClick={() => handleExport("scans")}
                 className="flex w-full items-center gap-3 px-3 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50"
               >
-                <Download className="h-4 w-4 text-[#2563EB]" />
+                <Download className="h-4 w-4 text-[#022150]" />
                 <div className="text-left">
                   <p className="font-medium">Scans (CSV)</p>
                   <p className="text-[10px] text-gray-400">Historique des scans</p>
@@ -429,7 +429,7 @@ export function StatistiquesPage() {
         </h2>
         <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
           {STATS_KPIS.map((kpi, i) => {
-            const visual = KPI_VISUALS[i] ?? { icon: "📊", iconBg: "#EFF6FF" };
+            const visual = KPI_VISUALS[i] ?? { icon: "📊", iconBg: "#F0F4F9" };
             // For KPI #4 ("Produits scannés", tendance "75%") no arrow — it's a coverage ratio
             const isRatio = i === 3;
             const tendanceDisplay = isRatio
@@ -462,8 +462,8 @@ export function StatistiquesPage() {
               <AreaChart data={SCANS_30J} margin={{ top: 10, right: 12, left: -8, bottom: 0 }}>
                 <defs>
                   <linearGradient id="scansGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#2563EB" stopOpacity={0.35} />
-                    <stop offset="100%" stopColor="#2563EB" stopOpacity={0} />
+                    <stop offset="0%" stopColor="#022150" stopOpacity={0.35} />
+                    <stop offset="100%" stopColor="#022150" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" vertical={false} />
@@ -481,17 +481,17 @@ export function StatistiquesPage() {
                   width={40}
                 />
                 <Tooltip
-                  content={<ChartTooltip suffix=" scans" color="#2563EB" labelFormatter={(l) => `Date : ${l}`} />}
-                  cursor={{ stroke: "#2563EB", strokeWidth: 1, strokeDasharray: "3 3" }}
+                  content={<ChartTooltip suffix=" scans" color="#022150" labelFormatter={(l) => `Date : ${l}`} />}
+                  cursor={{ stroke: "#022150", strokeWidth: 1, strokeDasharray: "3 3" }}
                 />
                 <Area
                   type="monotone"
                   dataKey="scans"
-                  stroke="#2563EB"
+                  stroke="#022150"
                   strokeWidth={3}
                   fill="url(#scansGradient)"
                   dot={false}
-                  activeDot={{ r: 5, fill: "#2563EB", stroke: "#fff", strokeWidth: 2 }}
+                  activeDot={{ r: 5, fill: "#022150", stroke: "#fff", strokeWidth: 2 }}
                 />
               </AreaChart>
             </ResponsiveContainer>
@@ -708,7 +708,7 @@ export function StatistiquesPage() {
                       <td className="py-3 text-right">
                         <button
                           type="button"
-                          className="inline-flex items-center gap-1 text-[12px] font-medium text-[#2563EB] hover:underline"
+                          className="inline-flex items-center gap-1 text-[12px] font-medium text-[#022150] hover:underline"
                         >
                           Voir détails
                           <ArrowRight className="h-3 w-3" />
@@ -742,7 +742,7 @@ export function StatistiquesPage() {
             className="relative overflow-hidden rounded-lg border border-[#E5E7EB]"
             style={{
               height: 360,
-              background: "linear-gradient(135deg, #F0FDF4 0%, #EFF6FF 100%)",
+              background: "linear-gradient(135deg, #F0FDF4 0%, #F0F4F9 100%)",
             }}
           >
             {/* Decorative country silhouette hint (subtle) */}
@@ -855,7 +855,7 @@ export function StatistiquesPage() {
           </div>
 
           <div className="mt-4">
-            <InsightBox color="#2563EB">60% de vos scans viennent de Dakar</InsightBox>
+            <InsightBox color="#022150">60% de vos scans viennent de Dakar</InsightBox>
           </div>
         </SectionCard>
       </div>
@@ -937,7 +937,7 @@ export function StatistiquesPage() {
             ))}
           </ul>
           <div className="mt-3">
-            <InsightBox color="#2563EB">85% des scans viennent de mobile</InsightBox>
+            <InsightBox color="#022150">85% des scans viennent de mobile</InsightBox>
           </div>
         </SectionCard>
 

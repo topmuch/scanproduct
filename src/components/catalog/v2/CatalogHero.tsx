@@ -38,11 +38,11 @@ export function CatalogHero({
   }
 
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-[#1e40af] via-[#2563eb] to-[#1e3a8a]">
+    <section className="relative overflow-hidden bg-gradient-to-br from-[#0A2B5F] via-[#022150] to-[#0D3068]">
       {/* Decorative blobs */}
       <div aria-hidden className="pointer-events-none absolute inset-0">
         <div className="absolute -left-32 -top-32 h-96 w-96 rounded-full bg-white/10 blur-3xl" />
-        <div className="absolute -bottom-40 -right-20 h-[28rem] w-[28rem] rounded-full bg-blue-400/20 blur-3xl" />
+        <div className="absolute -bottom-40 -right-20 h-[28rem] w-[28rem] rounded-full bg-[#4E74A8]/20 blur-3xl" />
         <div className="absolute left-1/2 top-1/3 h-64 w-64 -translate-x-1/2 rounded-full bg-emerald-300/10 blur-3xl" />
       </div>
 
@@ -72,13 +72,13 @@ export function CatalogHero({
         {/* Title */}
         <h1 className="mx-auto mt-6 max-w-3xl text-3xl font-bold leading-tight text-white sm:text-4xl lg:text-5xl">
           Découvrez des produits{" "}
-          <span className="block bg-gradient-to-r from-blue-200 via-white to-emerald-200 bg-clip-text text-transparent">
+          <span className="block bg-gradient-to-r from-[#C3D2E5] via-white to-emerald-200 bg-clip-text text-transparent">
             authentiques et traçables
           </span>
         </h1>
 
         {/* Subtitle */}
-        <p className="mx-auto mt-4 max-w-2xl text-base text-blue-100/90 sm:text-lg">
+        <p className="mx-auto mt-4 max-w-2xl text-base text-[#DCE7F2]/90 sm:text-lg">
           Parcourez notre catalogue de produits vérifiés par VerifScan.
           Scannez les QR codes pour accéder à leur traçabilité complète.
         </p>
@@ -101,7 +101,7 @@ export function CatalogHero({
               onChange={(e) => setValue(e.target.value)}
               placeholder="Rechercher un produit, une marque…"
               aria-label="Termes de recherche"
-              className="h-14 w-full rounded-2xl border-0 bg-white/95 pl-14 pr-32 text-base text-gray-900 shadow-2xl shadow-blue-900/20 outline-none backdrop-blur-sm transition-all placeholder:text-gray-400 focus:bg-white focus:ring-4 focus:ring-blue-300/50"
+              className="h-14 w-full rounded-2xl border-0 bg-white/95 pl-14 pr-32 text-base text-gray-900 shadow-2xl shadow-[#0D3068]/20 outline-none backdrop-blur-sm transition-all placeholder:text-gray-400 focus:bg-white focus:ring-4 focus:ring-[#8FA9C9]/50"
             />
             <div className="absolute right-2.5 flex items-center gap-1">
               {value && (
@@ -116,7 +116,7 @@ export function CatalogHero({
               )}
               <button
                 type="submit"
-                className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-[#2563EB] px-5 text-sm font-semibold text-white shadow-lg shadow-blue-600/30 transition-all hover:bg-[#1D4ED8] hover:shadow-xl"
+                className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-[#022150] px-5 text-sm font-semibold text-white shadow-lg shadow-[#022150]/30 transition-all hover:bg-[#011D46] hover:shadow-xl"
               >
                 <Search className="h-4 w-4" />
                 <span className="hidden sm:inline">Rechercher</span>
@@ -141,12 +141,12 @@ export function CatalogHero({
 function Stat({ icon, value, label }: { icon: React.ReactNode; value: string; label: string }) {
   return (
     <div className="flex items-center gap-3">
-      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-blue-200 ring-1 ring-white/20 backdrop-blur-sm">
+      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-[#C3D2E5] ring-1 ring-white/20 backdrop-blur-sm">
         {icon}
       </div>
       <div className="text-left">
         <div className="text-2xl font-bold text-white">{value}</div>
-        <div className="text-xs font-medium uppercase tracking-wide text-blue-200">{label}</div>
+        <div className="text-xs font-medium uppercase tracking-wide text-[#C3D2E5]">{label}</div>
       </div>
     </div>
   );

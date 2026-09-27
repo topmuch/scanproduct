@@ -28,7 +28,7 @@ type KpiCardProps = {
   trend: string;
   trendPositive: boolean;
   subtext: string;
-  /** Optional Tailwind gradient classes (e.g. "from-[#2563EB] to-[#3B82F6]"). When set, the card uses a colored gradient background with white text. */
+  /** Optional Tailwind gradient classes (e.g. "from-[#022150] to-[#2E5383]"). When set, the card uses a colored gradient background with white text. */
   gradient?: string;
 };
 
@@ -42,7 +42,7 @@ function KpiCard({ icon, iconBg, title, value, trend, trendPositive, subtext, gr
         "group p-6 transition-all duration-200 hover:-translate-y-1",
         hasGradient
           ? cn("border-white/20 bg-gradient-to-br text-white shadow-md hover:shadow-xl", gradient)
-          : "hover:shadow-lg hover:shadow-[#2563EB]/5"
+          : "hover:shadow-lg hover:shadow-[#022150]/5"
       )}
     >
       <div className="flex items-center gap-3">
@@ -113,7 +113,7 @@ function ActivityAvatar({ name }: { name: string }) {
   const initial = name.charAt(0).toUpperCase();
   return (
     <div className="flex items-center gap-2.5">
-      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#2563EB] to-[#10B981] text-[13px] font-bold text-white">
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#022150] to-[#10B981] text-[13px] font-bold text-white">
         {initial}
       </div>
       <span className="whitespace-nowrap text-[13px] font-medium text-[#374151]">
@@ -161,7 +161,7 @@ export function DashboardPage() {
       />
 
       {/* Welcome bar */}
-      <div className="flex flex-col gap-4 rounded-xl border border-[#E5E7EB] bg-gradient-to-br from-[#EFF6FF] to-[#F0FDF4] p-6 sm:flex-row sm:items-center sm:justify-between dark:border-white/10 dark:from-[#1E293B] dark:to-[#1E3A8A]">
+      <div className="flex flex-col gap-4 rounded-xl border border-[#E5E7EB] bg-gradient-to-br from-[#F0F4F9] to-[#F0FDF4] p-6 sm:flex-row sm:items-center sm:justify-between dark:border-white/10 dark:from-[#1E293B] dark:to-[#0D3068]">
         <div>
           <h1 className="font-display text-[24px] font-bold leading-tight text-[#111827] dark:text-white">
             Bonjour, Admin 👋
@@ -188,14 +188,14 @@ export function DashboardPage() {
       {/* KPI cards */}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
         <KpiCard
-          icon={<Users className="h-6 w-6 text-[#2563EB]" />}
-          iconBg="#EFF6FF"
+          icon={<Users className="h-6 w-6 text-[#022150]" />}
+          iconBg="#F0F4F9"
           title="Total Fabricants"
           value={<CountUp end={GLOBAL_KPI.totalMakers} />}
           trend="+12 ce mois"
           trendPositive
           subtext={`${GLOBAL_KPI.activeMakers} actifs · ${GLOBAL_KPI.inactiveMakers} inactifs`}
-          gradient="from-[#2563EB] to-[#3B82F6]"
+          gradient="from-[#022150] to-[#2E5383]"
         />
         <KpiCard
           icon={<CreditCard className="h-6 w-6 text-[#10B981]" />}
@@ -234,7 +234,7 @@ export function DashboardPage() {
         <Card>
           <CardHeader title="Nouveaux fabricants" subtitle="12 derniers mois" />
           <div className="p-5">
-            <AreaTrend data={signupsChartData} color="#2563EB" height={300} />
+            <AreaTrend data={signupsChartData} color="#022150" height={300} />
           </div>
         </Card>
 
@@ -302,7 +302,7 @@ export function DashboardPage() {
                   <td className="px-5 py-3 text-right">
                     <button
                       type="button"
-                      className="inline-flex items-center gap-1 text-[13px] font-semibold text-[#2563EB] hover:underline"
+                      className="inline-flex items-center gap-1 text-[13px] font-semibold text-[#022150] hover:underline"
                       onClick={() => setPage("support")}
                     >
                       <Eye className="h-4 w-4" />

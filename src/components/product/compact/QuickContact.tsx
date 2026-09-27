@@ -50,7 +50,7 @@ export function QuickContact({ fabricant }: Props) {
       icon: <Phone className="h-5 w-5" />,
       label: "Téléphone",
       href: `tel:${normalizePhone(phone)}`,
-      color: "bg-blue-500 hover:bg-blue-600",
+      color: "bg-[#2E5383] hover:bg-[#022150]",
     });
   }
   if (email) {

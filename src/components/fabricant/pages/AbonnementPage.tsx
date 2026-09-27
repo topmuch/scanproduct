@@ -47,7 +47,7 @@ type CancelReason =
 const PAYMENT_METHODS = [
   { id: "orange", nom: "Orange Money", icon: Smartphone, color: "#F59E0B" },
   { id: "wave", nom: "Wave", icon: Wallet, color: "#0EA5E9" },
-  { id: "carte", nom: "Carte bancaire", icon: CreditCard, color: "#2563EB" },
+  { id: "carte", nom: "Carte bancaire", icon: CreditCard, color: "#022150" },
   { id: "virement", nom: "Virement", icon: Building2, color: "#10B981" },
 ];
 
@@ -128,7 +128,7 @@ export function AbonnementPage() {
         subtitle="Gérez votre plan et votre facturation"
       >
         <span
-          className="inline-flex items-center rounded-full bg-gradient-to-r from-[#2563EB] to-[#10B981] px-4 py-2 text-[14px] font-bold text-white shadow-sm"
+          className="inline-flex items-center rounded-full bg-gradient-to-r from-[#022150] to-[#10B981] px-4 py-2 text-[14px] font-bold text-white shadow-sm"
         >
           ⭐ Plan {ABONNEMENT.plan}
         </span>
@@ -141,9 +141,9 @@ export function AbonnementPage() {
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="rounded-2xl border-2 border-[#2563EB] p-8"
+        className="rounded-2xl border-2 border-[#022150] p-8"
         style={{
-          background: "linear-gradient(135deg, #EFF6FF 0%, #F0FDF4 100%)",
+          background: "linear-gradient(135deg, #F0F4F9 0%, #F0FDF4 100%)",
         }}
       >
         {/* Top: plan name + status badge */}
@@ -245,14 +245,14 @@ export function AbonnementPage() {
           <OutlineButton>Voir les autres plans</OutlineButton>
           <button
             type="button"
-            className="text-[14px] font-medium text-[#2563EB] underline-offset-4 hover:underline"
+            className="text-[14px] font-medium text-[#022150] underline-offset-4 hover:underline"
           >
             Gérer la facturation
           </button>
         </div>
 
         {/* Avantages */}
-        <div className="mt-6 border-t border-[#DBEAFE] pt-6">
+        <div className="mt-6 border-t border-[#DCE7F2] pt-6">
           <p className="mb-3 text-[14px] font-semibold text-[#111827]">
             Avantages inclus
           </p>
@@ -293,7 +293,7 @@ export function AbonnementPage() {
             <select
               value={period}
               onChange={(e) => setPeriod(e.target.value as PeriodFilter)}
-              className="rounded-lg border border-[#E5E7EB] bg-white px-3 py-1.5 text-[13px] font-medium text-[#374151] focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20"
+              className="rounded-lg border border-[#E5E7EB] bg-white px-3 py-1.5 text-[13px] font-medium text-[#374151] focus:border-[#022150] focus:outline-none focus:ring-2 focus:ring-[#022150]/20"
             >
               <option value="30j">30 derniers jours</option>
               <option value="90j">90 derniers jours</option>
@@ -346,14 +346,14 @@ export function AbonnementPage() {
                       <button
                         type="button"
                         title="Télécharger la facture"
-                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#E5E7EB] bg-white text-[#6B7280] transition-colors hover:border-[#2563EB] hover:text-[#2563EB]"
+                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#E5E7EB] bg-white text-[#6B7280] transition-colors hover:border-[#022150] hover:text-[#022150]"
                       >
                         <Download className="h-4 w-4" />
                       </button>
                       <button
                         type="button"
                         title="Voir les détails"
-                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#E5E7EB] bg-white text-[#6B7280] transition-colors hover:border-[#2563EB] hover:text-[#2563EB]"
+                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#E5E7EB] bg-white text-[#6B7280] transition-colors hover:border-[#022150] hover:text-[#022150]"
                       >
                         <Eye className="h-4 w-4" />
                       </button>
@@ -421,7 +421,7 @@ export function AbonnementPage() {
                   key={m.id}
                   className={`flex items-center gap-2 rounded-lg border px-3 py-2 transition-colors ${
                     isActive
-                      ? "border-[#2563EB] bg-[#EFF6FF]"
+                      ? "border-[#022150] bg-[#F0F4F9]"
                       : "border-[#E5E7EB] bg-white"
                   }`}
                 >
@@ -477,15 +477,15 @@ export function AbonnementPage() {
                 style={
                   isCurrent
                     ? {
-                        border: "2px solid #2563EB",
+                        border: "2px solid #022150",
                         background:
-                          "linear-gradient(135deg, #EFF6FF 0%, #F0FDF4 100%)",
+                          "linear-gradient(135deg, #F0F4F9 0%, #F0FDF4 100%)",
                       }
                     : undefined
                 }
               >
                 {isCurrent && (
-                  <span className="absolute -top-3 left-6 inline-flex items-center rounded-full bg-gradient-to-r from-[#2563EB] to-[#10B981] px-3 py-1 text-[11px] font-bold text-white shadow-sm">
+                  <span className="absolute -top-3 left-6 inline-flex items-center rounded-full bg-gradient-to-r from-[#022150] to-[#10B981] px-3 py-1 text-[11px] font-bold text-white shadow-sm">
                     ⭐ Plan actuel
                   </span>
                 )}
@@ -652,7 +652,7 @@ export function AbonnementPage() {
                     Math.max(0, parseInt(e.target.value || "0", 10) || 0),
                   )
                 }
-                className="w-full rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-[14px] font-medium text-[#111827] focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20"
+                className="w-full rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-[14px] font-medium text-[#111827] focus:border-[#022150] focus:outline-none focus:ring-2 focus:ring-[#022150]/20"
               />
             </label>
             <div className="rounded-lg border border-[#E5E7EB] bg-white px-4 py-2">

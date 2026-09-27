@@ -492,14 +492,14 @@ export function LotsPage() {
             placeholder="Rechercher par numéro de lot, produit..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="h-10 w-full rounded-lg border border-[#E5E7EB] bg-white pl-9 pr-3 text-[14px] text-[#111827] placeholder:text-[#9CA3AF] focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/10"
+            className="h-10 w-full rounded-lg border border-[#E5E7EB] bg-white pl-9 pr-3 text-[14px] text-[#111827] placeholder:text-[#9CA3AF] focus:border-[#022150] focus:outline-none focus:ring-2 focus:ring-[#022150]/10"
           />
         </div>
 
         <select
           value={productFilter}
           onChange={(e) => setProductFilter(e.target.value)}
-          className="h-10 rounded-lg border border-[#E5E7EB] bg-white px-3 text-[14px] text-[#374151] focus:border-[#2563EB] focus:outline-none"
+          className="h-10 rounded-lg border border-[#E5E7EB] bg-white px-3 text-[14px] text-[#374151] focus:border-[#022150] focus:outline-none"
         >
           <option value="tous">Tous les produits</option>
           {produits.map((p) => (
@@ -518,7 +518,7 @@ export function LotsPage() {
         <select
           value={dateFilter}
           onChange={(e) => setDateFilter(e.target.value as DateFilter)}
-          className="h-10 rounded-lg border border-[#E5E7EB] bg-white px-3 text-[14px] text-[#374151] focus:border-[#2563EB] focus:outline-none"
+          className="h-10 rounded-lg border border-[#E5E7EB] bg-white px-3 text-[14px] text-[#374151] focus:border-[#022150] focus:outline-none"
         >
           {DATE_OPTIONS.map((o) => (
             <option key={o.value} value={o.value}>
@@ -530,7 +530,7 @@ export function LotsPage() {
         <select
           value={sortFilter}
           onChange={(e) => setSortFilter(e.target.value as SortFilter)}
-          className="h-10 rounded-lg border border-[#E5E7EB] bg-white px-3 text-[14px] text-[#374151] focus:border-[#2563EB] focus:outline-none"
+          className="h-10 rounded-lg border border-[#E5E7EB] bg-white px-3 text-[14px] text-[#374151] focus:border-[#022150] focus:outline-none"
         >
           {SORT_OPTIONS.map((o) => (
             <option key={o.value} value={o.value}>
@@ -548,14 +548,14 @@ export function LotsPage() {
             type="date"
             value={dateFrom}
             onChange={(e) => setDateFrom(e.target.value)}
-            className="h-9 rounded-md border border-[#E5E7EB] bg-white px-2 text-[13px] text-[#374151] focus:border-[#2563EB] focus:outline-none"
+            className="h-9 rounded-md border border-[#E5E7EB] bg-white px-2 text-[13px] text-[#374151] focus:border-[#022150] focus:outline-none"
           />
           <span className="text-[13px] text-[#9CA3AF]">→</span>
           <input
             type="date"
             value={dateTo}
             onChange={(e) => setDateTo(e.target.value)}
-            className="h-9 rounded-md border border-[#E5E7EB] bg-white px-2 text-[13px] text-[#374151] focus:border-[#2563EB] focus:outline-none"
+            className="h-9 rounded-md border border-[#E5E7EB] bg-white px-2 text-[13px] text-[#374151] focus:border-[#022150] focus:outline-none"
           />
         </div>
       )}
@@ -567,18 +567,18 @@ export function LotsPage() {
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
-            className="sticky top-[70px] z-30 mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#2563EB]/20 bg-[#EFF6FF] px-4 py-3 shadow-sm"
+            className="sticky top-[70px] z-30 mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#022150]/20 bg-[#F0F4F9] px-4 py-3 shadow-sm"
           >
             <div className="flex items-center gap-3">
-              <span className="rounded-full bg-[#2563EB] px-2.5 py-1 text-[12px] font-semibold text-white">
+              <span className="rounded-full bg-[#022150] px-2.5 py-1 text-[12px] font-semibold text-white">
                 {selectedIds.size}
               </span>
-              <span className="text-[14px] font-medium text-[#1E40AF]">
+              <span className="text-[14px] font-medium text-[#0A2B5F]">
                 {selectedIds.size === 1 ? "lot sélectionné" : "lots sélectionnés"}
               </span>
               <button
                 onClick={clearSelection}
-                className="text-[13px] text-[#2563EB] hover:underline"
+                className="text-[13px] text-[#022150] hover:underline"
               >
                 Tout désélectionner
               </button>
@@ -755,8 +755,8 @@ function StyledCheckbox({
       onClick={onChange}
       className="flex h-5 w-5 items-center justify-center rounded border-2 transition-colors"
       style={{
-        borderColor: checked || indeterminate ? "#2563EB" : "#D1D5DB",
-        backgroundColor: checked || indeterminate ? "#2563EB" : "white",
+        borderColor: checked || indeterminate ? "#022150" : "#D1D5DB",
+        backgroundColor: checked || indeterminate ? "#022150" : "white",
       }}
     >
       {checked && !indeterminate && <Check className="h-3.5 w-3.5 text-white" />}
@@ -808,7 +808,7 @@ function LotRow({
       <td className="px-4 py-3">
         <span
           className="font-mono text-[14px] font-medium"
-          style={{ color: "#2563EB" }}
+          style={{ color: "#022150" }}
         >
           {lot.numero}
         </span>
@@ -955,7 +955,7 @@ function PaginationButton({
       onClick={onClick}
       className={`flex h-8 min-w-[32px] items-center justify-center rounded-lg px-2 text-[13px] font-medium transition-colors ${
         active
-          ? "bg-[#2563EB] text-white"
+          ? "bg-[#022150] text-white"
           : disabled
           ? "cursor-not-allowed text-[#D1D5DB]"
           : "border border-[#E5E7EB] bg-white text-[#374151] hover:bg-[#F9FAFB]"
@@ -1312,7 +1312,7 @@ function StepProgress({ current }: { current: 1 | 2 | 3 }) {
       {/* connecting line */}
       <div className="absolute left-0 right-0 top-4 h-0.5 bg-[#E5E7EB]">
         <div
-          className="h-full bg-gradient-to-r from-[#2563EB] to-[#10B981] transition-all duration-500"
+          className="h-full bg-gradient-to-r from-[#022150] to-[#10B981] transition-all duration-500"
           style={{ width: `${progress * 100}%` }}
         />
       </div>
@@ -1328,7 +1328,7 @@ function StepProgress({ current }: { current: 1 | 2 | 3 }) {
                   backgroundColor: isDone
                     ? "#10B981"
                     : isActive
-                    ? "#2563EB"
+                    ? "#022150"
                     : "#E5E7EB",
                   color: isDone || isActive ? "white" : "#6B7280",
                 }}
@@ -1377,7 +1377,7 @@ function Step1Product({
         <button
           type="button"
           onClick={() => setOpen(!open)}
-          className="flex h-11 w-full items-center justify-between rounded-lg border border-[#E5E7EB] bg-white px-3 text-left focus:border-[#2563EB] focus:outline-none"
+          className="flex h-11 w-full items-center justify-between rounded-lg border border-[#E5E7EB] bg-white px-3 text-left focus:border-[#022150] focus:outline-none"
         >
           {selected ? (
             <span className="flex items-center gap-2.5">
@@ -1423,7 +1423,7 @@ function Step1Product({
                     value={search}
                     onChange={(e) => onSearch(e.target.value)}
                     placeholder="Rechercher un produit…"
-                    className="h-9 w-full rounded-md border border-[#E5E7EB] bg-white pl-8 pr-2 text-[13px] focus:border-[#2563EB] focus:outline-none"
+                    className="h-9 w-full rounded-md border border-[#E5E7EB] bg-white pl-8 pr-2 text-[13px] focus:border-[#022150] focus:outline-none"
                   />
                 </div>
               </div>
@@ -1458,7 +1458,7 @@ function Step1Product({
                         </span>
                       </span>
                       {selectedProductId === p.id && (
-                        <Check className="h-4 w-4 text-[#2563EB]" />
+                        <Check className="h-4 w-4 text-[#022150]" />
                       )}
                     </button>
                   ))
@@ -1471,7 +1471,7 @@ function Step1Product({
       <a
         href="#"
         onClick={(e) => e.preventDefault()}
-        className="mt-3 inline-block text-[13px] font-medium text-[#2563EB] hover:underline"
+        className="mt-3 inline-block text-[13px] font-medium text-[#022150] hover:underline"
       >
         + Créer un nouveau produit
       </a>
@@ -1520,7 +1520,7 @@ function Step2Info(props: {
             <input
               value={props.numero}
               onChange={(e) => props.onNumero(e.target.value)}
-              className="h-10 flex-1 rounded-lg border border-[#E5E7EB] bg-white px-3 font-mono text-[14px] focus:border-[#2563EB] focus:outline-none"
+              className="h-10 flex-1 rounded-lg border border-[#E5E7EB] bg-white px-3 font-mono text-[14px] focus:border-[#022150] focus:outline-none"
             />
             <button
               type="button"
@@ -1537,7 +1537,7 @@ function Step2Info(props: {
             value={props.poids}
             onChange={(e) => props.onPoids(e.target.value)}
             placeholder="ex. 500ml, 250g…"
-            className="h-10 w-full rounded-lg border border-[#E5E7EB] bg-white px-3 text-[14px] focus:border-[#2563EB] focus:outline-none"
+            className="h-10 w-full rounded-lg border border-[#E5E7EB] bg-white px-3 text-[14px] focus:border-[#022150] focus:outline-none"
           />
         </Field>
         <Field label="Date de fabrication" required>
@@ -1545,7 +1545,7 @@ function Step2Info(props: {
             type="date"
             value={props.dateFab}
             onChange={(e) => props.onDateFab(e.target.value)}
-            className="h-10 w-full rounded-lg border border-[#E5E7EB] bg-white px-3 text-[14px] focus:border-[#2563EB] focus:outline-none"
+            className="h-10 w-full rounded-lg border border-[#E5E7EB] bg-white px-3 text-[14px] focus:border-[#022150] focus:outline-none"
           />
         </Field>
         <Field label="Date de péremption" required hint={`Dans ${daysToPerm} jours`}>
@@ -1553,7 +1553,7 @@ function Step2Info(props: {
             type="date"
             value={props.datePerm}
             onChange={(e) => props.onDatePerm(e.target.value)}
-            className="h-10 w-full rounded-lg border border-[#E5E7EB] bg-white px-3 text-[14px] focus:border-[#2563EB] focus:outline-none"
+            className="h-10 w-full rounded-lg border border-[#E5E7EB] bg-white px-3 text-[14px] focus:border-[#022150] focus:outline-none"
           />
         </Field>
       </div>
@@ -1564,7 +1564,7 @@ function Step2Info(props: {
           onChange={(e) => props.onIngredients(e.target.value)}
           placeholder="Eau, sucre, bissap, citron..."
           rows={3}
-          className="w-full rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-[14px] focus:border-[#2563EB] focus:outline-none"
+          className="w-full rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-[14px] focus:border-[#022150] focus:outline-none"
         />
       </Field>
 
@@ -1574,7 +1574,7 @@ function Step2Info(props: {
             value={props.lieuFab}
             onChange={(e) => props.onLieuFab(e.target.value)}
             placeholder="Dakar, Sénégal"
-            className="h-10 w-full rounded-lg border border-[#E5E7EB] bg-white px-3 text-[14px] focus:border-[#2563EB] focus:outline-none"
+            className="h-10 w-full rounded-lg border border-[#E5E7EB] bg-white px-3 text-[14px] focus:border-[#022150] focus:outline-none"
           />
         </Field>
         <Field label="Lieu de transformation">
@@ -1583,7 +1583,7 @@ function Step2Info(props: {
             onChange={(e) => props.onLieuTrans(e.target.value)}
             disabled={props.lieuIdentique}
             placeholder="Dakar, Sénégal"
-            className="h-10 w-full rounded-lg border border-[#E5E7EB] bg-white px-3 text-[14px] focus:border-[#2563EB] focus:outline-none disabled:bg-[#F9FAFB] disabled:text-[#9CA3AF]"
+            className="h-10 w-full rounded-lg border border-[#E5E7EB] bg-white px-3 text-[14px] focus:border-[#022150] focus:outline-none disabled:bg-[#F9FAFB] disabled:text-[#9CA3AF]"
           />
         </Field>
       </div>
@@ -1592,7 +1592,7 @@ function Step2Info(props: {
           type="checkbox"
           checked={props.lieuIdentique}
           onChange={(e) => props.onLieuIdentique(e.target.checked)}
-          className="h-4 w-4 rounded border-[#D1D5DB] text-[#2563EB] focus:ring-[#2563EB]"
+          className="h-4 w-4 rounded border-[#D1D5DB] text-[#022150] focus:ring-[#022150]"
         />
         Identique au lieu de fabrication
       </label>
@@ -1602,7 +1602,7 @@ function Step2Info(props: {
           <button
             type="button"
             onClick={props.onSelectAllPays}
-            className="text-[12px] font-medium text-[#2563EB] hover:underline"
+            className="text-[12px] font-medium text-[#022150] hover:underline"
           >
             Tout sélectionner
           </button>
@@ -1635,7 +1635,7 @@ function Step2Info(props: {
                       type="checkbox"
                       checked={checked}
                       onChange={() => props.onTogglePays(p)}
-                      className="h-4 w-4 rounded border-[#D1D5DB] text-[#2563EB] focus:ring-[#2563EB]"
+                      className="h-4 w-4 rounded border-[#D1D5DB] text-[#022150] focus:ring-[#022150]"
                     />
                     {p}
                   </label>
@@ -1660,7 +1660,7 @@ function Step2Info(props: {
                       type="checkbox"
                       checked={checked}
                       onChange={() => props.onTogglePays(p)}
-                      className="h-4 w-4 rounded border-[#D1D5DB] text-[#2563EB] focus:ring-[#2563EB]"
+                      className="h-4 w-4 rounded border-[#D1D5DB] text-[#022150] focus:ring-[#022150]"
                     />
                     {p}
                   </label>
@@ -1677,7 +1677,7 @@ function Step2Info(props: {
           onChange={(e) => props.onNotes(e.target.value)}
           placeholder="Notes internes (non visibles par les consommateurs)…"
           rows={2}
-          className="w-full rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-[14px] focus:border-[#2563EB] focus:outline-none"
+          className="w-full rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-[14px] focus:border-[#022150] focus:outline-none"
         />
       </Field>
     </div>
@@ -1749,7 +1749,7 @@ function Step3QR(props: {
           min={1}
           value={props.qrCount}
           onChange={(e) => props.onQrCount(Math.max(1, parseInt(e.target.value, 10) || 0))}
-          className="h-10 w-full rounded-lg border border-[#E5E7EB] bg-white px-3 text-[14px] focus:border-[#2563EB] focus:outline-none"
+          className="h-10 w-full rounded-lg border border-[#E5E7EB] bg-white px-3 text-[14px] focus:border-[#022150] focus:outline-none"
         />
       </Field>
 
@@ -1770,7 +1770,7 @@ function Step3QR(props: {
                   onClick={() => props.onQrTaille(o.v as "petit" | "moyen" | "grand")}
                   className={`flex-1 rounded-lg border px-2 py-2 text-[12px] font-medium transition-colors ${
                     props.qrTaille === o.v
-                      ? "border-[#2563EB] bg-[#EFF6FF] text-[#2563EB]"
+                      ? "border-[#022150] bg-[#F0F4F9] text-[#022150]"
                       : "border-[#E5E7EB] bg-white text-[#374151] hover:bg-[#F9FAFB]"
                   }`}
                 >
@@ -1790,7 +1790,7 @@ function Step3QR(props: {
                     key={f}
                     className={`flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg border px-2 py-2 text-[12px] font-medium uppercase transition-colors ${
                       checked
-                        ? "border-[#2563EB] bg-[#EFF6FF] text-[#2563EB]"
+                        ? "border-[#022150] bg-[#F0F4F9] text-[#022150]"
                         : "border-[#E5E7EB] bg-white text-[#374151] hover:bg-[#F9FAFB]"
                     }`}
                   >
@@ -1798,7 +1798,7 @@ function Step3QR(props: {
                       type="checkbox"
                       checked={checked}
                       onChange={() => props.onToggleFormat(f)}
-                      className="h-3.5 w-3.5 rounded border-[#D1D5DB] text-[#2563EB] focus:ring-[#2563EB]"
+                      className="h-3.5 w-3.5 rounded border-[#D1D5DB] text-[#022150] focus:ring-[#022150]"
                     />
                     {f}
                   </label>
@@ -1821,7 +1821,7 @@ function Step3QR(props: {
                 <select
                   value={props.etiquettesPage}
                   onChange={(e) => props.onEtiquettesPage(parseInt(e.target.value, 10))}
-                  className="h-8 rounded-md border border-[#E5E7EB] bg-white px-2 text-[13px] focus:border-[#2563EB] focus:outline-none"
+                  className="h-8 rounded-md border border-[#E5E7EB] bg-white px-2 text-[13px] focus:border-[#022150] focus:outline-none"
                 >
                   {[10, 20, 30, 40].map((n) => (
                     <option key={n} value={n}>
@@ -1899,7 +1899,7 @@ function CheckOption({
         type="checkbox"
         checked={checked}
         onChange={(e) => onChange(e.target.checked)}
-        className="h-4 w-4 rounded border-[#D1D5DB] text-[#2563EB] focus:ring-[#2563EB]"
+        className="h-4 w-4 rounded border-[#D1D5DB] text-[#022150] focus:ring-[#022150]"
       />
       {label}
     </label>
@@ -1982,7 +1982,7 @@ function SuccessState({
       <div className="mx-auto mt-5 max-w-md rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] p-4 text-left">
         <div className="grid grid-cols-2 gap-y-2 text-[13px]">
           <span className="text-[#6B7280]">Numéro de lot</span>
-          <span className="text-right font-mono font-medium text-[#2563EB]">{numero}</span>
+          <span className="text-right font-mono font-medium text-[#022150]">{numero}</span>
           <span className="text-[#6B7280]">Produit</span>
           <span className="text-right font-medium text-[#111827]">{productName}</span>
           <span className="text-[#6B7280]">QR codes générés</span>

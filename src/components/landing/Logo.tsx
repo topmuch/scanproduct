@@ -29,7 +29,7 @@ export function Logo({ className, variant = "default", size = "lg" }: LogoProps)
   return (
     <span className={cn("inline-flex items-center select-none", className)}>
       <img
-        src="/verifscan-logo.webp?v=3"
+        src="/verifscan-logo.webp?v=5"
         alt="VerifScan"
         className={cn(
           "w-auto shrink-0",

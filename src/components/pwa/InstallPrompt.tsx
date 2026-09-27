@@ -124,7 +124,7 @@ export function InstallPrompt() {
         >
           <div className="relative overflow-hidden rounded-2xl border border-[#E5E7EB] bg-white p-4 shadow-2xl ring-1 ring-black/5">
             {/* Accent gradient en haut */}
-            <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#2563EB] to-[#10B981]" />
+            <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#022150] to-[#10B981]" />
 
             <button
               type="button"
@@ -136,7 +136,7 @@ export function InstallPrompt() {
             </button>
 
             <div className="flex items-start gap-3 pr-8">
-              <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#2563EB] to-[#10B981] text-white shadow-md">
+              <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#022150] to-[#10B981] text-white shadow-md">
                 {iosInstructions ? (
                   <Smartphone className="h-6 w-6" />
                 ) : (
@@ -162,7 +162,7 @@ export function InstallPrompt() {
               <div className="mt-3 space-y-2 rounded-xl bg-[#F9FAFB] p-3 text-[13px] text-[#374151]">
                 <div className="flex items-center gap-2">
                   <span className="flex h-6 w-6 items-center justify-center rounded-md bg-white shadow-sm">
-                    <Share className="h-3.5 w-3.5 text-[#2563EB]" />
+                    <Share className="h-3.5 w-3.5 text-[#022150]" />
                   </span>
                   <span>
                     Touchez l&apos;icône <strong>Partager</strong> en bas de Safari.
@@ -179,7 +179,7 @@ export function InstallPrompt() {
                 <button
                   type="button"
                   onClick={dismiss}
-                  className="mt-1 w-full rounded-lg border border-[#2563EB] bg-white px-4 py-2 text-[13px] font-semibold text-[#2563EB] transition-colors hover:bg-[#EFF6FF]"
+                  className="mt-1 w-full rounded-lg border border-[#022150] bg-white px-4 py-2 text-[13px] font-semibold text-[#022150] transition-colors hover:bg-[#F0F4F9]"
                 >
                   J&apos;ai compris
                 </button>
@@ -189,7 +189,7 @@ export function InstallPrompt() {
                 <button
                   type="button"
                   onClick={onInstall}
-                  className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg bg-[#2563EB] px-4 py-2.5 text-[13px] font-bold text-white shadow-md transition-all hover:bg-[#1D4ED8] active:scale-[0.98]"
+                  className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg bg-[#022150] px-4 py-2.5 text-[13px] font-bold text-white shadow-md transition-all hover:bg-[#011D46] active:scale-[0.98]"
                 >
                   <Download className="h-4 w-4" />
                   Installer

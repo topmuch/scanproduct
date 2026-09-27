@@ -44,7 +44,7 @@ export function SimilarProducts({ products }: Props) {
         </h2>
         <Link
           href="/produits"
-          className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 transition-colors hover:text-blue-700"
+          className="inline-flex items-center gap-1 text-xs font-semibold text-[#022150] transition-colors hover:text-[#011D46]"
         >
           Tout voir <ArrowRight className="h-3.5 w-3.5" />
         </Link>
@@ -61,9 +61,9 @@ export function SimilarProducts({ products }: Props) {
             <Link
               key={p.id}
               href={href}
-              className="group flex flex-col overflow-hidden rounded-xl border border-gray-200 bg-white transition-all hover:-translate-y-1 hover:border-blue-300 hover:shadow-lg"
+              className="group flex flex-col overflow-hidden rounded-xl border border-gray-200 bg-white transition-all hover:-translate-y-1 hover:border-[#8FA9C9] hover:shadow-lg"
             >
-              <div className="relative flex h-24 items-center justify-center bg-gradient-to-br from-blue-50 via-white to-green-50">
+              <div className="relative flex h-24 items-center justify-center bg-gradient-to-br from-[#F0F4F9] via-white to-green-50">
                 {p.imageUrl ? (
                   <img
                     src={p.imageUrl}

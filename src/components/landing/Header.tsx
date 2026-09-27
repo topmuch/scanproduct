@@ -62,15 +62,15 @@ export function Header() {
             const className = cn(
               "group relative rounded-md px-3 py-2 text-[15px] font-medium transition-colors",
               active
-                ? "text-[#2563EB]"
-                : "text-[#374151] hover:text-[#2563EB]"
+                ? "text-[#022150]"
+                : "text-[#374151] hover:text-[#022150]"
             );
             const content = (
               <>
                 {link.label}
                 <span
                   className={cn(
-                    "absolute bottom-1 left-3 right-3 h-0.5 rounded-full bg-[#2563EB] transition-all duration-300",
+                    "absolute bottom-1 left-3 right-3 h-0.5 rounded-full bg-[#022150] transition-all duration-300",
                     active ? "opacity-100" : "opacity-0 group-hover:opacity-100"
                   )}
                 />
@@ -88,13 +88,13 @@ export function Header() {
         <div className="hidden items-center gap-2 lg:flex">
           <Link
             href="/login"
-            className="rounded-md px-3 py-2 text-[15px] font-semibold text-[#2563EB] transition-colors hover:bg-[#EFF6FF]"
+            className="rounded-md px-3 py-2 text-[15px] font-semibold text-[#022150] transition-colors hover:bg-[#F0F4F9]"
           >
             Connexion
           </Link>
           <Link
             href="/register"
-            className="group inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-[#2563EB] to-[#10B981] px-5 py-2.5 text-[15px] font-semibold text-white shadow-md shadow-[#2563EB]/25 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-[#2563EB]/40"
+            className="group inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-[#022150] to-[#10B981] px-5 py-2.5 text-[15px] font-semibold text-white shadow-md shadow-[#022150]/25 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-[#022150]/40"
           >
             Devenir partenaire
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
@@ -149,7 +149,7 @@ export function Header() {
                   const className = cn(
                     "rounded-lg px-4 py-3 text-base font-medium transition-colors",
                     active
-                      ? "bg-[#EFF6FF] text-[#2563EB]"
+                      ? "bg-[#F0F4F9] text-[#022150]"
                       : "text-[#374151] hover:bg-[#F9FAFB]"
                   );
                   return (
@@ -169,14 +169,14 @@ export function Header() {
                 <Link
                   href="/login"
                   onClick={() => setMobileOpen(false)}
-                  className="inline-flex items-center justify-center rounded-lg border border-[#2563EB] px-5 py-3 text-[15px] font-semibold text-[#2563EB] transition-colors hover:bg-[#EFF6FF]"
+                  className="inline-flex items-center justify-center rounded-lg border border-[#022150] px-5 py-3 text-[15px] font-semibold text-[#022150] transition-colors hover:bg-[#F0F4F9]"
                 >
                   Connexion
                 </Link>
                 <Link
                   href="/register"
                   onClick={() => setMobileOpen(false)}
-                  className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-gradient-to-r from-[#2563EB] to-[#10B981] px-5 py-3 text-[15px] font-semibold text-white shadow-md"
+                  className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-gradient-to-r from-[#022150] to-[#10B981] px-5 py-3 text-[15px] font-semibold text-white shadow-md"
                 >
                   Devenir partenaire
                   <ArrowRight className="h-4 w-4" />

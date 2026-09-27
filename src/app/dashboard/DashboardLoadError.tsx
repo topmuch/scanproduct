@@ -43,7 +43,7 @@ export function DashboardLoadError() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#F9FAFB] px-4 py-12">
       <div className="w-full max-w-md">
-        <div className="rounded-2xl border border-[#E5E7EB] bg-white p-8 text-center shadow-[0_8px_32px_rgba(37,99,235,0.06)]">
+        <div className="rounded-2xl border border-[#E5E7EB] bg-white p-8 text-center shadow-[0_8px_32px_rgba(2, 33, 80,0.06)]">
           <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-[#FEF3C7]">
             <AlertTriangle className="h-7 w-7 text-[#D97706]" />
           </div>
@@ -63,7 +63,7 @@ export function DashboardLoadError() {
               type="button"
               onClick={handleRetry}
               disabled={retrying}
-              className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-[#2563EB] to-[#10B981] px-5 text-sm font-semibold text-white shadow-md shadow-[#2563EB]/25 transition-all hover:shadow-lg hover:shadow-[#2563EB]/40 disabled:cursor-not-allowed disabled:opacity-70"
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-[#022150] to-[#10B981] px-5 text-sm font-semibold text-white shadow-md shadow-[#022150]/25 transition-all hover:shadow-lg hover:shadow-[#022150]/40 disabled:cursor-not-allowed disabled:opacity-70"
             >
               <RefreshCw className={`h-4 w-4 ${retrying ? "animate-spin" : ""}`} />
               {retrying ? "Rechargement…" : "Réessayer"}

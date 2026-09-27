@@ -182,7 +182,7 @@ export default async function ProductPage({
     (lot.productCertifications?.length ?? 0);
 
   return (
-    <div className="relative flex min-h-screen flex-col bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50">
+    <div className="relative flex min-h-screen flex-col bg-gradient-to-br from-slate-50 via-[#F0F4F9] to-purple-50">
       {/* ── Background decorations: floating colored blobs ───────────────
           Three large blurred circles that slowly float around, creating
           a dynamic, premium atmosphere. `pointer-events-none` so they
@@ -191,7 +191,7 @@ export default async function ProductPage({
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
         <div className="wow-animate-float absolute -left-20 top-0 h-96 w-96 rounded-full bg-purple-300 opacity-20 mix-blend-multiply blur-3xl" />
         <div
-          className="wow-animate-float absolute right-0 top-1/3 h-96 w-96 rounded-full bg-blue-300 opacity-20 mix-blend-multiply blur-3xl"
+          className="wow-animate-float absolute right-0 top-1/3 h-96 w-96 rounded-full bg-[#8FA9C9] opacity-20 mix-blend-multiply blur-3xl"
           style={{ animationDelay: "2s" }}
         />
         <div

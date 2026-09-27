@@ -54,12 +54,12 @@ function getFreshnessState(daysLeft: number): FreshnessState {
   }
   if (daysLeft > 30) {
     return {
-      gradient: "from-blue-500 to-cyan-600",
+      gradient: "from-[#2E5383] to-cyan-600",
       glow: "wow-shadow-glow-blue",
       message: "Bon à consommer",
       icon: "✅",
-      barGradient: "from-blue-400 via-blue-500 to-cyan-500",
-      text: "text-blue-700",
+      barGradient: "from-[#4E74A8] via-[#2E5383] to-cyan-500",
+      text: "text-[#011D46]",
     };
   }
   if (daysLeft > 7) {

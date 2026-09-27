@@ -134,10 +134,10 @@ function LoginForm() {
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="rounded-2xl border border-[#E5E7EB] bg-white p-8 shadow-[0_8px_32px_rgba(37,99,235,0.06)]"
+        className="rounded-2xl border border-[#E5E7EB] bg-white p-8 shadow-[0_8px_32px_rgba(2, 33, 80,0.06)]"
       >
         <div className="mb-6 flex flex-col items-center text-center">
-          <div className="mb-3 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-[#2563EB] to-[#10B981] text-white shadow-md">
+          <div className="mb-3 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-[#022150] to-[#10B981] text-white shadow-md">
             <ShieldCheck className="h-6 w-6" />
           </div>
           <h1 className="font-display text-2xl font-bold text-[#111827]">
@@ -173,7 +173,7 @@ function LoginForm() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="vous@entreprise.sn"
-                className="h-11 w-full rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] pl-10 pr-3 text-sm text-[#111827] outline-none transition-all focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/20"
+                className="h-11 w-full rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] pl-10 pr-3 text-sm text-[#111827] outline-none transition-all focus:border-[#022150] focus:bg-white focus:ring-2 focus:ring-[#022150]/20"
               />
             </div>
           </div>
@@ -195,7 +195,7 @@ function LoginForm() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="h-11 w-full rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] pl-10 pr-10 text-sm text-[#111827] outline-none transition-all focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/20"
+                className="h-11 w-full rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] pl-10 pr-10 text-sm text-[#111827] outline-none transition-all focus:border-[#022150] focus:bg-white focus:ring-2 focus:ring-[#022150]/20"
               />
               <button
                 type="button"
@@ -215,7 +215,7 @@ function LoginForm() {
           <button
             type="submit"
             disabled={loading}
-            className="group inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-[#2563EB] to-[#10B981] text-sm font-semibold text-white shadow-md shadow-[#2563EB]/25 transition-all hover:shadow-lg hover:shadow-[#2563EB]/40 disabled:cursor-not-allowed disabled:opacity-70"
+            className="group inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-[#022150] to-[#10B981] text-sm font-semibold text-white shadow-md shadow-[#022150]/25 transition-all hover:shadow-lg hover:shadow-[#022150]/40 disabled:cursor-not-allowed disabled:opacity-70"
           >
             {loading ? (
               <>
@@ -235,7 +235,7 @@ function LoginForm() {
           Pas encore partenaire ?{" "}
           <Link
             href="/register"
-            className="font-semibold text-[#2563EB] hover:underline"
+            className="font-semibold text-[#022150] hover:underline"
           >
             Créer un compte
           </Link>
@@ -252,9 +252,9 @@ function LoginForm() {
                 setEmail("admin@verifscan.sn");
                 setPassword("Admin123!2025");
               }}
-              className="flex items-center gap-2 rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] px-3 py-2 text-left transition-colors hover:border-[#2563EB] hover:bg-[#EFF6FF]"
+              className="flex items-center gap-2 rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] px-3 py-2 text-left transition-colors hover:border-[#022150] hover:bg-[#F0F4F9]"
             >
-              <ShieldCheck className="h-3.5 w-3.5 text-[#2563EB]" />
+              <ShieldCheck className="h-3.5 w-3.5 text-[#022150]" />
               <div>
                 <p className="font-semibold text-[#111827]">SuperAdmin</p>
                 <p className="text-[#6B7280]">admin@verifscan.sn</p>
@@ -291,7 +291,7 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen bg-white">
       {/* Left brand panel (hidden on mobile) */}
-      <div className="relative hidden w-1/2 overflow-hidden bg-gradient-to-br from-[#2563EB] via-[#1E40AF] to-[#10B981] lg:flex">
+      <div className="relative hidden w-1/2 overflow-hidden bg-gradient-to-br from-[#022150] via-[#0A2B5F] to-[#10B981] lg:flex">
         <div className="absolute inset-0 opacity-30">
           <div className="absolute -left-20 top-20 h-72 w-72 rounded-full bg-white/20 blur-3xl" />
           <div className="absolute right-10 top-1/3 h-96 w-96 rounded-full bg-[#10B981]/30 blur-3xl" />
@@ -300,7 +300,7 @@ export default function LoginPage() {
         <div className="relative z-10 flex flex-col justify-between p-12 text-white">
           <Link href="/" className="flex items-center">
             <img
-              src="/verifscan-logo.webp?v=3"
+              src="/verifscan-logo.webp?v=5"
               alt="VerifScan"
               className="h-14 w-auto shrink-0 brightness-0 invert"
               width={720}
@@ -314,7 +314,7 @@ export default function LoginPage() {
               <br />
               gagnez la confiance.
             </h2>
-            <p className="mt-4 max-w-md text-[#DBEAFE]">
+            <p className="mt-4 max-w-md text-[#DCE7F2]">
               La plateforme sénégalaise de traçabilité par QR codes pour les
               fabricants engagés dans la transparence.
             </p>
@@ -333,7 +333,7 @@ export default function LoginPage() {
             </ul>
           </div>
 
-          <p className="text-xs text-[#DBEAFE]/70">
+          <p className="text-xs text-[#DCE7F2]/70">
             © {new Date().getFullYear()} VerifScan — Dakar, Sénégal 🇸🇳
           </p>
         </div>
@@ -344,7 +344,7 @@ export default function LoginPage() {
         <Suspense
           fallback={
             <div className="flex h-12 w-12 items-center justify-center">
-              <Loader2 className="h-6 w-6 animate-spin text-[#2563EB]" />
+              <Loader2 className="h-6 w-6 animate-spin text-[#022150]" />
             </div>
           }
         >

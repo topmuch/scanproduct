@@ -50,7 +50,7 @@ export function TicketDetailPage() {
       <button
         type="button"
         onClick={goBack}
-        className="mb-4 inline-flex items-center gap-1.5 text-[14px] font-semibold text-[#6B7280] transition-colors hover:text-[#2563EB]"
+        className="mb-4 inline-flex items-center gap-1.5 text-[14px] font-semibold text-[#6B7280] transition-colors hover:text-[#022150]"
       >
         <ArrowLeft className="h-4 w-4" />
         Retour aux tickets
@@ -69,7 +69,7 @@ export function TicketDetailPage() {
                   <Badge color={STATUS_COLOR[ticket.status]}>{ticket.status}</Badge>
                   <button
                     type="button"
-                    className="inline-flex items-center gap-0.5 text-[12px] font-semibold text-[#6B7280] hover:text-[#2563EB]"
+                    className="inline-flex items-center gap-0.5 text-[12px] font-semibold text-[#6B7280] hover:text-[#022150]"
                   >
                     Changer <ChevronDown className="h-3 w-3" />
                   </button>
@@ -79,7 +79,7 @@ export function TicketDetailPage() {
                   <Badge color={PRIORITY_COLOR[ticket.priority]}>{ticket.priority}</Badge>
                   <button
                     type="button"
-                    className="inline-flex items-center gap-0.5 text-[12px] font-semibold text-[#6B7280] hover:text-[#2563EB]"
+                    className="inline-flex items-center gap-0.5 text-[12px] font-semibold text-[#6B7280] hover:text-[#022150]"
                   >
                     Changer <ChevronDown className="h-3 w-3" />
                   </button>
@@ -109,7 +109,7 @@ export function TicketDetailPage() {
             <div className="p-5">
               <textarea
                 placeholder="Écrire une réponse..."
-                className="min-h-[120px] w-full resize-y rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-[14px] text-[#111827] outline-none transition-colors placeholder:text-[#9CA3AF] focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/15"
+                className="min-h-[120px] w-full resize-y rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-[14px] text-[#111827] outline-none transition-colors placeholder:text-[#9CA3AF] focus:border-[#022150] focus:ring-2 focus:ring-[#022150]/15"
               />
               <div className="mt-3 flex flex-wrap items-center gap-2">
                 <Button variant="ghost" size="sm" onClick={() => toast.info("Joindre un fichier — bientôt")}>
@@ -177,14 +177,14 @@ function ClientMessage({
 
 function AdminMessage({ message }: { message: Ticket["messages"][number] }) {
   return (
-    <div className="rounded-xl border-l-[3px] border-[#2563EB] bg-[#EFF6FF] p-4">
+    <div className="rounded-xl border-l-[3px] border-[#022150] bg-[#F0F4F9] p-4">
       <div className="mb-2 flex items-center gap-2.5">
-        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#2563EB] to-[#10B981] text-[12px] font-bold text-white">
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#022150] to-[#10B981] text-[12px] font-bold text-white">
           AV
         </div>
         <div className="flex items-baseline gap-2">
           <span className="text-[14px] font-semibold text-[#111827]">{message.author}</span>
-          <span className="inline-flex items-center rounded-full bg-[#2563EB] px-2 py-0.5 text-[11px] font-semibold text-white">
+          <span className="inline-flex items-center rounded-full bg-[#022150] px-2 py-0.5 text-[11px] font-semibold text-white">
             Admin
           </span>
           <span className="text-[12px] text-[#6B7280]">{message.timestamp}</span>
@@ -215,7 +215,7 @@ function InfoCard({ ticket }: { ticket: Ticket }) {
           <div>
             <button
               type="button"
-              className="text-[14px] font-semibold text-[#2563EB] hover:underline"
+              className="text-[14px] font-semibold text-[#022150] hover:underline"
               onClick={() => toast.info("Ouverture du profil fabricant — bientôt")}
             >
               {ticket.requester}
@@ -231,7 +231,7 @@ function InfoCard({ ticket }: { ticket: Ticket }) {
               type="button"
               onClick={copyEmail}
               aria-label="Copier l'email"
-              className="inline-flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md text-[#6B7280] transition-colors hover:bg-[#F3F4F6] hover:text-[#2563EB]"
+              className="inline-flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md text-[#6B7280] transition-colors hover:bg-[#F3F4F6] hover:text-[#022150]"
             >
               <Copy className="h-3.5 w-3.5" />
             </button>
@@ -248,13 +248,13 @@ function InfoCard({ ticket }: { ticket: Ticket }) {
 
         <InfoRow label="Assigné à">
           <div className="flex items-center gap-2">
-            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-br from-[#2563EB] to-[#10B981] text-[10px] font-bold text-white">
+            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-br from-[#022150] to-[#10B981] text-[10px] font-bold text-white">
               AV
             </div>
             <span className="text-[13px] font-medium text-[#374151]">Admin VS</span>
             <button
               type="button"
-              className="inline-flex items-center gap-0.5 text-[12px] font-semibold text-[#6B7280] hover:text-[#2563EB]"
+              className="inline-flex items-center gap-0.5 text-[12px] font-semibold text-[#6B7280] hover:text-[#022150]"
               onClick={() => toast.info("Réassignation — bientôt")}
             >
               <ChevronDown className="h-3 w-3" />
@@ -273,7 +273,7 @@ function InfoCard({ ticket }: { ticket: Ticket }) {
             <button
               type="button"
               onClick={() => toast.info("Ajouter un tag — bientôt")}
-              className="inline-flex items-center gap-0.5 rounded-full border border-dashed border-[#D1D5DB] px-2.5 py-0.5 text-[12px] font-semibold text-[#6B7280] transition-colors hover:border-[#2563EB] hover:text-[#2563EB]"
+              className="inline-flex items-center gap-0.5 rounded-full border border-dashed border-[#D1D5DB] px-2.5 py-0.5 text-[12px] font-semibold text-[#6B7280] transition-colors hover:border-[#022150] hover:text-[#022150]"
             >
               <Plus className="h-3 w-3" />
               Ajouter
@@ -341,7 +341,7 @@ function InternalNotesCard({ ticket }: { ticket: Ticket }) {
               if (e.key === "Enter") addNote();
             }}
             placeholder="Ajouter une note..."
-            className="h-9 flex-1 rounded-lg border border-[#E5E7EB] bg-white px-3 text-[13px] text-[#111827] outline-none transition-colors placeholder:text-[#9CA3AF] focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/15"
+            className="h-9 flex-1 rounded-lg border border-[#E5E7EB] bg-white px-3 text-[13px] text-[#111827] outline-none transition-colors placeholder:text-[#9CA3AF] focus:border-[#022150] focus:ring-2 focus:ring-[#022150]/15"
           />
           <Button variant="outline" size="sm" onClick={addNote} disabled={!draft.trim()}>
             Ajouter

@@ -131,7 +131,7 @@ const STATUS_META: Record<
   { label: string; bg: string; text: string; Icon: typeof Clock }
 > = {
   pending: { label: "En attente", bg: "#FEF3C7", text: "#92400E", Icon: Clock },
-  responded: { label: "Répondu", bg: "#DBEAFE", text: "#1E40AF", Icon: CheckCircle2 },
+  responded: { label: "Répondu", bg: "#DCE7F2", text: "#0A2B5F", Icon: CheckCircle2 },
   accepted: { label: "Acceptée", bg: "#D1FAE5", text: "#065F46", Icon: CheckCircle2 },
   declined: { label: "Refusée", bg: "#FEE2E2", text: "#991B1B", Icon: XCircle },
 };
@@ -279,7 +279,7 @@ function InquiriesTab() {
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <KpiCard
           icon="📥"
-          iconBg="#EFF6FF"
+          iconBg="#F0F4F9"
           label="Total demandes"
           value={total}
           subText="Reçues via le catalogue B2B"
@@ -293,7 +293,7 @@ function InquiriesTab() {
         />
         <KpiCard
           icon="✉️"
-          iconBg="#DBEAFE"
+          iconBg="#DCE7F2"
           label="Répondues"
           value={responded}
           subText="Réponses envoyées"

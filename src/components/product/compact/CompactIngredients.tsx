@@ -142,7 +142,7 @@ export function CompactIngredients({ lot }: Props) {
             {Object.entries(nutrition).map(([k, v]) => (
               <div
                 key={k}
-                className="flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 p-2"
+                className="flex items-center gap-2 rounded-lg border border-[#C3D2E5] bg-[#F0F4F9] p-2"
               >
                 <span
                   className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md bg-white text-xs shadow-sm"

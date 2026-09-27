@@ -125,7 +125,7 @@ export function CatalogSliderClient({ items }: Props) {
       <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mx-auto max-w-2xl text-center">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-[#EFF6FF] px-3 py-1 text-xs font-semibold uppercase tracking-wider text-[#2563EB]">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-[#F0F4F9] px-3 py-1 text-xs font-semibold uppercase tracking-wider text-[#022150]">
             <Package className="h-3.5 w-3.5" />
             Catalogue
           </span>
@@ -193,7 +193,7 @@ export function CatalogSliderClient({ items }: Props) {
                   className={cn(
                     "h-2 rounded-full transition-all duration-300",
                     isActive
-                      ? "w-8 bg-[#2563EB]"
+                      ? "w-8 bg-[#022150]"
                       : "w-2 bg-gray-300 hover:bg-gray-400",
                   )}
                 />
@@ -206,7 +206,7 @@ export function CatalogSliderClient({ items }: Props) {
         <div className="mt-10 text-center">
           <Link
             href="/produits"
-            className="group inline-flex items-center justify-center gap-2 rounded-[10px] border-2 border-[#2563EB] bg-white px-7 py-3 text-base font-semibold text-[#2563EB] transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#2563EB] hover:text-white hover:shadow-lg hover:shadow-[#2563EB]/25"
+            className="group inline-flex items-center justify-center gap-2 rounded-[10px] border-2 border-[#022150] bg-white px-7 py-3 text-base font-semibold text-[#022150] transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#022150] hover:text-white hover:shadow-lg hover:shadow-[#022150]/25"
           >
             Voir tout le catalogue
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
@@ -232,14 +232,14 @@ function SliderCard({ item }: { item: CatalogSliderItem }) {
 
   return (
     <div
-      className="group flex h-full flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1.5 hover:border-blue-200 hover:shadow-xl hover:shadow-blue-100/50"
+      className="group flex h-full flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1.5 hover:border-[#C3D2E5] hover:shadow-xl hover:shadow-[#DCE7F2]/50"
     >
       {/* Image area — taller (1:1 square) so the product photo is more visible.
           p-7 gives more breathing room around the image. Wrapped in a Link. */}
       <Link
         href={href}
         aria-label={`Voir le passeport numérique de ${item.name}`}
-        className="relative block aspect-square overflow-hidden bg-gradient-to-br from-gray-50 via-white to-blue-50/40"
+        className="relative block aspect-square overflow-hidden bg-gradient-to-br from-gray-50 via-white to-[#F0F4F9]/40"
       >
         {/* Transparency badge (top-right) */}
         <span
@@ -277,7 +277,7 @@ function SliderCard({ item }: { item: CatalogSliderItem }) {
       <div className="flex flex-1 flex-col gap-2 p-4">
         {/* Category + weight */}
         <div className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-1 rounded-md bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-[#2563EB]">
+          <span className="inline-flex items-center gap-1 rounded-md bg-[#F0F4F9] px-2 py-0.5 text-[10px] font-semibold text-[#022150]">
             <span aria-hidden>{emoji}</span>
             {item.category ?? "Produit"}
           </span>
@@ -288,7 +288,7 @@ function SliderCard({ item }: { item: CatalogSliderItem }) {
 
         {/* Name */}
         <Link href={href} className="block">
-          <h3 className="line-clamp-2 text-sm font-bold leading-snug text-gray-900 transition-colors group-hover:text-[#2563EB]">
+          <h3 className="line-clamp-2 text-sm font-bold leading-snug text-gray-900 transition-colors group-hover:text-[#022150]">
             {item.name}
           </h3>
         </Link>
@@ -308,7 +308,7 @@ function SliderCard({ item }: { item: CatalogSliderItem }) {
                 className="h-full w-full object-contain"
               />
             ) : (
-              <span className="text-[10px] font-bold text-[#2563EB]">
+              <span className="text-[10px] font-bold text-[#022150]">
                 {fabricantName.charAt(0).toUpperCase()}
               </span>
             )}
@@ -358,7 +358,7 @@ function SliderCard({ item }: { item: CatalogSliderItem }) {
           </div>
           <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-[#2563EB] via-[#8b5cf6] to-[#ec4899] transition-all duration-1000"
+              className="h-full rounded-full bg-gradient-to-r from-[#022150] via-[#8b5cf6] to-[#ec4899] transition-all duration-1000"
               style={{ width: `${Math.min(100, Math.max(0, score))}%` }}
             />
           </div>
@@ -417,7 +417,7 @@ function CarouselArrow({
       onClick={onClick}
       aria-label={direction === "prev" ? "Précédent" : "Suivant"}
       className={cn(
-        "absolute top-1/2 z-20 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-gray-200 bg-white/95 text-gray-700 shadow-lg backdrop-blur transition-all duration-200 hover:scale-110 hover:border-[#2563EB] hover:text-[#2563EB] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-100",
+        "absolute top-1/2 z-20 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-gray-200 bg-white/95 text-gray-700 shadow-lg backdrop-blur transition-all duration-200 hover:scale-110 hover:border-[#022150] hover:text-[#022150] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-100",
         direction === "prev" ? "-left-3 lg:-left-5" : "-right-3 lg:-right-5",
         className,
       )}

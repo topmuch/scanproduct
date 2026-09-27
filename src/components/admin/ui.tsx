@@ -31,7 +31,7 @@ export function CardHeader({ title, subtitle, action }: { title: string; subtitl
 type BadgeColor = "blue" | "green" | "orange" | "red" | "gray" | "purple" | "yellow";
 
 const BADGE_STYLES: Record<BadgeColor, string> = {
-  blue: "bg-[#DBEAFE] text-[#1E40AF]",
+  blue: "bg-[#DCE7F2] text-[#0A2B5F]",
   green: "bg-[#D1FAE5] text-[#065F46]",
   orange: "bg-[#FFEDD5] text-[#9A3412]",
   red: "bg-[#FEE2E2] text-[#991B1B]",
@@ -71,12 +71,12 @@ export function Button({
   size?: "sm" | "md" | "lg";
 }) {
   const variants = {
-    primary: "bg-[#2563EB] text-white hover:bg-[#1D4ED8] shadow-sm",
-    outline: "border border-[#E5E7EB] bg-white text-[#374151] hover:bg-[#F9FAFB] hover:border-[#2563EB] hover:text-[#2563EB]",
+    primary: "bg-[#022150] text-white hover:bg-[#011D46] shadow-sm",
+    outline: "border border-[#E5E7EB] bg-white text-[#374151] hover:bg-[#F9FAFB] hover:border-[#022150] hover:text-[#022150]",
     ghost: "text-[#374151] hover:bg-[#F3F4F6]",
     danger: "bg-[#EF4444] text-white hover:bg-[#DC2626] shadow-sm",
     success: "bg-[#10B981] text-white hover:bg-[#059669] shadow-sm",
-    gradient: "bg-gradient-to-r from-[#2563EB] to-[#10B981] text-white hover:shadow-lg hover:shadow-[#2563EB]/25",
+    gradient: "bg-gradient-to-r from-[#022150] to-[#10B981] text-white hover:shadow-lg hover:shadow-[#022150]/25",
   };
   const sizes = {
     sm: "h-8 px-3 text-[13px]",

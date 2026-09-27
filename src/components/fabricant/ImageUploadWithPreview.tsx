@@ -250,7 +250,7 @@ export function ImageUploadWithPreview({
         style={{ height: `${height}px` }}
         className={`relative flex w-full items-center justify-center overflow-hidden rounded-xl border-2 transition-colors ${
           dragActive
-            ? "border-[#2563EB] bg-[#EFF6FF]"
+            ? "border-[#022150] bg-[#F0F4F9]"
             : preview
               ? "border-[#E5E7EB] bg-white"
               : "border-dashed border-[#E5E7EB] bg-[#F9FAFB]"
@@ -320,7 +320,7 @@ export function ImageUploadWithPreview({
             type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={uploading}
-            className="flex h-full w-full flex-col items-center justify-center gap-2 text-[#6B7280] transition-colors hover:text-[#2563EB] disabled:opacity-60"
+            className="flex h-full w-full flex-col items-center justify-center gap-2 text-[#6B7280] transition-colors hover:text-[#022150] disabled:opacity-60"
           >
             {uploading ? (
               <Loader2 size={28} className="animate-spin" />

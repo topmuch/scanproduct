@@ -59,7 +59,7 @@ export function ContactOrb({ fabricant }: Props) {
       Icon: Phone,
       label: "Téléphone",
       href: `tel:${normalizePhone(phone)}`,
-      gradient: "from-blue-500 via-blue-600 to-cyan-500",
+      gradient: "from-[#2E5383] via-[#022150] to-cyan-500",
       glow: "wow-shadow-glow-blue",
       external: false,
     });
@@ -79,12 +79,12 @@ export function ContactOrb({ fabricant }: Props) {
   return (
     <div className="group relative">
       {/* Glow blur behind the whole card */}
-      <div className="absolute -inset-1 rounded-[2rem] bg-gradient-to-br from-blue-400 via-purple-400 to-pink-400 opacity-20 blur-2xl transition-opacity duration-500 group-hover:opacity-30" />
+      <div className="absolute -inset-1 rounded-[2rem] bg-gradient-to-br from-[#4E74A8] via-purple-400 to-pink-400 opacity-20 blur-2xl transition-opacity duration-500 group-hover:opacity-30" />
 
       <div className="wow-glass wow-shadow-card relative overflow-hidden rounded-3xl p-4 sm:p-5">
         {/* Header */}
         <div className="mb-4 flex items-center gap-3">
-          <div className="wow-shadow-glow-purple flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 text-white">
+          <div className="wow-shadow-glow-purple flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#2E5383] to-purple-600 text-white">
             <HelpCircle className="h-6 w-6" />
           </div>
           <div className="min-w-0">

@@ -458,7 +458,7 @@ export async function deleteNotification(notificationId: string, userId: string)
  * Render a simple HTML wrapper for a notification email.
  *
  * Layout (all inline styles for email client compatibility):
- *   - Top blue band (#2563EB) with "VerifScan" wordmark
+ *   - Top blue band (#022150) with "VerifScan" wordmark
  *   - Severity-tinted content card (warning=amber, critical=red,
  *     success=green, info=gray)
  *   - Title + message body
@@ -480,7 +480,7 @@ export function renderNotificationEmail(
         ? "#F59E0B"
         : sev === "success"
           ? "#10B981"
-          : "#2563EB";
+          : "#022150";
 
   const accentBg =
     sev === "critical"
@@ -489,7 +489,7 @@ export function renderNotificationEmail(
         ? "#FFFBEB"
         : sev === "success"
           ? "#ECFDF5"
-          : "#EFF6FF";
+          : "#F0F4F9";
 
   // Escape HTML special chars in user-provided content to avoid breaking the
   // email layout or injecting markup.
@@ -518,13 +518,13 @@ export function renderNotificationEmail(
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background-color:#FFFFFF;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.08);">
           <!-- Header band -->
           <tr>
-            <td style="background-color:#2563EB;padding:20px 24px;">
+            <td style="background-color:#022150;padding:20px 24px;">
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                 <tr>
                   <td style="font-size:20px;font-weight:700;color:#FFFFFF;letter-spacing:-0.01em;">
                     VerifScan
                   </td>
-                  <td align="right" style="font-size:12px;color:#DBEAFE;">
+                  <td align="right" style="font-size:12px;color:#DCE7F2;">
                     La vérité au bout du scan
                   </td>
                 </tr>

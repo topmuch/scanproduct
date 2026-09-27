@@ -57,7 +57,7 @@ function BadgeItem({
   alert?: boolean;
 }) {
   const colorClasses = {
-    blue: "bg-blue-50 text-blue-700",
+    blue: "bg-[#F0F4F9] text-[#011D46]",
     orange: alert
       ? "bg-red-50 text-red-700 animate-pulse"
       : "bg-orange-50 text-orange-700",
@@ -141,7 +141,7 @@ export function AuthenticityHero({
             )}
             {/* Floating category badge */}
             {product.category && (
-              <div className="absolute -right-2 -top-2 rounded-full bg-blue-500 px-2 py-1 text-[10px] font-bold text-white shadow-lg">
+              <div className="absolute -right-2 -top-2 rounded-full bg-[#2E5383] px-2 py-1 text-[10px] font-bold text-white shadow-lg">
                 {emoji} {product.category}
               </div>
             )}
@@ -161,7 +161,7 @@ export function AuthenticityHero({
 
             {/* Manufacturer */}
             <div className="mt-2 flex items-center gap-2 text-xs">
-              <div className="flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-blue-400 to-blue-600 text-[10px] font-bold text-white">
+              <div className="flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-[#4E74A8] to-[#022150] text-[10px] font-bold text-white">
                 {(fabricant.companyName ?? fabricant.name ?? "F")
                   .charAt(0)
                   .toUpperCase()}
@@ -170,7 +170,7 @@ export function AuthenticityHero({
                 {fabricant.companyName ?? fabricant.name}
               </span>
               {fabricant.isVerified && (
-                <CheckCircle2 className="h-3 w-3 flex-shrink-0 text-blue-500" />
+                <CheckCircle2 className="h-3 w-3 flex-shrink-0 text-[#2E5383]" />
               )}
             </div>
 

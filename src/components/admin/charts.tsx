@@ -42,7 +42,7 @@ type AreaTrendProps = {
   height?: number;
 };
 
-export function AreaTrend({ data, color = "#2563EB", height = 280 }: AreaTrendProps) {
+export function AreaTrend({ data, color = "#022150", height = 280 }: AreaTrendProps) {
   const id = `grad-${color.replace("#", "")}`;
   return (
     <ResponsiveContainer width="100%" height={height}>
@@ -69,7 +69,7 @@ type LineTrendProps = {
   height?: number;
 };
 
-export function LineTrend({ data, color = "#2563EB", height = 280 }: LineTrendProps) {
+export function LineTrend({ data, color = "#022150", height = 280 }: LineTrendProps) {
   return (
     <ResponsiveContainer width="100%" height={height}>
       <LineChart data={data} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
@@ -126,7 +126,7 @@ export function BarH({ data, height = 360 }: BarHProps) {
         <defs>
           <linearGradient id="barH-grad" x1="0" y1="0" x2="1" y2="0">
             <stop offset="0%" stopColor="#10B981" />
-            <stop offset="100%" stopColor="#2563EB" />
+            <stop offset="100%" stopColor="#022150" />
           </linearGradient>
         </defs>
         <Bar dataKey="value" fill="url(#barH-grad)" radius={[0, 6, 6, 0]} maxBarSize={26} />

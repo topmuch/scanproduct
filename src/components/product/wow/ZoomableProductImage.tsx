@@ -53,7 +53,7 @@ export function ZoomableProductImage({
     return (
       <div
         className={
-          "flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50 text-5xl " +
+          "flex items-center justify-center bg-gradient-to-br from-[#F0F4F9] to-purple-50 text-5xl " +
           className
         }
         role="img"

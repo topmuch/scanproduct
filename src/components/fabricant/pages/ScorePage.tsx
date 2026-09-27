@@ -280,7 +280,7 @@ export function ScorePage() {
         <span
           className="inline-flex items-center rounded-full px-4 py-2 text-[14px] font-semibold text-white shadow-sm"
           style={{
-            background: "linear-gradient(to right, #8B5CF6, #2563EB)",
+            background: "linear-gradient(to right, #8B5CF6, #022150)",
           }}
         >
           💎 {s.global}/100 — Transparence exemplaire
@@ -296,7 +296,7 @@ export function ScorePage() {
         transition={{ duration: 0.4 }}
         className="rounded-2xl p-8"
         style={{
-          background: "linear-gradient(135deg, #F3E8FF 0%, #EFF6FF 100%)",
+          background: "linear-gradient(135deg, #F3E8FF 0%, #F0F4F9 100%)",
         }}
       >
         <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
@@ -322,7 +322,7 @@ export function ScorePage() {
             <ProgressBar
               value={s.global}
               max={100}
-              gradient="from-[#8B5CF6] to-[#2563EB]"
+              gradient="from-[#8B5CF6] to-[#022150]"
               height="h-4"
             />
             <div className="mt-4 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">

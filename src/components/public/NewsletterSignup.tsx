@@ -69,13 +69,13 @@ export function NewsletterSignup({
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder={placeholder}
-          className="h-11 w-full rounded-lg border border-[#E5E7EB] bg-white pl-10 pr-3 text-sm text-[#111827] shadow-sm outline-none transition-colors placeholder:text-[#9CA3AF] focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20"
+          className="h-11 w-full rounded-lg border border-[#E5E7EB] bg-white pl-10 pr-3 text-sm text-[#111827] shadow-sm outline-none transition-colors placeholder:text-[#9CA3AF] focus:border-[#022150] focus:ring-2 focus:ring-[#022150]/20"
         />
       </div>
       <button
         type="submit"
         disabled={loading}
-        className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[#2563EB] px-5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#1D4ED8] disabled:opacity-60"
+        className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[#022150] px-5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#011D46] disabled:opacity-60"
       >
         {loading ? (
           <Loader2 className="h-4 w-4 animate-spin" />

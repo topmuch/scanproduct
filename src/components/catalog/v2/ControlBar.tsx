@@ -77,7 +77,7 @@ export function ControlBar({
             <button
               type="button"
               onClick={() => updateUrl({ transparency: null })}
-              className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-[#2563EB] ring-1 ring-blue-200 transition-colors hover:bg-blue-100"
+              className="inline-flex items-center gap-1 rounded-full bg-[#F0F4F9] px-2.5 py-1 text-xs font-semibold text-[#022150] ring-1 ring-[#C3D2E5] transition-colors hover:bg-[#DCE7F2]"
             >
               Niveau : {activeTransparency}
               <span aria-hidden>×</span>
@@ -104,7 +104,7 @@ export function ControlBar({
                   className={[
                     "inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-all sm:px-3 sm:text-sm",
                     isActive
-                      ? "bg-[#2563EB] text-white shadow-md shadow-blue-200"
+                      ? "bg-[#022150] text-white shadow-md shadow-[#C3D2E5]"
                       : "text-gray-600 hover:bg-gray-100",
                   ].join(" ")}
                 >
@@ -129,7 +129,7 @@ export function ControlBar({
               className={[
                 "flex h-8 w-8 items-center justify-center rounded-lg transition-all",
                 view === "grid"
-                  ? "bg-[#2563EB] text-white shadow-md"
+                  ? "bg-[#022150] text-white shadow-md"
                   : "text-gray-600 hover:bg-gray-100",
               ].join(" ")}
             >
@@ -143,7 +143,7 @@ export function ControlBar({
               className={[
                 "flex h-8 w-8 items-center justify-center rounded-lg transition-all",
                 view === "list"
-                  ? "bg-[#2563EB] text-white shadow-md"
+                  ? "bg-[#022150] text-white shadow-md"
                   : "text-gray-600 hover:bg-gray-100",
               ].join(" ")}
             >
@@ -169,7 +169,7 @@ export function ControlBar({
               className={[
                 "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold transition-all",
                 isActive
-                  ? "border-[#2563EB] bg-blue-50 text-blue-700 shadow-sm"
+                  ? "border-[#022150] bg-[#F0F4F9] text-[#011D46] shadow-sm"
                   : "border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50",
               ].join(" ")}
             >

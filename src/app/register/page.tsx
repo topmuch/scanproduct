@@ -116,15 +116,15 @@ export default function RegisterPage() {
   return (
     <div className="flex min-h-screen bg-white">
       {/* Left brand panel */}
-      <div className="relative hidden w-1/2 overflow-hidden bg-gradient-to-br from-[#10B981] via-[#059669] to-[#2563EB] lg:flex">
+      <div className="relative hidden w-1/2 overflow-hidden bg-gradient-to-br from-[#10B981] via-[#059669] to-[#022150] lg:flex">
         <div className="absolute inset-0 opacity-30">
           <div className="absolute -left-20 top-20 h-72 w-72 rounded-full bg-white/20 blur-3xl" />
-          <div className="absolute right-10 top-1/3 h-96 w-96 rounded-full bg-[#2563EB]/30 blur-3xl" />
+          <div className="absolute right-10 top-1/3 h-96 w-96 rounded-full bg-[#022150]/30 blur-3xl" />
         </div>
         <div className="relative z-10 flex flex-col justify-between p-12 text-white">
           <Link href="/" className="flex items-center">
             <img
-              src="/verifscan-logo.webp?v=3"
+              src="/verifscan-logo.webp?v=5"
               alt="VerifScan"
               className="h-14 w-auto shrink-0 brightness-0 invert"
               width={720}
@@ -173,7 +173,7 @@ export default function RegisterPage() {
         >
           <div className="rounded-2xl border border-[#E5E7EB] bg-white p-8 shadow-[0_8px_32px_rgba(16,185,129,0.06)]">
             <div className="mb-6 text-center">
-              <div className="mb-3 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-[#10B981] to-[#2563EB] text-white shadow-md">
+              <div className="mb-3 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-[#10B981] to-[#022150] text-white shadow-md">
                 <Building2 className="h-6 w-6" />
               </div>
               <h1 className="font-display text-2xl font-bold text-[#111827]">
@@ -247,7 +247,7 @@ export default function RegisterPage() {
                     value={form.password}
                     onChange={(e) => update("password", e.target.value)}
                     placeholder="Min. 8 caractères"
-                    className="h-11 w-full rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] pl-10 pr-10 text-sm text-[#111827] outline-none transition-all focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/20"
+                    className="h-11 w-full rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] pl-10 pr-10 text-sm text-[#111827] outline-none transition-all focus:border-[#022150] focus:bg-white focus:ring-2 focus:ring-[#022150]/20"
                   />
                   <button
                     type="button"
@@ -278,15 +278,15 @@ export default function RegisterPage() {
                   type="checkbox"
                   checked={form.accept}
                   onChange={(e) => update("accept", e.target.checked)}
-                  className="mt-0.5 h-4 w-4 rounded border-[#E5E7EB] text-[#2563EB] focus:ring-[#2563EB]"
+                  className="mt-0.5 h-4 w-4 rounded border-[#E5E7EB] text-[#022150] focus:ring-[#022150]"
                 />
                 <span>
                   J'accepte les{" "}
-                  <Link href="#" className="text-[#2563EB] hover:underline">
+                  <Link href="#" className="text-[#022150] hover:underline">
                     conditions générales
                   </Link>{" "}
                   et la{" "}
-                  <Link href="#" className="text-[#2563EB] hover:underline">
+                  <Link href="#" className="text-[#022150] hover:underline">
                     politique de confidentialité
                   </Link>
                   .
@@ -296,7 +296,7 @@ export default function RegisterPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="group inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-[#10B981] to-[#2563EB] text-sm font-semibold text-white shadow-md shadow-[#10B981]/25 transition-all hover:shadow-lg hover:shadow-[#10B981]/40 disabled:cursor-not-allowed disabled:opacity-70"
+                className="group inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-[#10B981] to-[#022150] text-sm font-semibold text-white shadow-md shadow-[#10B981]/25 transition-all hover:shadow-lg hover:shadow-[#10B981]/40 disabled:cursor-not-allowed disabled:opacity-70"
               >
                 {loading ? (
                   <>
@@ -316,7 +316,7 @@ export default function RegisterPage() {
               Déjà partenaire ?{" "}
               <Link
                 href="/login"
-                className="font-semibold text-[#2563EB] hover:underline"
+                className="font-semibold text-[#022150] hover:underline"
               >
                 Se connecter
               </Link>
@@ -364,7 +364,7 @@ function Field({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className="h-11 w-full rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] pl-10 pr-3 text-sm text-[#111827] outline-none transition-all focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/20"
+          className="h-11 w-full rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] pl-10 pr-3 text-sm text-[#111827] outline-none transition-all focus:border-[#022150] focus:bg-white focus:ring-2 focus:ring-[#022150]/20"
         />
       </div>
     </div>

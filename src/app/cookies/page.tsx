@@ -41,7 +41,7 @@ export default function CookiesPage() {
           politique complète la{" "}
           <a
             href="/politique-confidentialite"
-            className="font-medium text-[#2563EB] underline-offset-2 hover:underline"
+            className="font-medium text-[#022150] underline-offset-2 hover:underline"
           >
             Politique de confidentialité
           </a>{" "}
@@ -248,7 +248,7 @@ export default function CookiesPage() {
               href="https://support.google.com/chrome/answer/95647"
               target="_blank"
               rel="noopener noreferrer"
-              className="font-medium text-[#2563EB] underline-offset-2 hover:underline"
+              className="font-medium text-[#022150] underline-offset-2 hover:underline"
             >
               Google Chrome
             </a>
@@ -258,7 +258,7 @@ export default function CookiesPage() {
               href="https://support.mozilla.org/fr/kb/protection-renforcee-contre-pistage-firefox-ordinateur"
               target="_blank"
               rel="noopener noreferrer"
-              className="font-medium text-[#2563EB] underline-offset-2 hover:underline"
+              className="font-medium text-[#022150] underline-offset-2 hover:underline"
             >
               Mozilla Firefox
             </a>
@@ -268,7 +268,7 @@ export default function CookiesPage() {
               href="https://support.apple.com/fr-fr/guide/safari/sfri11471/mac"
               target="_blank"
               rel="noopener noreferrer"
-              className="font-medium text-[#2563EB] underline-offset-2 hover:underline"
+              className="font-medium text-[#022150] underline-offset-2 hover:underline"
             >
               Safari
             </a>
@@ -278,7 +278,7 @@ export default function CookiesPage() {
               href="https://support.microsoft.com/fr-fr/microsoft-edge/supprimer-les-cookies-dans-microsoft-edge-63947406-40ac-c3b8-57b9-2a946a29ae09"
               target="_blank"
               rel="noopener noreferrer"
-              className="font-medium text-[#2563EB] underline-offset-2 hover:underline"
+              className="font-medium text-[#022150] underline-offset-2 hover:underline"
             >
               Microsoft Edge
             </a>
@@ -301,7 +301,7 @@ export default function CookiesPage() {
             Par email :{" "}
             <a
               href="mailto:contact@verifscan.sn"
-              className="font-medium text-[#2563EB] underline-offset-2 hover:underline"
+              className="font-medium text-[#022150] underline-offset-2 hover:underline"
             >
               contact@verifscan.sn
             </a>
@@ -310,7 +310,7 @@ export default function CookiesPage() {
             Par téléphone :{" "}
             <a
               href="tel:+221338000000"
-              className="font-medium text-[#2563EB] underline-offset-2 hover:underline"
+              className="font-medium text-[#022150] underline-offset-2 hover:underline"
             >
               +221 33 800 00 00
             </a>

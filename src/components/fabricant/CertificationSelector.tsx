@@ -68,11 +68,11 @@ const ACCENT_CLASSES: Record<
     border: "border-amber-200",
   },
   blue: {
-    bg: "bg-blue-50",
-    bgSoft: "bg-blue-100",
-    text: "text-blue-700",
-    textStrong: "text-blue-800",
-    border: "border-blue-200",
+    bg: "bg-[#F0F4F9]",
+    bgSoft: "bg-[#DCE7F2]",
+    text: "text-[#011D46]",
+    textStrong: "text-[#0A2B5F]",
+    border: "border-[#C3D2E5]",
   },
   green: {
     bg: "bg-green-50",

@@ -78,11 +78,11 @@ const TYPE_META: Record<
   lot_recall: { Icon: AlertTriangle, color: "#EF4444", bg: "#FEE2E2", label: "Lot rappelé" },
   quota_warning: { Icon: AlertCircle, color: "#F59E0B", bg: "#FEF3C7", label: "Alerte quota" },
   quota_exceeded: { Icon: AlertCircle, color: "#EF4444", bg: "#FEE2E2", label: "Quota atteint" },
-  new_scan: { Icon: ScanLine, color: "#2563EB", bg: "#EFF6FF", label: "Nouveau scan" },
+  new_scan: { Icon: ScanLine, color: "#022150", bg: "#F0F4F9", label: "Nouveau scan" },
   weekly_report: { Icon: BarChart3, color: "#10B981", bg: "#D1FAE5", label: "Rapport hebdo" },
-  system: { Icon: Info, color: "#2563EB", bg: "#EFF6FF", label: "Système" },
+  system: { Icon: Info, color: "#022150", bg: "#F0F4F9", label: "Système" },
   ticket_update: { Icon: MessageSquare, color: "#8B5CF6", bg: "#EDE9FE", label: "Ticket" },
-  subscription: { Icon: CreditCard, color: "#2563EB", bg: "#EFF6FF", label: "Abonnement" },
+  subscription: { Icon: CreditCard, color: "#022150", bg: "#F0F4F9", label: "Abonnement" },
   lot_expiring: { Icon: CalendarClock, color: "#F59E0B", bg: "#FEF3C7", label: "Péremption" },
   new_inquiry: { Icon: MessageSquareQuote, color: "#8B5CF6", bg: "#EDE9FE", label: "Demande de devis" },
   monthly_report: { Icon: CalendarRange, color: "#059669", bg: "#D1FAE5", label: "Rapport mensuel" },
@@ -94,7 +94,7 @@ const SEVERITY_META: Record<
 > = {
   critical: { bg: "#FEE2E2", text: "#991B1B", label: "Critique" },
   warning: { bg: "#FEF3C7", text: "#92400E", label: "Avertissement" },
-  info: { bg: "#EFF6FF", text: "#1E40AF", label: "Info" },
+  info: { bg: "#F0F4F9", text: "#0A2B5F", label: "Info" },
   success: { bg: "#D1FAE5", text: "#065F46", label: "Succès" },
 };
 
@@ -166,7 +166,7 @@ function NotificationRow({
       className={cn(
         "rounded-xl border bg-white p-4 transition-shadow hover:shadow-sm dark:border-white/10 dark:bg-white/5",
         isUnread
-          ? "border-l-2 border-l-[#2563EB] border-[#E5E7EB] bg-[#EFF6FF]/30 dark:bg-[#2563EB]/10"
+          ? "border-l-2 border-l-[#022150] border-[#E5E7EB] bg-[#F0F4F9]/30 dark:bg-[#022150]/10"
           : "border-[#E5E7EB]",
       )}
     >
@@ -189,7 +189,7 @@ function NotificationRow({
               {sev.label}
             </span>
             {isUnread && (
-              <span className="inline-flex h-2 w-2 rounded-full bg-[#2563EB]" aria-label="Non lue" />
+              <span className="inline-flex h-2 w-2 rounded-full bg-[#022150]" aria-label="Non lue" />
             )}
           </div>
           <p className="mt-1 text-[13px] leading-relaxed text-[#6B7280] dark:text-white/60">
@@ -228,7 +228,7 @@ function NotificationRow({
               <button
                 type="button"
                 onClick={() => onOpenLot(lotId)}
-                className="inline-flex items-center gap-1.5 rounded-md border border-[#2563EB]/30 bg-[#EFF6FF] px-2.5 py-1.5 text-[12px] font-medium text-[#2563EB] transition-colors hover:bg-[#DBEAFE]"
+                className="inline-flex items-center gap-1.5 rounded-md border border-[#022150]/30 bg-[#F0F4F9] px-2.5 py-1.5 text-[12px] font-medium text-[#022150] transition-colors hover:bg-[#DCE7F2]"
               >
                 <ExternalLink className="h-3.5 w-3.5" />
                 Voir le lot
@@ -293,7 +293,7 @@ function PreferencesSummaryCard({
         <button
           type="button"
           onClick={onEdit}
-          className="text-[12px] font-medium text-[#2563EB] hover:opacity-80"
+          className="text-[12px] font-medium text-[#022150] hover:opacity-80"
         >
           Modifier
         </button>
@@ -315,14 +315,14 @@ function PreferencesSummaryCard({
               className={cn(
                 "rounded-lg border p-3 text-center",
                 prefs.pushEnabled
-                  ? "border-[#2563EB]/30 bg-[#EFF6FF]"
+                  ? "border-[#022150]/30 bg-[#F0F4F9]"
                   : "border-[#E5E7EB] bg-[#F9FAFB] dark:border-white/10 dark:bg-white/5",
               )}
             >
               <Globe
                 className={cn(
                   "mx-auto h-4 w-4",
-                  prefs.pushEnabled ? "text-[#2563EB]" : "text-[#9CA3AF]",
+                  prefs.pushEnabled ? "text-[#022150]" : "text-[#9CA3AF]",
                 )}
               />
               <p className="mt-1 text-[11px] font-medium text-[#374151] dark:text-white/80">
@@ -633,8 +633,8 @@ export function NotificationsPage() {
                   className={cn(
                     "inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-[13px] font-medium transition-colors",
                     isActive
-                      ? "border-[#2563EB] bg-[#2563EB] text-white shadow-sm"
-                      : "border-[#E5E7EB] bg-white text-[#6B7280] hover:text-[#2563EB] dark:border-white/10 dark:bg-white/5 dark:text-white/70",
+                      ? "border-[#022150] bg-[#022150] text-white shadow-sm"
+                      : "border-[#E5E7EB] bg-white text-[#6B7280] hover:text-[#022150] dark:border-white/10 dark:bg-white/5 dark:text-white/70",
                   )}
                 >
                   {opt.label}
@@ -674,8 +674,8 @@ export function NotificationsPage() {
             </div>
           ) : visibleNotifications.length === 0 ? (
             <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-[#E5E7EB] bg-[#F9FAFB] py-16 text-center dark:border-white/10 dark:bg-white/5">
-              <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#EFF6FF]">
-                <Bell className="h-8 w-8 text-[#2563EB]" />
+              <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#F0F4F9]">
+                <Bell className="h-8 w-8 text-[#022150]" />
               </div>
               <h3 className="font-display text-[18px] font-semibold text-[#111827] dark:text-white">
                 Aucune notification

@@ -164,7 +164,7 @@ export function KpiCard({
   subText?: string;
   onClick?: () => void;
   decimals?: number;
-  /** Optional Tailwind gradient classes (e.g. "from-[#2563EB] to-[#3B82F6]"). When set, the card uses a colored gradient background with white text. */
+  /** Optional Tailwind gradient classes (e.g. "from-[#022150] to-[#2E5383]"). When set, the card uses a colored gradient background with white text. */
   gradient?: string;
 }) {
   const hasGradient = Boolean(gradient);
@@ -248,8 +248,8 @@ export function PillFilter<T extends string>({
           className={cn(
             "rounded-md px-3 py-1.5 text-[13px] font-medium transition-colors",
             value === opt.value
-              ? "bg-white text-[#2563EB] shadow-sm"
-              : "text-[#6B7280] hover:text-[#2563EB]"
+              ? "bg-white text-[#022150] shadow-sm"
+              : "text-[#6B7280] hover:text-[#022150]"
           )}
         >
           {opt.label}
@@ -305,7 +305,7 @@ export function GradientButton({
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        "inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-[#2563EB] to-[#10B981] px-4 py-2.5 text-[14px] font-semibold text-white shadow-sm transition-all hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50",
+        "inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-[#022150] to-[#10B981] px-4 py-2.5 text-[14px] font-semibold text-white shadow-sm transition-all hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50",
         className
       )}
     >
@@ -351,7 +351,7 @@ export function OutlineButton({
 export function ProgressBar({
   value,
   max = 100,
-  gradient = "from-[#2563EB] to-[#10B981]",
+  gradient = "from-[#022150] to-[#10B981]",
   height = "h-2",
 }: {
   value: number;
@@ -375,7 +375,7 @@ export function ProgressBar({
 // ============================================================================
 // InsightBox — colored callout with lightbulb insight
 // ============================================================================
-export function InsightBox({ children, color = "#2563EB" }: { children: ReactNode; color?: string }) {
+export function InsightBox({ children, color = "#022150" }: { children: ReactNode; color?: string }) {
   return (
     <div
       className="flex items-start gap-2 rounded-lg px-3 py-2 text-[13px]"

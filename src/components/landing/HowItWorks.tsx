@@ -38,9 +38,9 @@ const STEPS: Step[] = [
     title: "Créez votre produit",
     description:
       "Ajoutez les détails de vos produits : nom, ingrédients, dates de fabrication et péremption, logo, certifications. Tout est centralisé sur une fiche propre et professionnelle.",
-    numberBg: "bg-[#2563EB]",
-    accent: "text-[#2563EB]",
-    accentSoft: "bg-[#EFF6FF]",
+    numberBg: "bg-[#022150]",
+    accent: "text-[#022150]",
+    accentSoft: "bg-[#F0F4F9]",
   },
   {
     number: 2,
@@ -124,7 +124,7 @@ export function HowItWorks() {
         {/* Process mini-illustration */}
         <AnimatedSection className="mt-14">
           <div className="mx-auto flex max-w-3xl flex-wrap items-center justify-center gap-3 rounded-2xl border border-[#E5E7EB] bg-white p-5 text-sm shadow-sm sm:gap-4">
-            <span className="inline-flex items-center gap-2 rounded-lg bg-[#EFF6FF] px-3 py-2 font-medium text-[#2563EB]">
+            <span className="inline-flex items-center gap-2 rounded-lg bg-[#F0F4F9] px-3 py-2 font-medium text-[#022150]">
               <FileText className="h-4 w-4" /> Fiche produit
             </span>
             <ArrowRight className="h-4 w-4 text-[#9CA3AF]" />
@@ -143,7 +143,7 @@ export function HowItWorks() {
         <AnimatedSection className="mt-10 text-center">
           <a
             href="/register"
-            className="group inline-flex items-center gap-2 rounded-[10px] bg-[#2563EB] px-8 py-3.5 text-base font-semibold text-white shadow-lg shadow-[#2563EB]/25 transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#1D4ED8]"
+            className="group inline-flex items-center gap-2 rounded-[10px] bg-[#022150] px-8 py-3.5 text-base font-semibold text-white shadow-lg shadow-[#022150]/25 transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#011D46]"
           >
             Démarrer maintenant
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />

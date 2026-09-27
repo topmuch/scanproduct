@@ -5,9 +5,9 @@ import { cn } from "@/lib/utils";
 type SectionBadgeProps = {
   children: React.ReactNode;
   className?: string;
-  /** tailwind bg class for the badge, e.g. bg-[#EFF6FF] */
+  /** tailwind bg class for the badge, e.g. bg-[#F0F4F9] */
   bg?: string;
-  /** tailwind text class, e.g. text-[#2563EB] */
+  /** tailwind text class, e.g. text-[#022150] */
   color?: string;
 };
 

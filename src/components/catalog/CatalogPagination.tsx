@@ -100,7 +100,7 @@ export function CatalogPagination({ currentPage, totalPages }: Props) {
             <span
               key={`page-${p}`}
               aria-current="page"
-              className={`${baseLinkClass} bg-[#2563EB] text-white shadow-sm`}
+              className={`${baseLinkClass} bg-[#022150] text-white shadow-sm`}
             >
               {p}
             </span>

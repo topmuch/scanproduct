@@ -85,7 +85,7 @@ function emailShell(title: string, accentColor: string, bodyHtml: string): strin
     <tr><td align="center">
       <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
         <!-- Banner -->
-        <tr><td style="background:linear-gradient(135deg,#2563EB,#10B981);padding:20px 28px;">
+        <tr><td style="background:linear-gradient(135deg,#022150,#10B981);padding:20px 28px;">
           <table role="presentation" width="100%"><tr>
             <td style="color:#ffffff;font-size:20px;font-weight:bold;">&#128737;&#65039; VerifScan</td>
             <td align="right" style="color:rgba(255,255,255,0.85);font-size:12px;">La v&eacute;rit&eacute; au bout du scan</td>
@@ -102,7 +102,7 @@ function emailShell(title: string, accentColor: string, bodyHtml: string): strin
         </td></tr>
         <!-- CTA -->
         <tr><td style="padding:8px 28px 24px 28px;" align="center">
-          <a href="${APP_URL}/dashboard" style="display:inline-block;background:linear-gradient(135deg,#2563EB,#10B981);color:#ffffff;text-decoration:none;font-weight:bold;font-size:14px;padding:12px 28px;border-radius:8px;">Ouvrir mon tableau de bord</a>
+          <a href="${APP_URL}/dashboard" style="display:inline-block;background:linear-gradient(135deg,#022150,#10B981);color:#ffffff;text-decoration:none;font-weight:bold;font-size:14px;padding:12px 28px;border-radius:8px;">Ouvrir mon tableau de bord</a>
         </td></tr>
         <!-- Footer -->
         <tr><td style="background:#F9FAFB;padding:16px 28px;border-top:1px solid #F3F4F6;">
@@ -354,7 +354,7 @@ export function renderDigestEmail(stats: WeeklyDigestStats): string {
   let body = `<p style="margin:0 0 16px 0;">Bonjour <strong>${escapeHtml(stats.fabricantName)}</strong>, voici l'activit&eacute; de vos produits du <strong>${escapeHtml(stats.periodLabel)}</strong>.</p>`;
 
   body += kpiRow([
-    { value: String(stats.totalScans), label: "Scans (7 j)", color: "#2563EB" },
+    { value: String(stats.totalScans), label: "Scans (7 j)", color: "#022150" },
     { value: deltaText, label: "vs semaine pr&eacute;c.", color: deltaColor },
     { value: String(stats.activeProducts), label: "Produits actifs" },
     { value: String(stats.activeLots), label: "Lots actifs" },
@@ -367,11 +367,11 @@ export function renderDigestEmail(stats: WeeklyDigestStats): string {
       stats.topLots.map((l) => [
         escapeHtml(l.productName),
         escapeHtml(l.lotLabel),
-        `<strong style="color:#2563EB;">${l.scans}</strong>`,
+        `<strong style="color:#022150;">${l.scans}</strong>`,
       ]),
     );
   } else {
-    body += `<div style="background:#EFF6FF;border-radius:8px;padding:14px;margin-top:18px;font-size:13px;color:#1E40AF;">Aucun scan cette semaine. Pensez &agrave; promouvoir vos QR codes en boutique et sur vos emballages !</div>`;
+    body += `<div style="background:#F0F4F9;border-radius:8px;padding:14px;margin-top:18px;font-size:13px;color:#0A2B5F;">Aucun scan cette semaine. Pensez &agrave; promouvoir vos QR codes en boutique et sur vos emballages !</div>`;
   }
 
   if (stats.expiringLots.length > 0) {
@@ -405,7 +405,7 @@ export function renderDigestEmail(stats: WeeklyDigestStats): string {
 
   return emailShell(
     "&#128202; Rapport hebdomadaire",
-    "#2563EB",
+    "#022150",
     body,
   );
 }
@@ -522,7 +522,7 @@ interface ExpiryBucket {
 export const EXPIRY_BUCKETS: ExpiryBucket[] = [
   { key: "J7", maxDays: 7, severity: "critical", color: "#EF4444", label: "≤ 7 jours" },
   { key: "J15", maxDays: 15, severity: "warning", color: "#F59E0B", label: "≤ 15 jours" },
-  { key: "J30", maxDays: 30, severity: "info", color: "#3B82F6", label: "≤ 30 jours" },
+  { key: "J30", maxDays: 30, severity: "info", color: "#2E5383", label: "≤ 30 jours" },
 ];
 
 function bucketFor(daysLeft: number): ExpiryBucket | null {
@@ -722,7 +722,7 @@ export function renderInquiryEmail(inquiry: InquiryEmailData): string {
   if (inquiry.requesterCompany) {
     contactRows.push(["Société", escapeHtml(inquiry.requesterCompany)]);
   }
-  contactRows.push(["Email", `<a href="mailto:${escapeHtml(inquiry.requesterEmail)}" style="color:#2563EB;text-decoration:none;">${escapeHtml(inquiry.requesterEmail)}</a>`]);
+  contactRows.push(["Email", `<a href="mailto:${escapeHtml(inquiry.requesterEmail)}" style="color:#022150;text-decoration:none;">${escapeHtml(inquiry.requesterEmail)}</a>`]);
   if (inquiry.requesterPhone) {
     contactRows.push(["Téléphone", escapeHtml(inquiry.requesterPhone)]);
   }
@@ -748,11 +748,11 @@ export function renderInquiryEmail(inquiry: InquiryEmailData): string {
   body += dataTable(["Champ", "Détail"], contactRows);
 
   body += `<div style="font-size:14px;font-weight:bold;color:#111827;margin:22px 0 2px 0;">&#128172; Message</div>`;
-  body += `<div style="background:#F9FAFB;border-left:3px solid #2563EB;border-radius:0 8px 8px 0;padding:12px 14px;font-size:13px;color:#374151;line-height:1.6;white-space:pre-line;">${escapeHtml(inquiry.message)}</div>`;
+  body += `<div style="background:#F9FAFB;border-left:3px solid #022150;border-radius:0 8px 8px 0;padding:12px 14px;font-size:13px;color:#374151;line-height:1.6;white-space:pre-line;">${escapeHtml(inquiry.message)}</div>`;
 
   body += `<div style="background:#ECFDF5;border-radius:8px;padding:12px 14px;margin-top:18px;font-size:12px;color:#065F46;">💡 Répondez rapidement : une réponse sous 48 h augmente nettement vos chances de conclure la vente.</div>`;
 
-  return emailShell("&#128179; Nouvelle demande de devis", "#2563EB", body);
+  return emailShell("&#128179; Nouvelle demande de devis", "#022150", body);
 }
 
 // ---------------------------------------------------------------------------
@@ -970,7 +970,7 @@ export function renderMonthlyReportEmail(stats: MonthlyReportStats): string {
   let body = `<p style="margin:0 0 16px 0;">Bonjour <strong>${escapeHtml(stats.fabricantName)}</strong>, voici le bilan complet de votre activit&eacute; VerifScan pour <strong>${escapeHtml(stats.periodLabel)}</strong>.</p>`;
 
   body += kpiRow([
-    { value: String(stats.totalScans), label: "Scans du mois", color: "#2563EB" },
+    { value: String(stats.totalScans), label: "Scans du mois", color: "#022150" },
     { value: deltaText, label: "vs mois pr&eacute;c.", color: deltaColor },
     { value: String(stats.lotsGenerated), label: "Lots g&eacute;n&eacute;r&eacute;s", color: "#10B981" },
     { value: String(stats.inquiriesCount), label: "Demandes de devis", color: "#8B5CF6" },
@@ -987,13 +987,13 @@ export function renderMonthlyReportEmail(stats: MonthlyReportStats): string {
             : 0;
         return [
           escapeHtml(p.productName),
-          `<strong style="color:#2563EB;">${p.scans}</strong>`,
+          `<strong style="color:#022150;">${p.scans}</strong>`,
           `${share} %`,
         ];
       }),
     );
   } else {
-    body += `<div style="background:#EFF6FF;border-radius:8px;padding:14px;margin-top:18px;font-size:13px;color:#1E40AF;">Aucun scan ce mois-ci. Pensez &agrave; promouvoir vos QR codes en boutique et sur vos emballages !</div>`;
+    body += `<div style="background:#F0F4F9;border-radius:8px;padding:14px;margin-top:18px;font-size:13px;color:#0A2B5F;">Aucun scan ce mois-ci. Pensez &agrave; promouvoir vos QR codes en boutique et sur vos emballages !</div>`;
   }
 
   body += `<div style="font-size:14px;font-weight:bold;color:#111827;margin:22px 0 2px 0;">&#128179; Demandes de devis</div>`;

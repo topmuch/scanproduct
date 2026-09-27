@@ -30,7 +30,7 @@ import { ProductImage } from "@/components/fabricant/ProductImage";
 type PeriodKey = "7j" | "30j" | "90j" | "12m";
 
 // Rank colors for the Top 5 Produits list
-const RANK_COLORS = ["#2563EB", "#10B981", "#F59E0B", "#8B5CF6", "#EC4899"];
+const RANK_COLORS = ["#022150", "#10B981", "#F59E0B", "#8B5CF6", "#EC4899"];
 
 // ----------------------------------------------------------------------------
 // Custom tooltip for the scans AreaChart
@@ -102,7 +102,7 @@ export function AccueilPage() {
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="flex flex-col gap-4 rounded-xl border border-[#E5E7EB] bg-gradient-to-br from-[#EFF6FF] to-[#F0FDF4] p-6 sm:flex-row sm:items-center sm:justify-between dark:border-white/10 dark:from-[#1E293B] dark:to-[#1E3A8A]"
+        className="flex flex-col gap-4 rounded-xl border border-[#E5E7EB] bg-gradient-to-br from-[#F0F4F9] to-[#F0FDF4] p-6 sm:flex-row sm:items-center sm:justify-between dark:border-white/10 dark:from-[#1E293B] dark:to-[#0D3068]"
       >
         <div>
           <h1 className="font-display text-[24px] font-bold leading-tight text-[#111827]">
@@ -134,12 +134,12 @@ export function AccueilPage() {
           <p className="mb-2 text-[13px] font-medium text-[#374151] dark:text-[#E5E7EB]">
             Complétez votre profil à 75%
           </p>
-          <ProgressBar value={75} gradient="from-[#2563EB] to-[#10B981]" height="h-2" />
+          <ProgressBar value={75} gradient="from-[#022150] to-[#10B981]" height="h-2" />
         </div>
         <button
           type="button"
           onClick={() => setPage("parametres")}
-          className="self-start text-[13px] font-semibold text-[#2563EB] hover:underline sm:self-auto dark:text-[#60A5FA]"
+          className="self-start text-[13px] font-semibold text-[#022150] hover:underline sm:self-auto dark:text-[#4E74A8]"
         >
           Voir les détails
         </button>
@@ -151,13 +151,13 @@ export function AccueilPage() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard
           icon="📦"
-          iconBg="#EFF6FF"
+          iconBg="#F0F4F9"
           label="Total Produits"
           value={stats.kpis.produits.total}
           tendance={stats.kpis.produits.tendance}
           subText={`${stats.kpis.produits.actifs} actifs · ${stats.kpis.produits.brouillons} brouillons`}
           onClick={() => setPage("produits")}
-          gradient="from-[#2563EB] to-[#3B82F6]"
+          gradient="from-[#022150] to-[#2E5383]"
         />
         <KpiCard
           icon="🏷️"
@@ -211,7 +211,7 @@ export function AccueilPage() {
             <button
               type="button"
               onClick={() => setPage("statistiques")}
-              className="text-[14px] font-semibold text-[#2563EB] hover:underline"
+              className="text-[14px] font-semibold text-[#022150] hover:underline"
             >
               Voir les détails
             </button>
@@ -223,8 +223,8 @@ export function AccueilPage() {
             <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
               <defs>
                 <linearGradient id="scanGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#2563EB" stopOpacity={0.2} />
-                  <stop offset="100%" stopColor="#2563EB" stopOpacity={0} />
+                  <stop offset="0%" stopColor="#022150" stopOpacity={0.2} />
+                  <stop offset="100%" stopColor="#022150" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid stroke="#F3F4F6" vertical={false} />
@@ -246,11 +246,11 @@ export function AccueilPage() {
               <Area
                 type="monotone"
                 dataKey="scans"
-                stroke="#2563EB"
+                stroke="#022150"
                 strokeWidth={3}
                 fill="url(#scanGradient)"
                 dot={false}
-                activeDot={{ r: 5, fill: "#2563EB", strokeWidth: 2, stroke: "#fff" }}
+                activeDot={{ r: 5, fill: "#022150", strokeWidth: 2, stroke: "#fff" }}
               />
             </AreaChart>
           </ResponsiveContainer>
@@ -294,7 +294,7 @@ export function AccueilPage() {
             <button
               type="button"
               onClick={() => setPage("statistiques")}
-              className="text-[14px] font-semibold text-[#2563EB] hover:underline"
+              className="text-[14px] font-semibold text-[#022150] hover:underline"
             >
               Voir tout l&apos;historique
             </button>
@@ -335,7 +335,7 @@ export function AccueilPage() {
                   </div>
                   <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-[#F3F4F6] pl-7">
                     <div
-                      className="h-full rounded-full bg-[#2563EB]"
+                      className="h-full rounded-full bg-[#022150]"
                       style={{ width: `${(prod.scans / maxScans) * 100}%` }}
                     />
                   </div>
@@ -347,7 +347,7 @@ export function AccueilPage() {
             <button
               type="button"
               onClick={() => setPage("produits")}
-              className="text-[14px] font-semibold text-[#2563EB] hover:underline"
+              className="text-[14px] font-semibold text-[#022150] hover:underline"
             >
               Voir tous les produits
             </button>
@@ -363,7 +363,7 @@ export function AccueilPage() {
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="rounded-xl border border-[#E5E7EB] bg-gradient-to-br from-[#F3E8FF] to-[#EFF6FF] p-6 dark:border-white/10 dark:from-[#1E1B4B] dark:to-[#1E3A8A]"
+        className="rounded-xl border border-[#E5E7EB] bg-gradient-to-br from-[#F3E8FF] to-[#F0F4F9] p-6 dark:border-white/10 dark:from-[#1E1B4B] dark:to-[#0D3068]"
       >
         {/* Header */}
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -393,7 +393,7 @@ export function AccueilPage() {
           <div className="flex flex-col justify-center gap-4">
             <ProgressBar
               value={score.global}
-              gradient="from-[#8B5CF6] to-[#2563EB]"
+              gradient="from-[#8B5CF6] to-[#022150]"
               height="h-3"
             />
             {/* 4 mini detail chips */}
@@ -507,7 +507,7 @@ export function AccueilPage() {
                   <div className="mt-2 w-full">
                     <ProgressBar
                       value={badge.progression ?? 0}
-                      gradient="from-[#2563EB] to-[#10B981]"
+                      gradient="from-[#022150] to-[#10B981]"
                       height="h-1.5"
                     />
                     <p className="mt-1 text-[12px] font-medium text-[#6B7280]">

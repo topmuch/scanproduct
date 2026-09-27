@@ -495,7 +495,7 @@ export function FidelitePage() {
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <KpiCard
               icon="👥"
-              iconBg="#EFF6FF"
+              iconBg="#F0F4F9"
               label="Consommateurs uniques"
               value={stats.totalConsumers}
               subText="Clients ayant scanné vos produits"

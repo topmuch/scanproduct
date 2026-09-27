@@ -260,7 +260,7 @@ function subEmailShell(title: string, accentColor: string, bodyHtml: string): st
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#F3F4F6;padding:24px 12px;">
     <tr><td align="center">
       <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
-        <tr><td style="background:linear-gradient(135deg,#2563EB,#10B981);padding:20px 28px;">
+        <tr><td style="background:linear-gradient(135deg,#022150,#10B981);padding:20px 28px;">
           <table role="presentation" width="100%"><tr>
             <td style="color:#ffffff;font-size:20px;font-weight:bold;">&#128737;&#65039; VerifScan</td>
             <td align="right" style="color:rgba(255,255,255,0.85);font-size:12px;">La v&eacute;rit&eacute; au bout du scan</td>
@@ -274,7 +274,7 @@ function subEmailShell(title: string, accentColor: string, bodyHtml: string): st
           ${bodyHtml}
         </td></tr>
         <tr><td style="padding:8px 28px 24px 28px;" align="center">
-          <a href="${APP_URL}/dashboard/abonnement" style="display:inline-block;background:linear-gradient(135deg,#2563EB,#10B981);color:#ffffff;text-decoration:none;font-weight:bold;font-size:14px;padding:12px 28px;border-radius:8px;">G&eacute;rer mon abonnement</a>
+          <a href="${APP_URL}/dashboard/abonnement" style="display:inline-block;background:linear-gradient(135deg,#022150,#10B981);color:#ffffff;text-decoration:none;font-weight:bold;font-size:14px;padding:12px 28px;border-radius:8px;">G&eacute;rer mon abonnement</a>
         </td></tr>
         <tr><td style="background:#F9FAFB;padding:16px 28px;border-top:1px solid #F3F4F6;">
           <div style="font-size:11px;color:#9CA3AF;line-height:1.5;">

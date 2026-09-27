@@ -38,7 +38,7 @@ export function CompactCertifications({ lotCerts, fabricantCerts }: Props) {
             {lotCerts.map((c) => (
               <div
                 key={c.id}
-                className="flex items-start gap-2 rounded-lg border border-blue-100 bg-blue-50 p-2"
+                className="flex items-start gap-2 rounded-lg border border-[#DCE7F2] bg-[#F0F4F9] p-2"
               >
                 <span aria-hidden className="text-base">
                   📜

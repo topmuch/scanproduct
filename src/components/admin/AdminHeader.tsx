@@ -23,7 +23,7 @@ const PAGE_TITLES: Record<AdminPage, { breadcrumb: string; title: string }> = {
 
 const TYPE_BADGE: Record<string, string> = {
   Inscription: "bg-[#D1FAE5] text-[#065F46]",
-  Paiement: "bg-[#DBEAFE] text-[#1E40AF]",
+  Paiement: "bg-[#DCE7F2] text-[#0A2B5F]",
   Support: "bg-[#FEF3C7] text-[#92400E]",
   Alerte: "bg-[#FEE2E2] text-[#991B1B]",
   Système: "bg-[#F3F4F6] text-[#374151]",
@@ -82,7 +82,7 @@ export function AdminHeader() {
           <input
             type="text"
             placeholder="Rechercher utilisateur, produit, lot..."
-            className="h-10 w-[280px] rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] pl-9 pr-14 text-sm text-[#111827] placeholder:text-[#9CA3AF] focus:border-[#2563EB] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 lg:w-[320px] dark:border-white/10 dark:bg-white/10 dark:text-white dark:placeholder:text-white/40 dark:focus:bg-white/15"
+            className="h-10 w-[280px] rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] pl-9 pr-14 text-sm text-[#111827] placeholder:text-[#9CA3AF] focus:border-[#022150] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#022150]/20 lg:w-[320px] dark:border-white/10 dark:bg-white/10 dark:text-white dark:placeholder:text-white/40 dark:focus:bg-white/15"
           />
           <kbd className="absolute right-3 top-1/2 -translate-y-1/2 rounded border border-[#E5E7EB] bg-white px-1.5 py-0.5 text-[10px] font-semibold text-[#9CA3AF] dark:border-white/10 dark:bg-white/10 dark:text-white/50">
             ⌘K
@@ -132,7 +132,7 @@ export function AdminHeader() {
                   </li>
                 ))}
               </ul>
-              <button className="w-full bg-[#F9FAFB] py-2.5 text-center text-[13px] font-medium text-[#2563EB] hover:bg-[#EFF6FF]">
+              <button className="w-full bg-[#F9FAFB] py-2.5 text-center text-[13px] font-medium text-[#022150] hover:bg-[#F0F4F9]">
                 Voir toutes les notifications
               </button>
             </div>
@@ -144,7 +144,7 @@ export function AdminHeader() {
           <button
             type="button"
             onClick={() => setAvatarOpen((v) => !v)}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[#2563EB] to-[#10B981] font-display text-sm font-bold text-white ring-2 ring-white transition hover:ring-[#DBEAFE] dark:ring-[#0F172A] dark:hover:ring-white/30"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[#022150] to-[#10B981] font-display text-sm font-bold text-white ring-2 ring-white transition hover:ring-[#DCE7F2] dark:ring-[#0F172A] dark:hover:ring-white/30"
             aria-label="Menu profil"
           >
             AV
@@ -186,7 +186,7 @@ export function AdminHeader() {
           <div className="absolute inset-0 bg-black/40" onClick={() => setMobileNavOpen(false)} />
           <div className="absolute left-0 top-0 h-full w-[260px] bg-white shadow-2xl">
             <div className="flex h-[70px] items-center justify-between border-b border-[#F3F4F6] px-6">
-              <span className="font-display text-lg font-bold text-[#111827]">Verif<span className="text-[#2563EB]">Scan</span></span>
+              <span className="font-display text-lg font-bold text-[#111827]">Verif<span className="text-[#022150]">Scan</span></span>
               <button onClick={() => setMobileNavOpen(false)} className="flex h-9 w-9 items-center justify-center rounded-md hover:bg-[#F3F4F6]">
                 <X className="h-5 w-5" />
               </button>
@@ -198,7 +198,7 @@ export function AdminHeader() {
                   onClick={() => { setPage(p); setMobileNavOpen(false); }}
                   className={cn(
                     "block w-full rounded-lg px-4 py-2.5 text-left text-sm font-medium",
-                    page === p ? "bg-[#DBEAFE] text-[#2563EB]" : "text-[#374151] hover:bg-[#F9FAFB]"
+                    page === p ? "bg-[#DCE7F2] text-[#022150]" : "text-[#374151] hover:bg-[#F9FAFB]"
                   )}
                 >
                   {PAGE_TITLES[p].title}

@@ -157,14 +157,14 @@ export function WowHero({ product, lot, fabricant }: Props) {
       {/* ============================================================ */}
       <div className="group relative">
         {/* Glow blur behind card */}
-        <div className="absolute -inset-1 rounded-[2rem] bg-gradient-to-br from-blue-400 via-purple-400 to-pink-400 opacity-20 blur-2xl transition-opacity duration-500 group-hover:opacity-40" />
+        <div className="absolute -inset-1 rounded-[2rem] bg-gradient-to-br from-[#4E74A8] via-purple-400 to-pink-400 opacity-20 blur-2xl transition-opacity duration-500 group-hover:opacity-40" />
 
         <div className="wow-glass wow-shadow-card relative overflow-hidden rounded-3xl p-4 sm:p-5">
           <div className="flex flex-col gap-4 sm:flex-row">
             {/* Product image — large, aspect ratio preserved, tap to zoom */}
             <div className="relative mx-auto w-full max-w-[260px] flex-shrink-0 sm:mx-0 sm:w-44 sm:max-w-none">
               {/* Gradient blur behind image */}
-              <div className="absolute -inset-2 rounded-3xl bg-gradient-to-br from-blue-300 via-purple-300 to-pink-300 opacity-50 blur-lg" />
+              <div className="absolute -inset-2 rounded-3xl bg-gradient-to-br from-[#8FA9C9] via-purple-300 to-pink-300 opacity-50 blur-lg" />
 
               <div className="relative h-48 w-full sm:h-44 sm:w-44">
                 <div className="relative h-full w-full overflow-hidden rounded-2xl border-4 border-white bg-white shadow-xl">
@@ -175,7 +175,7 @@ export function WowHero({ product, lot, fabricant }: Props) {
                       className="h-full w-full"
                     />
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50 text-6xl">
+                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#F0F4F9] to-purple-50 text-6xl">
                       {emoji}
                     </div>
                   )}
@@ -183,7 +183,7 @@ export function WowHero({ product, lot, fabricant }: Props) {
 
                 {/* Floating category badge top-right */}
                 {product.category && (
-                  <div className="absolute -right-2 -top-2 z-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 px-2.5 py-1 text-[10px] font-bold text-white shadow-lg sm:text-xs">
+                  <div className="absolute -right-2 -top-2 z-10 rounded-full bg-gradient-to-r from-[#2E5383] to-purple-500 px-2.5 py-1 text-[10px] font-bold text-white shadow-lg sm:text-xs">
                     {emoji} {product.category}
                   </div>
                 )}
@@ -203,9 +203,9 @@ export function WowHero({ product, lot, fabricant }: Props) {
               )}
 
               {/* Manufacturer info card */}
-              <div className="mt-3 flex items-center gap-3 rounded-2xl bg-gradient-to-r from-blue-50 to-purple-50 p-2.5">
+              <div className="mt-3 flex items-center gap-3 rounded-2xl bg-gradient-to-r from-[#F0F4F9] to-purple-50 p-2.5">
                 {fabricant.logoUrl ? (
-                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-xl border border-blue-100 bg-white shadow-md">
+                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-xl border border-[#DCE7F2] bg-white shadow-md">
                     <img
                       src={fabricant.logoUrl}
                       alt={`Logo ${companyName}`}
@@ -214,7 +214,7 @@ export function WowHero({ product, lot, fabricant }: Props) {
                     />
                   </div>
                 ) : (
-                  <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 text-sm font-bold text-white shadow-md">
+                  <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#2E5383] to-purple-600 text-sm font-bold text-white shadow-md">
                     {companyName.charAt(0).toUpperCase()}
                   </div>
                 )}
@@ -224,7 +224,7 @@ export function WowHero({ product, lot, fabricant }: Props) {
                       {companyName}
                     </span>
                     {fabricant.isVerified && (
-                      <BadgeCheck className="h-4 w-4 flex-shrink-0 text-blue-500" />
+                      <BadgeCheck className="h-4 w-4 flex-shrink-0 text-[#2E5383]" />
                     )}
                   </div>
                   {(fabricant.city || fabricant.country) && (
@@ -274,7 +274,7 @@ export function WowHero({ product, lot, fabricant }: Props) {
           icon="🏷️"
           value={lot.lotNumber ?? lot.reference ?? "—"}
           label="Lot"
-          gradient="from-blue-500 to-cyan-600"
+          gradient="from-[#2E5383] to-cyan-600"
           glow="wow-shadow-glow-blue"
         />
         <StatCard

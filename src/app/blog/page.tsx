@@ -37,7 +37,7 @@ const PLACEHOLDER_ARTICLES = [
     excerpt:
       "Du QR code généré en usine jusqu'à la page consultée par le consommateur : découvrez le cheminement complet d'un passeport numérique.",
     readTime: "6 min",
-    color: "#2563EB",
+    color: "#022150",
   },
   {
     icon: ShieldCheck,
@@ -64,7 +64,7 @@ const PLACEHOLDER_ARTICLES = [
     excerpt:
       "Les consommateurs scannent-ils vraiment les QR codes ? Que font-ils après ? Les premiers chiffres de notre étude terrain 2025.",
     readTime: "7 min",
-    color: "#2563EB",
+    color: "#022150",
   },
 ];
 
@@ -81,7 +81,7 @@ export default function BlogPage() {
             className="pointer-events-none absolute inset-0 opacity-30"
             style={{
               backgroundImage:
-                "radial-gradient(circle at 15% 30%, rgba(37,99,235,0.45) 0, transparent 45%), radial-gradient(circle at 85% 70%, rgba(16,185,129,0.30) 0, transparent 50%)",
+                "radial-gradient(circle at 15% 30%, rgba(2, 33, 80,0.45) 0, transparent 45%), radial-gradient(circle at 85% 70%, rgba(16,185,129,0.30) 0, transparent 50%)",
             }}
           />
           <div className="relative mx-auto max-w-[1400px] px-4 py-16 sm:px-6 sm:py-20 lg:px-8 lg:py-24">
@@ -91,7 +91,7 @@ export default function BlogPage() {
             </span>
             <h1 className="mt-6 max-w-3xl font-display text-4xl font-bold leading-tight tracking-tight sm:text-5xl lg:text-6xl">
               Bientôt, ici, la{" "}
-              <span className="bg-gradient-to-r from-[#60A5FA] via-[#34D399] to-[#FBBF24] bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-[#4E74A8] via-[#34D399] to-[#FBBF24] bg-clip-text text-transparent">
                 vérité sur la traçabilité.
               </span>
             </h1>
@@ -126,9 +126,9 @@ export default function BlogPage() {
         {/* COMING SOON BANNER */}
         <section className="border-b border-[#F3F4F6] bg-white">
           <div className="mx-auto max-w-[1400px] px-4 py-6 sm:px-6 lg:px-8">
-            <div className="flex flex-col items-start justify-between gap-4 rounded-xl bg-[#EFF6FF] px-6 py-4 sm:flex-row sm:items-center">
+            <div className="flex flex-col items-start justify-between gap-4 rounded-xl bg-[#F0F4F9] px-6 py-4 sm:flex-row sm:items-center">
               <div className="flex items-center gap-3">
-                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#2563EB]/10 text-[#2563EB]">
+                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#022150]/10 text-[#022150]">
                   <Sparkles className="h-5 w-5" />
                 </span>
                 <div>
@@ -140,7 +140,7 @@ export default function BlogPage() {
                   </p>
                 </div>
               </div>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-[#2563EB] px-3 py-1.5 text-xs font-medium text-white">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-[#022150] px-3 py-1.5 text-xs font-medium text-white">
                 <Clock className="h-3 w-3" />
                 Bientôt disponible
               </span>
@@ -228,7 +228,7 @@ export default function BlogPage() {
 
         {/* CTA */}
         <section className="mx-auto max-w-[1400px] px-4 pb-20 sm:px-6 lg:px-8">
-          <div className="overflow-hidden rounded-3xl bg-gradient-to-br from-[#0F172A] via-[#1E3A8A] to-[#2563EB] p-10 text-white shadow-xl sm:p-14">
+          <div className="overflow-hidden rounded-3xl bg-gradient-to-br from-[#0F172A] via-[#0D3068] to-[#022150] p-10 text-white shadow-xl sm:p-14">
             <div className="grid items-center gap-8 lg:grid-cols-2">
               <div>
                 <h2 className="font-display text-2xl font-bold sm:text-3xl">
@@ -243,7 +243,7 @@ export default function BlogPage() {
                 <div className="mt-6 flex flex-wrap gap-3">
                   <Link
                     href="/#contact"
-                    className="inline-flex items-center gap-2 rounded-lg bg-white px-5 py-3 text-sm font-semibold text-[#2563EB] shadow-md transition-colors hover:bg-white/90"
+                    className="inline-flex items-center gap-2 rounded-lg bg-white px-5 py-3 text-sm font-semibold text-[#022150] shadow-md transition-colors hover:bg-white/90"
                   >
                     Proposer un sujet
                     <ArrowRight className="h-4 w-4" />

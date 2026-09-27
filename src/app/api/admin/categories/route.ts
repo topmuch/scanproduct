@@ -98,7 +98,7 @@ export async function POST(request: NextRequest) {
         products: 0,
         order: category.order,
         active: category.isActive,
-        color: "#3B82F6",
+        color: "#2E5383",
       },
       { status: 201 }
     );

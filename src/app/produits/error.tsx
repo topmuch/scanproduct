@@ -49,7 +49,7 @@ export default function CatalogError({
           <button
             type="button"
             onClick={reset}
-            className="inline-flex items-center gap-2 rounded-lg bg-[#2563EB] px-5 py-3 text-[14px] font-semibold text-white shadow-sm transition-colors hover:bg-[#1D4ED8]"
+            className="inline-flex items-center gap-2 rounded-lg bg-[#022150] px-5 py-3 text-[14px] font-semibold text-white shadow-sm transition-colors hover:bg-[#011D46]"
           >
             <RefreshCw className="h-4 w-4" />
             Réessayer

@@ -207,7 +207,7 @@ export function FabricantSidebar() {
       {/* Profile */}
       <div className="border-t border-white/10 p-4">
         <div className="flex items-center gap-3 rounded-lg p-2 hover:bg-white/10">
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-[#2563EB] to-[#10B981] font-display text-sm font-bold text-white">
+          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-[#022150] to-[#10B981] font-display text-sm font-bold text-white">
             {logoInitial}
           </span>
           <div className="min-w-0 flex-1 leading-tight">
@@ -235,7 +235,7 @@ export function FabricantSidebar() {
   return (
     <>
       {/* Desktop sidebar */}
-      <aside className="fixed inset-y-0 left-0 z-40 hidden w-[260px] flex-col border-r border-white/10 bg-gradient-to-b from-[#1E3A8A] to-[#1E40AF] lg:flex">
+      <aside className="fixed inset-y-0 left-0 z-40 hidden w-[260px] flex-col border-r border-white/10 bg-gradient-to-b from-[#0D3068] to-[#0A2B5F] lg:flex">
         {sidebarContent}
       </aside>
 
@@ -246,7 +246,7 @@ export function FabricantSidebar() {
             className="absolute inset-0 bg-black/40 backdrop-blur-sm"
             onClick={() => setMobileSidebarOpen(false)}
           />
-          <aside className="absolute inset-y-0 left-0 flex w-[280px] flex-col border-r border-white/10 bg-gradient-to-b from-[#1E3A8A] to-[#1E40AF]">
+          <aside className="absolute inset-y-0 left-0 flex w-[280px] flex-col border-r border-white/10 bg-gradient-to-b from-[#0D3068] to-[#0A2B5F]">
             {sidebarContent}
           </aside>
         </div>

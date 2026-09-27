@@ -122,7 +122,7 @@ export function UserDetailPage() {
       <button
         type="button"
         onClick={goBack}
-        className="mb-4 inline-flex items-center gap-2 text-[14px] font-semibold text-[#6B7280] transition-colors hover:text-[#2563EB]"
+        className="mb-4 inline-flex items-center gap-2 text-[14px] font-semibold text-[#6B7280] transition-colors hover:text-[#022150]"
       >
         <ArrowLeft className="h-4 w-4" />
         Retour
@@ -160,7 +160,7 @@ export function UserDetailPage() {
                   <button
                     type="button"
                     onClick={() => copyToClipboard(maker.email)}
-                    className="text-[#9CA3AF] hover:text-[#2563EB]"
+                    className="text-[#9CA3AF] hover:text-[#022150]"
                     title="Copier l'email"
                     aria-label="Copier l'email"
                   >
@@ -175,7 +175,7 @@ export function UserDetailPage() {
                 action={
                   <a
                     href={`tel:${maker.phone.replace(/\s/g, "")}`}
-                    className="text-[#9CA3AF] hover:text-[#2563EB]"
+                    className="text-[#9CA3AF] hover:text-[#022150]"
                     title="Appeler"
                     aria-label="Appeler"
                   >
@@ -335,7 +335,7 @@ export function UserDetailPage() {
           <Card>
             <CardHeader title="Historique des scans" subtitle="30 derniers jours" />
             <div className="p-5">
-              <AreaTrend data={scansData} color="#2563EB" height={240} />
+              <AreaTrend data={scansData} color="#022150" height={240} />
 
               <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg bg-[#F9FAFB] px-4 py-3">
                 <div>
@@ -433,7 +433,7 @@ export function UserDetailPage() {
                 value={noteInput}
                 onChange={(e) => setNoteInput(e.target.value)}
                 placeholder="Ajouter une note..."
-                className="h-9 flex-1 rounded-lg border border-[#E5E7EB] bg-white px-3 text-[13px] text-[#111827] placeholder:text-[#9CA3AF] focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/10"
+                className="h-9 flex-1 rounded-lg border border-[#E5E7EB] bg-white px-3 text-[13px] text-[#111827] placeholder:text-[#9CA3AF] focus:border-[#022150] focus:outline-none focus:ring-2 focus:ring-[#022150]/10"
               />
               <Button size="sm" onClick={() => setNoteInput("")}>
                 Enregistrer
@@ -463,7 +463,7 @@ export function UserDetailPage() {
                           aria-hidden="true"
                         />
                       )}
-                      <span className="z-10 mt-1 h-[11px] w-[11px] shrink-0 rounded-full border-2 border-[#EFF6FF] bg-[#2563EB]" />
+                      <span className="z-10 mt-1 h-[11px] w-[11px] shrink-0 rounded-full border-2 border-[#F0F4F9] bg-[#022150]" />
                       <div className="min-w-0">
                         <div className="text-[11px] text-[#6B7280]">{a.date}</div>
                         <div className="text-[13px] font-medium text-[#111827]">{a.label}</div>

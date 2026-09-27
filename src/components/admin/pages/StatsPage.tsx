@@ -42,11 +42,11 @@ function buildKpiCards(GLOBAL_KPI: {
   totalScans: number;
 }): KpiCard[] {
   return [
-    { label: "Total fabricants", value: GLOBAL_KPI.totalMakers, Icon: Users, color: "#2563EB", bg: "#DBEAFE" },
+    { label: "Total fabricants", value: GLOBAL_KPI.totalMakers, Icon: Users, color: "#022150", bg: "#DCE7F2" },
     { label: "Fabricants actifs", value: GLOBAL_KPI.activeMakers, Icon: UserCheck, color: "#10B981", bg: "#D1FAE5" },
     { label: "Total produits", value: GLOBAL_KPI.totalProducts, Icon: Package, color: "#F59E0B", bg: "#FFEDD5" },
     { label: "Total lots", value: GLOBAL_KPI.totalLots, Icon: Layers, color: "#8B5CF6", bg: "#EDE9FE" },
-    { label: "Total QR codes", value: GLOBAL_KPI.totalQrCodes, Icon: QrCode, color: "#2563EB", bg: "#DBEAFE" },
+    { label: "Total QR codes", value: GLOBAL_KPI.totalQrCodes, Icon: QrCode, color: "#022150", bg: "#DCE7F2" },
     { label: "Total scans", value: GLOBAL_KPI.totalScans, Icon: ScanLine, color: "#10B981", bg: "#D1FAE5" },
   ];
 }
@@ -55,7 +55,7 @@ function buildKpiCards(GLOBAL_KPI: {
 // Coordinates are stylized positions on the placeholder map; values are
 // derived from real scan aggregates (topCities[0..4]).
 const CITY_DOTS_TEMPLATE = [
-  { x: "20%", y: "32%", size: 32, color: "#2563EB" },
+  { x: "20%", y: "32%", size: 32, color: "#022150" },
   { x: "30%", y: "40%", size: 22, color: "#10B981" },
   { x: "34%", y: "12%", size: 18, color: "#F59E0B" },
   { x: "17%", y: "56%", size: 16, color: "#8B5CF6" },
@@ -66,8 +66,8 @@ const RANK_COLORS = [
   "#F59E0B", // gold
   "#9CA3AF", // silver
   "#B45309", // bronze
-  "#2563EB",
-  "#2563EB",
+  "#022150",
+  "#022150",
   "#10B981",
   "#10B981",
   "#8B5CF6",
@@ -125,8 +125,8 @@ export function StatsPage() {
             className={cn(
               "h-9 rounded-lg px-3 text-[13px] font-semibold transition-all duration-200",
               period === p
-                ? "bg-[#2563EB] text-white shadow-sm"
-                : "border border-[#E5E7EB] bg-white text-[#374151] hover:border-[#2563EB] hover:bg-[#F9FAFB] hover:text-[#2563EB]"
+                ? "bg-[#022150] text-white shadow-sm"
+                : "border border-[#E5E7EB] bg-white text-[#374151] hover:border-[#022150] hover:bg-[#F9FAFB] hover:text-[#022150]"
             )}
           >
             {p}
@@ -178,7 +178,7 @@ export function StatsPage() {
             <div className="p-4">
               <BarV
                 data={SIGNUPS_DATA.map((d) => ({ label: d.label, value: d.value }))}
-                color="#2563EB"
+                color="#022150"
                 height={260}
               />
             </div>
@@ -228,7 +228,7 @@ export function StatsPage() {
             <div className="p-4">
               <AreaTrend
                 data={SCANS_DAILY.map((d) => ({ label: d.label, value: d.value }))}
-                color="#2563EB"
+                color="#022150"
                 height={260}
               />
             </div>
@@ -279,7 +279,7 @@ export function StatsPage() {
                           className="h-full rounded-full transition-all duration-700"
                           style={{
                             width: `${pct}%`,
-                            background: "linear-gradient(to right, #10B981, #2563EB)",
+                            background: "linear-gradient(to right, #10B981, #022150)",
                           }}
                         />
                       </div>
@@ -302,7 +302,7 @@ export function StatsPage() {
           <CardHeader title="Géographie" subtitle="Répartition des scans par ville" />
           <div className="grid grid-cols-1 gap-6 p-5 lg:grid-cols-2">
             {/* Stylized Senegal map placeholder */}
-            <div className="relative flex min-h-[420px] items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed border-[#E5E7EB] bg-gradient-to-br from-[#F9FAFB] via-white to-[#EFF6FF]">
+            <div className="relative flex min-h-[420px] items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed border-[#E5E7EB] bg-gradient-to-br from-[#F9FAFB] via-white to-[#F0F4F9]">
               <div className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-[0.07]">
                 <span className="text-[200px] leading-none">🗺️</span>
               </div>
@@ -352,7 +352,7 @@ export function StatsPage() {
               ))}
 
               <div className="absolute bottom-3 left-3 flex items-center gap-2 rounded-lg bg-white/80 px-2.5 py-1.5 text-[11px] text-[#6B7280] backdrop-blur">
-                <span className="h-2 w-2 rounded-full bg-[#2563EB]" />
+                <span className="h-2 w-2 rounded-full bg-[#022150]" />
                 Taille = volume de scans
               </div>
             </div>
@@ -384,12 +384,12 @@ export function StatsPage() {
                         <td className="px-4 py-2.5 text-sm font-semibold text-[#6B7280]">{i + 1}</td>
                         <td className="px-4 py-2.5">
                           <div className="flex items-center gap-2">
-                            <MapPin className="h-3.5 w-3.5 shrink-0 text-[#2563EB]" />
+                            <MapPin className="h-3.5 w-3.5 shrink-0 text-[#022150]" />
                             <span className="text-sm font-medium text-[#111827]">{c.city}</span>
                           </div>
                           <div className="mt-1.5 h-1.5 w-32 overflow-hidden rounded-full bg-[#E5E7EB]">
                             <div
-                              className="h-full rounded-full bg-[#2563EB]/70"
+                              className="h-full rounded-full bg-[#022150]/70"
                               style={{ width: `${Math.min(c.pct * 2.5, 100)}%` }}
                             />
                           </div>
@@ -417,7 +417,7 @@ export function StatsPage() {
               title="Temps de chargement moyen"
               subtitle="Latence API (ms) · 30 jours"
               action={
-                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#DBEAFE] text-[#2563EB]">
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#DCE7F2] text-[#022150]">
                   <Zap className="h-4 w-4" />
                 </span>
               }
@@ -425,7 +425,7 @@ export function StatsPage() {
             <div className="p-4">
               <LineTrend
                 data={PERF_DATA.latency.map((d) => ({ label: d.label, value: d.value }))}
-                color="#2563EB"
+                color="#022150"
                 height={220}
               />
               <div className="mt-4 flex items-center justify-between rounded-lg bg-[#F9FAFB] px-4 py-3">

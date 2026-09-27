@@ -59,7 +59,7 @@ const inter = localFont({
  * before the user installs the PWA.
  */
 export const viewport: Viewport = {
-  themeColor: "#2563EB",
+  themeColor: "#022150",
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,

@@ -21,7 +21,7 @@ const STATS: Stat[] = [
 
 export function StatsBanner() {
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-[#2563EB] to-[#1E40AF] py-16 lg:py-20">
+    <section className="relative overflow-hidden bg-gradient-to-br from-[#022150] to-[#0A2B5F] py-16 lg:py-20">
       {/* decorative blurred blobs */}
       <div className="pointer-events-none absolute -left-20 top-0 h-72 w-72 rounded-full bg-white/10 blur-3xl" />
       <div className="pointer-events-none absolute -right-16 bottom-0 h-72 w-72 rounded-full bg-[#10B981]/20 blur-3xl" />

@@ -36,7 +36,7 @@ export default function MentionsLegalesPage() {
           La plateforme VerifScan, accessible à l&apos;adresse{" "}
           <a
             href="https://verifscan.sn"
-            className="font-medium text-[#2563EB] underline-offset-2 hover:underline"
+            className="font-medium text-[#022150] underline-offset-2 hover:underline"
           >
             https://verifscan.sn
           </a>
@@ -51,7 +51,7 @@ export default function MentionsLegalesPage() {
             Email :{" "}
             <a
               href="mailto:contact@verifscan.sn"
-              className="font-medium text-[#2563EB] underline-offset-2 hover:underline"
+              className="font-medium text-[#022150] underline-offset-2 hover:underline"
             >
               contact@verifscan.sn
             </a>
@@ -60,7 +60,7 @@ export default function MentionsLegalesPage() {
             Téléphone :{" "}
             <a
               href="tel:+221338000000"
-              className="font-medium text-[#2563EB] underline-offset-2 hover:underline"
+              className="font-medium text-[#022150] underline-offset-2 hover:underline"
             >
               +221 33 800 00 00
             </a>
@@ -88,7 +88,7 @@ export default function MentionsLegalesPage() {
           l&apos;adresse{" "}
           <a
             href="mailto:contact@verifscan.sn"
-            className="font-medium text-[#2563EB] underline-offset-2 hover:underline"
+            className="font-medium text-[#022150] underline-offset-2 hover:underline"
           >
             contact@verifscan.sn
           </a>
@@ -126,7 +126,7 @@ export default function MentionsLegalesPage() {
           veuillez contacter VerifScan à l&apos;adresse{" "}
           <a
             href="mailto:contact@verifscan.sn"
-            className="font-medium text-[#2563EB] underline-offset-2 hover:underline"
+            className="font-medium text-[#022150] underline-offset-2 hover:underline"
           >
             contact@verifscan.sn
           </a>
@@ -168,7 +168,7 @@ export default function MentionsLegalesPage() {
           décrit dans la{" "}
           <a
             href="/politique-confidentialite"
-            className="font-medium text-[#2563EB] underline-offset-2 hover:underline"
+            className="font-medium text-[#022150] underline-offset-2 hover:underline"
           >
             Politique de confidentialité
           </a>
@@ -198,7 +198,7 @@ export default function MentionsLegalesPage() {
           dans la{" "}
           <a
             href="/cookies"
-            className="font-medium text-[#2563EB] underline-offset-2 hover:underline"
+            className="font-medium text-[#022150] underline-offset-2 hover:underline"
           >
             Politique de cookies
           </a>
@@ -238,7 +238,7 @@ export default function MentionsLegalesPage() {
             Par email :{" "}
             <a
               href="mailto:contact@verifscan.sn"
-              className="font-medium text-[#2563EB] underline-offset-2 hover:underline"
+              className="font-medium text-[#022150] underline-offset-2 hover:underline"
             >
               contact@verifscan.sn
             </a>
@@ -247,7 +247,7 @@ export default function MentionsLegalesPage() {
             Par téléphone :{" "}
             <a
               href="tel:+221338000000"
-              className="font-medium text-[#2563EB] underline-offset-2 hover:underline"
+              className="font-medium text-[#022150] underline-offset-2 hover:underline"
             >
               +221 33 800 00 00
             </a>

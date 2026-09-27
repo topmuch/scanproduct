@@ -76,7 +76,7 @@ function FilterSelect<T extends string>({
       <select
         value={value}
         onChange={(e) => onChange(e.target.value as T)}
-        className="h-10 w-full rounded-lg border border-[#E5E7EB] bg-white px-3 text-[13px] font-medium text-[#374151] outline-none transition-colors hover:border-[#2563EB] focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/15"
+        className="h-10 w-full rounded-lg border border-[#E5E7EB] bg-white px-3 text-[13px] font-medium text-[#374151] outline-none transition-colors hover:border-[#022150] focus:border-[#022150] focus:ring-2 focus:ring-[#022150]/15"
       >
         {options.map((opt) => (
           <option key={opt.value} value={opt.value}>
@@ -203,7 +203,7 @@ function GenerationModal({
         {/* Header */}
         <div className="flex items-center justify-between border-b border-[#F3F4F6] px-6 py-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-[#2563EB] to-[#10B981] text-white">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-[#022150] to-[#10B981] text-white">
               <QrCodeIcon className="h-5 w-5" />
             </div>
             <h2 className="font-display text-[18px] font-bold text-[#111827]">Générer des QR codes</h2>
@@ -227,7 +227,7 @@ function GenerationModal({
             <select
               value={lotId}
               onChange={(e) => setLotId(e.target.value)}
-              className="h-10 w-full rounded-lg border border-[#E5E7EB] bg-white px-3 text-[13px] font-medium text-[#374151] outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/15"
+              className="h-10 w-full rounded-lg border border-[#E5E7EB] bg-white px-3 text-[13px] font-medium text-[#374151] outline-none focus:border-[#022150] focus:ring-2 focus:ring-[#022150]/15"
             >
               {lots.slice(0, 12).map((l) => (
                 <option key={l.id} value={l.id}>
@@ -248,7 +248,7 @@ function GenerationModal({
               max={quotaRestant}
               value={nombre}
               onChange={(e) => setNombre(Math.max(1, Math.min(quotaRestant || 1, Number(e.target.value) || 0)))}
-              className="h-10 w-full rounded-lg border border-[#E5E7EB] bg-white px-3 text-[14px] font-medium text-[#111827] outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/15"
+              className="h-10 w-full rounded-lg border border-[#E5E7EB] bg-white px-3 text-[14px] font-medium text-[#111827] outline-none focus:border-[#022150] focus:ring-2 focus:ring-[#022150]/15"
             />
             <p className="mt-1 text-[12px] text-[#9CA3AF]">Quota restant : {formatNombre(quotaRestant)}</p>
           </div>
@@ -271,7 +271,7 @@ function GenerationModal({
                     className={
                       "rounded-lg border px-3 py-2 text-left transition-all " +
                       (active
-                        ? "border-[#2563EB] bg-[#2563EB]/5 ring-1 ring-[#2563EB]"
+                        ? "border-[#022150] bg-[#022150]/5 ring-1 ring-[#022150]"
                         : "border-[#E5E7EB] bg-white hover:border-[#9CA3AF]")
                     }
                   >
@@ -293,7 +293,7 @@ function GenerationModal({
                     type="checkbox"
                     checked={formats[f]}
                     onChange={() => toggle(formats, setFormats, f)}
-                    className="h-4 w-4 rounded border-[#E5E7EB] accent-[#2563EB]"
+                    className="h-4 w-4 rounded border-[#E5E7EB] accent-[#022150]"
                   />
                   <span className="font-semibold uppercase">{f}</span>
                 </label>
@@ -316,7 +316,7 @@ function GenerationModal({
                     type="checkbox"
                     checked={options[o.key]}
                     onChange={() => toggle(options, setOptions, o.key)}
-                    className="h-4 w-4 rounded border-[#E5E7EB] accent-[#2563EB]"
+                    className="h-4 w-4 rounded border-[#E5E7EB] accent-[#022150]"
                   />
                   <span>{o.label}</span>
                 </label>
@@ -569,7 +569,7 @@ export function QRCodesPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Rechercher par ID, lot, produit..."
-            className="h-10 w-full rounded-lg border border-[#E5E7EB] bg-white pl-9 pr-3 text-[13px] text-[#111827] outline-none transition-colors placeholder:text-[#9CA3AF] focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/15"
+            className="h-10 w-full rounded-lg border border-[#E5E7EB] bg-white pl-9 pr-3 text-[13px] text-[#111827] outline-none transition-colors placeholder:text-[#9CA3AF] focus:border-[#022150] focus:ring-2 focus:ring-[#022150]/15"
           />
         </div>
         <FilterSelect
@@ -625,12 +625,12 @@ export function QRCodesPage() {
 
       {/* Bulk actions bar */}
       {selectedIds.size > 0 && (
-        <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#2563EB]/30 bg-[#2563EB]/5 px-4 py-3">
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#022150]/30 bg-[#022150]/5 px-4 py-3">
           <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={clearSelection}
-              className="flex h-6 w-6 items-center justify-center rounded-full bg-[#2563EB] text-white"
+              className="flex h-6 w-6 items-center justify-center rounded-full bg-[#022150] text-white"
               aria-label="Effacer la sélection"
             >
               <X className="h-3.5 w-3.5" />
@@ -726,7 +726,7 @@ export function QRCodesPage() {
             type="checkbox"
             checked={allVisibleSelected}
             onChange={toggleSelectAllVisible}
-            className="h-4 w-4 rounded border-[#E5E7EB] accent-[#2563EB]"
+            className="h-4 w-4 rounded border-[#E5E7EB] accent-[#022150]"
             id="select-all"
           />
           <label htmlFor="select-all" className="text-[12px] text-[#6B7280]">
@@ -748,7 +748,7 @@ export function QRCodesPage() {
                 key={q.id}
                 className={
                   "relative rounded-lg border bg-white p-4 transition-all hover:shadow-md " +
-                  (selected ? "border-[#2563EB] ring-1 ring-[#2563EB]" : "border-[#E5E7EB]")
+                  (selected ? "border-[#022150] ring-1 ring-[#022150]" : "border-[#E5E7EB]")
                 }
               >
                 {/* Checkbox */}
@@ -757,7 +757,7 @@ export function QRCodesPage() {
                     type="checkbox"
                     checked={selected}
                     onChange={() => toggleSelect(q.id)}
-                    className="h-4 w-4 rounded border-[#E5E7EB] accent-[#2563EB]"
+                    className="h-4 w-4 rounded border-[#E5E7EB] accent-[#022150]"
                   />
                 </label>
 
@@ -775,7 +775,7 @@ export function QRCodesPage() {
                       "inline-block rounded px-1.5 py-px text-[9px] font-semibold " +
                       (urlQrDe(q).format === "GS1"
                         ? "bg-[#ECFDF5] text-[#047857]"
-                        : "bg-[#EFF6FF] text-[#1D4ED8]")
+                        : "bg-[#F0F4F9] text-[#011D46]")
                     }
                   >
                     {urlQrDe(q).format === "GS1" ? "GS1 Digital Link" : "Standard"}
@@ -933,7 +933,7 @@ export function QRCodesPage() {
                   className={
                     "inline-flex h-9 w-9 items-center justify-center rounded-lg border text-[13px] font-semibold transition-colors " +
                     (active
-                      ? "border-[#2563EB] bg-[#2563EB] text-white"
+                      ? "border-[#022150] bg-[#022150] text-white"
                       : "border-[#E5E7EB] bg-white text-[#374151] hover:bg-[#F9FAFB]")
                   }
                 >

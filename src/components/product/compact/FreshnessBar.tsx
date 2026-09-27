@@ -51,8 +51,8 @@ export function FreshnessBar({ expiryDate, manufactureDate }: Props) {
     message = "Produit très frais";
     icon = "🟢";
   } else if (daysLeft > 30) {
-    color = "text-blue-700";
-    gradient = "from-blue-400 to-blue-600";
+    color = "text-[#011D46]";
+    gradient = "from-[#4E74A8] to-[#022150]";
     message = "Bon à consommer";
     icon = "✅";
   } else if (daysLeft > 7) {

@@ -54,7 +54,7 @@ export default function PolitiqueConfidentialitePage() {
             Email :{" "}
             <a
               href="mailto:contact@verifscan.sn"
-              className="font-medium text-[#2563EB] underline-offset-2 hover:underline"
+              className="font-medium text-[#022150] underline-offset-2 hover:underline"
             >
               contact@verifscan.sn
             </a>
@@ -63,7 +63,7 @@ export default function PolitiqueConfidentialitePage() {
             Téléphone :{" "}
             <a
               href="tel:+221338000000"
-              className="font-medium text-[#2563EB] underline-offset-2 hover:underline"
+              className="font-medium text-[#022150] underline-offset-2 hover:underline"
             >
               +221 33 800 00 00
             </a>
@@ -339,7 +339,7 @@ export default function PolitiqueConfidentialitePage() {
           Pour exercer ces droits, contactez VerifScan à l&apos;adresse{" "}
           <a
             href="mailto:contact@verifscan.sn"
-            className="font-medium text-[#2563EB] underline-offset-2 hover:underline"
+            className="font-medium text-[#022150] underline-offset-2 hover:underline"
           >
             contact@verifscan.sn
           </a>{" "}
@@ -359,7 +359,7 @@ export default function PolitiqueConfidentialitePage() {
           détail de leur usage et de leur gestion est décrit dans la{" "}
           <a
             href="/cookies"
-            className="font-medium text-[#2563EB] underline-offset-2 hover:underline"
+            className="font-medium text-[#022150] underline-offset-2 hover:underline"
           >
             Politique de cookies
           </a>
@@ -379,7 +379,7 @@ export default function PolitiqueConfidentialitePage() {
           VerifScan sans autorisation, merci de nous le signaler à{" "}
           <a
             href="mailto:contact@verifscan.sn"
-            className="font-medium text-[#2563EB] underline-offset-2 hover:underline"
+            className="font-medium text-[#022150] underline-offset-2 hover:underline"
           >
             contact@verifscan.sn
           </a>{" "}
@@ -398,7 +398,7 @@ export default function PolitiqueConfidentialitePage() {
             Par email :{" "}
             <a
               href="mailto:contact@verifscan.sn"
-              className="font-medium text-[#2563EB] underline-offset-2 hover:underline"
+              className="font-medium text-[#022150] underline-offset-2 hover:underline"
             >
               contact@verifscan.sn
             </a>
@@ -407,7 +407,7 @@ export default function PolitiqueConfidentialitePage() {
             Par téléphone :{" "}
             <a
               href="tel:+221338000000"
-              className="font-medium text-[#2563EB] underline-offset-2 hover:underline"
+              className="font-medium text-[#022150] underline-offset-2 hover:underline"
             >
               +221 33 800 00 00
             </a>

@@ -22,7 +22,7 @@ import {
  *   - Primary CTA → /register ("Créer votre compte gratuit")
  *   - Secondary CTA → /produits ("Découvrir le catalogue")
  *
- * The primary CTA keeps the homepage blue accent (#2563EB) to preserve the
+ * The primary CTA keeps the homepage blue accent (#022150) to preserve the
  * SaaS landing page identity (the catalog page uses green #3BB77E).
  *
  * Transition strategy (no white gap): all slides are stacked in the DOM at
@@ -203,7 +203,7 @@ export function Hero() {
             >
               <Link
                 href="/register"
-                className="group inline-flex w-full items-center justify-center gap-2 rounded-[10px] bg-[#2563EB] px-7 py-3.5 text-base font-semibold text-white shadow-lg shadow-black/30 transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#1D4ED8] hover:shadow-xl sm:w-auto"
+                className="group inline-flex w-full items-center justify-center gap-2 rounded-[10px] bg-[#022150] px-7 py-3.5 text-base font-semibold text-white shadow-lg shadow-black/30 transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#011D46] hover:shadow-xl sm:w-auto"
               >
                 Créer votre compte gratuit
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />

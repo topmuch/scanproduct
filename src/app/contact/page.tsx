@@ -44,7 +44,7 @@ export default function ContactPage() {
 
       <main className="flex-1">
         {/* Hero */}
-        <section className="relative overflow-hidden bg-gradient-to-br from-[#2563EB] via-[#1E40AF] to-[#0F172A] py-16 text-white sm:py-20">
+        <section className="relative overflow-hidden bg-gradient-to-br from-[#022150] via-[#0A2B5F] to-[#0F172A] py-16 text-white sm:py-20">
           {/* Decorative gradient orbs */}
           <div className="pointer-events-none absolute -left-20 top-0 h-72 w-72 rounded-full bg-[#10B981]/20 blur-3xl" />
           <div className="pointer-events-none absolute -right-20 bottom-0 h-72 w-72 rounded-full bg-[#F59E0B]/20 blur-3xl" />
@@ -56,7 +56,7 @@ export default function ContactPage() {
               </span>
               <h1 className="mt-5 font-display text-4xl font-bold leading-tight tracking-tight sm:text-5xl">
                 Parlons de votre{" "}
-                <span className="bg-gradient-to-r from-[#60A5FA] to-[#34D399] bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-[#4E74A8] to-[#34D399] bg-clip-text text-transparent">
                   projet
                 </span>
               </h1>
@@ -73,8 +73,8 @@ export default function ContactPage() {
           <div className="mx-auto grid max-w-[1400px] gap-6 px-4 py-8 sm:grid-cols-3 sm:px-6 lg:px-8">
             {QUICK_INFO.map((item) => (
               <div key={item.title} className="flex items-center gap-4">
-                <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-[#EFF6FF]">
-                  <item.icon className="h-5 w-5 text-[#2563EB]" />
+                <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-[#F0F4F9]">
+                  <item.icon className="h-5 w-5 text-[#022150]" />
                 </div>
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wide text-[#9CA3AF]">
@@ -108,7 +108,7 @@ export default function ContactPage() {
             <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <a
                 href="/register"
-                className="inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-[#2563EB] to-[#10B981] px-6 py-3 text-[15px] font-semibold text-white shadow-md shadow-[#2563EB]/25 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg"
+                className="inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-[#022150] to-[#10B981] px-6 py-3 text-[15px] font-semibold text-white shadow-md shadow-[#022150]/25 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg"
               >
                 Devenir partenaire
               </a>

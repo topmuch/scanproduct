@@ -146,7 +146,7 @@ type StepMeta = {
 
 // ============================================================================
 // Style constants — emerald #10B981 is the primary accent for V3 wizard
-// elements. Legacy #2563EB blue is kept for input focus rings for
+// elements. Legacy #022150 blue is kept for input focus rings for
 // backward-compat with the rest of the fabricant dashboard.
 // ============================================================================
 
@@ -155,7 +155,7 @@ const EMERALD_DARK = "#047857";
 const EMERALD_SOFT = "#ECFDF5";
 
 const inputClass =
-  "w-full rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-[14px] text-[#111827] placeholder:text-[#9CA3AF] focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 transition";
+  "w-full rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-[14px] text-[#111827] placeholder:text-[#9CA3AF] focus:border-[#022150] focus:outline-none focus:ring-2 focus:ring-[#022150]/20 transition";
 
 /**
  * Returns the input className with a red border + red focus ring when the

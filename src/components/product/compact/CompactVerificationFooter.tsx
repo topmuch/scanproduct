@@ -69,7 +69,7 @@ export function CompactVerificationFooter({ lot }: Props) {
             href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(publicUrl)}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/20 text-blue-300 ring-1 ring-blue-400/30 transition-colors hover:bg-blue-500/40"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-[#2E5383]/20 text-[#8FA9C9] ring-1 ring-[#4E74A8]/30 transition-colors hover:bg-[#2E5383]/40"
             aria-label="Partager sur Facebook"
           >
             <svg
@@ -85,7 +85,7 @@ export function CompactVerificationFooter({ lot }: Props) {
             href={`https://twitter.com/intent/tweet?text=${shareText}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-sky-500/20 text-sky-300 ring-1 ring-sky-400/30 transition-colors hover:bg-sky-500/40"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-[#2E5383]/20 text-[#8FA9C9] ring-1 ring-[#4E74A8]/30 transition-colors hover:bg-[#2E5383]/40"
             aria-label="Partager sur Twitter / X"
           >
             <svg

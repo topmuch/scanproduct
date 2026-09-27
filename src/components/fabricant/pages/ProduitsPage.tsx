@@ -430,7 +430,7 @@ export function ProduitsPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Rechercher un produit..."
-            className="w-full rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] py-2 pl-9 pr-3 text-[14px] text-[#111827] placeholder:text-[#9CA3AF] focus:border-[#2563EB] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 transition"
+            className="w-full rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] py-2 pl-9 pr-3 text-[14px] text-[#111827] placeholder:text-[#9CA3AF] focus:border-[#022150] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#022150]/20 transition"
           />
         </div>
 
@@ -438,7 +438,7 @@ export function ProduitsPage() {
           <select
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
-            className="appearance-none rounded-lg border border-[#E5E7EB] bg-white py-2 pl-3 pr-9 text-[14px] text-[#374151] focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 transition"
+            className="appearance-none rounded-lg border border-[#E5E7EB] bg-white py-2 pl-3 pr-9 text-[14px] text-[#374151] focus:border-[#022150] focus:outline-none focus:ring-2 focus:ring-[#022150]/20 transition"
           >
             <option value="toutes">Toutes les catégories</option>
             {CATEGORIES.map((c) => (
@@ -468,7 +468,7 @@ export function ProduitsPage() {
           <select
             value={sortFilter}
             onChange={(e) => setSortFilter(e.target.value as SortFilter)}
-            className="appearance-none rounded-lg border border-[#E5E7EB] bg-white py-2 pl-3 pr-9 text-[14px] text-[#374151] focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 transition"
+            className="appearance-none rounded-lg border border-[#E5E7EB] bg-white py-2 pl-3 pr-9 text-[14px] text-[#374151] focus:border-[#022150] focus:outline-none focus:ring-2 focus:ring-[#022150]/20 transition"
           >
             <option value="recent">Récent</option>
             <option value="ancien">Ancien</option>

@@ -4,7 +4,7 @@ import type { LotWithDetails } from "@/lib/public-data";
 /**
  * VerificationGlow — spectacular verification footer.
  *
- * Renders a full-width dark gradient card (slate-900 → blue-900 →
+ * Renders a full-width dark gradient card (slate-900 → [#0D3068] →
  * purple-900) with decorative blurred circles, a large glassmorphism
  * shield/check icon with pulse glow, blockchain hash, reference number
  * and three trust badges.
@@ -27,11 +27,11 @@ export function VerificationGlow({ lot }: Props) {
   const reference = lot.reference ?? lot.lotNumber ?? null;
 
   return (
-    <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900 wow-shadow-elevated">
+    <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-[#0D3068] to-purple-900 wow-shadow-elevated">
       {/* Decorative blurred circles */}
       <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/10 blur-3xl" />
       <div className="absolute -bottom-12 -left-8 h-44 w-44 rounded-full bg-purple-400/20 blur-3xl" />
-      <div className="absolute left-1/2 top-1/3 h-24 w-24 -translate-x-1/2 rounded-full bg-blue-400/10 blur-2xl" />
+      <div className="absolute left-1/2 top-1/3 h-24 w-24 -translate-x-1/2 rounded-full bg-[#4E74A8]/10 blur-2xl" />
 
       <div className="relative flex flex-col items-center gap-4 px-5 py-7 text-center sm:px-6 sm:py-8">
         {/* Large shield/check icon in glassmorphism circle */}

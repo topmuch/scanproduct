@@ -51,12 +51,12 @@ const ACCENT: Record<
     gradient: "from-amber-50 to-yellow-50",
   },
   blue: {
-    bg: "bg-blue-50",
-    bgSoft: "bg-blue-100",
-    text: "text-blue-700",
-    textStrong: "text-blue-900",
-    border: "border-blue-200",
-    gradient: "from-blue-50 to-sky-50",
+    bg: "bg-[#F0F4F9]",
+    bgSoft: "bg-[#DCE7F2]",
+    text: "text-[#011D46]",
+    textStrong: "text-[#0D3068]",
+    border: "border-[#C3D2E5]",
+    gradient: "from-[#F0F4F9] to-[#E2EAF3]",
   },
   green: {
     bg: "bg-green-50",

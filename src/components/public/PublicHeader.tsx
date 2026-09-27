@@ -18,25 +18,25 @@ export function PublicHeader() {
         <nav className="hidden items-center gap-1 md:flex" aria-label="Navigation publique">
           <Link
             href="/"
-            className="rounded-md px-3 py-2 text-[15px] font-medium text-[#374151] transition-colors hover:text-[#2563EB]"
+            className="rounded-md px-3 py-2 text-[15px] font-medium text-[#374151] transition-colors hover:text-[#022150]"
           >
             Accueil
           </Link>
           <Link
             href="/produits"
-            className="rounded-md px-3 py-2 text-[15px] font-semibold text-[#2563EB]"
+            className="rounded-md px-3 py-2 text-[15px] font-semibold text-[#022150]"
           >
             Catalogue
           </Link>
           <a
             href="/#fonctionnalites"
-            className="rounded-md px-3 py-2 text-[15px] font-medium text-[#374151] transition-colors hover:text-[#2563EB]"
+            className="rounded-md px-3 py-2 text-[15px] font-medium text-[#374151] transition-colors hover:text-[#022150]"
           >
             Fonctionnalités
           </a>
           <a
             href="/#contact"
-            className="rounded-md px-3 py-2 text-[15px] font-medium text-[#374151] transition-colors hover:text-[#2563EB]"
+            className="rounded-md px-3 py-2 text-[15px] font-medium text-[#374151] transition-colors hover:text-[#022150]"
           >
             Contact
           </a>
@@ -45,7 +45,7 @@ export function PublicHeader() {
         <div className="flex items-center gap-2">
           <Link
             href="/produits"
-            className="flex h-9 w-9 items-center justify-center rounded-md text-[#6B7280] transition-colors hover:bg-[#F3F4F6] hover:text-[#2563EB] md:hidden"
+            className="flex h-9 w-9 items-center justify-center rounded-md text-[#6B7280] transition-colors hover:bg-[#F3F4F6] hover:text-[#022150] md:hidden"
             aria-label="Rechercher"
           >
             <Search className="h-5 w-5" />
@@ -59,7 +59,7 @@ export function PublicHeader() {
           </Link>
           <Link
             href="/register"
-            className="inline-flex items-center gap-1.5 rounded-md bg-[#2563EB] px-3 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#1D4ED8]"
+            className="inline-flex items-center gap-1.5 rounded-md bg-[#022150] px-3 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#011D46]"
           >
             <ShieldCheck className="h-4 w-4" />
             <span className="hidden sm:inline">Devenir partenaire</span>

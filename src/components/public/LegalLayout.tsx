@@ -69,7 +69,7 @@ export function LegalLayout({
               <div className="sticky top-24">
                 <Link
                   href="/"
-                  className="mb-6 inline-flex items-center gap-1.5 text-sm font-medium text-[#6B7280] transition-colors hover:text-[#2563EB]"
+                  className="mb-6 inline-flex items-center gap-1.5 text-sm font-medium text-[#6B7280] transition-colors hover:text-[#022150]"
                 >
                   <ArrowLeft className="h-4 w-4" />
                   Retour à l&apos;accueil
@@ -84,9 +84,9 @@ export function LegalLayout({
                         <li key={s.id}>
                           <a
                             href={`#${s.id}`}
-                            className="flex gap-2 rounded-md px-2 py-1.5 text-sm text-[#374151] transition-colors hover:bg-[#F3F4F6] hover:text-[#2563EB]"
+                            className="flex gap-2 rounded-md px-2 py-1.5 text-sm text-[#374151] transition-colors hover:bg-[#F3F4F6] hover:text-[#022150]"
                           >
-                            <span className="font-semibold text-[#2563EB]">
+                            <span className="font-semibold text-[#022150]">
                               {i + 1}.
                             </span>
                             <span>{s.title}</span>
@@ -113,7 +113,7 @@ export function LegalLayout({
                         href={`#${s.id}`}
                         className="flex gap-2 rounded-md px-2 py-1.5 text-sm text-[#374151]"
                       >
-                        <span className="font-semibold text-[#2563EB]">
+                        <span className="font-semibold text-[#022150]">
                           {i + 1}.
                         </span>
                         <span>{s.title}</span>
@@ -152,7 +152,7 @@ export function LegalArticle({
   return (
     <section id={id} className="scroll-mt-24 border-t border-[#F3F4F6] py-8 first:border-t-0">
       <header className="mb-3 flex items-baseline gap-3">
-        <span className="font-display text-sm font-bold text-[#2563EB]">
+        <span className="font-display text-sm font-bold text-[#022150]">
           Article {index}
         </span>
         <h2 className="font-display text-xl font-semibold text-[#111827] sm:text-2xl">

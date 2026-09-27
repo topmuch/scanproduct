@@ -35,9 +35,9 @@ const COLOR_MAP: Record<
     badgeGradient: "from-emerald-400 to-green-500",
   },
   blue: {
-    gradient: "from-blue-500 to-cyan-600",
+    gradient: "from-[#2E5383] to-cyan-600",
     glow: "wow-shadow-glow-blue",
-    badgeGradient: "from-blue-400 to-cyan-500",
+    badgeGradient: "from-[#4E74A8] to-cyan-500",
   },
   purple: {
     gradient: "from-purple-500 to-pink-600",

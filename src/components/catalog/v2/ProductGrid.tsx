@@ -51,8 +51,8 @@ export function ProductGrid({ products, pagination, view }: Props) {
 function EmptyState() {
   return (
     <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-200 bg-white px-6 py-20 text-center">
-      <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-blue-50 to-blue-100" aria-hidden>
-        <PackageSearch className="h-10 w-10 text-[#2563EB]" />
+      <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-[#F0F4F9] to-[#DCE7F2]" aria-hidden>
+        <PackageSearch className="h-10 w-10 text-[#022150]" />
       </div>
       <h3 className="mt-5 text-xl font-bold text-gray-900">Aucun produit trouvé</h3>
       <p className="mt-2 max-w-md text-sm text-gray-500">

@@ -345,7 +345,7 @@ export default function CGUPage() {
             Par email :{" "}
             <a
               href="mailto:contact@verifscan.sn"
-              className="font-medium text-[#2563EB] underline-offset-2 hover:underline"
+              className="font-medium text-[#022150] underline-offset-2 hover:underline"
             >
               contact@verifscan.sn
             </a>
@@ -354,7 +354,7 @@ export default function CGUPage() {
             Par téléphone :{" "}
             <a
               href="tel:+221338000000"
-              className="font-medium text-[#2563EB] underline-offset-2 hover:underline"
+              className="font-medium text-[#022150] underline-offset-2 hover:underline"
             >
               +221 33 800 00 00
             </a>

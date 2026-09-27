@@ -75,11 +75,11 @@ const TYPE_ICON: Record<
   lot_recall: { Icon: AlertTriangle, color: "#EF4444", bg: "#FEE2E2" },
   quota_warning: { Icon: AlertCircle, color: "#F59E0B", bg: "#FEF3C7" },
   quota_exceeded: { Icon: AlertCircle, color: "#EF4444", bg: "#FEE2E2" },
-  new_scan: { Icon: ScanLine, color: "#2563EB", bg: "#EFF6FF" },
+  new_scan: { Icon: ScanLine, color: "#022150", bg: "#F0F4F9" },
   weekly_report: { Icon: BarChart3, color: "#10B981", bg: "#D1FAE5" },
-  system: { Icon: Info, color: "#2563EB", bg: "#EFF6FF" },
+  system: { Icon: Info, color: "#022150", bg: "#F0F4F9" },
   ticket_update: { Icon: MessageSquare, color: "#8B5CF6", bg: "#EDE9FE" },
-  subscription: { Icon: CreditCard, color: "#2563EB", bg: "#EFF6FF" },
+  subscription: { Icon: CreditCard, color: "#022150", bg: "#F0F4F9" },
   lot_expiring: { Icon: CalendarClock, color: "#F59E0B", bg: "#FEF3C7" },
   new_inquiry: { Icon: MessageSquareQuote, color: "#8B5CF6", bg: "#EDE9FE" },
   monthly_report: { Icon: CalendarRange, color: "#059669", bg: "#D1FAE5" },
@@ -274,7 +274,7 @@ export function FabricantHeader() {
           <input
             type="text"
             placeholder="Rechercher un produit, lot..."
-            className="w-[260px] rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] py-2 pl-9 pr-3 text-[13px] text-[#111827] outline-none transition-colors placeholder:text-[#9CA3AF] focus:border-[#2563EB] focus:bg-white lg:w-[300px] dark:border-white/10 dark:bg-white/10 dark:text-white dark:placeholder:text-white/40 dark:focus:bg-white/15"
+            className="w-[260px] rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] py-2 pl-9 pr-3 text-[13px] text-[#111827] outline-none transition-colors placeholder:text-[#9CA3AF] focus:border-[#022150] focus:bg-white lg:w-[300px] dark:border-white/10 dark:bg-white/10 dark:text-white dark:placeholder:text-white/40 dark:focus:bg-white/15"
           />
           <kbd className="pointer-events-none absolute right-2 top-1/2 hidden -translate-y-1/2 rounded border border-[#E5E7EB] bg-white px-1.5 py-0.5 text-[10px] font-medium text-[#9CA3AF] lg:block dark:border-white/10 dark:bg-white/10 dark:text-white/50">
             ⌘K
@@ -285,7 +285,7 @@ export function FabricantHeader() {
         <button
           type="button"
           onClick={toggle}
-          className="flex h-10 w-10 items-center justify-center rounded-lg border border-[#E5E7EB] text-[#6B7280] transition-colors hover:bg-[#F9FAFB] hover:text-[#2563EB] dark:border-white/10 dark:text-white/70 dark:hover:bg-white/10 dark:hover:text-white"
+          className="flex h-10 w-10 items-center justify-center rounded-lg border border-[#E5E7EB] text-[#6B7280] transition-colors hover:bg-[#F9FAFB] hover:text-[#022150] dark:border-white/10 dark:text-white/70 dark:hover:bg-white/10 dark:hover:text-white"
           aria-label={theme === "light" ? "Activer le mode sombre" : "Activer le mode clair"}
           title={theme === "light" ? "Mode sombre" : "Mode clair"}
         >
@@ -297,7 +297,7 @@ export function FabricantHeader() {
           <button
             type="button"
             onClick={() => setNotifOpen((o) => !o)}
-            className="relative flex h-10 w-10 items-center justify-center rounded-lg border border-[#E5E7EB] text-[#6B7280] transition-colors hover:bg-[#F9FAFB] hover:text-[#2563EB] dark:border-white/10 dark:text-white/70 dark:hover:bg-white/10 dark:hover:text-white"
+            className="relative flex h-10 w-10 items-center justify-center rounded-lg border border-[#E5E7EB] text-[#6B7280] transition-colors hover:bg-[#F9FAFB] hover:text-[#022150] dark:border-white/10 dark:text-white/70 dark:hover:bg-white/10 dark:hover:text-white"
             aria-label="Notifications"
           >
             <Bell className="h-5 w-5" />
@@ -329,7 +329,7 @@ export function FabricantHeader() {
                     type="button"
                     onClick={handleMarkAllRead}
                     disabled={markingAll || unreadCount === 0}
-                    className="inline-flex items-center gap-1.5 text-[12px] font-medium text-[#2563EB] transition-opacity hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-40"
+                    className="inline-flex items-center gap-1.5 text-[12px] font-medium text-[#022150] transition-opacity hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     {markingAll ? (
                       <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -374,7 +374,7 @@ export function FabricantHeader() {
                           onClick={() => handleMarkAsRead(n.id)}
                           className={cn(
                             "flex w-full gap-3 border-b border-[#F9FAFB] px-4 py-3 text-left transition-colors hover:bg-[#F9FAFB] dark:border-white/5 dark:hover:bg-white/5",
-                            isUnread && "border-l-2 border-l-[#2563EB] bg-[#EFF6FF]/40 dark:bg-[#2563EB]/10",
+                            isUnread && "border-l-2 border-l-[#022150] bg-[#F0F4F9]/40 dark:bg-[#022150]/10",
                           )}
                         >
                           <span
@@ -395,7 +395,7 @@ export function FabricantHeader() {
                             </p>
                           </div>
                           {isUnread && (
-                            <span className="mt-1.5 h-2 w-2 flex-shrink-0 rounded-full bg-[#2563EB]" />
+                            <span className="mt-1.5 h-2 w-2 flex-shrink-0 rounded-full bg-[#022150]" />
                           )}
                         </button>
                       );
@@ -408,7 +408,7 @@ export function FabricantHeader() {
                     setNotifOpen(false);
                     setPage("notifications");
                   }}
-                  className="w-full border-t border-[#F3F4F6] py-2.5 text-[13px] font-medium text-[#2563EB] transition-colors hover:bg-[#F9FAFB] dark:border-white/10 dark:hover:bg-white/5"
+                  className="w-full border-t border-[#F3F4F6] py-2.5 text-[13px] font-medium text-[#022150] transition-colors hover:bg-[#F9FAFB] dark:border-white/10 dark:hover:bg-white/5"
                 >
                   Voir toutes les notifications
                 </button>
@@ -424,7 +424,7 @@ export function FabricantHeader() {
             onClick={() => setAvatarOpen((o) => !o)}
             className="flex items-center gap-2 rounded-lg border border-[#E5E7EB] py-1.5 pl-1.5 pr-2 transition-colors hover:bg-[#F9FAFB] dark:border-white/10 dark:hover:bg-white/10"
           >
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#2563EB] to-[#10B981] font-display text-[13px] font-bold text-white">
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#022150] to-[#10B981] font-display text-[13px] font-bold text-white">
               {profile.logo}
             </span>
             <ChevronDown className="h-4 w-4 text-[#6B7280] dark:text-white/60" />

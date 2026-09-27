@@ -35,7 +35,7 @@ const VALUES = [
     icon: ShieldCheck,
     title: "Authenticité",
     text: "Chaque produit vérifié par VerifScan porte un QR code unique, infalsifiable et lié à un lot précis. La confiance redevient la norme.",
-    color: "#2563EB",
+    color: "#022150",
   },
   {
     icon: Leaf,
@@ -59,7 +59,7 @@ const VALUES = [
     icon: Globe2,
     title: "Inclusion",
     text: "VerifScan accompagne aussi bien les grandes coopératives que les petits transformateurs, sans frais cachés ni barrières techniques.",
-    color: "#2563EB",
+    color: "#022150",
   },
   {
     icon: Sprout,
@@ -112,7 +112,7 @@ export default function AboutPage() {
             className="pointer-events-none absolute inset-0 opacity-30"
             style={{
               backgroundImage:
-                "radial-gradient(circle at 20% 20%, rgba(37,99,235,0.45) 0, transparent 45%), radial-gradient(circle at 80% 60%, rgba(16,185,129,0.35) 0, transparent 50%)",
+                "radial-gradient(circle at 20% 20%, rgba(2, 33, 80,0.45) 0, transparent 45%), radial-gradient(circle at 80% 60%, rgba(16,185,129,0.35) 0, transparent 50%)",
             }}
           />
           <div className="relative mx-auto max-w-[1400px] px-4 py-20 sm:px-6 sm:py-24 lg:px-8 lg:py-28">
@@ -122,7 +122,7 @@ export default function AboutPage() {
             </span>
             <h1 className="mt-6 max-w-3xl font-display text-4xl font-bold leading-tight tracking-tight sm:text-5xl lg:text-6xl">
               La vérité au bout du scan.
-              <span className="block bg-gradient-to-r from-[#60A5FA] via-[#34D399] to-[#FBBF24] bg-clip-text text-transparent">
+              <span className="block bg-gradient-to-r from-[#4E74A8] via-[#34D399] to-[#FBBF24] bg-clip-text text-transparent">
                 Née au Sénégal, pour l&apos;agro-industrie ouest-africaine.
               </span>
             </h1>
@@ -135,7 +135,7 @@ export default function AboutPage() {
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
                 href="/produits"
-                className="inline-flex items-center gap-2 rounded-lg bg-[#2563EB] px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-900/20 transition-colors hover:bg-[#1D4ED8]"
+                className="inline-flex items-center gap-2 rounded-lg bg-[#022150] px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-[#0D3068]/20 transition-colors hover:bg-[#011D46]"
               >
                 Explorer le catalogue
                 <ArrowRight className="h-4 w-4" />
@@ -154,7 +154,7 @@ export default function AboutPage() {
         <section className="mx-auto max-w-[1400px] px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
           <div className="grid gap-6 lg:grid-cols-2">
             <div className="rounded-2xl border border-[#E5E7EB] bg-white p-8 shadow-sm sm:p-10">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#EFF6FF] text-[#2563EB]">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#F0F4F9] text-[#022150]">
                 <Target className="h-6 w-6" />
               </div>
               <h2 className="mt-6 font-display text-2xl font-bold text-[#111827] sm:text-3xl">
@@ -199,7 +199,7 @@ export default function AboutPage() {
                   key={stat.label}
                   className="rounded-2xl border border-[#F3F4F6] bg-white p-6 text-center shadow-sm"
                 >
-                  <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-[#EFF6FF] text-[#2563EB]">
+                  <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-[#F0F4F9] text-[#022150]">
                     <stat.icon className="h-5 w-5" />
                   </div>
                   <div className="mt-4 font-display text-2xl font-bold text-[#111827] sm:text-3xl">
@@ -217,7 +217,7 @@ export default function AboutPage() {
         {/* VALUES */}
         <section className="mx-auto max-w-[1400px] px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
           <div className="mx-auto max-w-2xl text-center">
-            <span className="inline-flex items-center gap-2 rounded-full bg-[#EFF6FF] px-3 py-1 text-xs font-semibold text-[#2563EB]">
+            <span className="inline-flex items-center gap-2 rounded-full bg-[#F0F4F9] px-3 py-1 text-xs font-semibold text-[#022150]">
               Nos valeurs
             </span>
             <h2 className="mt-4 font-display text-3xl font-bold text-[#111827] sm:text-4xl">
@@ -328,7 +328,7 @@ export default function AboutPage() {
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
-              <div className="rounded-2xl border border-[#E5E7EB] bg-gradient-to-br from-[#2563EB] to-[#1D4ED8] p-6 text-white shadow-sm">
+              <div className="rounded-2xl border border-[#E5E7EB] bg-gradient-to-br from-[#022150] to-[#011D46] p-6 text-white shadow-sm">
                 <TrendingUp className="h-8 w-8 text-white/90" />
                 <div className="mt-4 font-display text-3xl font-bold">
                   +
@@ -349,7 +349,7 @@ export default function AboutPage() {
                 </p>
               </div>
               <div className="rounded-2xl border border-[#E5E7EB] bg-white p-6 shadow-sm sm:col-span-2">
-                <ShieldCheck className="h-8 w-8 text-[#2563EB]" />
+                <ShieldCheck className="h-8 w-8 text-[#022150]" />
                 <h3 className="mt-4 font-display text-lg font-semibold text-[#111827]">
                   Sécurité de bout en bout
                 </h3>
@@ -365,7 +365,7 @@ export default function AboutPage() {
 
         {/* CTA */}
         <section className="mx-auto max-w-[1400px] px-4 pb-20 sm:px-6 lg:px-8">
-          <div className="overflow-hidden rounded-3xl bg-gradient-to-br from-[#2563EB] via-[#1D4ED8] to-[#0F172A] p-10 text-white shadow-xl sm:p-14">
+          <div className="overflow-hidden rounded-3xl bg-gradient-to-br from-[#022150] via-[#011D46] to-[#0F172A] p-10 text-white shadow-xl sm:p-14">
             <div className="mx-auto max-w-2xl text-center">
               <h2 className="font-display text-3xl font-bold sm:text-4xl">
                 Prêt à protéger votre marque&nbsp;?
@@ -378,7 +378,7 @@ export default function AboutPage() {
               <div className="mt-8 flex flex-wrap justify-center gap-3">
                 <Link
                   href="/register"
-                  className="inline-flex items-center gap-2 rounded-lg bg-white px-6 py-3 text-sm font-semibold text-[#2563EB] shadow-md transition-colors hover:bg-white/90"
+                  className="inline-flex items-center gap-2 rounded-lg bg-white px-6 py-3 text-sm font-semibold text-[#022150] shadow-md transition-colors hover:bg-white/90"
                 >
                   Devenir partenaire
                   <ArrowRight className="h-4 w-4" />

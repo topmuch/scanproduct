@@ -1065,7 +1065,7 @@ const SEVERITY_META: Record<
   IngredientAnomaly["severity"],
   { bg: string; text: string; Icon: typeof AlertTriangle; label: string }
 > = {
-  info: { bg: "#EFF6FF", text: "#1E40AF", Icon: Info, label: "Info" },
+  info: { bg: "#F0F4F9", text: "#0A2B5F", Icon: Info, label: "Info" },
   warning: { bg: "#FEF3C7", text: "#92400E", Icon: AlertTriangle, label: "Attention" },
   critical: { bg: "#FEE2E2", text: "#991B1B", Icon: AlertTriangle, label: "Critique" },
 };

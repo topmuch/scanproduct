@@ -101,12 +101,12 @@ function ProductCardGrid({ product, index }: { product: ProductWithRelations; in
   return (
     <Link
       href={href}
-      className="group relative flex animate-fade-in flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition-all duration-500 hover:-translate-y-1.5 hover:border-blue-200 hover:shadow-2xl hover:shadow-blue-100/50"
+      className="group relative flex animate-fade-in flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition-all duration-500 hover:-translate-y-1.5 hover:border-[#C3D2E5] hover:shadow-2xl hover:shadow-[#DCE7F2]/50"
       style={{ animationDelay: `${Math.min(index, 8) * 60}ms` }}
       aria-label={`Voir le passeport numérique de ${product.name}`}
     >
       {/* Image area — 4:3 aspect ratio */}
-      <div className="relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-gray-50 via-white to-blue-50/40">
+      <div className="relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-gray-50 via-white to-[#F0F4F9]/40">
         {/* NOUVEAU / POPULAIRE badges (top-left) */}
         <div className="absolute left-3 top-3 z-10 flex flex-col gap-1.5">
           {isNew && (
@@ -161,7 +161,7 @@ function ProductCardGrid({ product, index }: { product: ProductWithRelations; in
           </span>
           <span
             aria-hidden
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-gray-700 shadow-lg backdrop-blur-sm transition-colors group-hover:text-[#2563EB]"
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-gray-700 shadow-lg backdrop-blur-sm transition-colors group-hover:text-[#022150]"
           >
             <Share2 className="h-4 w-4" />
           </span>
@@ -172,7 +172,7 @@ function ProductCardGrid({ product, index }: { product: ProductWithRelations; in
       <div className="flex flex-1 flex-col gap-2 p-5">
         {/* Category + weight */}
         <div className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-1 rounded-md bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-[#2563EB]">
+          <span className="inline-flex items-center gap-1 rounded-md bg-[#F0F4F9] px-2 py-0.5 text-[11px] font-semibold text-[#022150]">
             <span aria-hidden>{emoji}</span>
             {product.category ?? "Produit"}
           </span>
@@ -182,7 +182,7 @@ function ProductCardGrid({ product, index }: { product: ProductWithRelations; in
         </div>
 
         {/* Name */}
-        <h3 className="line-clamp-2 text-base font-bold leading-snug text-gray-900 transition-colors group-hover:text-[#2563EB]">
+        <h3 className="line-clamp-2 text-base font-bold leading-snug text-gray-900 transition-colors group-hover:text-[#022150]">
           {product.name}
         </h3>
 
@@ -197,7 +197,7 @@ function ProductCardGrid({ product, index }: { product: ProductWithRelations; in
             {product.fabricant?.logoUrl ? (
               <img src={product.fabricant.logoUrl} alt="" className="h-full w-full object-contain" />
             ) : (
-              <span className="text-xs font-bold text-[#2563EB]">
+              <span className="text-xs font-bold text-[#022150]">
                 {(fabricantName ?? "?").charAt(0).toUpperCase()}
               </span>
             )}
@@ -236,7 +236,7 @@ function ProductCardGrid({ product, index }: { product: ProductWithRelations; in
           </div>
           <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-gray-100">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-[#2563EB] via-[#8b5cf6] to-[#ec4899] transition-all duration-1000"
+              className="h-full rounded-full bg-gradient-to-r from-[#022150] via-[#8b5cf6] to-[#ec4899] transition-all duration-1000"
               style={{ width: `${Math.min(100, Math.max(0, score))}%` }}
             />
           </div>
@@ -267,12 +267,12 @@ function ProductCardList({ product, index }: { product: ProductWithRelations; in
   return (
     <Link
       href={href}
-      className="group flex animate-fade-in overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition-all duration-300 hover:border-blue-200 hover:shadow-xl"
+      className="group flex animate-fade-in overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition-all duration-300 hover:border-[#C3D2E5] hover:shadow-xl"
       style={{ animationDelay: `${Math.min(index, 8) * 60}ms` }}
       aria-label={`Voir le passeport numérique de ${product.name}`}
     >
       {/* Image (left) */}
-      <div className="relative h-40 w-40 flex-shrink-0 overflow-hidden bg-gradient-to-br from-gray-50 via-white to-blue-50/40 sm:h-48 sm:w-56">
+      <div className="relative h-40 w-40 flex-shrink-0 overflow-hidden bg-gradient-to-br from-gray-50 via-white to-[#F0F4F9]/40 sm:h-48 sm:w-56">
         {product.imageUrl ? (
           <img
             src={product.imageUrl}
@@ -307,7 +307,7 @@ function ProductCardList({ product, index }: { product: ProductWithRelations; in
         {/* Top row: category + transparency badge */}
         <div className="flex items-start justify-between gap-3">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center gap-1 rounded-md bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-[#2563EB]">
+            <span className="inline-flex items-center gap-1 rounded-md bg-[#F0F4F9] px-2 py-0.5 text-[11px] font-semibold text-[#022150]">
               <span aria-hidden>{emoji}</span>
               {product.category ?? "Produit"}
             </span>
@@ -328,7 +328,7 @@ function ProductCardList({ product, index }: { product: ProductWithRelations; in
         </div>
 
         {/* Name + brand */}
-        <h3 className="text-lg font-bold leading-snug text-gray-900 transition-colors group-hover:text-[#2563EB]">
+        <h3 className="text-lg font-bold leading-snug text-gray-900 transition-colors group-hover:text-[#022150]">
           {product.name}
         </h3>
         {product.brand && (
@@ -347,7 +347,7 @@ function ProductCardList({ product, index }: { product: ProductWithRelations; in
               {product.fabricant?.logoUrl ? (
                 <img src={product.fabricant.logoUrl} alt="" className="h-full w-full object-contain" />
               ) : (
-                <span className="text-sm font-bold text-[#2563EB]">
+                <span className="text-sm font-bold text-[#022150]">
                   {(fabricantName ?? "?").charAt(0).toUpperCase()}
                 </span>
               )}

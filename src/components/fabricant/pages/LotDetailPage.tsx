@@ -211,7 +211,7 @@ export function LotDetailPage() {
       {/* Back + header */}
       <button
         onClick={() => setPage("lots")}
-        className="mb-4 inline-flex items-center gap-1.5 text-[13px] font-medium text-[#2563EB] hover:underline"
+        className="mb-4 inline-flex items-center gap-1.5 text-[13px] font-medium text-[#022150] hover:underline"
       >
         <ArrowLeft className="h-4 w-4" />
         Retour aux lots
@@ -234,7 +234,7 @@ export function LotDetailPage() {
                 icon={<Tag className="h-4 w-4" />}
                 label="Numéro de lot"
                 value={
-                  <span className="font-mono font-medium text-[#2563EB]">
+                  <span className="font-mono font-medium text-[#022150]">
                     {lot.numero}
                   </span>
                 }
@@ -299,7 +299,7 @@ export function LotDetailPage() {
             {lotQrCodes.length === 0 ? (
               <div className="px-5 py-10 text-center text-[13px] text-[#6B7280]">
                 Aucun QR code généré pour ce lot. Cliquez sur{" "}
-                <span className="font-medium text-[#2563EB]">« Générer 10 QR codes »</span>{" "}
+                <span className="font-medium text-[#022150]">« Générer 10 QR codes »</span>{" "}
                 pour en créer.
               </div>
             ) : (
@@ -320,7 +320,7 @@ export function LotDetailPage() {
                           "mt-0.5 rounded px-1.5 py-px text-[9px] font-semibold " +
                           (qr.format === "GS1"
                             ? "bg-[#ECFDF5] text-[#047857]"
-                            : "bg-[#EFF6FF] text-[#1D4ED8]")
+                            : "bg-[#F0F4F9] text-[#011D46]")
                         }
                       >
                         {qr.format === "GS1" ? "GS1" : "Standard"}
@@ -337,7 +337,7 @@ export function LotDetailPage() {
               <p className="mt-3 text-center text-[12px] text-[#9CA3AF]">
                 Affichage de {Math.min(8, lotQrCodes.length)} QR codes sur {formatNombre(lotQrCodes.length)} —{" "}
                 <button
-                  className="font-medium text-[#2563EB] hover:underline"
+                  className="font-medium text-[#022150] hover:underline"
                   onClick={() => setPage("qr-codes")}
                 >
                   Voir tous les QR codes →
@@ -378,7 +378,7 @@ export function LotDetailPage() {
               <p className="text-[12px] uppercase tracking-wide text-[#6B7280]">
                 Scans totaux
               </p>
-              <p className="mt-1 font-display text-[40px] font-bold leading-none text-[#2563EB]">
+              <p className="mt-1 font-display text-[40px] font-bold leading-none text-[#022150]">
                 {formatNombre(lot.scans)}
               </p>
             </div>

@@ -81,7 +81,7 @@ export function CompactReviews({
             >
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
-                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-700">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#DCE7F2] text-xs font-bold text-[#011D46]">
                     {(r.authorName ?? "A").charAt(0).toUpperCase()}
                   </div>
                   <div>

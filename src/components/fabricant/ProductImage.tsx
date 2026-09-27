@@ -44,7 +44,7 @@ export function ProductImage({
   // Soft, light placeholder with the category emoji centered.
   //
   // ── Why not a colorful gradient? ────────────────────────────────
-  // A previous version used `from-[#1E3A8A] to-[#10B981]` (navy → emerald)
+  // A previous version used `from-[#0D3068] to-[#10B981]` (navy → emerald)
   // which, when rendered on a small thumbnail, looked like a solid
   // "purple rectangle" to users — especially after an uploaded image
   // was lost post-deployment and the fallback kicked in. Users reported

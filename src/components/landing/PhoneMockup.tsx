@@ -11,7 +11,7 @@ export function PhoneMockup() {
   return (
     <div className="relative mx-auto w-full max-w-[340px]">
       {/* Decorative blurred circles */}
-      <div className="pointer-events-none absolute -left-16 -top-16 h-64 w-64 rounded-full bg-[#2563EB]/10 blur-3xl animate-slow-spin" />
+      <div className="pointer-events-none absolute -left-16 -top-16 h-64 w-64 rounded-full bg-[#022150]/10 blur-3xl animate-slow-spin" />
       <div className="pointer-events-none absolute -bottom-16 -right-12 h-64 w-64 rounded-full bg-[#10B981]/10 blur-3xl animate-slow-spin" style={{ animationDirection: "reverse" }} />
       <div className="pointer-events-none absolute right-1/4 top-1/3 h-40 w-40 rounded-full bg-[#F59E0B]/10 blur-3xl" />
 
@@ -20,10 +20,10 @@ export function PhoneMockup() {
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: 0.9, duration: 0.5 }}
-        className="absolute -right-4 top-10 z-20 flex items-center gap-2 rounded-xl border border-[#BFDBFE] bg-white/95 px-3 py-2 shadow-lg backdrop-blur"
+        className="absolute -right-4 top-10 z-20 flex items-center gap-2 rounded-xl border border-[#C3D2E5] bg-white/95 px-3 py-2 shadow-lg backdrop-blur"
       >
-        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#EFF6FF]">
-          <Lock className="h-4 w-4 text-[#2563EB]" />
+        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#F0F4F9]">
+          <Lock className="h-4 w-4 text-[#022150]" />
         </span>
         <div className="leading-tight">
           <p className="text-[11px] font-semibold text-[#111827]">Sécurisé</p>
@@ -57,7 +57,7 @@ export function PhoneMockup() {
           {/* notch */}
           <div className="absolute left-1/2 top-0 z-20 h-6 w-32 -translate-x-1/2 rounded-b-2xl bg-[#111827]" />
           {/* screen */}
-          <div className="relative h-[560px] w-[300px] overflow-hidden rounded-[2rem] bg-gradient-to-b from-[#EFF6FF] via-white to-white">
+          <div className="relative h-[560px] w-[300px] overflow-hidden rounded-[2rem] bg-gradient-to-b from-[#F0F4F9] via-white to-white">
             {/* status bar */}
             <div className="flex items-center justify-between px-5 pt-3 text-[10px] font-semibold text-[#111827]">
               <span>9:41</span>
@@ -134,13 +134,13 @@ export function PhoneMockup() {
                 <FakeQR />
               </div>
               <div className="leading-tight">
-                <p className="flex items-center gap-1 text-[10px] font-bold text-[#2563EB]">
+                <p className="flex items-center gap-1 text-[10px] font-bold text-[#022150]">
                   <QrCode className="h-3 w-3" /> QR Code unique
                 </p>
                 <p className="mt-0.5 text-[9px] text-[#6B7280]">
                   Infalsifiable · lié au fabricant
                 </p>
-                <p className="mt-1 inline-block rounded bg-[#EFF6FF] px-1.5 py-0.5 text-[8px] font-semibold text-[#2563EB]">
+                <p className="mt-1 inline-block rounded bg-[#F0F4F9] px-1.5 py-0.5 text-[8px] font-semibold text-[#022150]">
                   Scanné 142×
                 </p>
               </div>

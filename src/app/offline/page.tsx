@@ -12,10 +12,10 @@ export const dynamic = "force-static";
  */
 export default function OfflinePage() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-[#F9FAFB] to-[#EFF6FF] px-6 py-12 text-center">
+    <main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-[#F9FAFB] to-[#F0F4F9] px-6 py-12 text-center">
       <div className="mx-auto max-w-md">
         <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-white shadow-xl ring-1 ring-black/5">
-          <WifiOff className="h-10 w-10 text-[#2563EB]" />
+          <WifiOff className="h-10 w-10 text-[#022150]" />
         </div>
 
         <h1 className="mt-6 font-display text-[26px] font-bold text-[#111827] sm:text-[30px]">
@@ -31,7 +31,7 @@ export default function OfflinePage() {
         <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
           <Link
             href="/"
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#2563EB] px-6 py-3 text-[15px] font-semibold text-white shadow-md transition-all hover:bg-[#1D4ED8] hover:-translate-y-0.5"
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#022150] px-6 py-3 text-[15px] font-semibold text-white shadow-md transition-all hover:bg-[#011D46] hover:-translate-y-0.5"
           >
             <RefreshCw className="h-4 w-4" />
             Réessayer

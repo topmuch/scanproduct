@@ -129,7 +129,7 @@ function Field({ label, children, hint }: { label: string; children: React.React
 }
 
 const inputCls =
-  "h-10 w-full rounded-lg border border-[#E5E7EB] bg-white px-3 text-[14px] font-medium text-[#111827] outline-none transition-colors focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/15 disabled:bg-[#F9FAFB] disabled:text-[#6B7280]";
+  "h-10 w-full rounded-lg border border-[#E5E7EB] bg-white px-3 text-[14px] font-medium text-[#111827] outline-none transition-colors focus:border-[#022150] focus:ring-2 focus:ring-[#022150]/15 disabled:bg-[#F9FAFB] disabled:text-[#6B7280]";
 
 function LimitField({
   label,
@@ -174,7 +174,7 @@ function LimitField({
               onClick={() => onChange(-1)}
               className={cn(
                 "px-3 py-2 text-[12px] font-semibold transition-colors",
-                isUnlimited ? "bg-[#2563EB] text-white" : "bg-white text-[#374151] hover:bg-[#F9FAFB]"
+                isUnlimited ? "bg-[#022150] text-white" : "bg-white text-[#374151] hover:bg-[#F9FAFB]"
               )}
             >
               Illimité
@@ -186,7 +186,7 @@ function LimitField({
               }}
               className={cn(
                 "border-l border-[#E5E7EB] px-3 py-2 text-[12px] font-semibold transition-colors",
-                !isUnlimited ? "bg-[#2563EB] text-white" : "bg-white text-[#374151] hover:bg-[#F9FAFB]"
+                !isUnlimited ? "bg-[#022150] text-white" : "bg-white text-[#374151] hover:bg-[#F9FAFB]"
               )}
             >
               Limité
@@ -221,7 +221,7 @@ function PlanCard({
       className={cn(
         "flex flex-col rounded-2xl p-5 shadow-sm",
         isPro
-          ? "border-2 border-[#2563EB] bg-gradient-to-br from-[#EFF6FF] to-[#F0FDF4]"
+          ? "border-2 border-[#022150] bg-gradient-to-br from-[#F0F4F9] to-[#F0FDF4]"
           : "border border-[#E5E7EB] bg-white"
       )}
     >
@@ -397,7 +397,7 @@ export function PlansConfigPage() {
       <button
         type="button"
         onClick={() => setPage("subscriptions")}
-        className="mb-3 inline-flex items-center gap-1.5 text-[13px] font-semibold text-[#2563EB] transition-colors hover:text-[#1D4ED8]"
+        className="mb-3 inline-flex items-center gap-1.5 text-[13px] font-semibold text-[#022150] transition-colors hover:text-[#011D46]"
       >
         <ArrowLeft className="h-4 w-4" />
         Abonnements

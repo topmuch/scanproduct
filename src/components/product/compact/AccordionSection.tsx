@@ -24,7 +24,7 @@ type Color =
 
 const COLOR_MAP: Record<Color, string> = {
   green: "from-emerald-500 to-green-600",
-  blue: "from-blue-500 to-blue-600",
+  blue: "from-[#2E5383] to-[#022150]",
   purple: "from-purple-500 to-purple-600",
   amber: "from-amber-500 to-orange-600",
   emerald: "from-emerald-500 to-teal-600",

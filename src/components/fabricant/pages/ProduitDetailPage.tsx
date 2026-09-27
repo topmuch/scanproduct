@@ -153,7 +153,7 @@ function LotRow({ lot }: { lot: Lot }) {
 // Shared input style
 // ============================================================================
 const inputClass =
-  "w-full rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-[14px] text-[#111827] placeholder:text-[#9CA3AF] focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 transition";
+  "w-full rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-[14px] text-[#111827] placeholder:text-[#9CA3AF] focus:border-[#022150] focus:outline-none focus:ring-2 focus:ring-[#022150]/20 transition";
 
 function FieldLabel({ children, required }: { children: React.ReactNode; required?: boolean }) {
   return (
@@ -336,7 +336,7 @@ function EditProductModal({
                       onClick={() => setStatus(o.v)}
                       className={`flex flex-1 items-center gap-2 rounded-lg border px-3 py-2 text-[13px] font-medium transition-colors ${
                         selected
-                          ? "border-[#2563EB] bg-[#EFF6FF] text-[#2563EB]"
+                          ? "border-[#022150] bg-[#F0F4F9] text-[#022150]"
                           : "border-[#E5E7EB] bg-white text-[#374151] hover:bg-[#F9FAFB]"
                       }`}
                     >
@@ -549,8 +549,8 @@ export function ProduitDetailPage() {
           <SectionCard title="Statistiques" subtitle="Aperçu de l'activité du produit">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               <MiniKpi
-                icon={<Layers size={18} className="text-[#2563EB]" />}
-                iconBg="#EFF6FF"
+                icon={<Layers size={18} className="text-[#022150]" />}
+                iconBg="#F0F4F9"
                 label="Lots"
                 value={product.lots}
               />
@@ -680,7 +680,7 @@ export function ProduitDetailPage() {
                   "mt-3 inline-block rounded px-1.5 py-px text-[9px] font-semibold " +
                   (formatQrProduit === "GS1"
                     ? "bg-[#ECFDF5] text-[#047857]"
-                    : "bg-[#EFF6FF] text-[#1D4ED8]")
+                    : "bg-[#F0F4F9] text-[#011D46]")
                 }
               >
                 {formatQrProduit === "GS1" ? "GS1 Digital Link" : "Standard"}

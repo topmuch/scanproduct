@@ -79,7 +79,7 @@ export function CategoriesPage() {
 
   async function handleSave() {
     if (!validate()) return;
-    const palette = ["#3B82F6", "#F59E0B", "#EF4444", "#10B981", "#8B5CF6", "#EAB308", "#84CC16", "#EC4899", "#6B7280"];
+    const palette = ["#2E5383", "#F59E0B", "#EF4444", "#10B981", "#8B5CF6", "#EAB308", "#84CC16", "#EC4899", "#6B7280"];
     if (editingId) {
       // PATCH existing category
       try {
@@ -216,7 +216,7 @@ function CategoryCard({
   onDelete: () => void;
 }) {
   return (
-    <Card className="group relative cursor-pointer p-6 transition-all duration-200 hover:-translate-y-0.5 hover:border-[#2563EB]/40 hover:shadow-lg hover:shadow-[#2563EB]/5">
+    <Card className="group relative cursor-pointer p-6 transition-all duration-200 hover:-translate-y-0.5 hover:border-[#022150]/40 hover:shadow-lg hover:shadow-[#022150]/5">
       <div onClick={onEdit} className="flex flex-col items-center text-center">
         <div
           className="flex h-16 w-16 items-center justify-center rounded-full text-[40px] leading-none"
@@ -288,7 +288,7 @@ function IconAction({
           ? "cursor-not-allowed text-[#D1D5DB]"
           : tone === "danger"
             ? "text-[#EF4444] hover:border-[#EF4444] hover:bg-[#FEF2F2]"
-            : "text-[#6B7280] hover:border-[#2563EB] hover:bg-[#EFF6FF] hover:text-[#2563EB]",
+            : "text-[#6B7280] hover:border-[#022150] hover:bg-[#F0F4F9] hover:text-[#022150]",
       ].join(" ")}
     >
       {children}
@@ -362,7 +362,7 @@ function CategoryModal({
               value={form.name}
               onChange={(e) => set("name", e.target.value)}
               placeholder="Ex : Boissons, Épices..."
-              className="w-full rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-[14px] text-[#111827] outline-none transition-colors focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/15"
+              className="w-full rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-[14px] text-[#111827] outline-none transition-colors focus:border-[#022150] focus:ring-2 focus:ring-[#022150]/15"
             />
             {errors.name && <p className="mt-1 text-[13px] text-[#EF4444]">{errors.name}</p>}
           </div>
@@ -381,7 +381,7 @@ function CategoryModal({
                 value={form.emoji}
                 onChange={(e) => set("emoji", e.target.value)}
                 placeholder="🥤"
-                className="w-full rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-[14px] text-[#111827] outline-none transition-colors focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/15"
+                className="w-full rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-[14px] text-[#111827] outline-none transition-colors focus:border-[#022150] focus:ring-2 focus:ring-[#022150]/15"
               />
             </div>
             {errors.emoji && <p className="mt-1 text-[13px] text-[#EF4444]">{errors.emoji}</p>}
@@ -395,7 +395,7 @@ function CategoryModal({
               onChange={(e) => set("description", e.target.value.slice(0, 200))}
               placeholder="Description courte..."
               rows={3}
-              className="w-full resize-y rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-[14px] text-[#111827] outline-none transition-colors focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/15"
+              className="w-full resize-y rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-[14px] text-[#111827] outline-none transition-colors focus:border-[#022150] focus:ring-2 focus:ring-[#022150]/15"
             />
             <p className="mt-1 text-right text-[12px] text-[#9CA3AF]">{form.description.length}/200</p>
           </div>
@@ -408,7 +408,7 @@ function CategoryModal({
               min={0}
               value={form.order}
               onChange={(e) => set("order", Number(e.target.value))}
-              className="w-full rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-[14px] text-[#111827] outline-none transition-colors focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/15"
+              className="w-full rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-[14px] text-[#111827] outline-none transition-colors focus:border-[#022150] focus:ring-2 focus:ring-[#022150]/15"
             />
             <p className="mt-1 text-[12px] text-[#9CA3AF]">
               Les catégories sont triées par ordre croissant dans l&apos;app.
@@ -424,7 +424,7 @@ function CategoryModal({
                 onClick={() => set("active", true)}
                 className={[
                   "rounded-md px-4 py-1.5 text-[13px] font-semibold transition-colors",
-                  form.active ? "bg-[#2563EB] text-white shadow-sm" : "text-[#6B7280] hover:text-[#111827]",
+                  form.active ? "bg-[#022150] text-white shadow-sm" : "text-[#6B7280] hover:text-[#111827]",
                 ].join(" ")}
               >
                 Active

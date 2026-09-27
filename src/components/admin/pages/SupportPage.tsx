@@ -108,7 +108,7 @@ export function SupportPage() {
               className={[
                 "inline-flex items-center gap-2 rounded-full px-4 py-2 text-[13px] font-semibold transition-colors",
                 active
-                  ? "bg-[#2563EB] text-white shadow-sm"
+                  ? "bg-[#022150] text-white shadow-sm"
                   : "border border-[#E5E7EB] bg-white text-[#374151] hover:bg-[#F9FAFB]",
               ].join(" ")}
             >
@@ -251,7 +251,7 @@ function FilterRow({
             className={[
               "rounded-full px-3 py-1 text-[12px] font-semibold transition-colors",
               isActive
-                ? "bg-[#2563EB] text-white"
+                ? "bg-[#022150] text-white"
                 : "border border-[#E5E7EB] bg-white text-[#374151] hover:bg-[#F9FAFB]",
             ].join(" ")}
           >
@@ -281,7 +281,7 @@ function TicketRow({
         <button
           type="button"
           onClick={onView}
-          className="text-left text-[14px] font-semibold text-[#111827] transition-colors hover:text-[#2563EB]"
+          className="text-left text-[14px] font-semibold text-[#111827] transition-colors hover:text-[#022150]"
         >
           {ticket.subject}
         </button>
@@ -309,7 +309,7 @@ function TicketRow({
       <td className="px-4 py-3">
         {ticket.assignedTo ? (
           <div className="flex items-center gap-2">
-            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-br from-[#2563EB] to-[#10B981] text-[10px] font-bold text-white">
+            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-br from-[#022150] to-[#10B981] text-[10px] font-bold text-white">
               AV
             </div>
             <span className="text-[13px] font-medium text-[#374151]">{ticket.assignedTo}</span>
@@ -373,7 +373,7 @@ function RowIcon({
         "border-[#E5E7EB] bg-white",
         tone === "danger"
           ? "text-[#EF4444] hover:border-[#EF4444] hover:bg-[#FEF2F2]"
-          : "text-[#6B7280] hover:border-[#2563EB] hover:bg-[#EFF6FF] hover:text-[#2563EB]",
+          : "text-[#6B7280] hover:border-[#022150] hover:bg-[#F0F4F9] hover:text-[#022150]",
       ].join(" ")}
     >
       {children}
@@ -384,7 +384,7 @@ function RowIcon({
 // ============================================================================
 // CreateTicketModal — full form to create a new internal support ticket.
 // ============================================================================
-const AVATAR_COLORS = ["#DC2626", "#10B981", "#2563EB", "#F59E0B", "#8B5CF6", "#EC4899", "#0891B2", "#7C3AED"];
+const AVATAR_COLORS = ["#DC2626", "#10B981", "#022150", "#F59E0B", "#8B5CF6", "#EC4899", "#0891B2", "#7C3AED"];
 const PLAN_OPTIONS: Ticket["plan"][] = ["Starter", "Pro", "Enterprise", "Essai"];
 
 function CreateTicketModal({
@@ -420,7 +420,7 @@ function CreateTicketModal({
   }
 
   const inputClass =
-    "w-full rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-[14px] text-[#111827] placeholder:text-[#9CA3AF] focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 transition";
+    "w-full rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-[14px] text-[#111827] placeholder:text-[#9CA3AF] focus:border-[#022150] focus:outline-none focus:ring-2 focus:ring-[#022150]/20 transition";
 
   return (
     <motion.div

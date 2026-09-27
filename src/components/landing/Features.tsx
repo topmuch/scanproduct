@@ -55,10 +55,10 @@ const FEATURES: Feature[] = [
     description:
       "Chaque lot dispose d'un QR code unique lié à une fiche produit complète. Vos clients accèdent à la vérité en un scan, où qu'ils soient.",
     illustration: "/features/feature-tracabilite.png",
-    cardGradient: "from-[#EFF6FF] via-[#F0FDF4] to-white",
-    accent: "text-[#2563EB]",
-    accentSoft: "bg-[#2563EB]",
-    bulletColor: "text-[#2563EB]",
+    cardGradient: "from-[#F0F4F9] via-[#F0FDF4] to-white",
+    accent: "text-[#022150]",
+    accentSoft: "bg-[#022150]",
+    bulletColor: "text-[#022150]",
     bullets: [
       "Ingrédients, origine et certifications visibles en 1 scan",
       "Historique complet de fabrication et de péremption",
@@ -113,11 +113,11 @@ export function Features() {
   return (
     <section
       id="fonctionnalites"
-      className="relative overflow-hidden bg-gradient-to-br from-[#EFF6FF] via-[#F0FDF4] to-[#FFFBEB] py-16 sm:py-20 lg:py-24"
+      className="relative overflow-hidden bg-gradient-to-br from-[#F0F4F9] via-[#F0FDF4] to-[#FFFBEB] py-16 sm:py-20 lg:py-24"
     >
       {/* soft multi-color blobs to reinforce the "multicolor" backdrop */}
       <div
-        className="pointer-events-none absolute -left-32 top-10 h-80 w-80 rounded-full bg-[#2563EB]/10 blur-3xl"
+        className="pointer-events-none absolute -left-32 top-10 h-80 w-80 rounded-full bg-[#022150]/10 blur-3xl"
         aria-hidden
       />
       <div
