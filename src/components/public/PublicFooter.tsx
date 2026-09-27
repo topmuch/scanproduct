@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { Logo } from "@/components/landing/Logo";
 import { Lock, Mail, Phone, MapPin, Facebook, Twitter, Linkedin, Instagram } from "lucide-react";
 
 /**
@@ -13,8 +12,7 @@ export function PublicFooter() {
         <div className="grid grid-cols-2 gap-8 md:grid-cols-4 lg:grid-cols-5">
           {/* Brand */}
           <div className="col-span-2 lg:col-span-2">
-            <Logo variant="light" />
-            <p className="mt-4 max-w-sm text-sm leading-relaxed text-white/70">
+            <p className="max-w-sm text-sm leading-relaxed text-white/70">
               La vérité au bout du scan. VerifScan offre aux fabricants un
               passeport numérique pour leurs produits, garantissant traçabilité,
               authenticité et transparence pour les consommateurs.

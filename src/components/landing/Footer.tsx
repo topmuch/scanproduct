@@ -2,7 +2,6 @@
 
 import { Lock, Facebook, Twitter, Linkedin, Instagram, Mail, Phone, MapPin } from "lucide-react";
 import Link from "next/link";
-import { Logo } from "./Logo";
 
 // Each footer link maps to a real target:
 //   - Real pages use absolute paths ("/produits", "/register", "/a-propos"…)
@@ -50,8 +49,7 @@ export function Footer() {
         <div className="grid grid-cols-2 gap-10 md:grid-cols-3 lg:grid-cols-5">
           {/* Column 1: brand */}
           <div className="col-span-2 lg:col-span-1">
-            <Logo variant="light" />
-            <p className="mt-4 max-w-xs text-sm leading-relaxed text-white/70">
+            <p className="max-w-xs text-sm leading-relaxed text-white/70">
               La vérité au bout du scan. VerifScan offre aux fabricants un passeport numérique pour leurs produits, garantissant traçabilité, authenticité et transparence pour les consommateurs sénégalais et ouest-africains.
             </p>
             <span className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-xs font-medium text-white/90">

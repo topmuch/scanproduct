@@ -104,8 +104,11 @@ export function AdminSidebar() {
   return (
     <aside className="fixed inset-y-0 left-0 z-40 hidden w-[260px] flex-col border-r border-white/10 bg-gradient-to-b from-[#1E3A8A] to-[#1E40AF] lg:flex">
       {/* Logo */}
-      <div className="flex h-[80px] items-center gap-2 border-b border-white/10 px-6">
-        <Logo />
+      <div className="flex h-[80px] items-center gap-2 border-b border-white/10 px-5">
+        {/* Pastille blanche : le logo couleur reste lisible sur fond sombre */}
+        <span className="inline-flex shrink-0 items-center rounded-lg bg-white px-2.5 py-1.5 shadow-sm">
+          <Logo size="sm" />
+        </span>
         <span className="ml-1 rounded-md bg-white/15 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-white">
           Admin
         </span>

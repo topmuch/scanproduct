@@ -126,9 +126,9 @@ export default function RegisterPage() {
             <img
               src="/verifscan-logo.webp?v=3"
               alt="VerifScan"
-              className="h-10 w-auto brightness-0 invert"
-              width={256}
-              height={62}
+              className="h-14 w-auto shrink-0 brightness-0 invert"
+              width={720}
+              height={247}
             />
           </Link>
 
