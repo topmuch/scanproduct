@@ -22,15 +22,7 @@ const NAV_LINKS = [
 
 export function Header() {
   const pathname = usePathname();
-  const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 8);
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
 
   // Lock body scroll when drawer is open
   useEffect(() => {
@@ -52,15 +44,15 @@ export function Header() {
     <header
       className={cn(
         "fixed inset-x-0 top-0 z-50 transition-all duration-300",
-        scrolled
-          ? "bg-white/80 backdrop-blur-xl shadow-[0_4px_24px_rgba(0,0,0,0.06)] border-b border-[#F3F4F6]"
-          : "bg-white/0"
+        // Barre claire permanente : le fond noir du hero ne transparaît plus,
+        // le logo couleur reste lisible en permanence.
+        "bg-white/85 backdrop-blur-xl shadow-[0_4px_24px_rgba(0,0,0,0.06)] border-b border-[#F3F4F6]",
       )}
     >
       <div className="mx-auto flex h-20 max-w-[1400px] items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo */}
         <Link href="/" className="group" aria-label="VerifScan accueil">
-          <Logo variant={scrolled ? "default" : "light"} />
+          <Logo />
         </Link>
 
         {/* Desktop nav */}
@@ -69,21 +61,16 @@ export function Header() {
             const active = isActive(link);
             const className = cn(
               "group relative rounded-md px-3 py-2 text-[15px] font-medium transition-colors",
-              scrolled
-                ? active
-                  ? "text-[#2563EB]"
-                  : "text-[#374151] hover:text-[#2563EB]"
-                : active
-                  ? "text-white"
-                  : "text-white/90 hover:text-white"
+              active
+                ? "text-[#2563EB]"
+                : "text-[#374151] hover:text-[#2563EB]"
             );
             const content = (
               <>
                 {link.label}
                 <span
                   className={cn(
-                    "absolute bottom-1 left-3 right-3 h-0.5 rounded-full transition-all duration-300",
-                    scrolled ? "bg-[#2563EB]" : "bg-white",
+                    "absolute bottom-1 left-3 right-3 h-0.5 rounded-full bg-[#2563EB] transition-all duration-300",
                     active ? "opacity-100" : "opacity-0 group-hover:opacity-100"
                   )}
                 />
@@ -101,12 +88,7 @@ export function Header() {
         <div className="hidden items-center gap-2 lg:flex">
           <Link
             href="/login"
-            className={cn(
-              "rounded-md px-3 py-2 text-[15px] font-semibold transition-colors",
-              scrolled
-                ? "text-[#2563EB] hover:bg-[#EFF6FF]"
-                : "text-white hover:bg-white/10"
-            )}
+            className="rounded-md px-3 py-2 text-[15px] font-semibold text-[#2563EB] transition-colors hover:bg-[#EFF6FF]"
           >
             Connexion
           </Link>
@@ -123,12 +105,7 @@ export function Header() {
         <button
           type="button"
           onClick={() => setMobileOpen(true)}
-          className={cn(
-            "inline-flex h-10 w-10 items-center justify-center rounded-lg transition-colors lg:hidden",
-            scrolled
-              ? "text-[#111827] hover:bg-[#F3F4F6]"
-              : "text-white hover:bg-white/10"
-          )}
+          className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-[#111827] transition-colors hover:bg-[#F3F4F6] lg:hidden"
           aria-label="Ouvrir le menu"
         >
           <Menu className="h-6 w-6" />
