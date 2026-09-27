@@ -99,6 +99,62 @@ fin d'abonnement) sont déclenchés par des appels HTTP protégés par
 > max par palier (J-7 / J-3 / expiré) — un cron qui tourne deux
 > fois ne double jamais l'envoi.
 
+### 🧪 Tester le cron
+
+Une fois `CRON_SECRET` défini, testez les endpoints **depuis le terminal
+Coolify** (onglet Terminal de la ressource) ou depuis votre machine :
+
+```bash
+# 1) Sans secret → 401 (preuve que la route est bien protégée)
+curl https://scanproduct.votredomaine.sn/api/cron/weekly-digest
+# {"error":"Unauthorized","reason":"Secret manquant (Authorization: Bearer ou ?secret=)"}
+
+# 2) Avec un mauvais secret → 401
+curl "https://scanproduct.votredomaine.sn/api/cron/expiry-alerts?secret=WRONG"
+# {"error":"Unauthorized","reason":"Secret invalide"}
+
+# 3a) Avec le bon secret en query → 200
+curl "https://scanproduct.votredomaine.sn/api/cron/weekly-digest?secret=$CRON_SECRET"
+
+# 3b) Avec le bon secret en header Bearer → 200 (équivalent)
+curl -H "Authorization: Bearer $CRON_SECRET" \
+  https://scanproduct.votredomaine.sn/api/cron/subscription-alerts
+```
+
+**Réponse de succès attendue** (HTTP 200) :
+
+```json
+{
+  "ok": true,
+  "job": "weekly-digest",
+  "processed": 5,
+  "sent": 4,
+  "skipped": 1,
+  "errors": [],
+  "durationMs": 834
+}
+```
+
+| Champ | Signification |
+|---|---|
+| `processed` | Fabricants actifs parcourus par le job |
+| `sent` | Emails réellement envoyés |
+| `skipped` | Emails non envoyés (déjà envoyés cette période, ou préférences désactivées) |
+| `errors` | Erreurs éventuelles par fabricant (tableau vide = tout OK) |
+
+> ⚠️ Si `sent` reste à 0 alors que des fabricants devraient être notifiés :
+> vérifiez les variables `SMTP_*` — sans SMTP configuré, les emails sont
+> seulement **loggés dans la console** du conteneur (onglet Logs), jamais
+> envoyés. Un 2ᵉ appel renvoyant `skipped` = nombre de fabricants est le
+> comportement **normal** (idempotence, pas une panne).
+
+### 🏠 Test en local (développement)
+
+```bash
+# .env.local doit contenir CRON_SECRET="..."
+curl "http://localhost:3000/api/cron/weekly-digest?secret=$(grep CRON_SECRET .env | cut -d'"' -f2)"
+```
+
 ---
 
 ## 5. Étape 4 — Persist Storage (IMPORTANT pour SQLite) ⚠️
