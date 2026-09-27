@@ -14,7 +14,7 @@ export function Logo({ className, variant = "default" }: LogoProps) {
   return (
     <span className={cn("inline-flex items-center select-none", className)}>
       <img
-        src="/verifscan-logo.webp"
+        src="/verifscan-logo.webp?v=2"
         alt="VerifScan"
         className={cn("h-12 w-auto", variant === "light" && "brightness-0 invert")}
         width={48}

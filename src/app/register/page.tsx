@@ -124,7 +124,7 @@ export default function RegisterPage() {
         <div className="relative z-10 flex flex-col justify-between p-12 text-white">
           <Link href="/" className="flex items-center">
             <img
-              src="/verifscan-logo.webp"
+              src="/verifscan-logo.webp?v=2"
               alt="VerifScan"
               className="h-10 w-auto brightness-0 invert"
               width={256}
