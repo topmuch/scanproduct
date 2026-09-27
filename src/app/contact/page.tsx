@@ -2,44 +2,117 @@ import type { Metadata } from "next";
 import { PublicHeader } from "@/components/public/PublicHeader";
 import { PublicFooter } from "@/components/public/PublicFooter";
 import { ContactForm } from "@/components/public/ContactForm";
-import { MessageCircle, Clock, Globe2 } from "lucide-react";
+import {
+  VERIFSCAN_ADDRESS,
+  VERIFSCAN_DIRECTIONS_URL,
+  VERIFSCAN_MAP_EMBED,
+} from "@/lib/contact";
+import { MessageCircle, Navigation, MapPin, Clock } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Contact — VerifScan",
+  title:
+    "Contact & Itinéraire — VerifScan Dakar (Ouest Foire) | Email, Téléphone, Carte",
   description:
-    "Contactez l'équipe VerifScan. Demandez une démo, devenez partenaire ou posez vos questions sur notre solution de traçabilité alimentaire par QR code.",
+    "Contactez VerifScan : contact@verifscan.com · +221 78 485 88 22 · Lot n°13, Ouest Foire, Dakar, Sénégal. Carte Google Maps, itinéraire, horaires et formulaire — réponse sous 24h.",
+  alternates: { canonical: "/contact" },
   openGraph: {
-    title: "Contact — VerifScan",
+    title: "Contact & Itinéraire — VerifScan Dakar (Ouest Foire)",
     description:
-      "Une question ? Notre équipe vous répond sous 24 heures. Email, téléphone, formulaire — choisissez le canal qui vous convient.",
+      "Email, téléphone, carte et itinéraire : notre équipe vous répond sous 24 heures. Lot n°13, Ouest Foire, Dakar, Sénégal.",
+    url: "/contact",
     type: "website",
+    images: ["/og-image.png?v=6"],
   },
 };
 
-const QUICK_INFO = [
-  {
-    icon: Clock,
-    title: "Horaires",
-    text: "Lun – Ven : 9h – 18h",
-    sub: "Samedi : 9h – 13h",
-  },
-  {
-    icon: Globe2,
-    title: "Zone d'action",
-    text: "Sénégal & CEDEAO",
-    sub: "Interventions régionales",
-  },
+/**
+ * JSON-LD — LocalBusiness avec adresse postale complète, géolocalisation
+ * Ouest Foire (Dakar) et horaires : éligible au panneau « Infos lieu » Google.
+ */
+function LocalBusinessJsonLd() {
+  const data = {
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    "@id": "https://verifscan.sn/#localbusiness",
+    name: "VerifScan",
+    description:
+      "Passeport numérique produit : traçabilité alimentaire et cosmétique, authentification QR code, lutte contre la contrefaçon.",
+    url: "https://verifscan.sn/contact",
+    telephone: "+221784858822",
+    email: "contact@verifscan.com",
+    image: "https://verifscan.sn/og-image.png",
+    priceRange: "$$",
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: "Lot n°13, Ouest Foire",
+      addressLocality: "Dakar",
+      addressRegion: "Dakar",
+      addressCountry: "SN",
+    },
+    geo: {
+      "@type": "GeoCoordinates",
+      latitude: 14.7294,
+      longitude: -17.4568,
+    },
+    openingHoursSpecification: [
+      {
+        "@type": "OpeningHoursSpecification",
+        dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+        opens: "09:00",
+        closes: "18:00",
+      },
+      {
+        "@type": "OpeningHoursSpecification",
+        dayOfWeek: "Saturday",
+        opens: "09:00",
+        closes: "13:00",
+      },
+    ],
+    contactPoint: [
+      {
+        "@type": "ContactPoint",
+        telephone: "+221784858822",
+        email: "contact@verifscan.com",
+        contactType: "customer service",
+        areaServed: ["SN", "FR", "BE", "CH", "CA"],
+        availableLanguage: ["fr"],
+      },
+    ],
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
+    />
+  );
+}
+
+const CONTACT_CHANNELS = [
   {
     icon: MessageCircle,
-    title: "Réponse",
-    text: "Sous 24 heures",
-    sub: "Du lundi au vendredi",
+    label: "Email",
+    value: "contact@verifscan.com",
+    href: "mailto:contact@verifscan.com",
+  },
+  {
+    icon: Clock,
+    label: "Téléphone / WhatsApp",
+    value: "+221 78 485 88 22",
+    href: "tel:+221784858822",
+  },
+  {
+    icon: MapPin,
+    label: "Adresse",
+    value: "Lot n°13, Ouest Foire — Dakar",
+    href: VERIFSCAN_DIRECTIONS_URL,
   },
 ];
 
 export default function ContactPage() {
   return (
     <div className="flex min-h-screen flex-col bg-[#F9FAFB]">
+      <LocalBusinessJsonLd />
       <PublicHeader />
 
       <main className="flex-1">
@@ -68,35 +141,132 @@ export default function ContactPage() {
           </div>
         </section>
 
-        {/* Quick info bar */}
+        {/* Canaux de contact — email / téléphone / adresse */}
         <section className="border-b border-[#F3F4F6] bg-white">
           <div className="mx-auto grid max-w-[1400px] gap-6 px-4 py-8 sm:grid-cols-3 sm:px-6 lg:px-8">
-            {QUICK_INFO.map((item) => (
-              <div key={item.title} className="flex items-center gap-4">
-                <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-[#F0F4F9]">
-                  <item.icon className="h-5 w-5 text-[#022150]" />
+            {CONTACT_CHANNELS.map((item) => (
+              <a
+                key={item.label}
+                href={item.href}
+                target={item.href.startsWith("http") ? "_blank" : undefined}
+                rel={item.href.startsWith("http") ? "noopener noreferrer" : undefined}
+                className="group flex items-center gap-4"
+              >
+                <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-[#F0F4F9] transition-colors group-hover:bg-[#022150]">
+                  <item.icon className="h-5 w-5 text-[#022150] transition-colors group-hover:text-white" />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <p className="text-xs font-semibold uppercase tracking-wide text-[#9CA3AF]">
-                    {item.title}
+                    {item.label}
                   </p>
-                  <p className="text-[15px] font-bold text-[#111827]">
-                    {item.text}
+                  <p className="truncate text-[15px] font-bold text-[#111827] transition-colors group-hover:text-[#022150]">
+                    {item.value}
                   </p>
-                  <p className="text-xs text-[#6B7280]">{item.sub}</p>
                 </div>
-              </div>
+              </a>
             ))}
           </div>
         </section>
 
-        {/* Form + info section */}
+        {/* Formulaire + infos détaillées */}
         <section className="mx-auto max-w-[1400px] px-4 py-14 sm:px-6 lg:px-8">
           <ContactForm />
         </section>
 
+        {/* Carte + itinéraire */}
+        <section
+          id="nous-trouver"
+          aria-label="Nous trouver — carte et itinéraire"
+          className="border-t border-[#F3F4F6] bg-white py-14"
+        >
+          <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
+            <div className="mx-auto mb-8 max-w-2xl text-center">
+              <span className="inline-flex items-center gap-2 rounded-full bg-[#F0F4F9] px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-[#022150]">
+                <MapPin className="h-3.5 w-3.5" /> Nous trouver
+              </span>
+              <h2 className="mt-4 font-display text-2xl font-bold text-[#111827] sm:text-3xl">
+                Rendez-nous visite à Ouest Foire, Dakar
+              </h2>
+              <p className="mt-3 text-[15px] leading-relaxed text-[#6B7280]">
+                {VERIFSCAN_ADDRESS} — ouvrez l&apos;itinéraire depuis votre
+                position en un clic, ou appelez-nous, nous vous guiderons.
+              </p>
+            </div>
+
+            <div className="grid gap-6 lg:grid-cols-3">
+              {/* Carte interactive */}
+              <div className="overflow-hidden rounded-2xl border border-[#F3F4F6] shadow-sm lg:col-span-2">
+                <iframe
+                  src={VERIFSCAN_MAP_EMBED}
+                  width="100%"
+                  height="100%"
+                  className="h-[320px] w-full sm:h-[420px]"
+                  style={{ border: 0 }}
+                  allowFullScreen
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  title="Carte — VerifScan, Ouest Foire, Dakar, Sénégal"
+                />
+              </div>
+
+              {/* Adresse + horaires + CTA */}
+              <div className="flex flex-col gap-6">
+                <div className="rounded-2xl border border-[#F3F4F6] bg-white p-6 shadow-sm">
+                  <div className="flex items-start gap-4">
+                    <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-lg bg-[#FFFBEB]">
+                      <MapPin className="h-5 w-5 text-[#F59E0B]" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-[#9CA3AF]">
+                        Adresse
+                      </p>
+                      <p className="mt-0.5 text-[15px] font-semibold leading-relaxed text-[#111827]">
+                        Lot n°13, Ouest Foire
+                        <br />
+                        Dakar, Sénégal
+                      </p>
+                    </div>
+                  </div>
+                  <div className="mt-5 flex items-start gap-4 border-t border-[#F3F4F6] pt-5">
+                    <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-lg bg-[#F0F9FF]">
+                      <Clock className="h-5 w-5 text-[#0EA5E9]" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-[#9CA3AF]">
+                        Horaires d&apos;ouverture
+                      </p>
+                      <p className="mt-0.5 text-[15px] font-semibold text-[#111827]">
+                        Lundi – Vendredi : 9h – 18h
+                      </p>
+                      <p className="text-sm text-[#6B7280]">
+                        Samedi : 9h – 13h
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <a
+                  href={VERIFSCAN_DIRECTIONS_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#022150] to-[#10B981] px-6 py-4 text-[15px] font-semibold text-white shadow-md shadow-[#022150]/25 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg"
+                >
+                  <Navigation className="h-5 w-5" />
+                  Obtenir l&apos;itinéraire
+                </a>
+                <a
+                  href="tel:+221784858822"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl border-2 border-[#022150] px-6 py-3.5 text-[15px] font-semibold text-[#022150] transition-colors hover:bg-[#F0F4F9]"
+                >
+                  Appeler le +221 78 485 88 22
+                </a>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* CTA */}
-        <section className="border-t border-[#F3F4F6] bg-white py-14">
+        <section className="border-t border-[#F3F4F6] bg-[#F9FAFB] py-14">
           <div className="mx-auto max-w-3xl px-4 text-center sm:px-6 lg:px-8">
             <h2 className="font-display text-2xl font-bold text-[#111827] sm:text-3xl">
               Prêt à digitaliser la traçabilité de vos produits ?

@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Mail, Phone, MapPin, Send, CheckCircle2, Loader2 } from "lucide-react";
+import { Mail, Phone, MapPin, Clock, Navigation, Send, CheckCircle2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { VERIFSCAN_DIRECTIONS_URL } from "@/lib/contact";
 
 const CONTACT_INFO = [
   {
@@ -17,17 +18,25 @@ const CONTACT_INFO = [
     icon: Phone,
     label: "Téléphone",
     value: "+221 78 485 88 22",
-    href: "tel:+2217848588226",
+    href: "tel:+221784858822",
     color: "#10B981",
     bg: "#ECFDF5",
   },
   {
     icon: MapPin,
     label: "Adresse",
-    value: "Dakar, Sénégal",
-    href: null,
+    value: "Lot n°13, Ouest Foire — Dakar, Sénégal",
+    href: VERIFSCAN_DIRECTIONS_URL,
     color: "#F59E0B",
     bg: "#FFFBEB",
+  },
+  {
+    icon: Clock,
+    label: "Horaires",
+    value: "Lun – Ven : 9h – 18h · Sam : 9h – 13h",
+    href: null,
+    color: "#0EA5E9",
+    bg: "#F0F9FF",
   },
 ];
 
@@ -96,7 +105,9 @@ export function ContactForm() {
                 {info.href ? (
                   <a
                     href={info.href}
-                    className="block truncate text-[15px] font-semibold text-[#111827] transition-colors hover:text-[#022150]"
+                    target={info.href?.startsWith("http") ? "_blank" : undefined}
+                    rel={info.href?.startsWith("http") ? "noopener noreferrer" : undefined}
+                    className="block text-[15px] font-semibold text-[#111827] transition-colors hover:text-[#022150]"
                   >
                     {info.value}
                   </a>
@@ -110,19 +121,17 @@ export function ContactForm() {
           ))}
         </div>
 
-        {/* Google Map embed */}
-        <div className="mt-6 overflow-hidden rounded-xl border border-[#F3F4F6] shadow-sm">
-          <iframe
-            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d30874.3476!2d-17.4677!3d14.7167!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMTTCsDQzJzAwLjAiTiAxN8KwMjgnMDUuMiJX!5e0!3m2!1sfr!2ssn!4v1700000000000!5m2!1sfr!2ssn"
-            width="100%"
-            height="240"
-            style={{ border: 0 }}
-            allowFullScreen
-            loading="lazy"
-            referrerPolicy="no-referrer-when-downgrade"
-            title="Carte — Dakar, Sénégal"
-          />
-        </div>
+        {/* CTA carte — la grande carte interactive est dans la section
+            « Nous trouver » de la page, on évite deux iframes Google. */}
+        <a
+          href={VERIFSCAN_DIRECTIONS_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-6 flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#022150] to-[#10B981] px-5 py-3.5 text-[15px] font-semibold text-white shadow-md shadow-[#022150]/25 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg"
+        >
+          <Navigation className="h-4 w-4" />
+          Ouvrir l&apos;itinéraire dans Google Maps
+        </a>
       </div>
 
       {/* Right: form */}

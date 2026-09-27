@@ -50,19 +50,19 @@ export default function MentionsLegalesPage() {
           <li>
             Email :{" "}
             <a
-              href="mailto:contact@verifscan.sn"
+              href="mailto:contact@verifscan.com"
               className="font-medium text-[#022150] underline-offset-2 hover:underline"
             >
-              contact@verifscan.sn
+              contact@verifscan.com
             </a>
           </li>
           <li>
             Téléphone :{" "}
             <a
-              href="tel:+221338000000"
+              href="tel:+221784858822"
               className="font-medium text-[#022150] underline-offset-2 hover:underline"
             >
-              +221 33 800 00 00
+              +221 78 485 88 22
             </a>
           </li>
         </ul>
@@ -87,10 +87,10 @@ export default function MentionsLegalesPage() {
           vous pouvez contacter le directeur de publication à
           l&apos;adresse{" "}
           <a
-            href="mailto:contact@verifscan.sn"
+            href="mailto:contact@verifscan.com"
             className="font-medium text-[#022150] underline-offset-2 hover:underline"
           >
-            contact@verifscan.sn
+            contact@verifscan.com
           </a>
           .
         </p>
@@ -125,10 +125,10 @@ export default function MentionsLegalesPage() {
           Pour toute demande technique relative à l&apos;hébergement,
           veuillez contacter VerifScan à l&apos;adresse{" "}
           <a
-            href="mailto:contact@verifscan.sn"
+            href="mailto:contact@verifscan.com"
             className="font-medium text-[#022150] underline-offset-2 hover:underline"
           >
-            contact@verifscan.sn
+            contact@verifscan.com
           </a>
           .
         </p>
@@ -237,19 +237,19 @@ export default function MentionsLegalesPage() {
           <li>
             Par email :{" "}
             <a
-              href="mailto:contact@verifscan.sn"
+              href="mailto:contact@verifscan.com"
               className="font-medium text-[#022150] underline-offset-2 hover:underline"
             >
-              contact@verifscan.sn
+              contact@verifscan.com
             </a>
           </li>
           <li>
             Par téléphone :{" "}
             <a
-              href="tel:+221338000000"
+              href="tel:+221784858822"
               className="font-medium text-[#022150] underline-offset-2 hover:underline"
             >
-              +221 33 800 00 00
+              +221 78 485 88 22
             </a>
           </li>
           <li>Par courrier : Dakar, Sénégal</li>

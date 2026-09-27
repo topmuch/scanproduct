@@ -116,9 +116,12 @@ def main() -> None:
     paste_contain(shield, 512, ratio=0.62).save(f"{PUBLIC}/icon-512-maskable.png")
 
     # favicon.ico (16 + 32 + 48)
+    # NB : PILICO ignore toute taille > taille de l'image de base → on part
+    # du frame 48×48 comme base et on fournit 16/32 en append_images.
     frames = [paste_contain(shield, s, ratio=0.95) for s in (16, 32, 48)]
-    frames[0].save(f"{PUBLIC}/favicon.ico", format="ICO",
-                   sizes=[(16, 16), (32, 32), (48, 48)], append_images=frames[1:])
+    frames[2].save(f"{PUBLIC}/favicon.ico", format="ICO",
+                   sizes=[(16, 16), (32, 32), (48, 48)],
+                   append_images=[frames[0], frames[1]])
 
     # 5) master archivé
     src.convert("RGBA").save(f"{BRAND}/logoverifiscan-master.png")

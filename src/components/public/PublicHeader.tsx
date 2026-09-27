@@ -21,7 +21,7 @@ const NAV_LINKS = [
   { label: "Accueil", href: "/", icon: Home },
   { label: "Catalogue", href: "/produits", icon: LayoutGrid },
   { label: "Fonctionnalités", href: "/#fonctionnalites", icon: Sparkles },
-  { label: "Contact", href: "/#contact", icon: Mail },
+  { label: "Contact", href: "/contact", icon: Mail },
 ];
 
 /**
@@ -80,7 +80,7 @@ export function PublicHeader() {
               Fonctionnalités
             </a>
             <a
-              href="/#contact"
+              href="/contact"
               className="rounded-md px-3 py-2 text-[15px] font-medium text-[#374151] transition-colors hover:text-[#022150]"
             >
               Contact

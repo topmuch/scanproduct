@@ -27,6 +27,6 @@ export async function GET() {
       ],
     },
     docs: "/docs",
-    contact: "contact@verifscan.sn",
+    contact: "contact@verifscan.com",
   });
 }

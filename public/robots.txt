@@ -1,3 +1,6 @@
+# VerifScan — robots.txt
+# Sitemap référencé pour l'exploration Google/Bing.
+
 User-agent: Googlebot
 Allow: /
 
@@ -12,3 +15,10 @@ Allow: /
 
 User-agent: *
 Allow: /
+Disallow: /dashboard
+Disallow: /superadmin
+Disallow: /api
+Disallow: /offline
+Disallow: /login/admin
+
+Sitemap: https://verifscan.sn/sitemap.xml

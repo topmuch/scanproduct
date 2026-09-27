@@ -67,6 +67,7 @@ export async function generateMetadata({
       title: "Produit introuvable — VerifScan",
       description:
         "Ce QR code ne correspond à aucun produit enregistré. Vérifiez le catalogue VerifScan.",
+      robots: { index: false, follow: true },
       openGraph: {
         title: "Produit introuvable — VerifScan",
         description:
@@ -78,6 +79,7 @@ export async function generateMetadata({
   return {
     title: `${lot.product.name} — Passeport numérique VerifScan`,
     description: lot.product.description?.slice(0, 160) ?? undefined,
+    alternates: { canonical: `/p/${lotId}` },
     openGraph: {
       title: `${lot.product.name} — Passeport numérique VerifScan`,
       description: lot.product.description?.slice(0, 160) ?? undefined,

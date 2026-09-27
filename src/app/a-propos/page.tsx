@@ -22,6 +22,7 @@ export const metadata: Metadata = {
   title: "À propos — VerifScan",
   description:
     "VerifScan est né au Sénégal pour offrir aux fabricants ouest-africains un passeport numérique qui garantit l'authenticité, la traçabilité et la transparence de leurs produits.",
+  alternates: { canonical: "/a-propos" },
   openGraph: {
     title: "À propos — VerifScan",
     description:

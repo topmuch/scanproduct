@@ -352,7 +352,7 @@ export default function CarrieresPage() {
                     <ArrowRight className="h-4 w-4" />
                   </Link>
                   <a
-                    href="mailto:contact@verifscan.sn"
+                    href="mailto:contact@verifscan.com"
                     className="inline-flex items-center gap-2 rounded-lg border border-white/30 bg-white/10 px-5 py-3 text-sm font-semibold text-white backdrop-blur transition-colors hover:bg-white/20"
                   >
                     Candidature spontanée

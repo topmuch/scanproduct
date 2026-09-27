@@ -15,7 +15,7 @@
  * rechargement si besoin via skipWaiting + clients.claim.
  */
 
-const CACHE_VERSION = "verifscan-v1-20260817";
+const CACHE_VERSION = "verifscan-v2-20260928";
 const OFFLINE_URL = "/offline";
 
 // App shell — pages et assets critiques pré-cacheés à l'installation.

@@ -300,19 +300,19 @@ export default function CookiesPage() {
           <li>
             Par email :{" "}
             <a
-              href="mailto:contact@verifscan.sn"
+              href="mailto:contact@verifscan.com"
               className="font-medium text-[#022150] underline-offset-2 hover:underline"
             >
-              contact@verifscan.sn
+              contact@verifscan.com
             </a>
           </li>
           <li>
             Par téléphone :{" "}
             <a
-              href="tel:+221338000000"
+              href="tel:+221784858822"
               className="font-medium text-[#022150] underline-offset-2 hover:underline"
             >
-              +221 33 800 00 00
+              +221 78 485 88 22
             </a>
           </li>
           <li>Par courrier : Dakar, Sénégal</li>

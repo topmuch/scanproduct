@@ -65,19 +65,24 @@ export function PublicFooter() {
             <ul className="mt-3 space-y-2 text-sm text-white/70">
               <li className="flex items-center gap-2">
                 <Mail className="h-4 w-4 text-white/50" />
-                <a href="mailto:contact@verifscan.sn" className="hover:text-white">
-                  contact@verifscan.sn
+                <a href="mailto:contact@verifscan.com" className="hover:text-white">
+                  contact@verifscan.com
                 </a>
               </li>
               <li className="flex items-center gap-2">
                 <Phone className="h-4 w-4 text-white/50" />
-                <a href="tel:+221338000000" className="hover:text-white">
-                  +221 33 800 00 00
+                <a href="tel:+221784858822" className="hover:text-white">
+                  +221 78 485 88 22
                 </a>
               </li>
               <li className="flex items-center gap-2">
                 <MapPin className="h-4 w-4 text-white/50" />
-                Dakar, Sénégal
+                Lot n°13, Ouest Foire — Dakar
+              </li>
+              <li>
+                <Link href="/contact" className="inline-flex items-center gap-1.5 font-medium text-[#34D399] hover:text-white">
+                  Carte & itinéraire →
+                </Link>
               </li>
             </ul>
             <div className="mt-4 flex gap-2">

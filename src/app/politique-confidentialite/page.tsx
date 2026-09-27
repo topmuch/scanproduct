@@ -53,19 +53,19 @@ export default function PolitiqueConfidentialitePage() {
           <li>
             Email :{" "}
             <a
-              href="mailto:contact@verifscan.sn"
+              href="mailto:contact@verifscan.com"
               className="font-medium text-[#022150] underline-offset-2 hover:underline"
             >
-              contact@verifscan.sn
+              contact@verifscan.com
             </a>
           </li>
           <li>
             Téléphone :{" "}
             <a
-              href="tel:+221338000000"
+              href="tel:+221784858822"
               className="font-medium text-[#022150] underline-offset-2 hover:underline"
             >
-              +221 33 800 00 00
+              +221 78 485 88 22
             </a>
           </li>
         </ul>
@@ -338,10 +338,10 @@ export default function PolitiqueConfidentialitePage() {
         <p>
           Pour exercer ces droits, contactez VerifScan à l&apos;adresse{" "}
           <a
-            href="mailto:contact@verifscan.sn"
+            href="mailto:contact@verifscan.com"
             className="font-medium text-[#022150] underline-offset-2 hover:underline"
           >
-            contact@verifscan.sn
+            contact@verifscan.com
           </a>{" "}
           en précisant l&apos;objet de votre demande et en joignant une
           preuve de votre identité.
@@ -378,10 +378,10 @@ export default function PolitiqueConfidentialitePage() {
           Si vous estimez qu&apos;un mineur a fourni des données à
           VerifScan sans autorisation, merci de nous le signaler à{" "}
           <a
-            href="mailto:contact@verifscan.sn"
+            href="mailto:contact@verifscan.com"
             className="font-medium text-[#022150] underline-offset-2 hover:underline"
           >
-            contact@verifscan.sn
+            contact@verifscan.com
           </a>{" "}
           afin que nous puissions procéder à leur suppression.
         </p>
@@ -397,19 +397,19 @@ export default function PolitiqueConfidentialitePage() {
           <li>
             Par email :{" "}
             <a
-              href="mailto:contact@verifscan.sn"
+              href="mailto:contact@verifscan.com"
               className="font-medium text-[#022150] underline-offset-2 hover:underline"
             >
-              contact@verifscan.sn
+              contact@verifscan.com
             </a>
           </li>
           <li>
             Par téléphone :{" "}
             <a
-              href="tel:+221338000000"
+              href="tel:+221784858822"
               className="font-medium text-[#022150] underline-offset-2 hover:underline"
             >
-              +221 33 800 00 00
+              +221 78 485 88 22
             </a>
           </li>
           <li>Par courrier : Dakar, Sénégal</li>

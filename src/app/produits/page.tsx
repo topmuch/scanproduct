@@ -17,14 +17,17 @@ import { FeaturesBar } from "@/components/landing/FeaturesBar";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Catalogue — VerifScan",
+  title: "Catalogue produits authentifiés — VerifScan | Traçabilité & passeport numérique",
   description:
-    "Découvrez les produits authentiques vérifiés par VerifScan. Parcourez les catégories, les nouveautés, les produits populaires et ceux bientôt périmés.",
+    "Parcourez le catalogue des produits authentifiés VerifScan : alimentaire, cosmétique, agro-industrie. Chaque produit possède son passeport numérique QR code — authenticité vérifiée, traçabilité complète du lot, lutte anti-contrefaçon. Sénégal, Afrique de l'Ouest.",
+  alternates: { canonical: "/produits" },
   openGraph: {
-    title: "Catalogue — VerifScan",
+    title: "Catalogue produits authentifiés — VerifScan",
     description:
       "Découvrez les produits authentiques vérifiés par VerifScan. Scannez le QR code de chaque produit pour accéder à son passeport numérique.",
+    url: "/produits",
     type: "website",
+    images: ["/og-image.png?v=6"],
   },
 };
 

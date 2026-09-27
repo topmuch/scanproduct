@@ -447,7 +447,7 @@ function GeneralSection() {
           <Field label="Email de contact">
             <input
               className={inputClass}
-              defaultValue="contact@verifscan.sn"
+              defaultValue="contact@verifscan.com"
             />
           </Field>
         </FormRow>
