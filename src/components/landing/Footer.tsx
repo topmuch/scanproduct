@@ -130,9 +130,12 @@ export function Footer() {
         <div className="mt-12 border-t border-white/10 pt-6">
           <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
             <p className="text-[13px] text-white/50">© 2026 VerifScan. Tous droits réservés.</p>
-            <p className="text-[13px] text-white/50">
-              Conçu au Sénégal 🇸🇳 · Pour l&apos;Afrique de l&apos;Ouest
-            </p>
+            <div className="flex items-center gap-4 text-[13px] text-white/50">
+              <span>Conçu au Sénégal 🇸🇳 · Pour l&apos;Afrique de l&apos;Ouest</span>
+              <Link href="/login/admin" className="transition-colors hover:text-white">
+                Espace admin
+              </Link>
+            </div>
           </div>
         </div>
       </div>

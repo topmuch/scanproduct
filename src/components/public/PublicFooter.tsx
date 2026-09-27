@@ -101,6 +101,7 @@ export function PublicFooter() {
             <Link href="/mentions-legales" className="hover:text-white">Mentions légales</Link>
             <Link href="/cgu" className="hover:text-white">CGU</Link>
             <Link href="/politique-confidentialite" className="hover:text-white">Confidentialité</Link>
+            <Link href="/login/admin" className="hover:text-white">Espace admin</Link>
           </div>
         </div>
       </div>
