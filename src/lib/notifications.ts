@@ -37,7 +37,9 @@ export type NotificationType =
   | "system"
   | "ticket_update"
   | "subscription"
-  | "lot_expiring";
+  | "lot_expiring"
+  | "new_inquiry"
+  | "monthly_report";
 
 export type NotificationSeverity = "info" | "success" | "warning" | "critical";
 
@@ -67,6 +69,8 @@ export const DEFAULT_PREFS: Record<NotificationType, ChannelPrefs> = {
   ticket_update: { in_app: true, email: true, sms: false },
   subscription: { in_app: true, email: true, sms: false },
   lot_expiring: { in_app: true, email: true, sms: false },
+  new_inquiry: { in_app: true, email: true, sms: false },
+  monthly_report: { in_app: true, email: true, sms: false },
 };
 
 export interface UserPrefs {

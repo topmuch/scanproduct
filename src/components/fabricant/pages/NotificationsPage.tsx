@@ -8,8 +8,10 @@ import {
   BarChart3,
   Info,
   MessageSquare,
+  MessageSquareQuote,
   CreditCard,
   CalendarClock,
+  CalendarRange,
   CheckCheck,
   Trash2,
   Bell,
@@ -44,7 +46,9 @@ type NotificationType =
   | "system"
   | "ticket_update"
   | "subscription"
-  | "lot_expiring";
+  | "lot_expiring"
+  | "new_inquiry"
+  | "monthly_report";
 
 type NotificationSeverity = "info" | "success" | "warning" | "critical";
 
@@ -80,6 +84,8 @@ const TYPE_META: Record<
   ticket_update: { Icon: MessageSquare, color: "#8B5CF6", bg: "#EDE9FE", label: "Ticket" },
   subscription: { Icon: CreditCard, color: "#2563EB", bg: "#EFF6FF", label: "Abonnement" },
   lot_expiring: { Icon: CalendarClock, color: "#F59E0B", bg: "#FEF3C7", label: "Péremption" },
+  new_inquiry: { Icon: MessageSquareQuote, color: "#8B5CF6", bg: "#EDE9FE", label: "Demande de devis" },
+  monthly_report: { Icon: CalendarRange, color: "#059669", bg: "#D1FAE5", label: "Rapport mensuel" },
 };
 
 const SEVERITY_META: Record<
@@ -93,7 +99,7 @@ const SEVERITY_META: Record<
 };
 
 const ALERT_TYPES: NotificationType[] = ["lot_recall", "quota_warning", "quota_exceeded", "lot_expiring"];
-const SYSTEM_TYPES: NotificationType[] = ["system", "weekly_report"];
+const SYSTEM_TYPES: NotificationType[] = ["system", "weekly_report", "monthly_report", "new_inquiry"];
 
 const FILTER_OPTIONS: { value: FilterTab; label: string }[] = [
   { value: "all", label: "Toutes" },
@@ -275,6 +281,8 @@ function PreferencesSummaryCard({
     ticket_update: "Mise à jour ticket",
     subscription: "Abonnement",
     lot_expiring: "Alertes de péremption",
+    new_inquiry: "Demandes de devis",
+    monthly_report: "Rapport mensuel",
   };
 
   return (

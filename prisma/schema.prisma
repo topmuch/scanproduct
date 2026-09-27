@@ -76,6 +76,7 @@ model User {
   emailLogs       EmailLog[]    @relation("EmailLogUser")
   aiConversations AiConversation[]
   inquiriesReceived MarketplaceInquiry[]
+  subscriptions   Subscription[]
 
   @@index([role])
   @@index([status])
@@ -722,4 +723,38 @@ model LoyaltyRedemption {
   @@index([consumerId])
   @@index([fabricantId])
   @@index([status])
+}
+
+// ============================================================================
+// V3 — Abonnements fabricants (cycle de vie plan Starter / Pro / Business)
+// ============================================================================
+// One row per subscription period. The ACTIVE row drives:
+//   - plan-limits.getUserPlan() (quotas QR / produits)
+//   - getFabricantAbonnement()  (dates réelles dans la page Abonnement)
+//   - /api/cron/subscription-alerts (emails de fin d'abonnement)
+//
+// Status: "ACTIVE"    → current period, quotas enforced
+//         "EXPIRED"   → past expiresAt, flipped automatically by the cron job
+//         "CANCELLED" → manually terminated (admin)
+//
+// Auto-provisioning: legacy users without any Subscription row get one created
+// lazily (rolling 30-day period from the current plan setting) by
+// ensureSubscription() — so the alerts job never misses a fabricant.
+model Subscription {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  plan      String   @default("starter") // "starter" | "pro" | "business"
+  status    String   @default("ACTIVE")  // "ACTIVE" | "EXPIRED" | "CANCELLED"
+
+  startedAt DateTime @default(now())
+  expiresAt DateTime // end of the paid period (billing/renewal date)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([expiresAt])
 }

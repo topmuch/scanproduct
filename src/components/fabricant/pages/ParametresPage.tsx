@@ -993,7 +993,9 @@ type NotificationPrefType =
   | "system"
   | "ticket_update"
   | "subscription"
-  | "lot_expiring";
+  | "lot_expiring"
+  | "new_inquiry"
+  | "monthly_report";
 
 type ChannelPrefs = { in_app: boolean; email: boolean; sms: boolean };
 
@@ -1007,6 +1009,8 @@ const PREF_TYPE_ROWS: { key: NotificationPrefType; label: string }[] = [
   { key: "ticket_update", label: "Mise à jour ticket" },
   { key: "subscription", label: "Abonnement" },
   { key: "lot_expiring", label: "Alertes de péremption" },
+  { key: "new_inquiry", label: "Demandes de devis" },
+  { key: "monthly_report", label: "Rapport mensuel" },
 ];
 
 const DEFAULT_CHANNEL_PREFS: Record<NotificationPrefType, ChannelPrefs> = {
@@ -1019,6 +1023,8 @@ const DEFAULT_CHANNEL_PREFS: Record<NotificationPrefType, ChannelPrefs> = {
   ticket_update: { in_app: true, email: true, sms: false },
   subscription: { in_app: true, email: true, sms: false },
   lot_expiring: { in_app: true, email: true, sms: false },
+  new_inquiry: { in_app: true, email: true, sms: false },
+  monthly_report: { in_app: true, email: true, sms: false },
 };
 
 type NotifPrefsState = {

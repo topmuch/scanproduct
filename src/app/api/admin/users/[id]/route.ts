@@ -3,6 +3,7 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { requireSuperAdmin } from "@/lib/admin-guard";
 import { getAdminUserDetail } from "@/lib/admin-server-data";
+import { setUserSubscription } from "@/lib/subscription";
 
 /**
  * GET /api/admin/users/[id]
@@ -38,7 +39,10 @@ const PatchSchema = z.object({
   status: z.enum(["ACTIVE", "SUSPENDED", "PENDING"]).optional(),
   role: z.enum(["FABRICANT", "SUPERADMIN"]).optional(),
   isVerified: z.boolean().optional(),
-  plan: z.enum(["Starter", "Pro", "Enterprise", "Essai"]).optional(), // not stored on User; ignored for now
+  // Plan change → creates/renews the fabricant's Subscription row
+  // (period ends at planExpiresAt, default +30 days).
+  plan: z.enum(["starter", "pro", "business"]).optional(),
+  planExpiresAt: z.string().datetime().optional(),
   name: z.string().min(2).max(80).optional(),
   companyName: z.string().min(2).max(120).optional(),
   phone: z.string().max(40).optional(),
@@ -72,7 +76,31 @@ export async function PATCH(
   }
   const data = parsed.data;
 
-  // Build the DB patch (skip `plan` — not stored on User)
+  // Plan change → real Subscription lifecycle (plan + expiry). Handled
+  // separately from the User patch because plans live on Subscription.
+  let subscriptionResult: Record<string, unknown> | null = null;
+  if (data.plan) {
+    try {
+      const sub = await setUserSubscription(id, data.plan, {
+        expiresAt: data.planExpiresAt ? new Date(data.planExpiresAt) : undefined,
+      });
+      subscriptionResult = {
+        plan: sub.plan,
+        planName: sub.planName,
+        status: sub.status,
+        startedAt: sub.startedAt,
+        expiresAt: sub.expiresAt,
+      };
+    } catch (error) {
+      console.error("[PATCH /api/admin/users/[id]] subscription error:", error);
+      return NextResponse.json(
+        { error: "Failed to update subscription" },
+        { status: 500 },
+      );
+    }
+  }
+
+  // Build the DB patch (skip `plan` — stored on Subscription, not User)
   const patch: Record<string, unknown> = {};
   if (data.status) patch.status = data.status;
   if (data.role) patch.role = data.role;
@@ -86,6 +114,10 @@ export async function PATCH(
   if (data.address !== undefined) patch.address = data.address || null;
 
   if (Object.keys(patch).length === 0) {
+    // Plan-only change is a valid request — return the subscription state.
+    if (subscriptionResult) {
+      return NextResponse.json({ plan: subscriptionResult });
+    }
     return NextResponse.json({ error: "No fields to update" }, { status: 400 });
   }
 

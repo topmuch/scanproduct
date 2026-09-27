@@ -10,6 +10,8 @@
  * to accidentally return another manufacturer's data.
  */
 import { db } from "@/lib/db";
+import { getUserSubscription } from "@/lib/subscription";
+import { PLANS, DEFAULT_PLAN } from "@/lib/plan-limits";
 import {
   calculateTransparencyScore,
   getLevelFromScore,
@@ -973,11 +975,74 @@ export async function getFabricantBadges(userId: string): Promise<Badge[]> {
 // ---------------------------------------------------------------------------
 
 export async function getFabricantAbonnement(userId: string): Promise<FabricantAbonnement> {
-  const [productCount, qrCount] = await Promise.all([
+  const [productCount, qrCount, subscription] = await Promise.all([
     db.product.count({ where: { fabricantId: userId } }),
     db.qRCode.count({ where: { fabricantId: userId } }),
+    // Real subscription when it exists; null → legacy fallback below.
+    getUserSubscription(userId),
   ]);
 
+  if (subscription) {
+    const planConfig = PLANS[subscription.plan] ?? PLANS[DEFAULT_PLAN];
+    const planAdvantages: Record<string, string[]> = {
+      starter: [
+        "10 produits",
+        "100 QR codes/mois",
+        "Statistiques de base",
+        "Page produit publique",
+        "Support email",
+      ],
+      pro: [
+        "50 produits",
+        "1 000 QR codes/mois",
+        "Statistiques avancées",
+        "QR codes personnalisés",
+        "Export données",
+        "Support prioritaire",
+      ],
+      business: [
+        "Produits illimités",
+        "100 000 QR codes/mois",
+        "Statistiques avancées",
+        "QR codes personnalisés",
+        "Export données",
+        "Support prioritaire",
+        "Account manager dédié",
+      ],
+    };
+
+    const daysLeft = Math.ceil(
+      (subscription.expiresAt.getTime() - Date.now()) / (24 * 60 * 60 * 1000),
+    );
+
+    return {
+      plan: planConfig.name,
+      prix: planConfig.priceMonthly,
+      prixAnnuel: planConfig.priceMonthly * 12,
+      status: daysLeft < 0 ? "Expiré" : "Actif",
+      dateDebut: subscription.startedAt.toLocaleDateString("fr-FR"),
+      prochaineFacturation: subscription.expiresAt.toLocaleDateString("fr-FR"),
+      methodePaiement: "Orange Money",
+      numeroPaiement: "—",
+      quota: {
+        produits: {
+          utilise: productCount,
+          limite: planConfig.productLimit,
+          label: `${Math.min(100, Math.round((productCount / planConfig.productLimit) * 100))}% du quota utilisé`,
+        },
+        qrCodes: {
+          utilise: qrCount,
+          limite: planConfig.qrLimit,
+          label: `${Math.min(100, Math.round((qrCount / planConfig.qrLimit) * 100))}% du quota utilisé`,
+        },
+        statistiques: { utilise: Number.MAX_SAFE_INTEGER, limite: Number.MAX_SAFE_INTEGER, label: "Illimité" },
+      },
+      avantages: planAdvantages[subscription.plan] ?? planAdvantages.starter,
+    };
+  }
+
+  // Legacy fallback — no Subscription row (should be rare: ensureSubscription
+  // auto-provisions one on first cron run or admin touch).
   const plan = "Pro";
   const quotaTotal = 5000;
   const now = new Date();

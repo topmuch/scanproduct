@@ -16,6 +16,7 @@
 
 import { db } from "@/lib/db";
 import { createNotification } from "@/lib/notifications";
+import { renderInquiryEmail } from "@/lib/fabricant-emails";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -245,13 +246,34 @@ export async function createInquiry(data: CreateInquiryInput) {
 
   // Fire-and-forget notification. `.catch(() => undefined)` ensures any
   // failure is swallowed — the inquiry itself is already saved.
+  //
+  // Type "new_inquiry" (email ON by default) with a rich HTML email listing
+  // every detail the requester provided — the fabricant can reply straight
+  // from their inbox without opening the dashboard.
   createNotification({
     userId: product.fabricantId,
-    type: "system",
+    type: "new_inquiry",
     title: "Nouvelle demande de devis",
     message: `${data.requesterName} demande un devis pour ${product.name}`,
     severity: "info",
     data: { inquiryId: inquiry.id, productId: product.id },
+    emailSubject: `💬 VerifScan — nouvelle demande de devis pour ${product.name}`,
+    emailHtml: renderInquiryEmail({
+      inquiryId: inquiry.id,
+      productName: product.name,
+      productId: product.id,
+      requesterName: data.requesterName.trim(),
+      requesterCompany: data.requesterCompany?.trim() || null,
+      requesterEmail: data.requesterEmail.trim(),
+      requesterPhone: data.requesterPhone?.trim() || null,
+      requesterCountry: data.requesterCountry?.trim() || null,
+      requesterCity: data.requesterCity?.trim() || null,
+      message: data.message.trim(),
+      quantity: typeof data.quantity === "number" ? data.quantity : null,
+      targetPrice: data.targetPrice?.trim() || null,
+      deliveryDelay: data.deliveryDelay?.trim() || null,
+      createdAt: inquiry.createdAt,
+    }),
   }).catch(() => undefined);
 
   return inquiry;

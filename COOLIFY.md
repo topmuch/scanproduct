@@ -83,17 +83,20 @@ pour référence) :
 
 ### ⏰ Tâches planifiées (notifications emails fabricants)
 
-Les emails automatiques (rapport hebdo scans + alertes péremption) sont
-déclenchés par des appels HTTP protégés par `CRON_SECRET`. Dans Coolify :
-**Project → Ressource → Scheduled Tasks → + Add** :
+Les emails automatiques (rapport hebdo, rapport mensuel, alertes péremption,
+fin d'abonnement) sont déclenchés par des appels HTTP protégés par
+`CRON_SECRET`. Dans Coolify : **Project → Ressource → Scheduled Tasks → + Add** :
 
 | Tâche | Commande | Fréquence |
 |---|---|---|
 | Rapport hebdo | `curl -fsS "http://scanproduct:3000/api/cron/weekly-digest?secret=$CRON_SECRET"` | Lundi 08:00 (`0 8 * * 1`) |
+| Rapport mensuel | `curl -fsS "http://scanproduct:3000/api/cron/monthly-report?secret=$CRON_SECRET"` | 1er du mois 08:00 (`0 8 1 * *`) |
 | Alertes péremption | `curl -fsS "http://scanproduct:3000/api/cron/expiry-alerts?secret=$CRON_SECRET"` | Tous les jours 08:00 (`0 8 * * *`) |
+| Fin d'abonnement | `curl -fsS "http://scanproduct:3000/api/cron/subscription-alerts?secret=$CRON_SECRET"` | Tous les jours 08:15 (`15 8 * * *`) |
 
-> Les jobs sont idempotents : un digest max par semaine et par fabricant, une
-> alerte péremption max par jour et par fabricant — un cron qui tourne deux
+> Les jobs sont idempotents : un digest max par semaine, un rapport mensuel
+> max par mois, une alerte péremption max par jour et une alerte abonnement
+> max par palier (J-7 / J-3 / expiré) — un cron qui tourne deux
 > fois ne double jamais l'envoi.
 
 ---

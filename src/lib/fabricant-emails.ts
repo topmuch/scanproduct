@@ -688,3 +688,419 @@ export async function runExpiryAlertsJob(): Promise<JobResult> {
 
   return result;
 }
+
+// ---------------------------------------------------------------------------
+// New quote inquiry ("demande de devis") — email template
+// ---------------------------------------------------------------------------
+
+export interface InquiryEmailData {
+  inquiryId: string;
+  productName: string;
+  productId: string;
+  requesterName: string;
+  requesterCompany?: string | null;
+  requesterEmail: string;
+  requesterPhone?: string | null;
+  requesterCountry?: string | null;
+  requesterCity?: string | null;
+  message: string;
+  quantity?: number | null;
+  targetPrice?: string | null;
+  deliveryDelay?: string | null;
+  createdAt: Date;
+}
+
+/**
+ * Rich HTML email shown to the fabricant when a distributor/consumer submits
+ * a "demande de devis" (marketplace inquiry). Lists every detail the
+ * requester provided so the fabricant can reply without opening the dashboard.
+ */
+export function renderInquiryEmail(inquiry: InquiryEmailData): string {
+  const contactRows: string[][] = [
+    ["Nom", escapeHtml(inquiry.requesterName)],
+  ];
+  if (inquiry.requesterCompany) {
+    contactRows.push(["Société", escapeHtml(inquiry.requesterCompany)]);
+  }
+  contactRows.push(["Email", `<a href="mailto:${escapeHtml(inquiry.requesterEmail)}" style="color:#2563EB;text-decoration:none;">${escapeHtml(inquiry.requesterEmail)}</a>`]);
+  if (inquiry.requesterPhone) {
+    contactRows.push(["Téléphone", escapeHtml(inquiry.requesterPhone)]);
+  }
+  if (inquiry.requesterCity || inquiry.requesterCountry) {
+    const place = [inquiry.requesterCity, inquiry.requesterCountry]
+      .filter(Boolean)
+      .join(", ");
+    contactRows.push(["Localisation", escapeHtml(place)]);
+  }
+  if (typeof inquiry.quantity === "number" && inquiry.quantity > 0) {
+    contactRows.push(["Quantité", `<strong>${inquiry.quantity}</strong>`]);
+  }
+  if (inquiry.targetPrice) {
+    contactRows.push(["Prix cible", escapeHtml(inquiry.targetPrice)]);
+  }
+  if (inquiry.deliveryDelay) {
+    contactRows.push(["Délai souhaité", escapeHtml(inquiry.deliveryDelay)]);
+  }
+
+  let body = `<p style="margin:0 0 16px 0;">Nouvelle demande de devis re&ccedil;ue le <strong>${fmtDate(inquiry.createdAt)}</strong> pour votre produit <strong>${escapeHtml(inquiry.productName)}</strong>.</p>`;
+
+  body += `<div style="font-size:14px;font-weight:bold;color:#111827;margin:18px 0 2px 0;">&#128100; Coordonn&eacute;es du demandeur</div>`;
+  body += dataTable(["Champ", "Détail"], contactRows);
+
+  body += `<div style="font-size:14px;font-weight:bold;color:#111827;margin:22px 0 2px 0;">&#128172; Message</div>`;
+  body += `<div style="background:#F9FAFB;border-left:3px solid #2563EB;border-radius:0 8px 8px 0;padding:12px 14px;font-size:13px;color:#374151;line-height:1.6;white-space:pre-line;">${escapeHtml(inquiry.message)}</div>`;
+
+  body += `<div style="background:#ECFDF5;border-radius:8px;padding:12px 14px;margin-top:18px;font-size:12px;color:#065F46;">💡 Répondez rapidement : une réponse sous 48 h augmente nettement vos chances de conclure la vente.</div>`;
+
+  return emailShell("&#128179; Nouvelle demande de devis", "#2563EB", body);
+}
+
+// ---------------------------------------------------------------------------
+// Monthly report — aggregation
+// ---------------------------------------------------------------------------
+
+/** "YYYY-MM" key for monthly idempotency (month being reported on). */
+function monthKeyOf(d: Date): string {
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+}
+
+export interface MonthlyPerProductRow {
+  productName: string;
+  productId: string;
+  scans: number;
+}
+
+export interface MonthlyReportStats {
+  fabricantId: string;
+  fabricantName: string;
+  monthKey: string;
+  periodLabel: string;
+  // Activity
+  lotsGenerated: number;
+  totalScans: number;
+  previousScans: number;
+  deltaPct: number | null;
+  activeProducts: number;
+  activeLots: number;
+  // Scans per product
+  perProduct: MonthlyPerProductRow[];
+  // Marketplace
+  inquiriesCount: number;
+  newInquiriesPending: number;
+  // Expiry
+  expiringSoon: DigestExpiringLot[];
+  expiredInMonth: DigestExpiringLot[];
+}
+
+export async function aggregateMonthlyStats(
+  fabricantId: string,
+): Promise<MonthlyReportStats | null> {
+  const fabricant = await db.user.findUnique({
+    where: { id: fabricantId },
+    select: { id: true, name: true, companyName: true, role: true, status: true },
+  });
+  if (!fabricant || fabricant.status !== "ACTIVE") return null;
+
+  const now = new Date();
+  // Reported period = previous calendar month.
+  const monthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1, 0, 0, 0, 0);
+  const monthEnd = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0); // exclusive
+  const prevMonthStart = new Date(now.getFullYear(), now.getMonth() - 2, 1, 0, 0, 0, 0);
+  const monthKey = monthKeyOf(monthStart);
+  const monthLabel = new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric" }).format(monthStart);
+  const periodLabel = monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1);
+
+  const lots = await db.lot.findMany({
+    where: { fabricantId },
+    select: {
+      id: true,
+      reference: true,
+      lotNumber: true,
+      productId: true,
+      expiryDate: true,
+      status: true,
+      createdAt: true,
+      product: { select: { id: true, name: true } },
+    },
+  });
+  const lotIds = lots.map((l) => l.id);
+  const productNameByLot = new Map(lots.map((l) => [l.id, l.product?.name ?? "Produit"]));
+  const productNameById = new Map(lots.map((l) => [l.productId, l.product?.name ?? "Produit"]));
+
+  const [
+    lotsGenerated,
+    totalScans,
+    previousScans,
+    perLot,
+    inquiriesCount,
+  ] = await Promise.all([
+    db.lot.count({
+      where: { fabricantId, createdAt: { gte: monthStart, lt: monthEnd } },
+    }),
+    lotIds.length
+      ? db.scan.count({
+          where: { lotId: { in: lotIds }, scannedAt: { gte: monthStart, lt: monthEnd } },
+        })
+      : Promise.resolve(0),
+    lotIds.length
+      ? db.scan.count({
+          where: {
+            lotId: { in: lotIds },
+            scannedAt: { gte: prevMonthStart, lt: monthStart },
+          },
+        })
+      : Promise.resolve(0),
+    lotIds.length
+      ? db.scan.groupBy({
+          by: ["lotId"],
+          where: { lotId: { in: lotIds }, scannedAt: { gte: monthStart, lt: monthEnd } },
+          _count: { lotId: true },
+          orderBy: { _count: { lotId: "desc" } },
+        })
+      : Promise.resolve([] as Array<{ lotId: string; _count: { lotId: number } }>),
+    db.marketplaceInquiry.count({
+      where: { fabricantId, createdAt: { gte: monthStart, lt: monthEnd } },
+    }),
+  ]);
+
+  const newInquiriesPending = await db.marketplaceInquiry.count({
+    where: { fabricantId, status: "pending" },
+  });
+
+  const deltaPct =
+    previousScans === 0
+      ? totalScans > 0
+        ? null
+        : 0
+      : Math.round(((totalScans - previousScans) / previousScans) * 100);
+
+  // --- Scans per product (top 10) -------------------------------------------
+  const perProductMap = new Map<string, number>();
+  for (const row of perLot) {
+    const pid = lots.find((l) => l.id === row.lotId)?.productId;
+    if (!pid) continue;
+    perProductMap.set(pid, (perProductMap.get(pid) ?? 0) + row._count.lotId);
+  }
+  const perProduct: MonthlyPerProductRow[] = [...perProductMap.entries()]
+    .map(([productId, scans]) => ({
+      productId,
+      productName: productNameById.get(productId) ?? "Produit",
+      scans,
+    }))
+    .sort((a, b) => b.scans - a.scans)
+    .slice(0, 10);
+
+  // --- Expiry ----------------------------------------------------------------
+  const soonLimit = new Date(now.getTime() + EXPIRY_WINDOW_DAYS * DAY_MS);
+  const expiringSoon: DigestExpiringLot[] = lots
+    .filter(
+      (l) =>
+        l.status === "ACTIVE" &&
+        l.expiryDate &&
+        l.expiryDate > now &&
+        l.expiryDate <= soonLimit,
+    )
+    .map((l) => ({
+      lotId: l.id,
+      lotLabel: l.lotNumber ?? l.reference ?? "—",
+      productName: productNameByLot.get(l.id) ?? "Produit",
+      expiryDate: l.expiryDate as Date,
+      daysLeft: Math.ceil((l.expiryDate!.getTime() - now.getTime()) / DAY_MS),
+    }))
+    .sort((a, b) => a.daysLeft - b.daysLeft)
+    .slice(0, 10);
+
+  const expiredInMonth: DigestExpiringLot[] = lots
+    .filter(
+      (l) =>
+        l.expiryDate &&
+        l.expiryDate >= monthStart &&
+        l.expiryDate < monthEnd,
+    )
+    .map((l) => ({
+      lotId: l.id,
+      lotLabel: l.lotNumber ?? l.reference ?? "—",
+      productName: productNameByLot.get(l.id) ?? "Produit",
+      expiryDate: l.expiryDate as Date,
+      daysLeft: 0,
+    }))
+    .slice(0, 10);
+
+  const activeLots = lots.filter((l) => l.status === "ACTIVE").length;
+  const activeProducts = new Set(
+    lots.filter((l) => l.status === "ACTIVE").map((l) => l.productId),
+  ).size;
+
+  return {
+    fabricantId,
+    fabricantName: fabricant.companyName ?? fabricant.name ?? "Fabricant",
+    monthKey,
+    periodLabel,
+    lotsGenerated,
+    totalScans,
+    previousScans,
+    deltaPct,
+    activeProducts,
+    activeLots,
+    perProduct,
+    inquiriesCount,
+    newInquiriesPending,
+    expiringSoon,
+    expiredInMonth,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Monthly report — email template
+// ---------------------------------------------------------------------------
+
+export function renderMonthlyReportEmail(stats: MonthlyReportStats): string {
+  const delta = stats.deltaPct;
+  const deltaText =
+    delta === null
+      ? stats.totalScans > 0
+        ? "Nouveau !"
+        : "—"
+      : delta > 0
+        ? `+${delta} %`
+        : `${delta} %`;
+  const deltaColor =
+    delta === null ? "#10B981" : delta >= 0 ? "#10B981" : "#EF4444";
+
+  let body = `<p style="margin:0 0 16px 0;">Bonjour <strong>${escapeHtml(stats.fabricantName)}</strong>, voici le bilan complet de votre activit&eacute; VerifScan pour <strong>${escapeHtml(stats.periodLabel)}</strong>.</p>`;
+
+  body += kpiRow([
+    { value: String(stats.totalScans), label: "Scans du mois", color: "#2563EB" },
+    { value: deltaText, label: "vs mois pr&eacute;c.", color: deltaColor },
+    { value: String(stats.lotsGenerated), label: "Lots g&eacute;n&eacute;r&eacute;s", color: "#10B981" },
+    { value: String(stats.inquiriesCount), label: "Demandes de devis", color: "#8B5CF6" },
+  ]);
+
+  if (stats.perProduct.length > 0) {
+    body += `<div style="font-size:14px;font-weight:bold;color:#111827;margin:22px 0 2px 0;">&#128202; Scans par produit</div>`;
+    body += dataTable(
+      ["Produit", "Scans", "Part"],
+      stats.perProduct.map((p) => {
+        const share =
+          stats.totalScans > 0
+            ? Math.round((p.scans / stats.totalScans) * 100)
+            : 0;
+        return [
+          escapeHtml(p.productName),
+          `<strong style="color:#2563EB;">${p.scans}</strong>`,
+          `${share} %`,
+        ];
+      }),
+    );
+  } else {
+    body += `<div style="background:#EFF6FF;border-radius:8px;padding:14px;margin-top:18px;font-size:13px;color:#1E40AF;">Aucun scan ce mois-ci. Pensez &agrave; promouvoir vos QR codes en boutique et sur vos emballages !</div>`;
+  }
+
+  body += `<div style="font-size:14px;font-weight:bold;color:#111827;margin:22px 0 2px 0;">&#128179; Demandes de devis</div>`;
+  body += `<div style="background:#F9FAFB;border-radius:8px;padding:12px 14px;font-size:13px;color:#374151;">${stats.inquiriesCount > 0 ? `<strong>${stats.inquiriesCount}</strong> nouvelle${stats.inquiriesCount > 1 ? "s" : ""} demande${stats.inquiriesCount > 1 ? "s" : ""} de devis re&ccedil;ue${stats.inquiriesCount > 1 ? "s" : ""} ce mois-ci` : "Aucune demande de devis ce mois-ci"}${stats.newInquiriesPending > 0 ? ` &mdash; <strong style="color:#F59E0B;">${stats.newInquiriesPending} en attente de r&eacute;ponse</strong>` : ""}.</div>`;
+
+  if (stats.expiringSoon.length > 0) {
+    body += `<div style="font-size:14px;font-weight:bold;color:#111827;margin:22px 0 2px 0;">&#9203; Lots expirant sous ${EXPIRY_WINDOW_DAYS} jours</div>`;
+    body += dataTable(
+      ["Produit", "Lot", "DLC", "Reste"],
+      stats.expiringSoon.map((l) => {
+        const color =
+          l.daysLeft <= 7 ? "#EF4444" : l.daysLeft <= 15 ? "#F59E0B" : "#111827";
+        return [
+          escapeHtml(l.productName),
+          escapeHtml(l.lotLabel),
+          shortDateFmt.format(l.expiryDate),
+          `<strong style="color:${color};">${l.daysLeft} j</strong>`,
+        ];
+      }),
+    );
+  }
+
+  if (stats.expiredInMonth.length > 0) {
+    body += `<div style="font-size:14px;font-weight:bold;color:#111827;margin:22px 0 2px 0;">&#10060; Expir&eacute;s ce mois-ci (${stats.expiredInMonth.length})</div>`;
+    body += dataTable(
+      ["Produit", "Lot", "DLC"],
+      stats.expiredInMonth.map((l) => [
+        escapeHtml(l.productName),
+        escapeHtml(l.lotLabel),
+        shortDateFmt.format(l.expiryDate),
+      ]),
+    );
+  }
+
+  body += `<div style="background:#F9FAFB;border-radius:8px;padding:12px 14px;margin-top:20px;font-size:12px;color:#6B7280;">Catalogue : <strong>${stats.activeProducts}</strong> produit(s) actif(s) &middot; <strong>${stats.activeLots}</strong> lot(s) actif(s).</div>`;
+
+  return emailShell("&#128202; Rapport mensuel", "#10B981", body);
+}
+
+// ---------------------------------------------------------------------------
+// Monthly report — job runner
+// ---------------------------------------------------------------------------
+
+export async function runMonthlyReportJob(): Promise<JobResult> {
+  const result: JobResult = { processed: 0, sent: 0, skipped: 0, errors: [] };
+
+  let fabricants: Array<{ id: string }> = [];
+  try {
+    fabricants = await db.user.findMany({
+      where: { role: "FABRICANT", status: "ACTIVE" },
+      select: { id: true },
+    });
+  } catch (err) {
+    result.errors.push(`Listing fabricants: ${String(err)}`);
+    return result;
+  }
+
+  for (const f of fabricants) {
+    result.processed += 1;
+    try {
+      const stats = await aggregateMonthlyStats(f.id);
+      if (!stats) {
+        result.skipped += 1;
+        continue;
+      }
+
+      // Idempotency: one report per month key (data.monthKey match).
+      const already = await db.notification.findFirst({
+        where: {
+          userId: f.id,
+          type: "monthly_report",
+          data: { contains: `"monthKey":"${stats.monthKey}"` },
+        },
+        select: { id: true },
+      });
+      if (already) {
+        result.skipped += 1;
+        continue;
+      }
+
+      const title = `📊 Rapport mensuel — ${stats.periodLabel}`;
+      const messageParts = [
+        `${stats.totalScans} scans · ${stats.lotsGenerated} lot(s) généré(s) · ${stats.inquiriesCount} demande(s) de devis.`,
+      ];
+      if (stats.expiringSoon.length > 0) {
+        messageParts.push(`⚠️ ${stats.expiringSoon.length} lot(s) expirent sous ${EXPIRY_WINDOW_DAYS} jours.`);
+      }
+      if (stats.expiredInMonth.length > 0) {
+        messageParts.push(`❌ ${stats.expiredInMonth.length} lot(s) expiré(s) ce mois-ci.`);
+      }
+
+      await createNotification({
+        userId: f.id,
+        type: "monthly_report",
+        title,
+        message: messageParts.join(" "),
+        severity: "info",
+        data: { monthKey: stats.monthKey, periodLabel: stats.periodLabel },
+        emailSubject: `📊 VerifScan — votre rapport mensuel (${stats.periodLabel})`,
+        emailHtml: renderMonthlyReportEmail(stats),
+      });
+
+      result.sent += 1;
+    } catch (err) {
+      result.errors.push(`fabricant ${f.id}: ${String(err)}`);
+    }
+  }
+
+  return result;
+}
