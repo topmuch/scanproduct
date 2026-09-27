@@ -16,6 +16,7 @@ import {
   Loader2,
   Factory,
   CheckCircle2,
+  Sparkles,
 } from "lucide-react";
 
 const ERROR_MESSAGES: Record<string, string> = {
@@ -28,8 +29,8 @@ const ERROR_MESSAGES: Record<string, string> = {
   // reverse proxy. Happens on Coolify when env vars aren't set correctly.
   Configuration:
     "Erreur de configuration serveur (NEXTAUTH_SECRET). Contactez l'administrateur.",
-  // CSRF token mismatch — the csrf cookie wasn't sent back. Happens behind
-  // a proxy or after a server restart (csrf token rotated).
+  // CSRF token mismatch — the csrf cookie wasn't sent back. Happens behind a
+  // proxy or after a server restart (csrf token rotated).
   CallbackVerifyError:
     "Session expirée ou jeton invalide. Rafraîchissez la page et réessayez.",
   OAuthCallback: "La connexion via le fournisseur a échoué. Réessayez.",
@@ -48,11 +49,64 @@ const ERROR_MESSAGES: Record<string, string> = {
 const NETWORK_ERROR =
   "Serveur indisponible. Le serveur est peut-être en cours de redémarrage — réessayez dans quelques secondes.";
 
+// ============================================================================
+// Espaces de connexion — séparation visuelle Fabricant / SuperAdmin
+// ============================================================================
+type Space = "fabricant" | "admin";
+
+interface SpaceInfo {
+  id: Space;
+  label: string;
+  tagline: string;
+  subtitle: string;
+  icon: React.ComponentType<{ className?: string }>;
+  // Card selected state
+  activeCard: string;
+  activeIcon: string;
+  // Demo account
+  demo: { email: string; password: string; name: string };
+}
+
+const SPACES: Record<Space, SpaceInfo> = {
+  fabricant: {
+    id: "fabricant",
+    label: "Espace Fabricant",
+    tagline: "Lots, QR codes & scans",
+    subtitle: "Accédez à votre tableau de bord fabricant",
+    icon: Factory,
+    activeCard: "border-[#10B981] bg-[#ECFDF5] ring-2 ring-[#10B981]/20",
+    activeIcon: "bg-[#10B981] text-white shadow-sm",
+    demo: {
+      email: "sarine@biocosmetique.sn",
+      password: "Demo1234!",
+      name: "Fabricant",
+    },
+  },
+  admin: {
+    id: "admin",
+    label: "Espace SuperAdmin",
+    tagline: "Console d'administration",
+    subtitle: "Accédez à la console d'administration",
+    icon: ShieldCheck,
+    activeCard: "border-[#022150] bg-[#F0F4F9] ring-2 ring-[#022150]/20",
+    activeIcon: "bg-[#022150] text-white shadow-sm",
+    demo: {
+      email: "admin@verifscan.sn",
+      password: "Admin123!2025",
+      name: "SuperAdmin",
+    },
+  },
+};
+
 function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
   const callbackUrl = params.get("callbackUrl") || "";
   const errorParam = params.get("error");
+  // Preselect the space via ?space=admin (deep link from the site footer, etc.)
+  const [space, setSpace] = useState<Space>(
+    params.get("space") === "admin" ? "admin" : "fabricant"
+  );
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -60,6 +114,9 @@ function LoginForm() {
   const [error, setError] = useState<string | null>(
     errorParam ? ERROR_MESSAGES[errorParam] ?? ERROR_MESSAGES.default : null
   );
+
+  const active = SPACES[space];
+  const ActiveIcon = active.icon;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -112,7 +169,9 @@ function LoginForm() {
       return;
     }
 
-    // Fetch the session to learn the role and route accordingly
+    // Fetch the session to learn the role and route accordingly. The server
+    // role always wins: the space selector is a visual/UX separator, not an
+    // access-control mechanism.
     try {
       const r = await fetch("/api/auth/session");
       const session = await r.json();
@@ -136,16 +195,73 @@ function LoginForm() {
         transition={{ duration: 0.4 }}
         className="rounded-2xl border border-[#E5E7EB] bg-white p-8 shadow-[0_8px_32px_rgba(2, 33, 80,0.06)]"
       >
-        <div className="mb-6 flex flex-col items-center text-center">
-          <div className="mb-3 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-[#022150] to-[#10B981] text-white shadow-md">
-            <ShieldCheck className="h-6 w-6" />
+        {/* Header — s'adapte à l'espace sélectionné */}
+        <motion.div
+          key={space}
+          initial={{ opacity: 0, y: 4 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.25 }}
+          className="mb-5 flex flex-col items-center text-center"
+        >
+          <div
+            className={`mb-3 inline-flex h-12 w-12 items-center justify-center rounded-xl text-white shadow-md transition-colors ${
+              space === "admin"
+                ? "bg-gradient-to-br from-[#022150] to-[#0A2B5F]"
+                : "bg-gradient-to-br from-[#022150] to-[#10B981]"
+            }`}
+          >
+            <ActiveIcon className="h-6 w-6" />
           </div>
           <h1 className="font-display text-2xl font-bold text-[#111827]">
             Connexion
           </h1>
-          <p className="mt-1 text-sm text-[#6B7280]">
-            Accédez à votre espace VerifScan
-          </p>
+          <p className="mt-1 text-sm text-[#6B7280]">{active.subtitle}</p>
+        </motion.div>
+
+        {/* Sélecteur d'espace — deux tableaux de bord distincts */}
+        <div
+          className="mb-5 grid grid-cols-2 gap-3"
+          role="tablist"
+          aria-label="Choisir l'espace de connexion"
+        >
+          {(Object.values(SPACES) as SpaceInfo[]).map((s) => {
+            const isActive = space === s.id;
+            const Icon = s.icon;
+            return (
+              <button
+                key={s.id}
+                type="button"
+                role="tab"
+                aria-selected={isActive}
+                onClick={() => setSpace(s.id)}
+                className={`flex flex-col items-center gap-1.5 rounded-xl border px-3 py-3.5 text-center transition-all ${
+                  isActive
+                    ? s.activeCard
+                    : "border-[#E5E7EB] bg-[#F9FAFB] hover:border-[#D1D5DB] hover:bg-white"
+                }`}
+              >
+                <span
+                  className={`inline-flex h-9 w-9 items-center justify-center rounded-lg border transition-colors ${
+                    isActive
+                      ? s.activeIcon
+                      : "border-[#E5E7EB] bg-white text-[#9CA3AF]"
+                  }`}
+                >
+                  <Icon className="h-5 w-5" />
+                </span>
+                <span
+                  className={`text-sm font-semibold ${
+                    isActive ? "text-[#111827]" : "text-[#6B7280]"
+                  }`}
+                >
+                  {s.label}
+                </span>
+                <span className="text-[11px] leading-tight text-[#9CA3AF]">
+                  {s.tagline}
+                </span>
+              </button>
+            );
+          })}
         </div>
 
         {error && (
@@ -231,50 +347,57 @@ function LoginForm() {
           </button>
         </form>
 
-        <div className="mt-6 text-center text-sm text-[#6B7280]">
-          Pas encore partenaire ?{" "}
-          <Link
-            href="/register"
-            className="font-semibold text-[#022150] hover:underline"
-          >
-            Créer un compte
-          </Link>
-        </div>
+        {space === "fabricant" && (
+          <div className="mt-6 text-center text-sm text-[#6B7280]">
+            Pas encore partenaire ?{" "}
+            <Link
+              href="/register"
+              className="font-semibold text-[#022150] hover:underline"
+            >
+              Créer un compte
+            </Link>
+          </div>
+        )}
 
+        {/* Compte de démonstration — celui de l'espace actif uniquement */}
         <div className="mt-6 border-t border-[#F3F4F6] pt-5">
           <p className="mb-2 text-center text-xs font-medium uppercase tracking-wide text-[#9CA3AF]">
-            Comptes de démonstration
+            Compte de démonstration — {active.label}
           </p>
-          <div className="grid grid-cols-2 gap-2 text-xs">
-            <button
-              type="button"
-              onClick={() => {
-                setEmail("admin@verifscan.sn");
-                setPassword("Admin123!2025");
-              }}
-              className="flex items-center gap-2 rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] px-3 py-2 text-left transition-colors hover:border-[#022150] hover:bg-[#F0F4F9]"
+          <button
+            type="button"
+            onClick={() => {
+              setEmail(active.demo.email);
+              setPassword(active.demo.password);
+            }}
+            className={`flex w-full items-center gap-3 rounded-lg border px-3 py-2.5 text-left transition-colors ${
+              space === "admin"
+                ? "border-[#E5E7EB] bg-[#F9FAFB] hover:border-[#022150] hover:bg-[#F0F4F9]"
+                : "border-[#E5E7EB] bg-[#F9FAFB] hover:border-[#10B981] hover:bg-[#ECFDF5]"
+            }`}
+          >
+            <span
+              className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
+                space === "admin"
+                  ? "bg-[#022150]/10 text-[#022150]"
+                  : "bg-[#10B981]/10 text-[#10B981]"
+              }`}
             >
-              <ShieldCheck className="h-3.5 w-3.5 text-[#022150]" />
-              <div>
-                <p className="font-semibold text-[#111827]">SuperAdmin</p>
-                <p className="text-[#6B7280]">admin@verifscan.sn</p>
-              </div>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setEmail("sarine@biocosmetique.sn");
-                setPassword("Demo1234!");
-              }}
-              className="flex items-center gap-2 rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] px-3 py-2 text-left transition-colors hover:border-[#10B981] hover:bg-[#ECFDF5]"
-            >
-              <Factory className="h-3.5 w-3.5 text-[#10B981]" />
-              <div>
-                <p className="font-semibold text-[#111827]">Fabricant</p>
-                <p className="text-[#6B7280]">sarine@bio…</p>
-              </div>
-            </button>
-          </div>
+              <ActiveIcon className="h-4 w-4" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-semibold text-[#111827]">
+                {active.demo.name}
+              </span>
+              <span className="block truncate text-xs text-[#6B7280]">
+                {active.demo.email}
+              </span>
+            </span>
+            <span className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-[#022150]">
+              <Sparkles className="h-3.5 w-3.5" />
+              Remplir
+            </span>
+          </button>
         </div>
       </motion.div>
 
@@ -319,18 +442,31 @@ export default function LoginPage() {
               fabricants engagés dans la transparence.
             </p>
 
-            <ul className="mt-8 space-y-3">
-              {[
-                "Générez des QR codes uniques par produit",
-                "Suivez les scans en temps réel",
-                "Améliorez votre score de transparence",
-              ].map((feat) => (
-                <li key={feat} className="flex items-center gap-3 text-sm">
-                  <CheckCircle2 className="h-5 w-5 text-[#10B981]" />
-                  <span className="text-[#F0F9FF]">{feat}</span>
-                </li>
-              ))}
-            </ul>
+            {/* Deux espaces distincts */}
+            <div className="mt-8 grid max-w-md grid-cols-2 gap-3">
+              <div className="rounded-xl border border-white/15 bg-white/10 p-4 backdrop-blur-sm">
+                <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-[#10B981] text-white">
+                  <Factory className="h-4 w-4" />
+                </span>
+                <p className="mt-2.5 text-sm font-semibold">
+                  Espace Fabricant
+                </p>
+                <p className="mt-0.5 text-xs text-[#DCE7F2]">
+                  Produits, lots, QR codes et suivi des scans
+                </p>
+              </div>
+              <div className="rounded-xl border border-white/15 bg-white/10 p-4 backdrop-blur-sm">
+                <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-white text-[#022150]">
+                  <ShieldCheck className="h-4 w-4" />
+                </span>
+                <p className="mt-2.5 text-sm font-semibold">
+                  Espace SuperAdmin
+                </p>
+                <p className="mt-0.5 text-xs text-[#DCE7F2]">
+                  Utilisateurs, devis, abonnements et statistiques
+                </p>
+              </div>
+            </div>
           </div>
 
           <p className="text-xs text-[#DCE7F2]/70">
