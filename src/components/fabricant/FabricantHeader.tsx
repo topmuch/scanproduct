@@ -19,6 +19,7 @@ import {
   Info,
   MessageSquare,
   CreditCard,
+  CalendarClock,
   CheckCheck,
   Loader2,
 } from "lucide-react";
@@ -41,7 +42,8 @@ type NotificationType =
   | "weekly_report"
   | "system"
   | "ticket_update"
-  | "subscription";
+  | "subscription"
+  | "lot_expiring";
 
 type NotificationSeverity = "info" | "success" | "warning" | "critical";
 
@@ -74,6 +76,7 @@ const TYPE_ICON: Record<
   system: { Icon: Info, color: "#2563EB", bg: "#EFF6FF" },
   ticket_update: { Icon: MessageSquare, color: "#8B5CF6", bg: "#EDE9FE" },
   subscription: { Icon: CreditCard, color: "#2563EB", bg: "#EFF6FF" },
+  lot_expiring: { Icon: CalendarClock, color: "#F59E0B", bg: "#FEF3C7" },
 };
 
 // ---------------------------------------------------------------------------

@@ -64,6 +64,12 @@ pour référence) :
 | `NODE_ENV` | `production` | |
 | `PORT` | `3000` | |
 | `HOSTNAME` | `0.0.0.0` | |
+| `CRON_SECRET` | *(chaîne aléatoire)* | **OBLIGATOIRE pour les jobs emails** — protège `/api/cron/*`. Générer : `openssl rand -hex 24`. |
+| `SMTP_HOST` | `smtp.votrefournisseur.com` | **OBLIGATOIRE pour les emails** (digest hebdo, alertes péremption, rappels lots). Vide = emails désactivés (loggés en console). |
+| `SMTP_PORT` | `587` | 465 si SSL. |
+| `SMTP_USER` | `no-reply@verifscan.sn` | Identifiant SMTP. |
+| `SMTP_PASS` | `********` | Mot de passe SMTP. |
+| `SMTP_FROM` | `VerifScan <no-reply@verifscan.sn>` | Expéditeur affiché. |
 
 ### 🔑 Générer `NEXTAUTH_SECRET`
 
@@ -74,6 +80,21 @@ pour référence) :
 > ⚠️ **Ne perdez pas cette valeur.** Si elle change, toutes les sessions
 > utilisateurs existantes seront invalidées et les tokens JWT deviendront
 > invalides (erreurs 401 sur les routes API).
+
+### ⏰ Tâches planifiées (notifications emails fabricants)
+
+Les emails automatiques (rapport hebdo scans + alertes péremption) sont
+déclenchés par des appels HTTP protégés par `CRON_SECRET`. Dans Coolify :
+**Project → Ressource → Scheduled Tasks → + Add** :
+
+| Tâche | Commande | Fréquence |
+|---|---|---|
+| Rapport hebdo | `curl -fsS "http://scanproduct:3000/api/cron/weekly-digest?secret=$CRON_SECRET"` | Lundi 08:00 (`0 8 * * 1`) |
+| Alertes péremption | `curl -fsS "http://scanproduct:3000/api/cron/expiry-alerts?secret=$CRON_SECRET"` | Tous les jours 08:00 (`0 8 * * *`) |
+
+> Les jobs sont idempotents : un digest max par semaine et par fabricant, une
+> alerte péremption max par jour et par fabricant — un cron qui tourne deux
+> fois ne double jamais l'envoi.
 
 ---
 

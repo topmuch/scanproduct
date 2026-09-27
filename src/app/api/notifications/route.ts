@@ -25,6 +25,7 @@ const VALID_TYPES: NotificationType[] = [
   "system",
   "ticket_update",
   "subscription",
+  "lot_expiring",
 ];
 const VALID_SEVERITIES: NotificationSeverity[] = ["info", "success", "warning", "critical"];
 

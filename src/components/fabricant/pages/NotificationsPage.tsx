@@ -9,6 +9,7 @@ import {
   Info,
   MessageSquare,
   CreditCard,
+  CalendarClock,
   CheckCheck,
   Trash2,
   Bell,
@@ -42,7 +43,8 @@ type NotificationType =
   | "weekly_report"
   | "system"
   | "ticket_update"
-  | "subscription";
+  | "subscription"
+  | "lot_expiring";
 
 type NotificationSeverity = "info" | "success" | "warning" | "critical";
 
@@ -77,6 +79,7 @@ const TYPE_META: Record<
   system: { Icon: Info, color: "#2563EB", bg: "#EFF6FF", label: "Système" },
   ticket_update: { Icon: MessageSquare, color: "#8B5CF6", bg: "#EDE9FE", label: "Ticket" },
   subscription: { Icon: CreditCard, color: "#2563EB", bg: "#EFF6FF", label: "Abonnement" },
+  lot_expiring: { Icon: CalendarClock, color: "#F59E0B", bg: "#FEF3C7", label: "Péremption" },
 };
 
 const SEVERITY_META: Record<
@@ -89,7 +92,7 @@ const SEVERITY_META: Record<
   success: { bg: "#D1FAE5", text: "#065F46", label: "Succès" },
 };
 
-const ALERT_TYPES: NotificationType[] = ["lot_recall", "quota_warning", "quota_exceeded"];
+const ALERT_TYPES: NotificationType[] = ["lot_recall", "quota_warning", "quota_exceeded", "lot_expiring"];
 const SYSTEM_TYPES: NotificationType[] = ["system", "weekly_report"];
 
 const FILTER_OPTIONS: { value: FilterTab; label: string }[] = [
@@ -271,6 +274,7 @@ function PreferencesSummaryCard({
     system: "Système",
     ticket_update: "Mise à jour ticket",
     subscription: "Abonnement",
+    lot_expiring: "Alertes de péremption",
   };
 
   return (

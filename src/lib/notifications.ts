@@ -36,7 +36,8 @@ export type NotificationType =
   | "weekly_report"
   | "system"
   | "ticket_update"
-  | "subscription";
+  | "subscription"
+  | "lot_expiring";
 
 export type NotificationSeverity = "info" | "success" | "warning" | "critical";
 
@@ -65,6 +66,7 @@ export const DEFAULT_PREFS: Record<NotificationType, ChannelPrefs> = {
   system: { in_app: true, email: true, sms: false },
   ticket_update: { in_app: true, email: true, sms: false },
   subscription: { in_app: true, email: true, sms: false },
+  lot_expiring: { in_app: true, email: true, sms: false },
 };
 
 export interface UserPrefs {
@@ -205,6 +207,18 @@ export interface CreateNotificationInput {
   /** Stored as JSON on the Notification row (contextual payload). */
   data?: Record<string, unknown>;
   /**
+   * Custom email subject. Falls back to `title` when omitted.
+   * Used by rich jobs (weekly digest, expiry alerts) that send a
+   * multi-section HTML email instead of the generic mono-block template.
+   */
+  emailSubject?: string;
+  /**
+   * Custom email HTML body. Falls back to renderNotificationEmail(title,
+   * message, severity) when omitted. Still logged to EmailLog and still
+   * gated by the user's per-type email preferences.
+   */
+  emailHtml?: string;
+  /**
    * Override the default channels. If omitted, channels are derived from the
    * user's per-type prefs + master toggles. If provided, the final set is the
    * intersection of the requested channels and what the user allows.
@@ -287,10 +301,14 @@ export async function createNotification(
         // No email on file — silently skip (not a failure, just nothing to do).
         emailStatus = "skipped";
       } else {
-        const html = renderNotificationEmail(title, message, severity);
+        // Rich jobs (weekly digest, expiry alerts) pass their own multi-section
+        // HTML; everything else gets the generic mono-block template.
+        const html =
+          input.emailHtml ?? renderNotificationEmail(title, message, severity);
+        const subject = input.emailSubject ?? title;
         const result = await sendEmail({
           to,
-          subject: title,
+          subject,
           html,
           text: message,
           userId,
