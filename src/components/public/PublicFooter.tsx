@@ -7,7 +7,7 @@ import { Lock, Mail, Phone, MapPin, Facebook, Twitter, Linkedin, Instagram } fro
  */
 export function PublicFooter() {
   return (
-    <footer className="mt-auto bg-[#0F172A] text-white">
+    <footer className="mt-auto hidden bg-[#0F172A] text-white md:block">
       <div className="mx-auto max-w-[1400px] px-4 py-12 sm:px-6 lg:px-8">
         <div className="grid grid-cols-2 gap-8 md:grid-cols-4 lg:grid-cols-5">
           {/* Brand */}

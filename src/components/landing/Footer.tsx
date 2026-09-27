@@ -44,7 +44,7 @@ const SOCIALS = [
 
 export function Footer() {
   return (
-    <footer id="contact" className="bg-[#0F172A] text-white">
+    <footer id="contact" className="hidden bg-[#0F172A] text-white md:block">
       <div className="mx-auto max-w-[1400px] px-4 py-16 sm:px-6 lg:px-8">
         <div className="grid grid-cols-2 gap-10 md:grid-cols-3 lg:grid-cols-5">
           {/* Column 1: brand */}

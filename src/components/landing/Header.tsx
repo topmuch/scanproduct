@@ -41,6 +41,11 @@ export function Header() {
   };
 
   return (
+    <>
+    {/* NOTE : le drawer mobile est volontairement rendu HORS du <header>.
+        Le backdrop-blur-xl du header crée un "containing block" pour les
+        éléments position:fixed enfants, ce qui réduisait le drawer et son
+        overlay à la hauteur de la barre (80px) au lieu du plein écran. */}
     <header
       className={cn(
         "fixed inset-x-0 top-0 z-50 transition-all duration-300",
@@ -111,9 +116,10 @@ export function Header() {
           <Menu className="h-6 w-6" />
         </button>
       </div>
+    </header>
 
-      {/* Mobile drawer */}
-      <AnimatePresence>
+    {/* Mobile drawer (hors header — voir note ci-dessus) */}
+    <AnimatePresence>
         {mobileOpen && (
           <>
             <motion.div
@@ -186,6 +192,6 @@ export function Header() {
           </>
         )}
       </AnimatePresence>
-    </header>
+    </>
   );
 }
