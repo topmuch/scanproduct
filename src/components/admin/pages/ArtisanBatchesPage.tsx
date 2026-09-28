@@ -11,6 +11,7 @@ import {
   Package,
   ChevronDown,
   ChevronUp,
+  FlaskConical,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -40,6 +41,7 @@ type PackItem = {
   status: string;
   soldTo: string | null;
   soldAt: string | null;
+  artisanPhone?: string | null;
   lotsCount: number;
 };
 
@@ -90,10 +92,15 @@ export function ArtisanBatchesPage() {
     fetchBatches();
   }, [fetchBatches]);
 
-  const createBatch = async () => {
-    if (packSize < 1 || totalQuantity < packSize || totalQuantity % packSize !== 0) {
+  const createBatch = async (
+    override?: { totalQuantity: number; packSize: number; pricePerPack: number }
+  ) => {
+    const qty = override?.totalQuantity ?? totalQuantity;
+    const size = override?.packSize ?? packSize;
+    const price = override?.pricePerPack ?? pricePerPack;
+    if (size < 1 || qty < size || qty % size !== 0) {
       toast.error(
-        `Le total (${totalQuantity}) doit être divisible par la taille du pack (${packSize})`
+        `Le total (${qty}) doit être divisible par la taille du pack (${size})`
       );
       return;
     }
@@ -102,10 +109,17 @@ export function ArtisanBatchesPage() {
       const res = await fetch("/api/admin/batches", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ totalQuantity, packSize, pricePerPack }),
+        body: JSON.stringify({ totalQuantity: qty, packSize: size, pricePerPack: price }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+      if (!res.ok) {
+        // Le détail serveur aide à diagnostiquer un 500 en prod (ex. table manquante)
+        throw new Error(
+          data.details
+            ? `${data.error || `HTTP ${res.status}`} — ${data.details}`
+            : data.error || `HTTP ${res.status}`
+        );
+      }
       toast.success(
         `Batch créé : ${data.batch.totalQuantity} QR codes dans ${data.batch.numberOfPacks} packs`
       );
@@ -116,6 +130,8 @@ export function ArtisanBatchesPage() {
       setCreating(false);
     }
   };
+
+  const createTestBatch = () => createBatch({ totalQuantity: 1, packSize: 1, pricePerPack: 0 });
 
   const downloadPDF = (batchId: string) => {
     window.open(`/api/admin/print-batch/${batchId}`, "_blank");
@@ -154,7 +170,7 @@ export function ArtisanBatchesPage() {
             </label>
             <input
               type="number"
-              min={2}
+              min={1}
               max={5000}
               value={totalQuantity}
               onChange={(e) => setTotalQuantity(parseInt(e.target.value) || 0)}
@@ -187,10 +203,19 @@ export function ArtisanBatchesPage() {
               className="w-full rounded-lg border border-[#E5E7EB] px-3 py-2 text-sm outline-none focus:border-[#022150]"
             />
           </div>
-          <div className="flex items-end">
-            <Button onClick={createBatch} disabled={creating} className="w-full">
+          <div className="flex items-end gap-2">
+            <Button onClick={() => createBatch()} disabled={creating} className="flex-1">
               <Plus className="mr-1 h-4 w-4" />
               {creating ? "Génération…" : "Générer le batch"}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={createTestBatch}
+              disabled={creating}
+              title="Crée un batch minimal : 1 QR produit + son QR Code Maître, prix 0 — pour valider le workflow de bout en bout"
+            >
+              <FlaskConical className="mr-1 h-4 w-4" />
+              1 QR de test
             </Button>
           </div>
         </div>
@@ -200,7 +225,7 @@ export function ArtisanBatchesPage() {
               <>
                 Cela créera <strong>{numberOfPacks} packs</strong> de{" "}
                 <strong>{packSize} QR codes</strong> + {numberOfPacks} QR Codes
-                Maîtres. Astuce : pour un test, essayez total 20 / pack 10.
+                Maîtres. Pour valider le workflow, cliquez sur « 1 QR de test ».
               </>
             ) : (
               <span className="text-red-600">

@@ -125,6 +125,25 @@ if [ -f "$DB_FILE" ] && command -v sqlite3 >/dev/null 2>&1; then
   fi
 fi
 
+# ── 3b. Vérifier les tables du système artisanal (Batch/Pack/PreActivatedLot/ArtisanScan)
+# Si prisma db push a échoué silencieusement, ces tables manquent et CHAQUE
+# génération de batch artisanal renvoie HTTP 500. On re-tente le push une fois.
+if [ -f "$DB_FILE" ] && command -v sqlite3 >/dev/null 2>&1; then
+  BATCH_EXISTS=$(sqlite3 "$DB_FILE" "SELECT name FROM sqlite_master WHERE type='table' AND name='Batch';" 2>/dev/null)
+  if [ -z "$BATCH_EXISTS" ]; then
+    echo "=== Table 'Batch' absente — re-run de prisma db push ==="
+    yes y | bunx prisma db push --skip-generate --accept-data-loss 2>&1 || true
+    BATCH_EXISTS=$(sqlite3 "$DB_FILE" "SELECT name FROM sqlite_master WHERE type='table' AND name='Batch';" 2>/dev/null)
+    if [ -z "$BATCH_EXISTS" ]; then
+      echo "CRITICAL: la table Batch n'a pas pu être créée — la génération de batches artisanaux échouera (HTTP 500)."
+    else
+      echo "  ✓ Table Batch créée"
+    fi
+  else
+    echo "=== Tables artisanales OK (Batch présente) ==="
+  fi
+fi
+
 # ── 4. VERIFY the schema ──────────────────────────────────────────────────
 echo "=== Verifying schema ==="
 if [ ! -f "$DB_FILE" ]; then

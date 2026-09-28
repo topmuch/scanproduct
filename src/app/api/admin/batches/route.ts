@@ -19,7 +19,8 @@ import { requireSuperAdmin } from "@/lib/admin-guard";
  */
 
 const CreateBatchSchema = z.object({
-  totalQuantity: z.number().int().min(2).max(5000).default(1000),
+  // min 1 → permet un batch de TEST (1 seul QR produit + son QR Maître).
+  totalQuantity: z.number().int().min(1).max(5000).default(1000),
   packSize: z.number().int().min(1).max(500).default(200),
   pricePerPack: z.number().int().min(0).max(10_000_000).default(70000),
 });
@@ -81,6 +82,7 @@ export async function GET() {
           status: p.status,
           soldTo: p.soldTo,
           soldAt: p.soldAt,
+          artisanPhone: p.artisanPhone,
           lotsCount: p._count.lots,
         })),
         stats: {
@@ -126,6 +128,7 @@ export async function POST(request: NextRequest) {
   }
 
   const numberOfPacks = totalQuantity / packSize;
+  const masterCodes: string[] = [];
 
   const batch = await db.batch.create({
     data: {
@@ -143,6 +146,7 @@ export async function POST(request: NextRequest) {
     for (let packNum = 1; packNum <= numberOfPacks; packNum++) {
       const packSuffix = `P${String(packNum).padStart(2, "0")}`;
       const masterCode = `MASTER-${batchIdShort}-${packSuffix}`;
+      masterCodes.push(masterCode);
 
       await db.$transaction(async (tx) => {
         const pack = await tx.pack.create({
@@ -190,6 +194,9 @@ export async function POST(request: NextRequest) {
           numberOfPacks,
           pricePerPack,
         },
+        // Codes maîtres renvoyés direct → permet de tester le workflow
+        // immédiatement après création (batch de test 1 QR notamment).
+        masterCodes,
       },
       { status: 201 }
     );
@@ -201,8 +208,13 @@ export async function POST(request: NextRequest) {
     } catch {
       /* ignore */
     }
+    // Détail renvoyé au SuperAdmin (endpoint protégé) — indispensable pour
+    // diagnostiquer un 500 en prod (ex. "Table main.Batch does not exist"
+    // = prisma db push n'a pas tourné sur le volume persistant).
+    const details =
+      error instanceof Error ? error.message.slice(0, 400) : String(error).slice(0, 400);
     return NextResponse.json(
-      { error: "Erreur serveur pendant la génération du batch" },
+      { error: "Erreur serveur pendant la génération du batch", details },
       { status: 500 }
     );
   }

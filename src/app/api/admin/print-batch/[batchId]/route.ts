@@ -52,14 +52,16 @@ export async function GET(
   doc
     .fontSize(10)
     .font("Helvetica")
+    .fillColor("#374151")
     .text(
       `Batch ${batch.id.slice(0, 8).toUpperCase()} · ${batch.totalQuantity} QR codes · ${batch.numberOfPacks} packs de ${batch.packSize}`,
       { align: "center" }
     )
+    .fillColor("#555555")
     .text(
       "Étiquette MAÎTRE (encadrée rouge) : à donner à l'artisan — active tout le pack en un scan. " +
         "URL publique des QR : https://verifscan.sn/a/<code>",
-      { align: "center", color: "#555555" }
+      { align: "center" }
     );
   doc.moveDown(1.5);
 
