@@ -19,6 +19,7 @@ type FormState = {
   expirationDate: string;
   artisanName: string;
   contactPhone: string;
+  contactEmail: string;
   artisanBio: string;
   usageTips: string;
 };
@@ -47,6 +48,7 @@ export default function ActivatePackPage({
     expirationDate: "",
     artisanName: "",
     contactPhone: "",
+    contactEmail: "",
     artisanBio: "",
     usageTips: "",
   });
@@ -90,6 +92,7 @@ export default function ActivatePackPage({
             expirationDate: form.expirationDate,
             artisanName: form.artisanName,
             contactPhone: form.contactPhone,
+            contactEmail: form.contactEmail,
             photoUrl,
             artisanBio: form.artisanBio,
             usageTips: form.usageTips,
@@ -302,6 +305,21 @@ export default function ActivatePackPage({
               placeholder="Ex : 77 123 45 67"
               value={form.contactPhone}
               onChange={(e) => set({ contactPhone: e.target.value })}
+              className={inputCls}
+            />
+          </div>
+
+          <div>
+            <label className={labelCls} htmlFor="contactEmail">
+              Email (optionnel)
+            </label>
+            <input
+              id="contactEmail"
+              type="email"
+              maxLength={120}
+              placeholder="Ex : aissata@gmail.com"
+              value={form.contactEmail}
+              onChange={(e) => set({ contactEmail: e.target.value })}
               className={inputCls}
             />
           </div>

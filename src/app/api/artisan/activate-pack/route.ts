@@ -36,6 +36,8 @@ const ProductDataSchema = z.object({
   expirationDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   artisanName: z.string().trim().min(2).max(120),
   contactPhone: z.string().trim().min(7).max(30),
+  // Email optionnel — affiché sur la page produit (ligne « Écrire »)
+  contactEmail: z.string().trim().email().max(120).optional().or(z.literal("")),
   photoUrl: z.string().max(500).optional().or(z.literal("")),
   // Optionnels — alimentent les sections « Histoire » et « Conseils » de la
   // page publique engageante. Absents = sections avec contenu par défaut.
@@ -167,6 +169,7 @@ export async function POST(request: NextRequest) {
             soldTo: productData.artisanName,
             soldAt: new Date(),
             artisanPhone: productData.contactPhone,
+            artisanEmail: productData.contactEmail || null,
           },
         });
 

@@ -121,6 +121,7 @@ export default async function ArtisanCodePage({
         expirationDate: lot.expirationDate,
         artisanName: lot.artisanName ?? "Artisan",
         contactPhone: lot.contactPhone ?? "",
+        contactEmail: lot.pack.artisanEmail ?? null,
         photoUrl: lot.photoUrl,
         artisanBio: lot.artisanBio,
         usageTips: lot.usageTips,

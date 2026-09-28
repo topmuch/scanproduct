@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Leaf, ShieldCheck, Sparkles, CalendarDays, Heart, ChevronDown, ChevronUp } from "lucide-react";
+import { Leaf, ShieldCheck, Sparkles, CalendarDays, Heart, ChevronDown, ChevronUp, Phone, Mail } from "lucide-react";
 
 /**
  * ArtisanProductView — page produit artisanale ENGAGEANTE (scan client final).
@@ -41,6 +41,7 @@ type Props = {
     expirationDate: Date | null;
     artisanName: string;
     contactPhone: string;
+    contactEmail?: string | null;
     photoUrl?: string | null;
     artisanBio?: string | null;
     usageTips?: string | null;
@@ -142,6 +143,12 @@ export function ArtisanProductView({ lot, similarProducts = [] }: Props) {
           </span>
         </div>
 
+        {/* Badge « Produit Authentique » — sceau vert, preuve anti-contrefaçon */}
+        <div className="absolute left-5 top-5 flex items-center gap-2 rounded-full border border-emerald-300/60 bg-gradient-to-r from-emerald-600 to-green-500 px-4 py-2 shadow-xl">
+          <ShieldCheck className="h-5 w-5 text-white" strokeWidth={2.5} />
+          <span className="text-sm font-bold tracking-wide text-white">Produit Authentique</span>
+        </div>
+
         {/* Overlay gradient */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
       </div>
@@ -151,6 +158,17 @@ export function ArtisanProductView({ lot, similarProducts = [] }: Props) {
         <div className="rounded-3xl border border-stone-100 bg-white p-7 shadow-xl transition-shadow duration-300 hover:shadow-2xl">
           <h1 className="mb-2 text-3xl font-bold text-gray-900">{lot.productName}</h1>
           <p className="mb-4 text-lg font-semibold text-amber-600">Par {lot.artisanName}</p>
+
+          {/* Bandeau authenticité — vérification anti-contrefaçon */}
+          <div className="mb-4 flex items-center gap-3 rounded-2xl border border-green-200 bg-gradient-to-r from-green-50 to-emerald-50 p-3">
+            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-green-600 shadow-md">
+              <ShieldCheck className="h-6 w-6 text-white" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-green-800">Produit Authentique</p>
+              <p className="text-xs text-green-700">Vérifié par VerifScan à chaque scan</p>
+            </div>
+          </div>
 
           {lot.contenance && (
             <div className="flex items-center gap-3">
@@ -329,9 +347,10 @@ export function ArtisanProductView({ lot, similarProducts = [] }: Props) {
           </div>
         </div>
 
-        {/* ── 8. BOUTON WHATSAPP ──────────────────────────────────────────── */}
+        {/* ── 8. CONTACT DE L'ARTISAN ───────────────────────────────────── */}
         {lot.contactPhone && (
           <div className="mb-6 mt-8">
+            {/* CTA WhatsApp géant (conversion) */}
             <a
               href={waLink}
               target="_blank"
@@ -344,12 +363,66 @@ export function ArtisanProductView({ lot, similarProducts = [] }: Props) {
               </svg>
               <span className="relative z-10">Contacter {lot.artisanName}</span>
             </a>
-            <p className="mt-3 text-center text-sm text-gray-600">
-              📞 Ou appelez le{" "}
-              <a href={`tel:${lot.contactPhone}`} className="font-semibold text-amber-600 hover:underline">
-                {lot.contactPhone}
-              </a>
-            </p>
+
+            {/* Carte infos de contact — chaque ligne est cliquable */}
+            <div className="mt-4 rounded-3xl border border-stone-100 bg-white p-5 shadow-sm">
+              <h3 className="mb-4 flex items-center gap-2 text-base font-bold text-gray-900">
+                <span className="text-xl">📇</span> Coordonnées de l&rsquo;artisan
+              </h3>
+
+              <div className="space-y-3">
+                {/* Ligne Téléphone */}
+                <a
+                  href={`tel:${lot.contactPhone}`}
+                  className="flex items-center gap-4 rounded-2xl border border-stone-200 bg-stone-50 p-4 transition-all hover:border-amber-300 hover:bg-amber-50"
+                >
+                  <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-orange-500 shadow-md">
+                    <Phone className="h-5 w-5 text-white" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Téléphone</p>
+                    <p className="truncate text-base font-bold text-gray-900">{lot.contactPhone}</p>
+                  </div>
+                  <span className="text-sm font-semibold text-amber-600">Appeler</span>
+                </a>
+
+                {/* Ligne WhatsApp */}
+                <a
+                  href={waLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-4 rounded-2xl border border-green-200 bg-green-50 p-4 transition-all hover:border-green-400 hover:bg-green-100"
+                >
+                  <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-green-500 to-emerald-600 shadow-md">
+                    <svg className="h-6 w-6 text-white" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
+                      <path d={WHATSAPP_SVG_PATH} />
+                    </svg>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-medium uppercase tracking-wide text-gray-500">WhatsApp</p>
+                    <p className="truncate text-base font-bold text-gray-900">Message direct</p>
+                  </div>
+                  <span className="text-sm font-semibold text-green-700">Discuter</span>
+                </a>
+
+                {/* Ligne Email (affichée seulement si l'artisan l'a renseignée) */}
+                {lot.contactEmail && (
+                  <a
+                    href={`mailto:${lot.contactEmail}`}
+                    className="flex items-center gap-4 rounded-2xl border border-sky-200 bg-sky-50 p-4 transition-all hover:border-sky-400 hover:bg-sky-100"
+                  >
+                    <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-sky-500 to-blue-600 shadow-md">
+                      <Mail className="h-5 w-5 text-white" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Email</p>
+                      <p className="truncate text-base font-bold text-gray-900">{lot.contactEmail}</p>
+                    </div>
+                    <span className="text-sm font-semibold text-sky-700">Écrire</span>
+                  </a>
+                )}
+              </div>
+            </div>
           </div>
         )}
 
