@@ -26,7 +26,7 @@ import { ScanTracker } from "./ScanTracker";
  *
  * 11 sections (design 2026) :
  *   1.  Hero image pleine largeur + badge « Fait main » animé
- *   2.  Carte produit (nom, artisan, contenance, étoiles)
+ *   2.  Carte produit bleu foncé (nom, 5 étoiles jaunes, avis vérifié, artisan, contenance)
  *   3.  Pourquoi choisir ce produit ? (4 avantages)
  *   4.  Composition naturelle (+ encadré sans allergènes)
  *   5.  Fraîcheur (badge jours restants, dates, barre de progression)
@@ -115,14 +115,22 @@ function regionLabel(region: string): string {
 const TIKTOK_SVG_PATH =
   "M12.53.02C13.84 0 15.14.01 16.44 0c.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z";
 
-/** Rangée d'étoiles (remplies jusqu'à `value`). */
-function Stars({ value, className = "h-4 w-4" }: { value: number; className?: string }) {
+/** Rangée d'étoiles (remplies jusqu'à `value`, jaunes ; vides personnalisables). */
+function Stars({
+  value,
+  className = "h-4 w-4",
+  emptyClassName = "text-gray-200",
+}: {
+  value: number;
+  className?: string;
+  emptyClassName?: string;
+}) {
   return (
     <div className="flex">
       {[...Array(5)].map((_, i) => (
         <svg
           key={i}
-          className={`${className} ${i < value ? "text-amber-400" : "text-gray-200"}`}
+          className={`${className} ${i < value ? "text-amber-400" : emptyClassName}`}
           fill="currentColor"
           viewBox="0 0 20 20"
           aria-hidden
@@ -349,25 +357,44 @@ export function ArtisanProductView({
       </div>
 
       <div className="relative z-10 mx-auto -mt-12 max-w-lg px-5 pb-4">
-        {/* ── 2. CARTE PRODUIT PRINCIPALE ─────────────────────────────────── */}
-        <div className="rounded-3xl border border-stone-100 bg-white p-7 shadow-xl transition-shadow duration-300 hover:shadow-2xl">
-          <h1 className="mb-2 text-3xl font-bold text-gray-900">{lot.productName}</h1>
-          <p className="mb-4 text-lg font-semibold text-amber-600">Par {lot.artisanName}</p>
+        {/* ── 2. CARTE PRODUIT PRINCIPALE (bleu foncé : titre → 5 étoiles → avis vérifié) ── */}
+        <div className="rounded-3xl border border-blue-800/60 bg-gradient-to-br from-blue-950 via-blue-900 to-blue-950 p-7 shadow-xl transition-shadow duration-300 hover:shadow-2xl">
+          <h1 className="mb-3 text-3xl font-bold text-white">{lot.productName}</h1>
+
+          {/* 5 étoiles jaunes + badge « Avis vérifié » (toujours visibles) */}
+          <div className="mb-3 flex flex-wrap items-center gap-2">
+            <Stars
+              value={avgRating > 0 ? Math.round(avgRating) : 5}
+              className="h-6 w-6"
+              emptyClassName="text-blue-800"
+            />
+            {avgRating > 0 && (
+              <span className="text-sm font-bold text-amber-300">{avgRating.toFixed(1)}/5</span>
+            )}
+            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-400/15 px-2.5 py-0.5 text-xs font-bold text-emerald-300">
+              <Check className="h-3 w-3" strokeWidth={3} />
+              {reviews.length > 0
+                ? `${reviews.length} avis vérifié${reviews.length > 1 ? "s" : ""}`
+                : "Avis vérifié"}
+            </span>
+          </div>
+
+          <p className="mb-4 text-lg font-semibold text-blue-200">Par {lot.artisanName}</p>
 
           {/* Bandeau authenticité — vérification anti-contrefaçon + compteur de scans */}
-          <div className="mb-4 flex items-center gap-3 rounded-2xl border border-green-200 bg-gradient-to-r from-green-50 to-emerald-50 p-3">
+          <div className="mb-4 flex items-center gap-3 rounded-2xl border border-emerald-400/30 bg-emerald-400/10 p-3">
             <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-green-600 shadow-md">
               <ShieldCheck className="h-6 w-6 text-white" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-bold text-green-800">Produit Authentique</p>
-              <p className="text-xs text-green-700">Vérifié par VerifScan à chaque scan</p>
+              <p className="text-sm font-bold text-emerald-200">Produit Authentique</p>
+              <p className="text-xs text-emerald-300/80">Vérifié par VerifScan à chaque scan</p>
             </div>
             {/* Compteur de scans — preuve sociale anti-contrefaçon */}
             {scanCount > 0 && (
-              <div className="flex-shrink-0 rounded-xl border border-green-200 bg-white/70 px-3 py-1.5 text-center">
-                <p className="text-lg font-extrabold leading-none text-green-700">{scanCount}</p>
-                <p className="text-[10px] font-medium text-green-600">
+              <div className="flex-shrink-0 rounded-xl border border-emerald-400/30 bg-white/10 px-3 py-1.5 text-center">
+                <p className="text-lg font-extrabold leading-none text-emerald-200">{scanCount}</p>
+                <p className="text-[10px] font-medium text-emerald-300/80">
                   scan{scanCount > 1 ? "s" : ""}
                 </p>
               </div>
@@ -378,11 +405,11 @@ export function ArtisanProductView({
           <button
             type="button"
             onClick={handleShare}
-            className="mb-2 flex w-full items-center justify-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 py-3 text-sm font-bold text-amber-800 transition-colors hover:bg-amber-100 active:scale-[0.98]"
+            className="mb-2 flex w-full items-center justify-center gap-2 rounded-2xl border border-amber-300/30 bg-amber-400/10 py-3 text-sm font-bold text-amber-200 transition-colors hover:bg-amber-400/20 active:scale-[0.98]"
           >
             {shareCopied ? (
               <>
-                <Check className="h-4 w-4 text-green-600" /> Lien copié !
+                <Check className="h-4 w-4 text-emerald-300" /> Lien copié !
               </>
             ) : (
               <>
@@ -393,24 +420,12 @@ export function ArtisanProductView({
 
           {lot.contenance && (
             <div className="flex items-center gap-3">
-              <span className="rounded-full border border-amber-200 bg-gradient-to-r from-amber-100 to-orange-100 px-4 py-2 font-medium text-amber-800 shadow-sm">
+              <span className="rounded-full border border-amber-300/30 bg-amber-400/10 px-4 py-2 font-medium text-amber-200 shadow-sm">
                 ⚖️ {lot.contenance}
               </span>
             </div>
           )}
 
-          {/* Note étoiles réelle (moyenne des avis clients) */}
-          {avgRating > 0 && (
-            <div className="mt-4 flex items-center gap-2">
-              <Stars value={Math.round(avgRating)} className="h-5 w-5" />
-              <span className="text-sm font-semibold text-gray-700">
-                {avgRating.toFixed(1)}/5
-              </span>
-              <span className="text-sm text-gray-500">
-                ({reviews.length} avis vérifié{reviews.length > 1 ? "s" : ""})
-              </span>
-            </div>
-          )}
         </div>
 
         {/* ── 3. POURQUOI CHOISIR CE PRODUIT ──────────────────────────────── */}
