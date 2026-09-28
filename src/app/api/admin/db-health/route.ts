@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { requireSuperAdmin } from "@/lib/admin-guard";
 import {
   ARTISAN_TABLES,
+  REQUIRED_COLUMNS,
   ensureArtisanTables,
 } from "@/lib/ensure-artisan-tables";
 
@@ -10,12 +11,15 @@ import {
  * Diagnostic + réparation de la base — SuperAdmin uniquement.
  *
  * GET  /api/admin/db-health → état : DATABASE_URL, liste des tables,
- *                              présence des 4 tables artisanales.
+ *                              présence des 4 tables artisanales, colonnes
+ *                              manquantes (ex. PreActivatedLot sans
+ *                              artisanBio/usageTips = schéma v1 en prod).
  * POST /api/admin/db-health → exécute l'auto-réparation (CREATE TABLE IF
- *                              NOT EXISTS via Prisma) puis renvoie le nouvel état.
+ *                              NOT EXISTS + ALTER TABLE ADD COLUMN via
+ *                              Prisma) puis renvoie le nouvel état.
  *
- * Utile quand le volume de prod n'a pas reçu `prisma db push` (P2021) et que
- * le fallback shell de l'entrypoint n'a pas pu atteindre la DB.
+ * Utile quand le volume de prod n'a pas reçu `prisma db push` (P2021/P2022)
+ * et que le fallback shell de l'entrypoint n'a pas pu atteindre la DB.
  */
 
 async function buildReport() {
@@ -25,6 +29,7 @@ async function buildReport() {
     totalTables?: number;
     tables?: string[];
     artisanal?: Record<string, boolean>;
+    missingColumns?: string[];
     allGood?: boolean;
     queryError?: string;
   } = {
@@ -42,7 +47,26 @@ async function buildReport() {
     report.artisanal = Object.fromEntries(
       ARTISAN_TABLES.map((t) => [t, names.includes(t)])
     );
-    report.allGood = ARTISAN_TABLES.every((t) => names.includes(t));
+
+    // Colonnes attendues sur les tables existantes (schéma le plus récent)
+    const missingColumns: string[] = [];
+    for (const [table, cols] of Object.entries(REQUIRED_COLUMNS)) {
+      if (!names.includes(table)) continue; // table absente → déjà signalée
+      const existing = await db
+        .$queryRawUnsafe<Array<{ name: string }>>(
+          `SELECT name FROM pragma_table_info('${table}')`
+        )
+        .catch(() => [] as Array<{ name: string }>);
+      for (const col of cols) {
+        if (!existing.some((c) => c.name === col.name)) {
+          missingColumns.push(`${table}.${col.name}`);
+        }
+      }
+    }
+    report.missingColumns = missingColumns;
+
+    report.allGood =
+      ARTISAN_TABLES.every((t) => names.includes(t)) && missingColumns.length === 0;
   } catch (error) {
     // La DB elle-même est injoignable/cassée — exposer l'erreur brute.
     report.queryError =

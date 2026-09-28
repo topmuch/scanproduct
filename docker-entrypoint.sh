@@ -160,6 +160,19 @@ if [ -f "$DB_FILE" ] && command -v sqlite3 >/dev/null 2>&1; then
     done
   fi
 
+  # Colonnes ajoutées après coup sur des tables déjà déployées — ALTER nu.
+  # (CREATE TABLE IF NOT EXISTS ne met à jour JAMAIS une table existante.)
+  LOT_EXISTS=$(sqlite3 "$DB_FILE" "SELECT name FROM sqlite_master WHERE type='table' AND name='PreActivatedLot';" 2>/dev/null)
+  if [ -n "$LOT_EXISTS" ]; then
+    LOT_COLS=$(sqlite3 "$DB_FILE" "PRAGMA table_info(PreActivatedLot);" 2>/dev/null | cut -d'|' -f2)
+    for COL in artisanBio usageTips; do
+      if ! echo "$LOT_COLS" | grep -qx "$COL"; then
+        echo "  + ALTER TABLE PreActivatedLot ADD COLUMN $COL (fallback nu)"
+        sqlite3 "$DB_FILE" "ALTER TABLE PreActivatedLot ADD COLUMN \"$COL\" TEXT;" 2>&1 | grep -v "duplicate column" || true
+      fi
+    done
+  fi
+
   # Nuclear fallback : DDL EXACT tel que créé par Prisma (extrait d'une DB
   # réelle via .schema). Idempotent : IF NOT EXISTS partout. Ordre respecté
   # pour les clés étrangères : Batch → Pack → PreActivatedLot → ArtisanScan.
@@ -218,6 +231,8 @@ CREATE TABLE IF NOT EXISTS "PreActivatedLot" (
     "artisanName" TEXT,
     "contactPhone" TEXT,
     "photoUrl" TEXT,
+    "artisanBio" TEXT,
+    "usageTips" TEXT,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL,
     CONSTRAINT "PreActivatedLot_packId_fkey" FOREIGN KEY ("packId") REFERENCES "Pack" ("id") ON DELETE CASCADE ON UPDATE CASCADE
@@ -254,7 +269,18 @@ ARTISAN_DDL
     echo "Le chargement/génération de batches renverra HTTP 500 (P2021)."
     echo "=================================================================="
   else
-    echo "  ✓ Vérification finale : toutes les tables artisanales sont en place"
+    # Colonnes artisanales attendues sur les tables existantes (schéma récent)
+    LOT_COLS=$(sqlite3 "$DB_FILE" "PRAGMA table_info(PreActivatedLot);" 2>/dev/null | cut -d'|' -f2)
+    LOT_MISSING=""
+    for COL in artisanBio usageTips; do
+      echo "$LOT_COLS" | grep -qx "$COL" || LOT_MISSING="$LOT_MISSING $COL"
+    done
+    if [ -n "$LOT_MISSING" ]; then
+      echo "CRITICAL: colonnes PreActivatedLot manquantes après fallback:$LOT_MISSING"
+      echo "La génération de batches renverra HTTP 500 (P2022 column does not exist)."
+    else
+      echo "  ✓ Vérification finale : tables artisanales + colonnes (artisanBio/usageTips) en place"
+    fi
   fi
 fi
 

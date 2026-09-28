@@ -48,7 +48,7 @@ async function insertLotsChunked(
   }
 }
 
-/** Répare la DB si l'erreur est « table manquante » ; retourne le descriptif. */
+/** Répare la DB si l'erreur est « table/colonne manquante » ; retourne le descriptif. */
 async function healIfTableMissing(error: unknown): Promise<string | null> {
   if (!isTableMissingError(error)) return null;
   const heal = await ensureArtisanTables();
@@ -56,9 +56,11 @@ async function healIfTableMissing(error: unknown): Promise<string | null> {
     console.error("[batches] Auto-réparation échouée:", heal.errors);
     return null;
   }
-  return heal.created.length > 0
-    ? `tables créées automatiquement : ${heal.created.join(", ")}`
-    : "tables déjà en place";
+  const bits: string[] = [];
+  if (heal.created.length > 0) bits.push(`tables créées : ${heal.created.join(", ")}`);
+  if (heal.columnsAdded.length > 0)
+    bits.push(`colonnes ajoutées : ${heal.columnsAdded.join(", ")}`);
+  return bits.length > 0 ? `auto-réparation — ${bits.join(" | ")}` : "schéma déjà en place";
 }
 
 export async function GET() {

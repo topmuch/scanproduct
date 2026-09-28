@@ -1,25 +1,34 @@
 import { db } from "@/lib/db";
 
 /**
- * Auto-réparation des tables du système artisanal (Batch/Pack/PreActivatedLot/ArtisanScan).
+ * Auto-réparation du schéma du système artisanal (Batch/Pack/PreActivatedLot/
+ * ArtisanScan) : TABLES manquantes ET COLONNES manquantes.
  *
  * CONTEXTE — pourquoi ce module existe :
  *   En prod (Coolify), `prisma db push` échoue parfois silencieusement au boot
- *   (historique : P2022 "column barcode does not exist", puis P2021 "The table
- *   main.Batch does not exist"). Le fallback shell de docker-entrypoint.sh
- *   (sqlite3 CLI) peut lui-même ne pas atteindre la DB selon l'environnement.
+ *   sur le volume persistant. Historique complet des pannes du même type :
+ *   - P2022 "column barcode does not exist" (table Product ancienne)
+ *   - P2021 "The table main.Batch does not exist" (tables artisanales absentes)
+ *   - P2022 "The column artisanBio does not exist" (table PreActivatedLot
+ *     créée AVANT l'ajout des champs bio/conseils de la page artisan v2)
+ *
+ *   Piège clé : `CREATE TABLE IF NOT EXISTS` est un NO-OP quand la table existe
+ *   déjà → les colonnes ajoutées au schéma APRÈS le premier déploiement ne sont
+ *   JAMAIS ajoutées par le DDL de création. Il faut un `ALTER TABLE ADD COLUMN`
+ *   explicite (SQLite : sûr pour une colonne nullable sans défaut).
  *
  *   Solution définitive : l'APPLICATION répare sa propre base au moment de
- *   l'erreur. Si une requête échoue avec P2021, on exécute le DDL
- *   `CREATE TABLE IF NOT EXISTS` via `$executeRawUnsafe` (le même canal Prisma
- *   qui a causé l'erreur — ne peut pas rater la DB), puis on rejoue la requête.
+ *   l'erreur. Si une requête échoue (P2021/P2022), on exécute le DDL via
+ *   `$executeRawUnsafe` (le même canal Prisma qui a causé l'erreur — ne peut
+ *   pas rater la DB), puis on rejoue la requête.
  *
  *   Aucune dépendance shell/sqlite3/child_process → compatible bundle client
  *   (même contraintes que db.ts, voir son AUTO-MIGRATION).
  *
- * Le DDL est l'EXTRAIT EXACT de ce que Prisma crée (dumpé d'une DB réelle via
- * sqlite_master), identique au heredoc ARTISAN_DDL de docker-entrypoint.sh.
- * Tout est idempotent (IF NOT EXISTS) → sans risque à chaque appel.
+ * Le DDL des tables est l'EXTRAIT EXACT de ce que Prisma crée (dumpé d'une DB
+ * réelle via sqlite_master), identique au heredoc ARTISAN_DDL de
+ * docker-entrypoint.sh. Tout est idempotent (IF NOT EXISTS / vérif PRAGMA
+ * avant ALTER) → sans risque à chaque appel.
  */
 
 export const ARTISAN_TABLES = ["Batch", "Pack", "PreActivatedLot", "ArtisanScan"] as const;
@@ -72,6 +81,8 @@ export const ARTISAN_DDL: string[] = [
     "artisanName" TEXT,
     "contactPhone" TEXT,
     "photoUrl" TEXT,
+    "artisanBio" TEXT,
+    "usageTips" TEXT,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL,
     CONSTRAINT "PreActivatedLot_packId_fkey" FOREIGN KEY ("packId") REFERENCES "Pack" ("id") ON DELETE CASCADE ON UPDATE CASCADE
@@ -94,16 +105,40 @@ export const ARTISAN_DDL: string[] = [
   `CREATE INDEX IF NOT EXISTS "ArtisanScan_scannedAt_idx" ON "ArtisanScan"("scannedAt")`,
 ];
 
-/** Détecte une erreur « table inexistante » (P2021 Prisma ou SQLite brut). */
+/**
+ * Colonnes ajoutées au schéma APRÈS le premier déploiement — les tables de
+ * prod créées avant leur introduction ne les ont pas. Réparées via
+ * `ALTER TABLE ADD COLUMN` (vérif PRAGMA avant → idempotent).
+ *
+ * ⚠️ À TENIR À JOUR à chaque ajout de champ sur les modèles artisanaux
+ * (le DDL CREATE ci-dessus couvre les DB fraîches, ceci couvre les DB
+ * existantes — les deux doivent évoluer ensemble).
+ */
+export const REQUIRED_COLUMNS: Record<string, Array<{ name: string; ddl: string }>> = {
+  Pack: [
+    { name: "artisanPhone", ddl: `ALTER TABLE "Pack" ADD COLUMN "artisanPhone" TEXT` },
+    { name: "artisanEmail", ddl: `ALTER TABLE "Pack" ADD COLUMN "artisanEmail" TEXT` },
+  ],
+  PreActivatedLot: [
+    { name: "artisanBio", ddl: `ALTER TABLE "PreActivatedLot" ADD COLUMN "artisanBio" TEXT` },
+    { name: "usageTips", ddl: `ALTER TABLE "PreActivatedLot" ADD COLUMN "usageTips" TEXT` },
+  ],
+};
+
+/** Détecte une erreur « table ou colonne inexistante » (P2021/P2022 Prisma ou SQLite brut). */
 export function isTableMissingError(error: unknown): boolean {
   const msg = error instanceof Error ? error.message : String(error);
-  return /P2021|does not exist in the current database|no such table/i.test(msg);
+  return /P2021|P2022|does not exist in the current database|no such table|no such column/i.test(
+    msg
+  );
 }
 
 export type HealResult = {
   ok: boolean;
   /** Tables qui MANQUAIENT et ont été créées par cet appel. */
   created: string[];
+  /** Colonnes qui MANQUAIENT et ont été ajoutées par cet appel (« Table.colonne »). */
+  columnsAdded: string[];
   /** Tables déjà en place (rien à faire). */
   alreadyOk: string[];
   /** Erreurs par instruction si le DDL a échoué (ex. DB read-only). */
@@ -118,11 +153,30 @@ async function listTables(): Promise<string[]> {
 }
 
 /**
- * Crée les tables artisanales manquantes. Idempotent et bon marché :
- * à appeler dès qu'une erreur « table does not exist » est détectée.
+ * Colonnes existantes d'une table. Passe par la table-virtuelle
+ * pragma_table_info (SELECT standard → compatible prepared statement Prisma,
+ * contrairement à `PRAGMA table_info(...)` nu).
+ */
+async function listColumns(table: string): Promise<string[]> {
+  const rows = await db.$queryRawUnsafe<Array<{ name: string }>>(
+    `SELECT name FROM pragma_table_info('${table.replace(/'/g, "''")}')`
+  );
+  return rows.map((r) => r.name);
+}
+
+/**
+ * Répare le schéma artisanal : crée les tables manquantes PUIS ajoute les
+ * colonnes manquantes sur les tables existantes. Idempotent et bon marché :
+ * à appeler dès qu'une erreur « table/column does not exist » est détectée.
  */
 export async function ensureArtisanTables(): Promise<HealResult> {
-  const result: HealResult = { ok: true, created: [], alreadyOk: [], errors: [] };
+  const result: HealResult = {
+    ok: true,
+    created: [],
+    columnsAdded: [],
+    alreadyOk: [],
+    errors: [],
+  };
 
   let before: string[];
   try {
@@ -162,8 +216,44 @@ export async function ensureArtisanTables(): Promise<HealResult> {
     }
   }
 
-  if (result.created.length > 0) {
-    console.log(`[ensure-artisan-tables] Tables créées à la volée : ${result.created.join(", ")}`);
+  // ── Colonnes : une table PRÉSENTE mais créée par une ancienne version du
+  // schéma manque des champs ajoutés depuis (ex. artisanBio/usageTips sur
+  // PreActivatedLot). CREATE TABLE IF NOT EXISTS ne les ajoute PAS.
+  for (const [table, cols] of Object.entries(REQUIRED_COLUMNS)) {
+    if (!after.includes(table)) continue; // absente (création ratée) → déjà tracé ci-dessus
+
+    let existing: string[];
+    try {
+      existing = await listColumns(table);
+    } catch (error) {
+      const msg = (error instanceof Error ? error.message : String(error)).slice(0, 200);
+      result.ok = false;
+      result.errors.push(`pragma_table_info(${table}) inaccessible: ${msg}`);
+      continue;
+    }
+
+    for (const col of cols) {
+      if (existing.includes(col.name)) continue;
+      try {
+        await db.$executeRawUnsafe(col.ddl);
+        result.columnsAdded.push(`${table}.${col.name}`);
+      } catch (error) {
+        const msg = (error instanceof Error ? error.message : String(error)).slice(0, 200);
+        // "duplicate column name" = course bénigne entre deux appels concurrents
+        if (!/duplicate column name/i.test(msg)) {
+          result.ok = false;
+          result.errors.push(msg);
+        }
+      }
+    }
+  }
+
+  if (result.created.length > 0 || result.columnsAdded.length > 0) {
+    const parts: string[] = [];
+    if (result.created.length > 0) parts.push(`tables créées : ${result.created.join(", ")}`);
+    if (result.columnsAdded.length > 0)
+      parts.push(`colonnes ajoutées : ${result.columnsAdded.join(", ")}`);
+    console.log(`[ensure-artisan-tables] Auto-réparation — ${parts.join(" | ")}`);
   }
   return result;
 }

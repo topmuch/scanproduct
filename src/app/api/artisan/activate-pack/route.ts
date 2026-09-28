@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
+import {
+  ensureArtisanTables,
+  isTableMissingError,
+} from "@/lib/ensure-artisan-tables";
 
 /**
  * POST /api/artisan/activate-pack
@@ -15,6 +19,12 @@ import { db } from "@/lib/db";
  * - Validation zod stricte des données produit.
  * - Rate limit mémoire : 10 activations / 5 min / IP.
  * - Le pack passe `activated`, l'artisan est enregistré sur le pack.
+ *
+ * AUTO-RÉPARATION : si la DB de prod est restée sur un schéma ancien (ex.
+ * PreActivatedLot sans les colonnes artisanBio/usageTips ajoutées par la
+ * page artisan v2 — `prisma db push` échouant silencieusement sur le volume),
+ * l'activation échouerait en P2022. On répare le schéma via
+ * $executeRawUnsafe puis on rejoue UNE fois — l'artisan ne voit rien.
  */
 
 const ProductDataSchema = z.object({
@@ -97,7 +107,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  try {
+  const run = async (): Promise<NextResponse> => {
     const result = await db.$transaction(
       async (tx) => {
         // 1. Charger le maître + son pack + les étiquettes à activer
@@ -169,7 +179,33 @@ export async function POST(request: NextRequest) {
       activated: result.activated,
       message: `${result.activated} produits activés avec succès !`,
     });
+  };
+
+  try {
+    return await run();
   } catch (error) {
+    // Auto-réparation puis rejeu unique (P2021/P2022 : table ou colonne
+    // manquante = db push raté en prod). Les erreurs métier
+    // (CODE_INVALIDE / DEJA_ACTIVE) ne matchent jamais isTableMissingError.
+    if (isTableMissingError(error)) {
+      const heal = await ensureArtisanTables();
+      if (heal.ok) {
+        try {
+          const res = await run();
+          const healed = [heal.created.length > 0 ? `tables: ${heal.created.join(",")}` : null,
+            heal.columnsAdded.length > 0 ? `colonnes: ${heal.columnsAdded.join(",")}` : null]
+            .filter(Boolean)
+            .join(" | ");
+          res.headers.set("x-db-healed", healed || "ok");
+          console.log(`[activate-pack] Réussi après auto-réparation (${healed})`);
+          return res;
+        } catch (retryError) {
+          error = retryError;
+        }
+      } else {
+        console.error("[activate-pack] Auto-réparation échouée:", heal.errors);
+      }
+    }
     const msg = error instanceof Error ? error.message : String(error);
     if (msg.startsWith("CODE_INVALIDE:")) {
       return NextResponse.json({ error: msg.split(":")[1] }, { status: 404 });
@@ -178,6 +214,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: msg.split(":")[1] }, { status: 409 });
     }
     console.error("[activate-pack] Erreur:", error);
-    return NextResponse.json({ error: "Erreur serveur pendant l'activation" }, { status: 500 });
+    // Détail exposé (sans donnée sensible) → un 500 en prod est
+    // diagnostiquable depuis le message d'erreur affiché à l'écran.
+    const details = msg.slice(0, 300);
+    return NextResponse.json(
+      { error: "Erreur serveur pendant l'activation", details },
+      { status: 500 }
+    );
   }
 }
