@@ -352,3 +352,39 @@ html.dark { color-scheme: dark; }
     transform: none;
   }
 }
+
+/* ── Animations page produit artisanale (badge "Fait main", bouton WhatsApp) ── */
+@keyframes artisan-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes artisan-pulse-opacity {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.artisan-bounce-slow {
+  animation: artisan-bounce 3s ease-in-out infinite;
+}
+
+.artisan-pulse-slow {
+  animation: artisan-pulse-opacity 2.5s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .artisan-bounce-slow,
+  .artisan-pulse-slow {
+    animation: none;
+  }
+}

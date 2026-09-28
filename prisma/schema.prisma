@@ -868,6 +868,10 @@ model PreActivatedLot {
   contactPhone      String?
   photoUrl          String?
 
+  // Page publique engageante : histoire de l'artisan + conseils d'utilisation
+  artisanBio        String? // texte libre (section "L'histoire de l'artisan")
+  usageTips         String? // un conseil par ligne (section "Conseils d'utilisation")
+
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 

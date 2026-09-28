@@ -11,7 +11,7 @@ import { PrismaClient } from '@prisma/client'
  * the new accessor. Comparing a version string forces a clean recreate on
  * the next module evaluation.
  */
-const PRISMA_CACHE_VERSION = 'v7-artisan'
+const PRISMA_CACHE_VERSION = 'v8-artisan-page'
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined

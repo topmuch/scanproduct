@@ -79,6 +79,37 @@ export default async function ArtisanCodePage({
   // Produit actif → journaliser le scan (sans bloquer le rendu)
   void recordArtisanScan(lot.id);
 
+  // Produits similaires : autres produits ACTIFS du même artisan (max 4).
+  // La section ne s'affiche que s'il y en a — pas de cartes factices.
+  let similarProducts: Array<{
+    qrCode: string;
+    productName: string;
+    photoUrl: string | null;
+    contenance: string | null;
+  }> = [];
+  try {
+    const rows = await db.preActivatedLot.findMany({
+      where: {
+        artisanName: lot.artisanName ?? undefined,
+        status: "active",
+        isMaster: false,
+        id: { not: lot.id },
+      },
+      select: { qrCode: true, productName: true, photoUrl: true, contenance: true },
+      orderBy: { activatedAt: "desc" },
+      take: 4,
+    });
+    similarProducts = rows.map((p) => ({
+      qrCode: p.qrCode,
+      productName: p.productName ?? "Produit artisanal",
+      photoUrl: p.photoUrl,
+      contenance: p.contenance,
+    }));
+  } catch (e) {
+    // Non bloquant : la page produit reste fonctionnelle sans suggestions
+    console.error("[a/[code]] produits similaires:", e);
+  }
+
   return (
     <ArtisanProductView
       lot={{
@@ -91,7 +122,10 @@ export default async function ArtisanCodePage({
         artisanName: lot.artisanName ?? "Artisan",
         contactPhone: lot.contactPhone ?? "",
         photoUrl: lot.photoUrl,
+        artisanBio: lot.artisanBio,
+        usageTips: lot.usageTips,
       }}
+      similarProducts={similarProducts}
     />
   );
 }

@@ -19,6 +19,8 @@ type FormState = {
   expirationDate: string;
   artisanName: string;
   contactPhone: string;
+  artisanBio: string;
+  usageTips: string;
 };
 
 const inputCls =
@@ -45,6 +47,8 @@ export default function ActivatePackPage({
     expirationDate: "",
     artisanName: "",
     contactPhone: "",
+    artisanBio: "",
+    usageTips: "",
   });
 
   const set = (patch: Partial<FormState>) => setForm((f) => ({ ...f, ...patch }));
@@ -87,6 +91,8 @@ export default function ActivatePackPage({
             artisanName: form.artisanName,
             contactPhone: form.contactPhone,
             photoUrl,
+            artisanBio: form.artisanBio,
+            usageTips: form.usageTips,
           },
         }),
       });
@@ -298,6 +304,47 @@ export default function ActivatePackPage({
               onChange={(e) => set({ contactPhone: e.target.value })}
               className={inputCls}
             />
+          </div>
+
+          {/* ── Optionnels : page produit plus engageante ── */}
+          <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+            <p className="mb-1 text-sm font-bold text-amber-800">
+              ✨ Pour mieux vendre (optionnel)
+            </p>
+            <p className="mb-3 text-xs text-amber-700">
+              Ces textes enrichissent votre page produit : histoire, conseils,
+              confiance. Vous pouvez les laisser vides.
+            </p>
+            <div className="space-y-3">
+              <div>
+                <label className={labelCls} htmlFor="artisanBio">
+                  Votre histoire
+                </label>
+                <textarea
+                  id="artisanBio"
+                  rows={3}
+                  maxLength={1200}
+                  placeholder="Ex : Je fabrique des savons au karité depuis 2020 à Dakar, avec des ingrédients locaux…"
+                  value={form.artisanBio}
+                  onChange={(e) => set({ artisanBio: e.target.value })}
+                  className={`${inputCls} resize-none`}
+                />
+              </div>
+              <div>
+                <label className={labelCls} htmlFor="usageTips">
+                  Conseils d&rsquo;utilisation (un par ligne)
+                </label>
+                <textarea
+                  id="usageTips"
+                  rows={3}
+                  maxLength={800}
+                  placeholder={"Ex :\nAppliquer matin et soir\nConserver au frais"}
+                  value={form.usageTips}
+                  onChange={(e) => set({ usageTips: e.target.value })}
+                  className={`${inputCls} resize-none`}
+                />
+              </div>
+            </div>
           </div>
 
           <button

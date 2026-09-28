@@ -26,6 +26,10 @@ const ProductDataSchema = z.object({
   artisanName: z.string().trim().min(2).max(120),
   contactPhone: z.string().trim().min(7).max(30),
   photoUrl: z.string().max(500).optional().or(z.literal("")),
+  // Optionnels — alimentent les sections « Histoire » et « Conseils » de la
+  // page publique engageante. Absents = sections avec contenu par défaut.
+  artisanBio: z.string().trim().max(1200).optional().or(z.literal("")),
+  usageTips: z.string().trim().max(800).optional().or(z.literal("")), // 1 conseil par ligne
 });
 
 const BodySchema = z.object({
@@ -124,6 +128,8 @@ export async function POST(request: NextRequest) {
           artisanName: productData.artisanName,
           contactPhone: productData.contactPhone,
           photoUrl: productData.photoUrl || null,
+          artisanBio: productData.artisanBio || null,
+          usageTips: productData.usageTips || null,
         };
 
         // 2. Activer toutes les étiquettes produit du pack
