@@ -40,11 +40,32 @@ Coolify va cloner le dépôt et détecter la présence d'un `Dockerfile`.
 Dans la section **Build Pack** de votre ressource :
 
 1. Sélectionnez **Dockerfile** (et **non** Nixpacks).
-2. Coolify détecte automatiquement le fichier `Dockerfile` à la racine du dépôt.
-3. laissez le **Port** par défaut : `3000` (Next.js).
+2. Vérifiez que le champ **Dockerfile Location** pointe bien vers la racine :
+   `/Dockerfile`.
+3. Laissez le **Port** par défaut : `3000` (Next.js).
 
-> Le `Dockerfile` est multi-stage (`deps` → `builder` → `runner`) et utilise
-> `node:20-alpine`. Aucune action supplémentaire n'est requise ici.
+### ⚠️ Le piège du « Dockerfile inline » périmé
+
+Si votre ressource Coolify affiche un **champ de contenu Dockerfile** (texte
+collé dans l'interface) contenant quelque chose comme :
+
+```dockerfile
+FROM node:20-alpine
+RUN apk add --no-cache git libc6-compat sqlite curl
+```
+
+… alors vous utilisez une **très ancienne version** du Dockerfile. Le
+`Dockerfile` actuel du dépôt (base **`node:20-bookworm-slim`**, ~7 kB, clonage
+git du source + bun épinglé + build standalone) est le seul supporté.
+
+**Correction :** dans la ressource, supprimez le contenu inline et/ou forcez
+*Dockerfile Location* = `/Dockerfile` (fichier lu depuis le dépôt), puis :
+
+1. **Redeploy** avec l'option **« Clear build cache »** (ou sur le serveur :
+   `docker builder prune -f`).
+2. Vérifiez dans les **Build Logs** que la 1ʳᵉ étape est bien
+   `FROM node:20-bookworm-slim` — si vous voyez `node:20-alpine`, la config
+   est encore périmée.
 
 ---
 
@@ -56,20 +77,22 @@ pour référence) :
 
 | Variable | Valeur | Notes |
 |---|---|---|
-| `DATABASE_URL` | `file:./db/custom.db` | Chemin local SQLite. **Ne pas modifier.** |
 | `NEXTAUTH_SECRET` | *(voir ci-dessous)* | **OBLIGATOIRE** — chaîne aléatoire de 32+ caractères. |
 | `NEXTAUTH_URL` | `https://scanproduct.votredomaine.sn` | Votre domaine Coolify final (avec `https://`). |
 | `ADMIN_EMAIL` | `admin@verifscan.sn` | Email du compte SuperAdmin (utilisé par le seed). |
 | `ADMIN_PASSWORD` | `ChangeMeOnFirstLogin!2025` | Mot de passe SuperAdmin — **changez-le** après 1ʳᵉ connexion. |
-| `NODE_ENV` | `production` | |
-| `PORT` | `3000` | |
-| `HOSTNAME` | `0.0.0.0` | |
 | `CRON_SECRET` | *(chaîne aléatoire)* | **OBLIGATOIRE pour les jobs emails** — protège `/api/cron/*`. Générer : `openssl rand -hex 24`. |
 | `SMTP_HOST` | `smtp.votrefournisseur.com` | **OBLIGATOIRE pour les emails** (digest hebdo, alertes péremption, rappels lots). Vide = emails désactivés (loggés en console). |
 | `SMTP_PORT` | `587` | 465 si SSL. |
 | `SMTP_USER` | `no-reply@verifscan.sn` | Identifiant SMTP. |
 | `SMTP_PASS` | `********` | Mot de passe SMTP. |
 | `SMTP_FROM` | `VerifScan <no-reply@verifscan.sn>` | Expéditeur affiché. |
+
+> ⚠️ **Ne définissez PAS `DATABASE_URL` dans Coolify.** Le `Dockerfile` fixe
+> déjà `DATABASE_URL=file:/app/data/scanproduct.db` (aligné sur le volume
+> persistant — voir Étape 4). Une valeur comme `file:./db/custom.db` définie
+> dans l'interface **écraserait** celle du Dockerfile et la DB serait perdue
+> à chaque redéploiement. Idem pour `UPLOAD_DIR` (géré par le Dockerfile).
 
 ### 🔑 Générer `NEXTAUTH_SECRET`
 
@@ -159,23 +182,24 @@ curl "http://localhost:3000/api/cron/weekly-digest?secret=$(grep CRON_SECRET .en
 
 ## 5. Étape 4 — Persist Storage (IMPORTANT pour SQLite) ⚠️
 
-La base de données SQLite est un **fichier local** (`/app/db/custom.db` dans le
-conteneur). Sans stockage persistant, ce fichier est **effacé à chaque
-reconstruction** du conteneur — vous perdriez tous les utilisateurs, fabricants
-et produits.
+La base de données SQLite est un **fichier local** (`/app/data/scanproduct.db`
+dans le conteneur). Sans stockage persistant, ce fichier est **effacé à chaque
+reconstruction** du conteneur — vous perdriez tous les utilisateurs, fabricants,
+produits et articles de blog.
 
-### Configurer le volume persistant
+### Configurer les volumes persistants
 
 1. Dans le menu de la ressource, ouvrez **Persistent Storage** (ou
    **Storages** selon la version de Coolify).
-2. Cliquez sur **+ Add Volume**.
-3. Configurez :
-   - **Name / Source** : `verifscan-db`
-   - **Mount Path / Target** : `/app/db`
-4. Sauvegardez.
+2. Cliquez sur **+ Add Volume** et configurez **2 volumes** :
 
-Coolify créera un volume Docker nommé `verifscan-db` et le montera dans le
-conteneur à `/app/db`. Le fichier `custom.db` survivra ainsi aux redéploiements.
+| Volume | Source (nom) | Mount Path | Contenu |
+|---|---|---|---|
+| Base SQLite | `verifscan-db` | `/app/data` | `scanproduct.db` — utilisateurs, produits, **articles de blog** |
+| Images produits | `verifscan-uploads` | `/app/public/uploads/product` | Photos uploadées par les fabricants |
+
+> 💡 Le `Dockerfile` crée ces dossiers avec `chmod 777` pour que le volume
+> soit inscriptible quel que soit l'utilisateur du conteneur.
 
 > 💡 **Pour la mise à l'échelle en production** : SQLite convient parfaitement
 > pour un déploiement mono-conteneur. Si vous prévoyez plusieurs conteneurs ou
@@ -190,13 +214,10 @@ conteneur à `/app/db`. Le fichier `custom.db` survivra ainsi aux redéploiement
   (`EXPOSE 3000`).
 - **Health Check Path** : `/api/health`
   - Coolify interroge cette URL pour savoir quand le conteneur est prêt.
-  - Réponse attendue : `200 OK` avec le JSON
-    `{ "status": "ok", "timestamp": "...", "version": "1.0.0", "service": "verifscan" }`.
-  - Le `Dockerfile` embarque déjà un `HEALTHCHECK` Docker qui appelle cette
-    même URL avec `wget --spider`.
-
-Si Coolify vous propose un champ **Health Check Path**, renseignez-y
-`/api/health`.
+  - Réponse attendue : JSON `status: ok|degraded` avec les checks database,
+    mémoire et disque.
+  - Configurez ce chemin dans les paramètres de la ressource Coolify
+    (Webhook/Healthcheck).
 
 ---
 
@@ -206,11 +227,12 @@ Si Coolify vous propose un champ **Health Check Path**, renseignez-y
 2. Suivez les logs de build en temps réel (onglet **Build Logs** / **Logs**).
 3. Premier build : **~3 à 5 minutes** (installation des dépendances,
    `prisma generate`, `next build`).
-4. Au démarrage du conteneur, la commande exécutée est :
-   ```
-   npx prisma db push --accept-data-loss && node server.js
-   ```
-   → Le schéma SQLite est appliqué **avant** le lancement du serveur Next.js.
+4. Au démarrage du conteneur, le script `docker-entrypoint.sh` exécute :
+   1. `prisma db push` (application du schéma SQLite),
+   2. un fallback SQL direct (ALTER TABLE) si des colonnes manquent,
+   3. le seed principal (comptes, produits) **puis le seed blog**
+      (4 articles fondateurs — idempotent),
+   4. enfin `node .next/standalone/server.js`.
 
 Une fois le build terminé et le health check au vert, le statut passe à
 **Running**.
@@ -261,11 +283,14 @@ Deux options :
 
 | Problème | Cause probable | Solution |
 |---|---|---|
-| **Base de données perdue après un redéploiement** | Volume persistant non configuré | Voir **Étape 4** — monter un volume à `/app/db`. |
+| **Le build utilise encore `node:20-alpine` / `apk add`** | Dockerfile inline périmé dans Coolify ou cache de build ancien | Voir **Étape 2 — Le piège du Dockerfile inline** : pointer `/Dockerfile` depuis le dépôt + **Clear build cache** + Redeploy. |
+| **Échec quasi instantané sur `apk add` / `apt-get` / `git clone`** | DNS ou réseau indisponible dans le builder | Tester depuis le VPS : `curl -I https://dl-cdn.alpinelinux.org` et `curl -I https://github.com`. Redémarrer Docker/Coolify si le DNS échoue. |
+| **Build bloqué ou 429 au clonage** | Rate limit GitHub anonyme | Définir la variable de build `GITHUB_TOKEN` (un PAT GitHub fin, scope `repo` si privé) ; ajouter `CACHEBUST=<timestamp>` pour invalider le cache du clone. |
+| **Base de données perdue après un redéploiement** | Volume persistant non configuré ou `DATABASE_URL` écrasé dans l'UI | Vérifier le volume `/app/data` (Étape 4) et **supprimer** toute variable `DATABASE_URL` définie dans Coolify. |
+| **Blog vide (aucun article) en production** | Seed blog absent d'une image ancienne | Redeploy avec la dernière image — l'entrypoint seede maintenant les 4 articles fondateurs à chaque démarrage (idempotent). |
 | **401 sur toutes les routes API** | `NEXTAUTH_SECRET` manquant ou modifié | Régénérer et redéfinir `NEXTAUTH_SECRET`, puis **Redeploy**. |
 | **Impossible de se connecter (admin)** | `ADMIN_EMAIL` / `ADMIN_PASSWORD` ne correspondent pas à ce que le seed attend | Vérifier que ces deux variables sont définies dans Coolify et relancer le seed via le terminal. |
 | **Prisma client non généré** | Le build a échoué avant l'étape `prisma generate` | Consulter les **Build Logs** ; vérifier que `prisma/schema.prisma` est bien présent. |
-| **`prisma db push` échoue au démarrage** | Volume non inscriptible par l'utilisateur `node` | Le `Dockerfile` fait déjà `chown -R node:node /app`. Vérifier que le volume monté n'écrase pas les permissions. |
 | **Health check qui ne passe jamais au vert** | Port incorrect ou `/api/health` injoignable | Vérifier que le Port Coolify = `3000` et que la route `/api/health` répond (curl depuis le terminal). |
 | **502 Bad Gateway** | Le conteneur n'est pas encore prêt ou a crashé | Consulter les **Logs** du conteneur ; attendre que le health check passe au vert. |
 
@@ -292,11 +317,12 @@ Pour mettre à jour VerifScan avec les derniers changements du dépôt :
 ```text
 Repo    : https://github.com/topmuch/scanproduct
 Branche : main
-Build   : Dockerfile (multi-stage, node:20-alpine)
+Build   : Dockerfile (racine, node:20-bookworm-slim + bun 1.3.14)
 Port    : 3000
 Health  : /api/health
-Volume  : verifscan-db → /app/db
-CMD     : npx prisma db push --accept-data-loss && node server.js
+Volumes : verifscan-db → /app/data · verifscan-uploads → /app/public/uploads/product
+DB      : file:/app/data/scanproduct.db (fixée par le Dockerfile — ne pas écraser)
+CMD     : docker-entrypoint.sh (db push + fallback SQL + seeds + node standalone)
 ```
 
 Bon déploiement ! 🚀

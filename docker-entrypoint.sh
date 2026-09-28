@@ -160,6 +160,12 @@ fi
 echo "=== Running seed ==="
 bun run prisma/seed.ts 2>&1 || echo "WARN: seed script returned non-zero (may be OK if already seeded)"
 
+# 5b. Seed the blog (4 articles fondateurs — idempotent, upsert par slug).
+#     Sans cela, une DB de production fraîche n'aurait AUCUN article :
+#     la section blog de l'accueil et /blog resteraient vides.
+echo "=== Running blog seed (4 articles fondateurs) ==="
+bun run scripts/seed-blog.ts 2>&1 || echo "WARN: blog seed returned non-zero (may be OK if already seeded)"
+
 # ── 6. Start the Next.js standalone server ────────────────────────────────
 echo "=== Starting server ==="
 exec node .next/standalone/server.js
