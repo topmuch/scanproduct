@@ -31,7 +31,13 @@ import { db } from "@/lib/db";
  * avant ALTER) → sans risque à chaque appel.
  */
 
-export const ARTISAN_TABLES = ["Batch", "Pack", "PreActivatedLot", "ArtisanScan"] as const;
+export const ARTISAN_TABLES = [
+  "Batch",
+  "Pack",
+  "PreActivatedLot",
+  "ArtisanScan",
+  "ArtisanReview",
+] as const;
 
 /** DDL artisana — une instruction par élément (Prisma = 1 statement par appel). */
 export const ARTISAN_DDL: string[] = [
@@ -57,6 +63,10 @@ export const ARTISAN_DDL: string[] = [
     "soldAt" DATETIME,
     "artisanPhone" TEXT,
     "artisanEmail" TEXT,
+    "instagramUrl" TEXT,
+    "facebookUrl" TEXT,
+    "tiktokUrl" TEXT,
+    "artisanPhotos" TEXT,
     "status" TEXT NOT NULL DEFAULT 'available',
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL,
@@ -83,6 +93,7 @@ export const ARTISAN_DDL: string[] = [
     "photoUrl" TEXT,
     "artisanBio" TEXT,
     "usageTips" TEXT,
+    "counterfeitAlert" TEXT,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL,
     CONSTRAINT "PreActivatedLot_packId_fkey" FOREIGN KEY ("packId") REFERENCES "Pack" ("id") ON DELETE CASCADE ON UPDATE CASCADE
@@ -99,10 +110,23 @@ export const ARTISAN_DDL: string[] = [
     "country" TEXT,
     "city" TEXT,
     "deviceType" TEXT,
+    "timezone" TEXT,
     CONSTRAINT "ArtisanScan_lotId_fkey" FOREIGN KEY ("lotId") REFERENCES "PreActivatedLot" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 )`,
   `CREATE INDEX IF NOT EXISTS "ArtisanScan_lotId_idx" ON "ArtisanScan"("lotId")`,
   `CREATE INDEX IF NOT EXISTS "ArtisanScan_scannedAt_idx" ON "ArtisanScan"("scannedAt")`,
+  `CREATE TABLE IF NOT EXISTS "ArtisanReview" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "lotId" TEXT NOT NULL,
+    "authorName" TEXT NOT NULL,
+    "rating" INTEGER NOT NULL,
+    "comment" TEXT NOT NULL,
+    "hidden" BOOLEAN NOT NULL DEFAULT false,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "ArtisanReview_lotId_fkey" FOREIGN KEY ("lotId") REFERENCES "PreActivatedLot" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+)`,
+  `CREATE INDEX IF NOT EXISTS "ArtisanReview_lotId_idx" ON "ArtisanReview"("lotId")`,
+  `CREATE INDEX IF NOT EXISTS "ArtisanReview_createdAt_idx" ON "ArtisanReview"("createdAt")`,
 ];
 
 /**
@@ -118,10 +142,18 @@ export const REQUIRED_COLUMNS: Record<string, Array<{ name: string; ddl: string 
   Pack: [
     { name: "artisanPhone", ddl: `ALTER TABLE "Pack" ADD COLUMN "artisanPhone" TEXT` },
     { name: "artisanEmail", ddl: `ALTER TABLE "Pack" ADD COLUMN "artisanEmail" TEXT` },
+    { name: "instagramUrl", ddl: `ALTER TABLE "Pack" ADD COLUMN "instagramUrl" TEXT` },
+    { name: "facebookUrl", ddl: `ALTER TABLE "Pack" ADD COLUMN "facebookUrl" TEXT` },
+    { name: "tiktokUrl", ddl: `ALTER TABLE "Pack" ADD COLUMN "tiktokUrl" TEXT` },
+    { name: "artisanPhotos", ddl: `ALTER TABLE "Pack" ADD COLUMN "artisanPhotos" TEXT` },
   ],
   PreActivatedLot: [
     { name: "artisanBio", ddl: `ALTER TABLE "PreActivatedLot" ADD COLUMN "artisanBio" TEXT` },
     { name: "usageTips", ddl: `ALTER TABLE "PreActivatedLot" ADD COLUMN "usageTips" TEXT` },
+    { name: "counterfeitAlert", ddl: `ALTER TABLE "PreActivatedLot" ADD COLUMN "counterfeitAlert" TEXT` },
+  ],
+  ArtisanScan: [
+    { name: "timezone", ddl: `ALTER TABLE "ArtisanScan" ADD COLUMN "timezone" TEXT` },
   ],
 };
 

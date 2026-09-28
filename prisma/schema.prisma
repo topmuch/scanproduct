@@ -835,6 +835,14 @@ model Pack {
   artisanPhone String?
   artisanEmail String?
 
+  // Réseaux sociaux de l'artisan (optionnels, remplis à l'activation)
+  instagramUrl String?
+  facebookUrl  String?
+  tiktokUrl    String?
+
+  // Galerie « L'atelier en images » — tableau JSON d'URLs (max 3)
+  artisanPhotos String?
+
   status       String   @default("available") // available, sold, activated
 
   createdAt    DateTime @default(now())
@@ -872,10 +880,15 @@ model PreActivatedLot {
   artisanBio        String? // texte libre (section "L'histoire de l'artisan")
   usageTips         String? // un conseil par ligne (section "Conseils d'utilisation")
 
+  // Alerte contrefaon : JSON {detectedAt, regionA, tzA, regionB, tzB} -
+  // rempli quand le meme QR est scanne depuis 2 regions distinctes en < 48 h
+  counterfeitAlert  String?
+
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
   scans             ArtisanScan[]
+  reviews           ArtisanReview[]
 
   @@index([packId])
   @@index([qrCode])
@@ -892,7 +905,30 @@ model ArtisanScan {
   country    String?
   city       String?
   deviceType String?
+  // Fuseau horaire IANA du visiteur (ex. "Africa/Dakar") - signal geo
+  // gratuit pour la detection de contrefacon (scans multi-regions).
+  timezone   String?
 
   @@index([lotId])
   @@index([scannedAt])
+}
+
+// ============================================================================
+// VerifScan - Avis clients sur les produits artisanaux (page /a/[code])
+// Moderation light : `hidden` permet a un futur back-office de masquer un
+// avis sans le supprimer. Ecriture publique (rate limitee), lecture publique.
+// ============================================================================
+model ArtisanReview {
+  id         String          @id @default(cuid())
+  lotId      String
+  lot        PreActivatedLot @relation(fields: [lotId], references: [id], onDelete: Cascade)
+
+  authorName String
+  rating     Int             // 1..5
+  comment    String
+  hidden     Boolean         @default(false)
+  createdAt  DateTime        @default(now())
+
+  @@index([lotId])
+  @@index([createdAt])
 }

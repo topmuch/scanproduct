@@ -13,6 +13,7 @@ import {
   ChevronUp,
   FlaskConical,
   Stethoscope,
+  CopyX,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -224,6 +225,56 @@ export function ArtisanBatchesPage() {
     }
   };
 
+  // Détection + dédoublonnage des batchs (relances pendant les incidents 500)
+  const [deduping, setDeduping] = useState(false);
+  const dedupeBatches = async () => {
+    setDeduping(true);
+    try {
+      const res = await fetch("/api/admin/db-health");
+      const report = await res.json();
+      const groups: Array<{ duplicates: unknown[] }> = report.duplicateBatches ?? [];
+      if (groups.length === 0) {
+        toast.success("Aucun batch dupliqué détecté");
+        return;
+      }
+      // 1) dry-run : ce qui serait supprimé (vides) vs protégé (scans/activations)
+      const preview = await fetch("/api/admin/db-health", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "dedupe", dryRun: true }),
+      });
+      const previewData = await preview.json();
+      const deletable: string[] = previewData.deleted ?? [];
+      const skipped: unknown[] = previewData.skipped ?? [];
+      const msg = `${groups.length} groupe(s) de doublons détecté(s).\n${deletable.length} batch(s) vide(s) supprimable(s), ${skipped.length} protégé(s) (scans/activations).\nSupprimer les ${deletable.length} doublon(s) vide(s) maintenant ?`;
+      if (!window.confirm(msg)) return;
+      // 2) suppression réelle
+      const finalRes = await fetch("/api/admin/db-health", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "dedupe", dryRun: false }),
+      });
+      const finalData = await finalRes.json();
+      const deletedCount = (finalData.deleted ?? []).length;
+      if (deletedCount > 0) {
+        toast.success(`${deletedCount} batch(s) dupliqué(s) supprimé(s)`, { duration: 8000 });
+      } else {
+        toast.info("Rien à supprimer");
+      }
+      if ((finalData.skipped ?? []).length > 0) {
+        toast.warning(
+          `${finalData.skipped.length} batch(s) protégé(s) (scans/activations) — suppression manuelle`,
+          { duration: 10000 }
+        );
+      }
+      await fetchBatches({ skipHeal: true });
+    } catch {
+      toast.error("Dédoublonnage impossible — endpoint db-health injoignable");
+    } finally {
+      setDeduping(false);
+    }
+  };
+
   const downloadPDF = (batchId: string) => {
     window.open(`/api/admin/print-batch/${batchId}`, "_blank");
     setTimeout(fetchBatches, 1500);
@@ -244,6 +295,16 @@ export function ArtisanBatchesPage() {
             <Button variant="outline" size="sm" onClick={runDbDiagnostic} disabled={diagnosing}>
               <Stethoscope className={`mr-1 h-4 w-4 ${diagnosing ? "animate-pulse" : ""}`} />
               Diagnostic DB
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={dedupeBatches}
+              disabled={deduping}
+              title="Détecte et supprime les batchs créés en double (relances pendant les incidents)"
+            >
+              <CopyX className={`mr-1 h-4 w-4 ${deduping ? "animate-pulse" : ""}`} />
+              Doublons
             </Button>
             <Button variant="outline" size="sm" onClick={() => fetchBatches()} disabled={loading}>
               <RefreshCw className={`mr-1 h-4 w-4 ${loading ? "animate-spin" : ""}`} />

@@ -43,6 +43,12 @@ const ProductDataSchema = z.object({
   // page publique engageante. Absents = sections avec contenu par défaut.
   artisanBio: z.string().trim().max(1200).optional().or(z.literal("")),
   usageTips: z.string().trim().max(800).optional().or(z.literal("")), // 1 conseil par ligne
+  // Réseaux sociaux (optionnels) — affichés dans la carte « Coordonnées »
+  instagramUrl: z.string().trim().max(200).optional().or(z.literal("")),
+  facebookUrl: z.string().trim().max(200).optional().or(z.literal("")),
+  tiktokUrl: z.string().trim().max(200).optional().or(z.literal("")),
+  // Galerie « L'atelier en images » — tableau JSON d'URLs (max 3)
+  artisanPhotos: z.array(z.string().max(500)).max(3).optional(),
 });
 
 const BodySchema = z.object({
@@ -170,6 +176,13 @@ export async function POST(request: NextRequest) {
             soldAt: new Date(),
             artisanPhone: productData.contactPhone,
             artisanEmail: productData.contactEmail || null,
+            instagramUrl: productData.instagramUrl || null,
+            facebookUrl: productData.facebookUrl || null,
+            tiktokUrl: productData.tiktokUrl || null,
+            artisanPhotos:
+              productData.artisanPhotos && productData.artisanPhotos.length > 0
+                ? JSON.stringify(productData.artisanPhotos)
+                : null,
           },
         });
 

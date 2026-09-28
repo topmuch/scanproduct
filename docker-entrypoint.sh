@@ -134,7 +134,7 @@ fi
 #   3. NUCLEAR : CREATE TABLE IF NOT EXISTS en SQL brut via sqlite3 — ne peut
 #      pas échouer silencieusement (même technique que le fallback Product).
 if [ -f "$DB_FILE" ] && command -v sqlite3 >/dev/null 2>&1; then
-  ARTISAN_TABLES="Batch Pack PreActivatedLot ArtisanScan"
+  ARTISAN_TABLES="Batch Pack PreActivatedLot ArtisanScan ArtisanReview"
   MISSING=""
   for T in $ARTISAN_TABLES; do
     T_EXISTS=$(sqlite3 "$DB_FILE" "SELECT name FROM sqlite_master WHERE type='table' AND name='$T';" 2>/dev/null)
@@ -148,11 +148,12 @@ if [ -f "$DB_FILE" ] && command -v sqlite3 >/dev/null 2>&1; then
     echo "=== Tables artisanales OK (Batch/Pack/PreActivatedLot/ArtisanScan présentes) ==="
   fi
 
-  # Colonnes Pack ajoutées après coup (artisanPhone/artisanEmail) — ALTER nu.
+  # Colonnes ajoutées après coup sur des tables déjà déployées — ALTER nu.
+  # (CREATE TABLE IF NOT EXISTS ne met à jour JAMAIS une table existante.)
   PACK_EXISTS=$(sqlite3 "$DB_FILE" "SELECT name FROM sqlite_master WHERE type='table' AND name='Pack';" 2>/dev/null)
   if [ -n "$PACK_EXISTS" ]; then
     PACK_COLS=$(sqlite3 "$DB_FILE" "PRAGMA table_info(Pack);" 2>/dev/null | cut -d'|' -f2)
-    for COL in artisanPhone artisanEmail; do
+    for COL in artisanPhone artisanEmail instagramUrl facebookUrl tiktokUrl artisanPhotos; do
       if ! echo "$PACK_COLS" | grep -qx "$COL"; then
         echo "  + ALTER TABLE Pack ADD COLUMN $COL (fallback nu)"
         sqlite3 "$DB_FILE" "ALTER TABLE Pack ADD COLUMN \"$COL\" TEXT;" 2>&1 | grep -v "duplicate column" || true
@@ -165,10 +166,22 @@ if [ -f "$DB_FILE" ] && command -v sqlite3 >/dev/null 2>&1; then
   LOT_EXISTS=$(sqlite3 "$DB_FILE" "SELECT name FROM sqlite_master WHERE type='table' AND name='PreActivatedLot';" 2>/dev/null)
   if [ -n "$LOT_EXISTS" ]; then
     LOT_COLS=$(sqlite3 "$DB_FILE" "PRAGMA table_info(PreActivatedLot);" 2>/dev/null | cut -d'|' -f2)
-    for COL in artisanBio usageTips; do
+    for COL in artisanBio usageTips counterfeitAlert; do
       if ! echo "$LOT_COLS" | grep -qx "$COL"; then
         echo "  + ALTER TABLE PreActivatedLot ADD COLUMN $COL (fallback nu)"
         sqlite3 "$DB_FILE" "ALTER TABLE PreActivatedLot ADD COLUMN \"$COL\" TEXT;" 2>&1 | grep -v "duplicate column" || true
+      fi
+    done
+  fi
+
+  # Colonne ArtisanScan.timezone (détection contrefaçon multi-régions)
+  SCAN_EXISTS=$(sqlite3 "$DB_FILE" "SELECT name FROM sqlite_master WHERE type='table' AND name='ArtisanScan';" 2>/dev/null)
+  if [ -n "$SCAN_EXISTS" ]; then
+    SCAN_COLS=$(sqlite3 "$DB_FILE" "PRAGMA table_info(ArtisanScan);" 2>/dev/null | cut -d'|' -f2)
+    for COL in timezone; do
+      if ! echo "$SCAN_COLS" | grep -qx "$COL"; then
+        echo "  + ALTER TABLE ArtisanScan ADD COLUMN $COL (fallback nu)"
+        sqlite3 "$DB_FILE" "ALTER TABLE ArtisanScan ADD COLUMN \"$COL\" TEXT;" 2>&1 | grep -v "duplicate column" || true
       fi
     done
   fi
@@ -207,6 +220,10 @@ CREATE TABLE IF NOT EXISTS "Pack" (
     "soldAt" DATETIME,
     "artisanPhone" TEXT,
     "artisanEmail" TEXT,
+    "instagramUrl" TEXT,
+    "facebookUrl" TEXT,
+    "tiktokUrl" TEXT,
+    "artisanPhotos" TEXT,
     "status" TEXT NOT NULL DEFAULT 'available',
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL,
@@ -233,6 +250,7 @@ CREATE TABLE IF NOT EXISTS "PreActivatedLot" (
     "photoUrl" TEXT,
     "artisanBio" TEXT,
     "usageTips" TEXT,
+    "counterfeitAlert" TEXT,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL,
     CONSTRAINT "PreActivatedLot_packId_fkey" FOREIGN KEY ("packId") REFERENCES "Pack" ("id") ON DELETE CASCADE ON UPDATE CASCADE
@@ -249,10 +267,23 @@ CREATE TABLE IF NOT EXISTS "ArtisanScan" (
     "country" TEXT,
     "city" TEXT,
     "deviceType" TEXT,
+    "timezone" TEXT,
     CONSTRAINT "ArtisanScan_lotId_fkey" FOREIGN KEY ("lotId") REFERENCES "PreActivatedLot" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 CREATE INDEX IF NOT EXISTS "ArtisanScan_lotId_idx" ON "ArtisanScan"("lotId");
 CREATE INDEX IF NOT EXISTS "ArtisanScan_scannedAt_idx" ON "ArtisanScan"("scannedAt");
+CREATE TABLE IF NOT EXISTS "ArtisanReview" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "lotId" TEXT NOT NULL,
+    "authorName" TEXT NOT NULL,
+    "rating" INTEGER NOT NULL,
+    "comment" TEXT NOT NULL,
+    "hidden" BOOLEAN NOT NULL DEFAULT false,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "ArtisanReview_lotId_fkey" FOREIGN KEY ("lotId") REFERENCES "PreActivatedLot" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+);
+CREATE INDEX IF NOT EXISTS "ArtisanReview_lotId_idx" ON "ArtisanReview"("lotId");
+CREATE INDEX IF NOT EXISTS "ArtisanReview_createdAt_idx" ON "ArtisanReview"("createdAt");
 ARTISAN_DDL
     echo "  SQL fallback exécuté (exit $?)"
   fi
@@ -272,14 +303,14 @@ ARTISAN_DDL
     # Colonnes artisanales attendues sur les tables existantes (schéma récent)
     LOT_COLS=$(sqlite3 "$DB_FILE" "PRAGMA table_info(PreActivatedLot);" 2>/dev/null | cut -d'|' -f2)
     LOT_MISSING=""
-    for COL in artisanBio usageTips; do
+    for COL in artisanBio usageTips counterfeitAlert; do
       echo "$LOT_COLS" | grep -qx "$COL" || LOT_MISSING="$LOT_MISSING $COL"
     done
     if [ -n "$LOT_MISSING" ]; then
       echo "CRITICAL: colonnes PreActivatedLot manquantes après fallback:$LOT_MISSING"
       echo "La génération de batches renverra HTTP 500 (P2022 column does not exist)."
     else
-      echo "  ✓ Vérification finale : tables artisanales + colonnes (artisanBio/usageTips) en place"
+      echo "  ✓ Vérification finale : tables artisanales + colonnes (artisanBio/usageTips/counterfeitAlert) en place"
     fi
   fi
 fi
@@ -324,6 +355,37 @@ bun run prisma/seed.ts 2>&1 || echo "WARN: seed script returned non-zero (may be
 #     la section blog de l'accueil et /blog resteraient vides.
 echo "=== Running blog seed (4 articles fondateurs) ==="
 bun run scripts/seed-blog.ts 2>&1 || echo "WARN: blog seed returned non-zero (may be OK if already seeded)"
+
+# ── 5b. BACKUP QUOTIDIEN de la base (boucle de fond) ──────────────────────
+# SQLite = la seule vraie donnée critique du produit. Une copie quotidienne
+# (API .backup = snapshot cohérent d'une DB vivante) dans /app/data/backups
+# (même volume persistant), rétention 14 jours. Le premier backup part tout
+# de suite au boot, puis un toutes les 24 h. Survit au `exec node` (nohup).
+BACKUP_DIR="$(dirname "$DB_FILE")/backups"
+mkdir -p "$BACKUP_DIR"
+echo "=== Backup initial vers $BACKUP_DIR ==="
+if command -v sqlite3 >/dev/null 2>&1 && [ -f "$DB_FILE" ]; then
+  sqlite3 "$DB_FILE" ".backup '$BACKUP_DIR/scanproduct-$(date +%Y%m%d-%H%M%S).db'" 2>&1 \
+    || cp "$DB_FILE" "$BACKUP_DIR/scanproduct-$(date +%Y%m%d-%H%M%S).db" 2>/dev/null || true
+  # Rétention : garder les 14 plus récents
+  ls -1t "$BACKUP_DIR"/scanproduct-*.db 2>/dev/null | tail -n +15 | xargs rm -f 2>/dev/null || true
+  ls -1t "$BACKUP_DIR"/scanproduct-*.db 2>/dev/null | head -3
+fi
+nohup sh -c '
+  while true; do
+    sleep 86400
+    DB_FILE_BACKUP="$(echo "$DATABASE_URL" | sed "s|^file:||")"
+    [ -z "$DB_FILE_BACKUP" ] && DB_FILE_BACKUP="/app/data/scanproduct.db"
+    BKDIR="$(dirname "$DB_FILE_BACKUP")/backups"
+    mkdir -p "$BKDIR"
+    if command -v sqlite3 >/dev/null 2>&1 && [ -f "$DB_FILE_BACKUP" ]; then
+      sqlite3 "$DB_FILE_BACKUP" ".backup '$BKDIR/scanproduct-$(date +%Y%m%d-%H%M%S).db'" \
+        || cp "$DB_FILE_BACKUP" "$BKDIR/scanproduct-$(date +%Y%m%d-%H%M%S).db" 2>/dev/null
+      ls -1t "$BKDIR"/scanproduct-*.db 2>/dev/null | tail -n +15 | xargs rm -f 2>/dev/null
+    fi
+  done
+' >/dev/null 2>&1 &
+echo "  Boucle backup quotidien démarrée (rétention 14)"
 
 # ── 6. Start the Next.js standalone server ────────────────────────────────
 echo "=== Starting server ==="

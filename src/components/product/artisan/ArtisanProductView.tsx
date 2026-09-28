@@ -2,7 +2,24 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Leaf, ShieldCheck, Sparkles, CalendarDays, Heart, ChevronDown, ChevronUp, Phone, Mail } from "lucide-react";
+import {
+  Leaf,
+  ShieldCheck,
+  Sparkles,
+  CalendarDays,
+  Heart,
+  ChevronDown,
+  ChevronUp,
+  Phone,
+  Mail,
+  Share2,
+  Star,
+  Instagram,
+  Facebook,
+  Check,
+  AlertTriangle,
+} from "lucide-react";
+import { ScanTracker } from "./ScanTracker";
 
 /**
  * ArtisanProductView — page produit artisanale ENGAGEANTE (scan client final).
@@ -31,6 +48,23 @@ type SimilarProduct = {
   contenance: string | null;
 };
 
+/** Alerte contrefaçon (JSON stocké sur PreActivatedLot.counterfeitAlert). */
+export type CounterfeitAlertInfo = {
+  detectedAt: string;
+  regionA: string;
+  tzA: string;
+  regionB: string;
+  tzB: string;
+};
+
+type ReviewItem = {
+  id: string;
+  authorName: string;
+  rating: number;
+  comment: string;
+  createdAt: Date | string;
+};
+
 type Props = {
   lot: {
     qrCode: string;
@@ -46,8 +80,59 @@ type Props = {
     artisanBio?: string | null;
     usageTips?: string | null;
   };
+  /** Preuve sociale : nombre de scans enregistrés pour ce produit. */
+  scanCount?: number;
+  /** Alerte anti-contrefaçon (scans multi-régions en < 48 h). */
+  counterfeitAlert?: CounterfeitAlertInfo | null;
+  /** Réseaux sociaux de l'artisan (remplis à l'activation). */
+  socials?: {
+    instagramUrl?: string | null;
+    facebookUrl?: string | null;
+    tiktokUrl?: string | null;
+  };
+  /** Galerie « L'atelier en images » (max 3 photos). */
+  artisanPhotos?: string[];
+  /** Avis clients réels chargés côté serveur. */
+  initialReviews?: ReviewItem[];
   similarProducts?: SimilarProduct[];
 };
+
+const REGION_LABELS: Record<string, string> = {
+  africa: "Afrique",
+  europe: "Europe",
+  america: "Amérique",
+  asia: "Asie",
+  australia: "Océanie",
+  pacific: "Pacifique",
+  utc: "UTC",
+  etc: "UTC",
+};
+
+function regionLabel(region: string): string {
+  return REGION_LABELS[region.toLowerCase()] ?? region;
+}
+
+const TIKTOK_SVG_PATH =
+  "M12.53.02C13.84 0 15.14.01 16.44 0c.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z";
+
+/** Rangée d'étoiles (remplies jusqu'à `value`). */
+function Stars({ value, className = "h-4 w-4" }: { value: number; className?: string }) {
+  return (
+    <div className="flex">
+      {[...Array(5)].map((_, i) => (
+        <svg
+          key={i}
+          className={`${className} ${i < value ? "text-amber-400" : "text-gray-200"}`}
+          fill="currentColor"
+          viewBox="0 0 20 20"
+          aria-hidden
+        >
+          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+        </svg>
+      ))}
+    </div>
+  );
+}
 
 function formatDate(date: Date | null): string {
   if (!date) return "—";
@@ -73,9 +158,94 @@ function toWhatsAppLink(phone: string, artisanName: string, productName: string)
 const WHATSAPP_SVG_PATH =
   "M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z";
 
-export function ArtisanProductView({ lot, similarProducts = [] }: Props) {
+export function ArtisanProductView({
+  lot,
+  scanCount = 0,
+  counterfeitAlert = null,
+  socials,
+  artisanPhotos = [],
+  initialReviews = [],
+  similarProducts = [],
+}: Props) {
   const [showAllIngredients, setShowAllIngredients] = useState(false);
   const [reviewThanks, setReviewThanks] = useState(false);
+  const [reviews, setReviews] = useState<ReviewItem[]>(initialReviews);
+
+  // ── Avis : formulaire (note 1-5, nom, commentaire) ──────────────────────
+  const [reviewRating, setReviewRating] = useState(0);
+  const [reviewName, setReviewName] = useState("");
+  const [reviewComment, setReviewComment] = useState("");
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const [reviewError, setReviewError] = useState("");
+
+  // ── Partage : Web Share API, repli = copie du lien ──────────────────────
+  const [shareCopied, setShareCopied] = useState(false);
+
+  async function handleShare() {
+    const url = window.location.href;
+    const data = {
+      title: `${lot.productName} — Produit Authentique`,
+      text: `Découvrez ${lot.productName} de ${lot.artisanName}, authentifié par VerifScan ✅`,
+      url,
+    };
+    if (typeof navigator !== "undefined" && "share" in navigator) {
+      try {
+        await navigator.share(data);
+        return;
+      } catch {
+        // partage annulé par l'utilisateur → rien à faire
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      setShareCopied(true);
+      window.setTimeout(() => setShareCopied(false), 2500);
+    } catch {
+      // clipboard refusé → rien à faire
+    }
+  }
+
+  const avgRating =
+    reviews.length > 0
+      ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
+      : 0;
+
+  async function submitReview(e: React.FormEvent) {
+    e.preventDefault();
+    setReviewError("");
+    if (reviewRating === 0) {
+      setReviewError("Choisissez une note de 1 à 5 étoiles.");
+      return;
+    }
+    setReviewSubmitting(true);
+    try {
+      const res = await fetch("/api/artisan/reviews", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code: lot.qrCode,
+          authorName: reviewName,
+          rating: reviewRating,
+          comment: reviewComment,
+        }),
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        review?: ReviewItem;
+        error?: string;
+      };
+      if (!res.ok) {
+        throw new Error(data.error || "Erreur pendant l'envoi de l'avis");
+      }
+      if (data.review) {
+        setReviews((prev) => [data.review as ReviewItem, ...prev]);
+      }
+      setReviewThanks(true);
+    } catch (err) {
+      setReviewError(err instanceof Error ? err.message : "Erreur inconnue");
+    } finally {
+      setReviewSubmitting(false);
+    }
+  }
 
   const waLink = toWhatsAppLink(lot.contactPhone, lot.artisanName, lot.productName);
 
@@ -125,7 +295,32 @@ export function ArtisanProductView({ lot, similarProducts = [] }: Props) {
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-amber-50 via-stone-50 to-white">
-      {/* ── 1. HERO IMAGE ─────────────────────────────────────────────────── */}
+      {/* Tracking du scan (timezone → détection contrefaçon, fire-and-forget) */}
+      <ScanTracker qrCode={lot.qrCode} />
+
+      {/* ── 0. ALERTE CONTREFAÇON (si scans multi-régions suspects) ────── */}
+      {counterfeitAlert && (
+        <div
+          role="alert"
+          className="border-b border-red-500 bg-gradient-to-r from-red-600 to-rose-600 px-5 py-4 text-white"
+        >
+          <div className="mx-auto flex max-w-lg items-start gap-3">
+            <AlertTriangle className="mt-0.5 h-6 w-6 flex-shrink-0" />
+            <div>
+              <p className="text-sm font-bold">Activité suspecte détectée</p>
+              <p className="mt-1 text-xs leading-relaxed text-red-100">
+                Ce QR code a été scanné depuis {regionLabel(counterfeitAlert.regionA)} puis{" "}
+                {regionLabel(counterfeitAlert.regionB)} en moins de 48 h (
+                {new Date(counterfeitAlert.detectedAt).toLocaleDateString("fr-FR")}). Un produit
+                physique ne voyage pas si vite — possible contrefaçon. En cas de doute, signalez-le
+                à l&rsquo;artisan.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── 1. HERO IMAGE─────────────────────────────────────────────────── */}
       <div className="relative h-96 overflow-hidden bg-stone-200">
         {lot.photoUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -159,16 +354,42 @@ export function ArtisanProductView({ lot, similarProducts = [] }: Props) {
           <h1 className="mb-2 text-3xl font-bold text-gray-900">{lot.productName}</h1>
           <p className="mb-4 text-lg font-semibold text-amber-600">Par {lot.artisanName}</p>
 
-          {/* Bandeau authenticité — vérification anti-contrefaçon */}
+          {/* Bandeau authenticité — vérification anti-contrefaçon + compteur de scans */}
           <div className="mb-4 flex items-center gap-3 rounded-2xl border border-green-200 bg-gradient-to-r from-green-50 to-emerald-50 p-3">
             <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-green-600 shadow-md">
               <ShieldCheck className="h-6 w-6 text-white" />
             </div>
-            <div>
+            <div className="min-w-0 flex-1">
               <p className="text-sm font-bold text-green-800">Produit Authentique</p>
               <p className="text-xs text-green-700">Vérifié par VerifScan à chaque scan</p>
             </div>
+            {/* Compteur de scans — preuve sociale anti-contrefaçon */}
+            {scanCount > 0 && (
+              <div className="flex-shrink-0 rounded-xl border border-green-200 bg-white/70 px-3 py-1.5 text-center">
+                <p className="text-lg font-extrabold leading-none text-green-700">{scanCount}</p>
+                <p className="text-[10px] font-medium text-green-600">
+                  scan{scanCount > 1 ? "s" : ""}
+                </p>
+              </div>
+            )}
           </div>
+
+          {/* Bouton partager — viralité (Web Share API, repli copie du lien) */}
+          <button
+            type="button"
+            onClick={handleShare}
+            className="mb-2 flex w-full items-center justify-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 py-3 text-sm font-bold text-amber-800 transition-colors hover:bg-amber-100 active:scale-[0.98]"
+          >
+            {shareCopied ? (
+              <>
+                <Check className="h-4 w-4 text-green-600" /> Lien copié !
+              </>
+            ) : (
+              <>
+                <Share2 className="h-4 w-4" /> Partager ce produit authentique
+              </>
+            )}
+          </button>
 
           {lot.contenance && (
             <div className="flex items-center gap-3">
@@ -178,17 +399,18 @@ export function ArtisanProductView({ lot, similarProducts = [] }: Props) {
             </div>
           )}
 
-          {/* Note étoiles (placeholder — avis à venir) */}
-          <div className="mt-4 flex items-center gap-2">
-            <div className="flex">
-              {[...Array(5)].map((_, i) => (
-                <svg key={i} className="h-5 w-5 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                </svg>
-              ))}
+          {/* Note étoiles réelle (moyenne des avis clients) */}
+          {avgRating > 0 && (
+            <div className="mt-4 flex items-center gap-2">
+              <Stars value={Math.round(avgRating)} className="h-5 w-5" />
+              <span className="text-sm font-semibold text-gray-700">
+                {avgRating.toFixed(1)}/5
+              </span>
+              <span className="text-sm text-gray-500">
+                ({reviews.length} avis vérifié{reviews.length > 1 ? "s" : ""})
+              </span>
             </div>
-            <span className="text-sm text-gray-500">(Soyez le premier à donner votre avis)</span>
-          </div>
+          )}
         </div>
 
         {/* ── 3. POURQUOI CHOISIR CE PRODUIT ──────────────────────────────── */}
@@ -325,6 +547,23 @@ export function ArtisanProductView({ lot, similarProducts = [] }: Props) {
               </p>
             </div>
           </div>
+
+          {/* Galerie — l'atelier en images (photos ajoutées à l'activation) */}
+          {artisanPhotos.length > 0 && (
+            <div className="mt-5">
+              <p className="mb-3 text-sm font-bold text-gray-800">📷 L&rsquo;atelier en images</p>
+              <div className="grid grid-cols-3 gap-2">
+                {artisanPhotos.map((url) => (
+                  <img
+                    key={url}
+                    src={url}
+                    alt={`Atelier de ${lot.artisanName}`}
+                    className="h-24 w-full rounded-2xl border border-amber-100 object-cover shadow-sm"
+                  />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* ── 7. CONSEILS D'UTILISATION ───────────────────────────────────── */}
@@ -421,6 +660,71 @@ export function ArtisanProductView({ lot, similarProducts = [] }: Props) {
                     <span className="text-sm font-semibold text-sky-700">Écrire</span>
                   </a>
                 )}
+
+                {/* Ligne Instagram (affichée seulement si renseignée) */}
+                {socials?.instagramUrl && (
+                  <a
+                    href={socials.instagramUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-4 rounded-2xl border border-pink-200 bg-pink-50 p-4 transition-all hover:border-pink-400 hover:bg-pink-100"
+                  >
+                    <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-pink-500 to-rose-600 shadow-md">
+                      <Instagram className="h-5 w-5 text-white" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Instagram</p>
+                      <p className="truncate text-base font-bold text-gray-900">
+                        {socials.instagramUrl.replace(/^https?:\/\//, "").replace(/\/$/, "")}
+                      </p>
+                    </div>
+                    <span className="text-sm font-semibold text-pink-600">Voir</span>
+                  </a>
+                )}
+
+                {/* Ligne Facebook (affichée seulement si renseignée) */}
+                {socials?.facebookUrl && (
+                  <a
+                    href={socials.facebookUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-4 rounded-2xl border border-blue-200 bg-blue-50 p-4 transition-all hover:border-blue-400 hover:bg-blue-100"
+                  >
+                    <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-blue-800 shadow-md">
+                      <Facebook className="h-5 w-5 text-white" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Facebook</p>
+                      <p className="truncate text-base font-bold text-gray-900">
+                        {socials.facebookUrl.replace(/^https?:\/\//, "").replace(/\/$/, "")}
+                      </p>
+                    </div>
+                    <span className="text-sm font-semibold text-blue-700">Voir</span>
+                  </a>
+                )}
+
+                {/* Ligne TikTok (affichée seulement si renseignée) */}
+                {socials?.tiktokUrl && (
+                  <a
+                    href={socials.tiktokUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-4 rounded-2xl border border-stone-300 bg-stone-100 p-4 transition-all hover:border-stone-500 hover:bg-stone-200"
+                  >
+                    <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-slate-800 to-black shadow-md">
+                      <svg className="h-5 w-5 text-white" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
+                        <path d={TIKTOK_SVG_PATH} />
+                      </svg>
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-medium uppercase tracking-wide text-gray-500">TikTok</p>
+                      <p className="truncate text-base font-bold text-gray-900">
+                        {socials.tiktokUrl.replace(/^https?:\/\//, "").replace(/\/$/, "")}
+                      </p>
+                    </div>
+                    <span className="text-sm font-semibold text-slate-800">Voir</span>
+                  </a>
+                )}
               </div>
             </div>
           </div>
@@ -432,27 +736,114 @@ export function ArtisanProductView({ lot, similarProducts = [] }: Props) {
             <span className="text-2xl">💬</span> Avis des clients
           </h2>
 
+          {/* Résumé : moyenne + nombre d'avis */}
+          {reviews.length > 0 && (
+            <div className="mb-4 flex items-center gap-4 rounded-2xl border border-amber-100 bg-amber-50 p-4">
+              <div className="text-center">
+                <p className="text-3xl font-extrabold leading-tight text-amber-600">
+                  {avgRating.toFixed(1)}
+                </p>
+                <Stars value={Math.round(avgRating)} />
+              </div>
+              <p className="text-sm text-gray-600">
+                {reviews.length} avis de clients ayant scanné ce produit
+              </p>
+            </div>
+          )}
+
+          {/* Liste des avis réels */}
+          {reviews.length > 0 && (
+            <div className="space-y-3">
+              {reviews.map((r) => (
+                <div key={r.id} className="rounded-2xl border border-stone-200 bg-stone-50 p-4">
+                  <div className="mb-2 flex items-center justify-between gap-3">
+                    <div className="flex min-w-0 items-center gap-2">
+                      <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-orange-500 text-sm font-bold text-white">
+                        {r.authorName.charAt(0).toUpperCase()}
+                      </div>
+                      <p className="truncate text-sm font-bold text-gray-900">{r.authorName}</p>
+                    </div>
+                    <div className="flex flex-shrink-0 items-center gap-2">
+                      <Stars value={r.rating} className="h-3.5 w-3.5" />
+                      <span className="text-xs text-gray-400">
+                        {new Date(r.createdAt).toLocaleDateString("fr-FR")}
+                      </span>
+                    </div>
+                  </div>
+                  <p className="text-sm leading-relaxed text-gray-700">{r.comment}</p>
+                </div>
+              ))}
+            </div>
+          )}
+
           {reviewThanks ? (
-            <div className="rounded-2xl border border-green-200 bg-green-50 p-5 text-center">
+            <div className="mt-4 rounded-2xl border border-green-200 bg-green-50 p-5 text-center">
               <p className="text-4xl mb-2">🙏</p>
-              <p className="font-semibold text-green-800">Merci !</p>
+              <p className="font-semibold text-green-800">Merci pour votre avis !</p>
               <p className="text-sm text-green-700">
-                Le système d&rsquo;avis arrive bientôt — votre intérêt compte beaucoup pour{" "}
-                {lot.artisanName}.
+                Votre expérience aide d&rsquo;autres clients et soutient {lot.artisanName}.
               </p>
             </div>
           ) : (
-            <div className="py-6 text-center">
-              <div className="mb-3 text-6xl">💝</div>
-              <p className="mb-4 text-gray-600">Soyez le premier à partager votre expérience !</p>
+            <form
+              onSubmit={submitReview}
+              className="mt-4 rounded-2xl border border-stone-200 bg-white p-4"
+            >
+              <p className="mb-3 text-sm font-bold text-gray-800">
+                {reviews.length === 0
+                  ? "Soyez le premier à partager votre expérience !"
+                  : "Donner mon avis"}
+              </p>
+
+              {/* Sélecteur d'étoiles */}
+              <div className="mb-3 flex items-center gap-1">
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => setReviewRating(n)}
+                    aria-label={`${n} étoile${n > 1 ? "s" : ""}`}
+                    className="p-1 transition-transform hover:scale-110"
+                  >
+                    <Star
+                      className={`h-7 w-7 ${n <= reviewRating ? "text-amber-400" : "text-gray-300"}`}
+                      fill="currentColor"
+                    />
+                  </button>
+                ))}
+              </div>
+
+              <input
+                type="text"
+                value={reviewName}
+                onChange={(e) => setReviewName(e.target.value)}
+                required
+                minLength={2}
+                maxLength={40}
+                placeholder="Votre nom"
+                className="mb-3 w-full rounded-xl border-2 border-gray-200 px-4 py-2.5 outline-none transition-colors focus:border-amber-500"
+              />
+              <textarea
+                value={reviewComment}
+                onChange={(e) => setReviewComment(e.target.value)}
+                required
+                minLength={2}
+                maxLength={500}
+                rows={3}
+                placeholder="Votre expérience avec ce produit…"
+                className="mb-3 w-full resize-none rounded-xl border-2 border-gray-200 px-4 py-2.5 outline-none transition-colors focus:border-amber-500"
+              />
+              {reviewError && (
+                <p className="mb-3 text-xs font-semibold text-red-600">{reviewError}</p>
+              )}
               <button
-                type="button"
-                onClick={() => setReviewThanks(true)}
-                className="rounded-xl bg-amber-500 px-6 py-3 font-semibold text-white transition-colors hover:bg-amber-600"
+                type="submit"
+                disabled={reviewSubmitting}
+                className="w-full rounded-xl bg-amber-500 py-3 font-semibold text-white transition-colors hover:bg-amber-600 disabled:opacity-50"
               >
-                Donner mon avis
+                {reviewSubmitting ? "Envoi…" : "Envoyer mon avis"}
               </button>
-            </div>
+            </form>
           )}
         </div>
 

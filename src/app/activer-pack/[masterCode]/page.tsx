@@ -12,6 +12,7 @@ import { QrCode, CheckCircle2 } from "lucide-react";
 
 type FormState = {
   photo: File | null;
+  galleryPhotos: File[];
   productName: string;
   contenance: string;
   ingredients: string;
@@ -20,6 +21,9 @@ type FormState = {
   artisanName: string;
   contactPhone: string;
   contactEmail: string;
+  instagramUrl: string;
+  facebookUrl: string;
+  tiktokUrl: string;
   artisanBio: string;
   usageTips: string;
 };
@@ -41,6 +45,7 @@ export default function ActivatePackPage({
   const [error, setError] = useState<string>("");
   const [form, setForm] = useState<FormState>({
     photo: null,
+    galleryPhotos: [],
     productName: "",
     contenance: "",
     ingredients: "",
@@ -49,6 +54,9 @@ export default function ActivatePackPage({
     artisanName: "",
     contactPhone: "",
     contactEmail: "",
+    instagramUrl: "",
+    facebookUrl: "",
+    tiktokUrl: "",
     artisanBio: "",
     usageTips: "",
   });
@@ -61,7 +69,7 @@ export default function ActivatePackPage({
     setLoading(true);
 
     try {
-      // 1. Upload photo si présente (route dédiée artisan, garde par code maître)
+      // 1. Upload photo principale si présente (route dédiée artisan)
       let photoUrl = "";
       if (form.photo) {
         const fd = new FormData();
@@ -76,6 +84,21 @@ export default function ActivatePackPage({
           throw new Error(uploadData.error || "Échec de l'upload de la photo");
         }
         photoUrl = uploadData.url;
+      }
+
+      // 1b. Upload galerie « atelier » (max 3 photos, échec non bloquant)
+      const galleryUrls: string[] = [];
+      for (const gp of form.galleryPhotos.slice(0, 3)) {
+        try {
+          const fd = new FormData();
+          fd.append("file", gp);
+          fd.append("masterCode", masterCode);
+          const upRes = await fetch("/api/artisan/upload", { method: "POST", body: fd });
+          const upData = await upRes.json().catch(() => ({}));
+          if (upRes.ok && upData.url) galleryUrls.push(upData.url);
+        } catch {
+          // une photo d'atelier ratée ne bloque pas l'activation
+        }
       }
 
       // 2. Activation en masse
@@ -94,6 +117,10 @@ export default function ActivatePackPage({
             contactPhone: form.contactPhone,
             contactEmail: form.contactEmail,
             photoUrl,
+            instagramUrl: form.instagramUrl,
+            facebookUrl: form.facebookUrl,
+            tiktokUrl: form.tiktokUrl,
+            artisanPhotos: galleryUrls,
             artisanBio: form.artisanBio,
             usageTips: form.usageTips,
           },
@@ -324,6 +351,60 @@ export default function ActivatePackPage({
             />
           </div>
 
+          {/* ── Réseaux sociaux (optionnels) : visibilité sur la page produit ── */}
+          <div className="rounded-xl border border-pink-200 bg-pink-50 p-4">
+            <p className="mb-1 text-sm font-bold text-pink-800">
+              📱 Vos réseaux sociaux (optionnel)
+            </p>
+            <p className="mb-3 text-xs text-pink-700">
+              Ils apparaissent sur votre page produit — vos clients vous suivent partout.
+            </p>
+            <div className="space-y-3">
+              <div>
+                <label className={labelCls} htmlFor="instagramUrl">
+                  Instagram
+                </label>
+                <input
+                  id="instagramUrl"
+                  type="url"
+                  maxLength={200}
+                  placeholder="Ex : https://instagram.com/aissata.cosmetics"
+                  value={form.instagramUrl}
+                  onChange={(e) => set({ instagramUrl: e.target.value })}
+                  className={inputCls}
+                />
+              </div>
+              <div>
+                <label className={labelCls} htmlFor="facebookUrl">
+                  Facebook
+                </label>
+                <input
+                  id="facebookUrl"
+                  type="url"
+                  maxLength={200}
+                  placeholder="Ex : https://facebook.com/aissata.cosmetics"
+                  value={form.facebookUrl}
+                  onChange={(e) => set({ facebookUrl: e.target.value })}
+                  className={inputCls}
+                />
+              </div>
+              <div>
+                <label className={labelCls} htmlFor="tiktokUrl">
+                  TikTok
+                </label>
+                <input
+                  id="tiktokUrl"
+                  type="url"
+                  maxLength={200}
+                  placeholder="Ex : https://tiktok.com/@aissata"
+                  value={form.tiktokUrl}
+                  onChange={(e) => set({ tiktokUrl: e.target.value })}
+                  className={inputCls}
+                />
+              </div>
+            </div>
+          </div>
+
           {/* ── Optionnels : page produit plus engageante ── */}
           <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
             <p className="mb-1 text-sm font-bold text-amber-800">
@@ -361,6 +442,28 @@ export default function ActivatePackPage({
                   onChange={(e) => set({ usageTips: e.target.value })}
                   className={`${inputCls} resize-none`}
                 />
+              </div>
+              <div>
+                <label className={labelCls} htmlFor="galleryPhotos">
+                  Photos de votre atelier (jusqu&rsquo;à 3)
+                </label>
+                <input
+                  id="galleryPhotos"
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  capture="environment"
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files ?? []).slice(0, 3);
+                    set({ galleryPhotos: files });
+                  }}
+                  className="w-full text-sm text-gray-500 file:mr-4 file:rounded-xl file:border-0 file:bg-amber-100 file:px-4 file:py-3 file:text-sm file:font-semibold file:text-amber-700 hover:file:bg-amber-200"
+                />
+                {form.galleryPhotos.length > 0 && (
+                  <p className="mt-2 text-xs text-green-700">
+                    {form.galleryPhotos.length} photo(s) sélectionnée(s)
+                  </p>
+                )}
               </div>
             </div>
           </div>
