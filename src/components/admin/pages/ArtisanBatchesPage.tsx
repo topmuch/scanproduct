@@ -12,6 +12,7 @@ import {
   ChevronDown,
   ChevronUp,
   FlaskConical,
+  Stethoscope,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -73,38 +74,72 @@ export function ArtisanBatchesPage() {
   const [packSize, setPackSize] = useState(200);
   const [pricePerPack, setPricePerPack] = useState(70000);
 
-  const fetchBatches = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/admin/batches");
-      if (!res.ok) {
-        // Extraire le détail renvoyé par l'API (ex. P2021 "table main.Batch
-        // does not exist" = prisma db push raté sur le volume) — sinon un
-        // simple "HTTP 500" est indéchiffrable pour le SuperAdmin.
-        let msg = `HTTP ${res.status}`;
-        try {
-          const errData = await res.json();
-          if (errData?.details) msg = `${errData.error ?? `HTTP ${res.status}`} — ${errData.details}`;
-          else if (errData?.error) msg = errData.error;
-        } catch {
-          /* corps non JSON : on garde HTTP <status> */
+  const fetchBatches = useCallback(
+    async (opts?: { skipHeal?: boolean }) => {
+      setLoading(true);
+      try {
+        const res = await fetch("/api/admin/batches");
+        if (!res.ok) {
+          // Extraire le détail renvoyé par l'API (ex. P2021 "table main.Batch
+          // does not exist" = prisma db push raté sur le volume) — sinon un
+          // simple "HTTP 500" est indéchiffrable pour le SuperAdmin.
+          let msg = `HTTP ${res.status}`;
+          try {
+            const errData = await res.json();
+            if (errData?.details) msg = `${errData.error ?? `HTTP ${res.status}`} — ${errData.details}`;
+            else if (errData?.error) msg = errData.error;
+          } catch {
+            /* corps non JSON : on garde HTTP <status> */
+          }
+          throw new Error(msg);
         }
-        throw new Error(msg);
+        const data = await res.json();
+        setBatches(Array.isArray(data) ? data : []);
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : "";
+        console.error(e);
+        // Auto-réparation : table manquante (P2021) → l'app crée les tables
+        // elle-même via /api/admin/db-health puis rejoue le chargement UNE fois.
+        if (!opts?.skipHeal && /P2021|does not exist in the current database/i.test(msg)) {
+          toast.loading("Tables manquantes — réparation automatique de la base…", {
+            id: "db-heal",
+            duration: 20000,
+          });
+          try {
+            const healRes = await fetch("/api/admin/db-health", { method: "POST" });
+            const healData = await healRes.json();
+            if (healData?.report?.allGood) {
+              toast.success(
+                `Base réparée (${(healData.heal?.created ?? []).join(", ") || "tables en place"}) — rechargement…`,
+                { id: "db-heal", duration: 6000 }
+              );
+              await fetchBatches({ skipHeal: true });
+              return;
+            }
+            toast.error(
+              `Réparation impossible : ${(healData?.heal?.errors ?? ["erreur inconnue"])
+                .join(" | ")
+                .slice(0, 300)}`,
+              { id: "db-heal", duration: 12000 }
+            );
+          } catch {
+            toast.error("Réparation automatique impossible (endpoint db-health injoignable)", {
+              id: "db-heal",
+              duration: 10000,
+            });
+          }
+          return;
+        }
+        toast.error(
+          msg ? `Impossible de charger les batches : ${msg}` : "Impossible de charger les batches",
+          { duration: 10000 }
+        );
+      } finally {
+        setLoading(false);
       }
-      const data = await res.json();
-      setBatches(Array.isArray(data) ? data : []);
-    } catch (e) {
-      console.error(e);
-      toast.error(
-        e instanceof Error
-          ? `Impossible de charger les batches : ${e.message}`
-          : "Impossible de charger les batches",
-        { duration: 10000 }
-      );
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    },
+    []
+  );
 
   useEffect(() => {
     fetchBatches();
@@ -151,6 +186,44 @@ export function ArtisanBatchesPage() {
 
   const createTestBatch = () => createBatch({ totalQuantity: 1, packSize: 1, pricePerPack: 0 });
 
+  // Diagnostic/réparation manuelle de la DB (endpoint SuperAdmin db-health)
+  const [diagnosing, setDiagnosing] = useState(false);
+  const runDbDiagnostic = async () => {
+    setDiagnosing(true);
+    try {
+      const res = await fetch("/api/admin/db-health");
+      const report = await res.json();
+      if (report.allGood) {
+        toast.success(
+          `Base OK — ${report.totalTables} tables, système artisanal en place (${report.databaseUrl})`,
+          { duration: 8000 }
+        );
+      } else {
+        toast.loading("Tables artisanales manquantes — réparation…", { id: "db-heal", duration: 20000 });
+        const healRes = await fetch("/api/admin/db-health", { method: "POST" });
+        const healData = await healRes.json();
+        if (healData?.report?.allGood) {
+          toast.success(
+            `Réparé — tables créées : ${(healData.heal?.created ?? []).join(", ") || "déjà présentes"}`,
+            { id: "db-heal", duration: 8000 }
+          );
+          await fetchBatches({ skipHeal: true });
+        } else {
+          toast.error(
+            `Échec réparation : ${(healData?.heal?.errors ?? [healData?.report?.queryError ?? "erreur inconnue"])
+              .join(" | ")
+              .slice(0, 300)}`,
+            { id: "db-heal", duration: 12000 }
+          );
+        }
+      }
+    } catch {
+      toast.error("Diagnostic impossible — endpoint db-health injoignable", { duration: 10000 });
+    } finally {
+      setDiagnosing(false);
+    }
+  };
+
   const downloadPDF = (batchId: string) => {
     window.open(`/api/admin/print-batch/${batchId}`, "_blank");
     setTimeout(fetchBatches, 1500);
@@ -167,10 +240,16 @@ export function ArtisanBatchesPage() {
         title="Production QR Artisans"
         subtitle="Batches de QR codes pré-imprimés, vendus en packs aux artisans. Activation en masse par QR Code Maître."
         action={
-          <Button variant="outline" size="sm" onClick={fetchBatches} disabled={loading}>
-            <RefreshCw className={`mr-1 h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-            Actualiser
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={runDbDiagnostic} disabled={diagnosing}>
+              <Stethoscope className={`mr-1 h-4 w-4 ${diagnosing ? "animate-pulse" : ""}`} />
+              Diagnostic DB
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => fetchBatches()} disabled={loading}>
+              <RefreshCw className={`mr-1 h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+              Actualiser
+            </Button>
+          </div>
         }
       />
 
