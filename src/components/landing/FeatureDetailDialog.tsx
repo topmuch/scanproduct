@@ -88,7 +88,7 @@ const CONTENT: Record<FeatureKey, FeatureContent> = {
     title: "La traçabilité totale, du producteur au consommateur",
     subtitle:
       "Chaque lot dispose d'un QR code unique lié à une fiche produit complète, infalsifiable et accessible en un scan.",
-    illustration: "/features/feature-tracabilite.png",
+    illustration: "/features/feature-tracabilite.webp",
     accent: "text-[#022150]",
     accentBg: "bg-[#F0F4F9]",
     accentSoft: "bg-[#022150]",
@@ -153,7 +153,7 @@ const CONTENT: Record<FeatureKey, FeatureContent> = {
     title: "Vos dossiers d'export prêts en quelques clics",
     subtitle:
       "Générez automatiquement les documents normalisés requis par les marchés internationaux, directement depuis les données de vos lots.",
-    illustration: "/features/feature-export.png",
+    illustration: "/features/feature-export.webp",
     accent: "text-[#10B981]",
     accentBg: "bg-[#F0FDF4]",
     accentSoft: "bg-[#10B981]",
@@ -218,7 +218,7 @@ const CONTENT: Record<FeatureKey, FeatureContent> = {
     title: "Pilotez votre marché grâce à vos données de scan",
     subtitle:
       "Suivez en temps réel les scans par région, par produit et par période pour identifier vos marchés les plus dynamiques.",
-    illustration: "/features/feature-statistiques.png",
+    illustration: "/features/feature-statistiques.webp",
     accent: "text-[#F59E0B]",
     accentBg: "bg-[#FFFBEB]",
     accentSoft: "bg-[#F59E0B]",

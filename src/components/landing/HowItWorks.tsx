@@ -33,8 +33,8 @@ type Step = {
 const STEPS: Step[] = [
   {
     number: 1,
-    illustration: "/features/step-create-product.png",
-    illustrationAlt: "Création d'un produit VerifScan sur tablette",
+    illustration: "/features/step-create-product.webp",
+    illustrationAlt: "Artisane préparant ses produits dans son atelier",
     title: "Créez votre produit",
     description:
       "Ajoutez les détails de vos produits : nom, ingrédients, dates de fabrication et péremption, logo, certifications. Tout est centralisé sur une fiche propre et professionnelle.",
@@ -44,8 +44,8 @@ const STEPS: Step[] = [
   },
   {
     number: 2,
-    illustration: "/features/step-generate-qr.png",
-    illustrationAlt: "Génération de QR codes pour étiquettes de produit",
+    illustration: "/features/step-generate-qr.webp",
+    illustrationAlt: "QR code imprimé sur l'étiquette d'un produit, scanné au smartphone",
     title: "Générez le QR code",
     description:
       "Un QR code unique est créé pour chaque lot, prêt à imprimer sur vos étiquettes. Chaque code est sécurisé et infalsifiable, lié à votre compte fabricant.",
@@ -55,8 +55,8 @@ const STEPS: Step[] = [
   },
   {
     number: 3,
-    illustration: "/features/step-share-track.png",
-    illustrationAlt: "Clients scannant et suivi des scans sur carte",
+    illustration: "/features/step-share-track.webp",
+    illustrationAlt: "Scan d'un colis au smartphone — suivi des scans en temps réel",
     title: "Partagez et suivez",
     description:
       "Vos clients scannent et accèdent à la fiche authentique. Vous suivez en temps réel les scans, retours clients et zones de consommation.",

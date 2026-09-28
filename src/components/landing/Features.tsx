@@ -54,7 +54,7 @@ const FEATURES: Feature[] = [
     title: "Traçabilité totale",
     description:
       "Chaque lot dispose d'un QR code unique lié à une fiche produit complète. Vos clients accèdent à la vérité en un scan, où qu'ils soient.",
-    illustration: "/features/feature-tracabilite.png",
+    illustration: "/features/feature-tracabilite.webp",
     cardGradient: "from-[#F0F4F9] via-[#F0FDF4] to-white",
     accent: "text-[#022150]",
     accentSoft: "bg-[#022150]",
@@ -72,7 +72,7 @@ const FEATURES: Feature[] = [
     title: "Export simplifié",
     description:
       "Préparez vos dossiers de conformité pour les marchés internationaux avec des documents normalisés générés automatiquement depuis vos lots.",
-    illustration: "/features/feature-export.png",
+    illustration: "/features/feature-export.webp",
     cardGradient: "from-[#F0FDF4] via-[#ECFEFF] to-white",
     accent: "text-[#10B981]",
     accentSoft: "bg-[#10B981]",
@@ -90,7 +90,7 @@ const FEATURES: Feature[] = [
     title: "Statistiques utiles",
     description:
       "Suivez en temps réel les scans par région, par produit, par période. Identifiez vos marchés les plus dynamiques et optimisez votre distribution.",
-    illustration: "/features/feature-statistiques.png",
+    illustration: "/features/feature-statistiques.webp",
     cardGradient: "from-[#FFFBEB] via-[#FFF7ED] to-white",
     accent: "text-[#F59E0B]",
     accentSoft: "bg-[#F59E0B]",
