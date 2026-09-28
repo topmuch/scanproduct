@@ -3,6 +3,7 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { requireSuperAdmin } from "@/lib/admin-guard";
 import {
+  asciiHeader,
   ensureArtisanTables,
   isTableMissingError,
 } from "@/lib/ensure-artisan-tables";
@@ -61,6 +62,16 @@ async function healIfTableMissing(error: unknown): Promise<string | null> {
   if (heal.columnsAdded.length > 0)
     bits.push(`colonnes ajoutées : ${heal.columnsAdded.join(", ")}`);
   return bits.length > 0 ? `auto-réparation — ${bits.join(" | ")}` : "schéma déjà en place";
+}
+
+/**
+ * Pose l'en-tête diagnostic x-db-healed SANS risque : un en-tête HTTP doit
+ * être une ByteString (codes ≤ 255). Le message « auto-réparation — » avec
+ * son tiret cadratin (U+2014 = 8212) transformait une réponse 201 réussie
+ * après réparation en 500 « Cannot convert argument to a ByteString ».
+ */
+function markHealed(res: NextResponse, healed: string) {
+  res.headers.set("x-db-healed", asciiHeader(healed));
 }
 
 export async function GET() {
@@ -128,7 +139,7 @@ export async function GET() {
     if (healed) {
       try {
         const res = await load();
-        res.headers.set("x-db-healed", healed);
+        markHealed(res, healed);
         console.log(`[batches] GET réussi après auto-réparation (${healed})`);
         return res;
       } catch (retryError) {
@@ -275,7 +286,7 @@ export async function POST(request: NextRequest) {
     if (healed) {
       try {
         const res = await run();
-        res.headers.set("x-db-healed", healed);
+        markHealed(res, healed);
         console.log(`[batches] POST réussi après auto-réparation (${healed})`);
         return res;
       } catch (retryError) {

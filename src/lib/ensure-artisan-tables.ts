@@ -133,6 +133,22 @@ export function isTableMissingError(error: unknown): boolean {
   );
 }
 
+/**
+ * Rend une chaîne sûre pour un EN-TÊTE HTTP (ByteString : chaque code de
+ * caractère doit être ≤ 255 — un « — » U+2014 (8212) ou un emoji fait
+ * planter res.headers.set avec "Cannot convert argument to a ByteString",
+ * ce qui transforme une réponse 201 pourtant réussie en 500).
+ * Accents → ASCII (NFD), tirets typographiques → « - », reste → retiré.
+ */
+export function asciiHeader(value: string): string {
+  return value
+    .replace(/[—–―]/g, "-")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^\x20-\x7E]/g, "")
+    .slice(0, 200);
+}
+
 export type HealResult = {
   ok: boolean;
   /** Tables qui MANQUAIENT et ont été créées par cet appel. */

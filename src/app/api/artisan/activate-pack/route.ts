@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import {
+  asciiHeader,
   ensureArtisanTables,
   isTableMissingError,
 } from "@/lib/ensure-artisan-tables";
@@ -196,7 +197,8 @@ export async function POST(request: NextRequest) {
             heal.columnsAdded.length > 0 ? `colonnes: ${heal.columnsAdded.join(",")}` : null]
             .filter(Boolean)
             .join(" | ");
-          res.headers.set("x-db-healed", healed || "ok");
+          // asciiHeader obligatoire : un en-tête HTTP refuse tout code > 255
+          res.headers.set("x-db-healed", asciiHeader(healed) || "ok");
           console.log(`[activate-pack] Réussi après auto-réparation (${healed})`);
           return res;
         } catch (retryError) {

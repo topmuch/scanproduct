@@ -55,7 +55,9 @@ const { Database } = await import("bun:sqlite");
 
 // Import dynamique APRÈS le positionnement de l'env
 const { db } = await import("@/lib/db");
-const { ensureArtisanTables, isTableMissingError } = await import("@/lib/ensure-artisan-tables");
+const { ensureArtisanTables, isTableMissingError, asciiHeader } = await import(
+  "@/lib/ensure-artisan-tables"
+);
 
 // 2. create échoue + détection — reproduit l'erreur prod exacte. NOTE : on ne
 //    passe PAS artisanBio dans data : Prisma référence quand même TOUTES les
@@ -163,9 +165,26 @@ console.log(
   `5. Prisma post-réparation: batch.create ✓ lot.create ✓ update(bio+tips) ✓ pack(artisanPhone) ✓ roundtrip bio/tips: ${roundtrip ? "✓" : "✗"}`
 );
 
+// 6. En-tête HTTP sûr — reproduit le bug du 29/09 : le message de diagnostic
+//    « auto-réparation — colonnes ajoutées : … » (tiret cadratin U+2014 =
+//    8212 > 255) plantait res.headers.set → 500 sur une réponse 201 réussie.
+const prodBreaking =
+  "auto-réparation — colonnes ajoutées : PreActivatedLot.artisanBio, PreActivatedLot.usageTips";
+const safe = asciiHeader(prodBreaking);
+const byteSafe = [...safe].every((ch) => ch.charCodeAt(0) <= 255 && ch.charCodeAt(0) >= 32);
+const asciiAt16 = safe.charCodeAt(16);
+console.log(
+  `6. x-db-healed: "${safe}" — tout code ≤ 255: ${byteSafe ? "✓" : "✗"} — index 16 (${safe[16] ?? "∅"} = ${asciiAt16}): ${asciiAt16 <= 255 ? "✓" : "✗"}`
+);
+if (!byteSafe || asciiAt16 > 255) {
+  console.error("✗ asciiHeader n'a pas neutralisé le message qui casse les en-têtes");
+  await db.$disconnect();
+  process.exit(1);
+}
+
 // Nettoyage (cascade sur pack/lot)
 await db.batch.delete({ where: { id: batch.id } });
 await db.$disconnect();
 rmSync(TEST_DB, { force: true });
 if (!roundtrip) process.exit(1);
-console.log("=== AUTO-RÉPARATION COLONNES VALIDÉE : P2022 détecté → ALTER TABLE ADD COLUMN → écritures OK ===");
+console.log("=== AUTO-RÉPARATION COLONNES VALIDÉE : P2022 détecté → ALTER TABLE ADD COLUMN → écritures OK + en-têtes ASCII sûrs ===");
