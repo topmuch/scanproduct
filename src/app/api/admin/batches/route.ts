@@ -46,54 +46,69 @@ export async function GET() {
     return NextResponse.json({ error: "Non autorisé" }, { status: 403 });
   }
 
-  const batches = await db.batch.findMany({
-    orderBy: { createdAt: "desc" },
-    include: {
-      packs: {
-        orderBy: { packNumber: "asc" },
-        include: {
-          _count: { select: { lots: true } },
+  // try/catch obligatoire : sans lui, un échec Prisma (ex. P2021 "table
+  // main.Batch does not exist" = db push raté sur le volume de prod) part
+  // en 500 brut SANS détail, et l'UI n'affiche que "Impossible de charger".
+  try {
+    const batches = await db.batch.findMany({
+      orderBy: { createdAt: "desc" },
+      include: {
+        packs: {
+          orderBy: { packNumber: "asc" },
+          include: {
+            _count: { select: { lots: true } },
+          },
         },
       },
-    },
-  });
+    });
 
-  // Résumé par batch : packs activés, QR actifs
-  const enriched = await Promise.all(
-    batches.map(async (b) => {
-      const activatedPacks = b.packs.filter((p) => p.status === "activated").length;
-      const activeLots = await db.preActivatedLot.count({
-        where: { packId: { in: b.packs.map((p) => p.id) }, status: "active" },
-      });
-      return {
-        id: b.id,
-        totalQuantity: b.totalQuantity,
-        packSize: b.packSize,
-        numberOfPacks: b.numberOfPacks,
-        status: b.status,
-        printedAt: b.printedAt,
-        createdAt: b.createdAt,
-        packs: b.packs.map((p) => ({
-          id: p.id,
-          packNumber: p.packNumber,
-          quantity: p.quantity,
-          price: p.price,
-          masterQrCode: p.masterQrCode,
-          status: p.status,
-          soldTo: p.soldTo,
-          soldAt: p.soldAt,
-          artisanPhone: p.artisanPhone,
-          lotsCount: p._count.lots,
-        })),
-        stats: {
-          activatedPacks,
-          activeLots,
-        },
-      };
-    })
-  );
+    // Résumé par batch : packs activés, QR actifs
+    const enriched = await Promise.all(
+      batches.map(async (b) => {
+        const activatedPacks = b.packs.filter((p) => p.status === "activated").length;
+        const activeLots = await db.preActivatedLot.count({
+          where: { packId: { in: b.packs.map((p) => p.id) }, status: "active" },
+        });
+        return {
+          id: b.id,
+          totalQuantity: b.totalQuantity,
+          packSize: b.packSize,
+          numberOfPacks: b.numberOfPacks,
+          status: b.status,
+          printedAt: b.printedAt,
+          createdAt: b.createdAt,
+          packs: b.packs.map((p) => ({
+            id: p.id,
+            packNumber: p.packNumber,
+            quantity: p.quantity,
+            price: p.price,
+            masterQrCode: p.masterQrCode,
+            status: p.status,
+            soldTo: p.soldTo,
+            soldAt: p.soldAt,
+            artisanPhone: p.artisanPhone,
+            lotsCount: p._count.lots,
+          })),
+          stats: {
+            activatedPacks,
+            activeLots,
+          },
+        };
+      })
+    );
 
-  return NextResponse.json(enriched);
+    return NextResponse.json(enriched);
+  } catch (error) {
+    console.error("[batches] Erreur lecture liste:", error);
+    // Détail renvoyé au SuperAdmin (endpoint protégé) — l'UI l'affiche
+    // dans le toast, ce qui rend un 500 de liste auto-diagnostiquable.
+    const details =
+      error instanceof Error ? error.message.slice(0, 400) : String(error).slice(0, 400);
+    return NextResponse.json(
+      { error: "Erreur serveur pendant le chargement des batches", details },
+      { status: 500 }
+    );
+  }
 }
 
 export async function POST(request: NextRequest) {

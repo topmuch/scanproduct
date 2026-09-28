@@ -77,12 +77,30 @@ export function ArtisanBatchesPage() {
     setLoading(true);
     try {
       const res = await fetch("/api/admin/batches");
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) {
+        // Extraire le détail renvoyé par l'API (ex. P2021 "table main.Batch
+        // does not exist" = prisma db push raté sur le volume) — sinon un
+        // simple "HTTP 500" est indéchiffrable pour le SuperAdmin.
+        let msg = `HTTP ${res.status}`;
+        try {
+          const errData = await res.json();
+          if (errData?.details) msg = `${errData.error ?? `HTTP ${res.status}`} — ${errData.details}`;
+          else if (errData?.error) msg = errData.error;
+        } catch {
+          /* corps non JSON : on garde HTTP <status> */
+        }
+        throw new Error(msg);
+      }
       const data = await res.json();
       setBatches(Array.isArray(data) ? data : []);
     } catch (e) {
       console.error(e);
-      toast.error("Impossible de charger les batches");
+      toast.error(
+        e instanceof Error
+          ? `Impossible de charger les batches : ${e.message}`
+          : "Impossible de charger les batches",
+        { duration: 10000 }
+      );
     } finally {
       setLoading(false);
     }

@@ -125,22 +125,136 @@ if [ -f "$DB_FILE" ] && command -v sqlite3 >/dev/null 2>&1; then
   fi
 fi
 
-# ── 3b. Vérifier les tables du système artisanal (Batch/Pack/PreActivatedLot/ArtisanScan)
-# Si prisma db push a échoué silencieusement, ces tables manquent et CHAQUE
-# génération de batch artisanal renvoie HTTP 500. On re-tente le push une fois.
+# ── 3b. Tables du système artisanal (Batch/Pack/PreActivatedLot/ArtisanScan) ──
+# Si prisma db push échoue silencieusement (historique : P2022 en prod, puis
+# P2021 "The table main.Batch does not exist"), CHAQUE génération/chargement
+# de batches renvoie HTTP 500. Stratégie en 3 temps :
+#   1. détecter les tables manquantes
+#   2. re-tenter prisma db push une fois
+#   3. NUCLEAR : CREATE TABLE IF NOT EXISTS en SQL brut via sqlite3 — ne peut
+#      pas échouer silencieusement (même technique que le fallback Product).
 if [ -f "$DB_FILE" ] && command -v sqlite3 >/dev/null 2>&1; then
-  BATCH_EXISTS=$(sqlite3 "$DB_FILE" "SELECT name FROM sqlite_master WHERE type='table' AND name='Batch';" 2>/dev/null)
-  if [ -z "$BATCH_EXISTS" ]; then
-    echo "=== Table 'Batch' absente — re-run de prisma db push ==="
-    yes y | bunx prisma db push --skip-generate --accept-data-loss 2>&1 || true
-    BATCH_EXISTS=$(sqlite3 "$DB_FILE" "SELECT name FROM sqlite_master WHERE type='table' AND name='Batch';" 2>/dev/null)
-    if [ -z "$BATCH_EXISTS" ]; then
-      echo "CRITICAL: la table Batch n'a pas pu être créée — la génération de batches artisanaux échouera (HTTP 500)."
-    else
-      echo "  ✓ Table Batch créée"
-    fi
+  ARTISAN_TABLES="Batch Pack PreActivatedLot ArtisanScan"
+  MISSING=""
+  for T in $ARTISAN_TABLES; do
+    T_EXISTS=$(sqlite3 "$DB_FILE" "SELECT name FROM sqlite_master WHERE type='table' AND name='$T';" 2>/dev/null)
+    [ -z "$T_EXISTS" ] && MISSING="$MISSING $T"
+  done
+
+  if [ -n "$MISSING" ]; then
+    echo "=== Tables artisanales manquantes:$MISSING — re-run de prisma db push ==="
+    yes y | bunx prisma db push --skip-generate --accept-data-loss 2>&1 | tail -3 || true
   else
-    echo "=== Tables artisanales OK (Batch présente) ==="
+    echo "=== Tables artisanales OK (Batch/Pack/PreActivatedLot/ArtisanScan présentes) ==="
+  fi
+
+  # Colonnes Pack ajoutées après coup (artisanPhone/artisanEmail) — ALTER nu.
+  PACK_EXISTS=$(sqlite3 "$DB_FILE" "SELECT name FROM sqlite_master WHERE type='table' AND name='Pack';" 2>/dev/null)
+  if [ -n "$PACK_EXISTS" ]; then
+    PACK_COLS=$(sqlite3 "$DB_FILE" "PRAGMA table_info(Pack);" 2>/dev/null | cut -d'|' -f2)
+    for COL in artisanPhone artisanEmail; do
+      if ! echo "$PACK_COLS" | grep -qx "$COL"; then
+        echo "  + ALTER TABLE Pack ADD COLUMN $COL (fallback nu)"
+        sqlite3 "$DB_FILE" "ALTER TABLE Pack ADD COLUMN \"$COL\" TEXT;" 2>&1 | grep -v "duplicate column" || true
+      fi
+    done
+  fi
+
+  # Nuclear fallback : DDL EXACT tel que créé par Prisma (extrait d'une DB
+  # réelle via .schema). Idempotent : IF NOT EXISTS partout. Ordre respecté
+  # pour les clés étrangères : Batch → Pack → PreActivatedLot → ArtisanScan.
+  STILL_MISSING=""
+  for T in $ARTISAN_TABLES; do
+    T_EXISTS=$(sqlite3 "$DB_FILE" "SELECT name FROM sqlite_master WHERE type='table' AND name='$T';" 2>/dev/null)
+    [ -z "$T_EXISTS" ] && STILL_MISSING="$STILL_MISSING $T"
+  done
+
+  if [ -n "$STILL_MISSING" ]; then
+    echo "=== NUCLEAR FALLBACK : CREATE TABLE IF NOT EXISTS (SQL brut) pour:$STILL_MISSING ==="
+    sqlite3 "$DB_FILE" <<'ARTISAN_DDL'
+CREATE TABLE IF NOT EXISTS "Batch" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "totalQuantity" INTEGER NOT NULL,
+    "packSize" INTEGER NOT NULL,
+    "numberOfPacks" INTEGER NOT NULL,
+    "printedAt" DATETIME,
+    "status" TEXT NOT NULL DEFAULT 'pending',
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL
+);
+CREATE INDEX IF NOT EXISTS "Batch_status_idx" ON "Batch"("status");
+CREATE TABLE IF NOT EXISTS "Pack" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "batchId" TEXT NOT NULL,
+    "packNumber" INTEGER NOT NULL,
+    "quantity" INTEGER NOT NULL,
+    "price" INTEGER NOT NULL,
+    "masterQrCode" TEXT NOT NULL,
+    "soldTo" TEXT,
+    "soldAt" DATETIME,
+    "artisanPhone" TEXT,
+    "artisanEmail" TEXT,
+    "status" TEXT NOT NULL DEFAULT 'available',
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL,
+    CONSTRAINT "Pack_batchId_fkey" FOREIGN KEY ("batchId") REFERENCES "Batch" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+);
+CREATE UNIQUE INDEX IF NOT EXISTS "Pack_masterQrCode_key" ON "Pack"("masterQrCode");
+CREATE INDEX IF NOT EXISTS "Pack_batchId_idx" ON "Pack"("batchId");
+CREATE INDEX IF NOT EXISTS "Pack_status_idx" ON "Pack"("status");
+CREATE INDEX IF NOT EXISTS "Pack_masterQrCode_idx" ON "Pack"("masterQrCode");
+CREATE TABLE IF NOT EXISTS "PreActivatedLot" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "packId" TEXT NOT NULL,
+    "qrCode" TEXT NOT NULL,
+    "isMaster" BOOLEAN NOT NULL DEFAULT false,
+    "status" TEXT NOT NULL DEFAULT 'inactive',
+    "activatedAt" DATETIME,
+    "productName" TEXT,
+    "contenance" TEXT,
+    "ingredients" TEXT,
+    "manufacturingDate" DATETIME,
+    "expirationDate" DATETIME,
+    "artisanName" TEXT,
+    "contactPhone" TEXT,
+    "photoUrl" TEXT,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL,
+    CONSTRAINT "PreActivatedLot_packId_fkey" FOREIGN KEY ("packId") REFERENCES "Pack" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+);
+CREATE UNIQUE INDEX IF NOT EXISTS "PreActivatedLot_qrCode_key" ON "PreActivatedLot"("qrCode");
+CREATE INDEX IF NOT EXISTS "PreActivatedLot_packId_idx" ON "PreActivatedLot"("packId");
+CREATE INDEX IF NOT EXISTS "PreActivatedLot_qrCode_idx" ON "PreActivatedLot"("qrCode");
+CREATE INDEX IF NOT EXISTS "PreActivatedLot_status_idx" ON "PreActivatedLot"("status");
+CREATE INDEX IF NOT EXISTS "PreActivatedLot_isMaster_idx" ON "PreActivatedLot"("isMaster");
+CREATE TABLE IF NOT EXISTS "ArtisanScan" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "lotId" TEXT NOT NULL,
+    "scannedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "country" TEXT,
+    "city" TEXT,
+    "deviceType" TEXT,
+    CONSTRAINT "ArtisanScan_lotId_fkey" FOREIGN KEY ("lotId") REFERENCES "PreActivatedLot" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+);
+CREATE INDEX IF NOT EXISTS "ArtisanScan_lotId_idx" ON "ArtisanScan"("lotId");
+CREATE INDEX IF NOT EXISTS "ArtisanScan_scannedAt_idx" ON "ArtisanScan"("scannedAt");
+ARTISAN_DDL
+    echo "  SQL fallback exécuté (exit $?)"
+  fi
+
+  # Vérification finale — doit TOUJOURS passer, sinon CRITICAL visible dans les logs.
+  FINAL_MISSING=""
+  for T in $ARTISAN_TABLES; do
+    T_EXISTS=$(sqlite3 "$DB_FILE" "SELECT name FROM sqlite_master WHERE type='table' AND name='$T';" 2>/dev/null)
+    [ -z "$T_EXISTS" ] && FINAL_MISSING="$FINAL_MISSING $T"
+  done
+  if [ -n "$FINAL_MISSING" ]; then
+    echo "=================================================================="
+    echo "CRITICAL: tables artisanales toujours manquantes après fallback:$FINAL_MISSING"
+    echo "Le chargement/génération de batches renverra HTTP 500 (P2021)."
+    echo "=================================================================="
+  else
+    echo "  ✓ Vérification finale : toutes les tables artisanales sont en place"
   fi
 fi
 
