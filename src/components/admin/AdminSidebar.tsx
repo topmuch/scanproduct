@@ -5,6 +5,7 @@ import {
   Users,
   CreditCard,
   FolderTree,
+  Newspaper,
   BarChart3,
   LifeBuoy,
   Settings,
@@ -59,6 +60,12 @@ const NAV_SECTIONS: NavSection[] = [
     ],
   },
   {
+    title: "CONTENU",
+    items: [
+      { key: "blog", page: "blog", label: "Blog", icon: Newspaper },
+    ],
+  },
+  {
     title: "ANALYTIQUE",
     items: [
       { key: "stats", page: "stats", label: "Statistiques", icon: BarChart3 },
@@ -90,6 +97,7 @@ const PAGE_TO_KEY: Record<AdminPage, string> = {
   subscriptions: "subscriptions",
   plans: "subscriptions",
   categories: "categories",
+  blog: "blog",
   stats: "stats",
   support: "tickets",
   "ticket-detail": "tickets",

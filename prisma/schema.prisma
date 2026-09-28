@@ -758,3 +758,33 @@ model Subscription {
   @@index([status])
   @@index([expiresAt])
 }
+
+// ============================================================================
+// BLOG — articles rédactionnels gérés par le SuperAdmin, publiés sur /blog
+// ============================================================================
+// Contenu en Markdown (rendu côté client avec react-markdown). Le référeneement
+// Google est assuré par : generateMetadata par article (title/description/canonical/
+// openGraph), JSON-LD "Article" sur /blog/[slug], et l'ajout dynamique des URLs
+// des articles publiés dans sitemap.ts.
+model Post {
+  id          String   @id @default(cuid())
+  slug        String   @unique // URL : /blog/<slug>
+  title       String
+  excerpt     String   // résumé (cards + meta description fallback)
+  content     String   // Markdown complet
+  coverImage  String?  // chemin public optionnel (ex: /images/blog/xxx.webp)
+  category    String   @default("Traçabilité") // badge de rubrique
+  readTime    Int      @default(5) // minutes de lecture estimées
+  author      String   @default("Équipe VerifScan")
+  published   Boolean  @default(false)
+  publishedAt DateTime? // fixé à la première publication (stabilité SEO)
+  seoTitle    String?  // <title> Google si défini, sinon title
+  seoDescription String? // meta description si définie, sinon excerpt
+  seoKeywords String?  // chaîne "mot1, mot2, ..." (meta keywords + JSON-LD)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([published])
+  @@index([publishedAt])
+}

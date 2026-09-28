@@ -18,6 +18,7 @@ const NAV_LINKS = [
   { label: "Catalogue", href: "/produits", match: "/produits" },
   { label: "Métiers", href: "/#metiers" },
   { label: "Témoignages", href: "/#temoignages" },
+  { label: "Blog", href: "/blog", match: "/blog" },
   { label: "Contact", href: "/contact" },
 ];
 

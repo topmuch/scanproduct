@@ -14,6 +14,7 @@ import {
   LayoutGrid,
   Sparkles,
   Mail,
+  Newspaper,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -21,6 +22,7 @@ const NAV_LINKS = [
   { label: "Accueil", href: "/", icon: Home },
   { label: "Catalogue", href: "/produits", icon: LayoutGrid },
   { label: "Fonctionnalités", href: "/#fonctionnalites", icon: Sparkles },
+  { label: "Blog", href: "/blog", icon: Newspaper },
   { label: "Contact", href: "/contact", icon: Mail },
 ];
 
@@ -78,6 +80,17 @@ export function PublicHeader() {
               className="rounded-md px-3 py-2 text-[15px] font-medium text-[#374151] transition-colors hover:text-[#022150]"
             >
               Fonctionnalités
+            </a>
+            <a
+              href="/blog"
+              className={cn(
+                "rounded-md px-3 py-2 text-[15px] font-medium transition-colors",
+                pathname.startsWith("/blog")
+                  ? "text-[#022150] font-semibold"
+                  : "text-[#374151] hover:text-[#022150]"
+              )}
+            >
+              Blog
             </a>
             <a
               href="/contact"

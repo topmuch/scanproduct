@@ -8,6 +8,7 @@ export type AdminPage =
   | "user-detail"
   | "subscriptions"
   | "categories"
+  | "blog"
   | "stats"
   | "support"
   | "ticket-detail"

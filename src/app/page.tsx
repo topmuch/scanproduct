@@ -10,6 +10,7 @@ import { Testimonials } from "@/components/landing/Testimonials";
 import { NewsletterBanner } from "@/components/landing/NewsletterBanner";
 import { FeaturesBar } from "@/components/landing/FeaturesBar";
 import { FinalCTA } from "@/components/landing/FinalCTA";
+import { LatestArticles } from "@/components/landing/LatestArticles";
 import { Footer } from "@/components/landing/Footer";
 
 // Force dynamic rendering — multiple sections fetch from the DB. Without this
@@ -45,6 +46,8 @@ export default function Home() {
         <NewsletterBanner />
         <FeaturesBar />
         <FinalCTA />
+        {/* Blog — derniers articles publiés depuis le SuperAdmin (avant le footer) */}
+        <LatestArticles />
       </main>
       <Footer />
     </div>

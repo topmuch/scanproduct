@@ -15,6 +15,7 @@ const PAGE_TITLES: Record<AdminPage, { breadcrumb: string; title: string }> = {
   subscriptions: { breadcrumb: "Abonnements", title: "Gestion des Abonnements" },
   plans: { breadcrumb: "Abonnements / Plans", title: "Configuration des Plans" },
   categories: { breadcrumb: "Catégories", title: "Gestion des Catégories" },
+  blog: { breadcrumb: "Blog", title: "Blog & Articles" },
   stats: { breadcrumb: "Statistiques", title: "Statistiques Globales" },
   support: { breadcrumb: "Support", title: "Support & Tickets" },
   "ticket-detail": { breadcrumb: "Support / Ticket", title: "Détail Ticket" },
@@ -192,7 +193,7 @@ export function AdminHeader() {
               </button>
             </div>
             <nav className="p-3">
-              {(["dashboard", "users", "subscriptions", "categories", "stats", "support", "settings"] as AdminPage[]).map((p) => (
+              {(["dashboard", "users", "subscriptions", "categories", "blog", "stats", "support", "settings"] as AdminPage[]).map((p) => (
                 <button
                   key={p}
                   onClick={() => { setPage(p); setMobileNavOpen(false); }}

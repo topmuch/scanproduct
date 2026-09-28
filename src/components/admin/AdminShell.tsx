@@ -11,6 +11,7 @@ import { UserDetailPage } from "./pages/UserDetailPage";
 import { SubscriptionsPage } from "./pages/SubscriptionsPage";
 import { PlansConfigPage } from "./pages/PlansConfigPage";
 import { CategoriesPage } from "./pages/CategoriesPage";
+import { BlogPage } from "./pages/BlogPage";
 import { StatsPage } from "./pages/StatsPage";
 import { SupportPage } from "./pages/SupportPage";
 import { TicketDetailPage } from "./pages/TicketDetailPage";
@@ -29,6 +30,8 @@ function renderPage(page: string) {
       return <PlansConfigPage />;
     case "categories":
       return <CategoriesPage />;
+    case "blog":
+      return <BlogPage />;
     case "stats":
       return <StatsPage />;
     case "support":
