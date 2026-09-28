@@ -6,6 +6,7 @@ import {
   CreditCard,
   FolderTree,
   Newspaper,
+  QrCode,
   BarChart3,
   LifeBuoy,
   Settings,
@@ -63,6 +64,7 @@ const NAV_SECTIONS: NavSection[] = [
     title: "CONTENU",
     items: [
       { key: "blog", page: "blog", label: "Blog", icon: Newspaper },
+      { key: "batches", page: "batches", label: "QR Artisans", icon: QrCode },
     ],
   },
   {
@@ -98,6 +100,7 @@ const PAGE_TO_KEY: Record<AdminPage, string> = {
   plans: "subscriptions",
   categories: "categories",
   blog: "blog",
+  batches: "batches",
   stats: "stats",
   support: "tickets",
   "ticket-detail": "tickets",

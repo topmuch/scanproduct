@@ -9,6 +9,7 @@ export type AdminPage =
   | "subscriptions"
   | "categories"
   | "blog"
+  | "batches"
   | "stats"
   | "support"
   | "ticket-detail"

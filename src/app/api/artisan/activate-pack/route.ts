@@ -1,0 +1,177 @@
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+import { db } from "@/lib/db";
+
+/**
+ * POST /api/artisan/activate-pack
+ *
+ * Activation EN MASSE du pack artisanal : l'artisan scanne le QR Code
+ * Maître et remplit un formulaire unique — TOUTES les étiquettes du pack
+ * reçoivent les mêmes infos produit et passent `active`.
+ *
+ * Sécurité :
+ * - Transaction atomique + garde `status === 'inactive'` → double
+ *   activation impossible (race condition de 2 scans simultanés).
+ * - Validation zod stricte des données produit.
+ * - Rate limit mémoire : 10 activations / 5 min / IP.
+ * - Le pack passe `activated`, l'artisan est enregistré sur le pack.
+ */
+
+const ProductDataSchema = z.object({
+  productName: z.string().trim().min(2).max(120),
+  contenance: z.string().trim().min(1).max(40),
+  ingredients: z.string().trim().min(2).max(2000),
+  manufacturingDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  expirationDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  artisanName: z.string().trim().min(2).max(120),
+  contactPhone: z.string().trim().min(7).max(30),
+  photoUrl: z.string().max(500).optional().or(z.literal("")),
+});
+
+const BodySchema = z.object({
+  masterCode: z.string().trim().min(8).max(80),
+  productData: ProductDataSchema,
+});
+
+// ── Rate limit mémoire (par IP) ──────────────────────────────────────────
+const RATE_WINDOW_MS = 5 * 60 * 1000;
+const RATE_MAX = 30;
+const rateMap = new Map<string, { count: number; resetAt: number }>();
+
+function rateLimited(ip: string): boolean {
+  const now = Date.now();
+  const entry = rateMap.get(ip);
+  if (!entry || entry.resetAt < now) {
+    rateMap.set(ip, { count: 1, resetAt: now + RATE_WINDOW_MS });
+    return false;
+  }
+  entry.count += 1;
+  return entry.count > RATE_MAX;
+}
+
+export async function POST(request: NextRequest) {
+  const ip =
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    request.headers.get("x-real-ip") ||
+    "inconnu";
+  if (rateLimited(ip)) {
+    return NextResponse.json(
+      { error: "Trop de tentatives. Réessayez dans quelques minutes." },
+      { status: 429 }
+    );
+  }
+
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Corps JSON invalide" }, { status: 400 });
+  }
+
+  const parsed = BodySchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: "Données invalides", issues: parsed.error.flatten() },
+      { status: 400 }
+    );
+  }
+  const { masterCode, productData } = parsed.data;
+
+  if (!masterCode.startsWith("MASTER-")) {
+    return NextResponse.json({ error: "Code maître invalide" }, { status: 400 });
+  }
+
+  const manufacturingDate = new Date(`${productData.manufacturingDate}T00:00:00.000Z`);
+  const expirationDate = new Date(`${productData.expirationDate}T00:00:00.000Z`);
+  if (Number.isNaN(manufacturingDate.getTime()) || Number.isNaN(expirationDate.getTime())) {
+    return NextResponse.json({ error: "Dates invalides" }, { status: 400 });
+  }
+  if (expirationDate <= manufacturingDate) {
+    return NextResponse.json(
+      { error: "La date de péremption doit être après la date de fabrication" },
+      { status: 400 }
+    );
+  }
+
+  try {
+    const result = await db.$transaction(
+      async (tx) => {
+        // 1. Charger le maître + son pack + les étiquettes à activer
+        const masterLot = await tx.preActivatedLot.findUnique({
+          where: { qrCode: masterCode },
+          include: {
+            pack: {
+              include: { lots: { where: { isMaster: false } } },
+            },
+          },
+        });
+
+        if (!masterLot || !masterLot.isMaster) {
+          throw new Error("CODE_INVALIDE:Code maître inconnu");
+        }
+        if (masterLot.status === "active" || masterLot.pack.status === "activated") {
+          throw new Error("DEJA_ACTIVE:Ce pack a déjà été activé");
+        }
+
+        const sharedData = {
+          status: "active" as const,
+          activatedAt: new Date(),
+          productName: productData.productName,
+          contenance: productData.contenance,
+          ingredients: productData.ingredients,
+          manufacturingDate,
+          expirationDate,
+          artisanName: productData.artisanName,
+          contactPhone: productData.contactPhone,
+          photoUrl: productData.photoUrl || null,
+        };
+
+        // 2. Activer toutes les étiquettes produit du pack
+        await Promise.all(
+          masterLot.pack.lots.map((lot) =>
+            tx.preActivatedLot.update({
+              where: { id: lot.id, status: "inactive" },
+              data: sharedData,
+            })
+          )
+        );
+
+        // 3. Activer le maître lui-même
+        await tx.preActivatedLot.update({
+          where: { id: masterLot.id },
+          data: sharedData,
+        });
+
+        // 4. Enregistrer l'artisan sur le pack + statut activated
+        await tx.pack.update({
+          where: { id: masterLot.packId },
+          data: {
+            status: "activated",
+            soldTo: productData.artisanName,
+            soldAt: new Date(),
+            artisanPhone: productData.contactPhone,
+          },
+        });
+
+        return { activated: masterLot.pack.lots.length };
+      },
+      { timeout: 20000 }
+    );
+
+    return NextResponse.json({
+      success: true,
+      activated: result.activated,
+      message: `${result.activated} produits activés avec succès !`,
+    });
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    if (msg.startsWith("CODE_INVALIDE:")) {
+      return NextResponse.json({ error: msg.split(":")[1] }, { status: 404 });
+    }
+    if (msg.startsWith("DEJA_ACTIVE:")) {
+      return NextResponse.json({ error: msg.split(":")[1] }, { status: 409 });
+    }
+    console.error("[activate-pack] Erreur:", error);
+    return NextResponse.json({ error: "Erreur serveur pendant l'activation" }, { status: 500 });
+  }
+}

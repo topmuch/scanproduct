@@ -788,3 +788,107 @@ model Post {
   @@index([published])
   @@index([publishedAt])
 }
+
+// ============================================================================
+// SYSTÈME ARTISANAL — QR codes pré-imprimés vendus en packs aux artisans
+// ============================================================================
+// Parcours hybride (coexiste avec le système formel Product/Lot/QRCode) :
+//   1. Le SuperAdmin génère un Batch (ex. 1000 QR) découpé en Packs (ex. 5×200)
+//   2. Chaque pack contient N PreActivatedLot inactifs + 1 QR Code Maître
+//   3. Le PDF d'impression (/api/admin/print-batch) met le Maître en rouge
+//   4. L'artisan achète un pack (70 000 FCFA), scanne le Maître, remplit un
+//      formulaire unique → TOUTES les étiquettes du pack s'activent d'un coup
+//   5. Le client final scanne un QR produit → /a/<code> → page Artisan
+//      chaleureuse (ambre/stone) avec contact WhatsApp direct
+model Batch {
+  id            String    @id @default(cuid())
+  totalQuantity Int       // 1000
+  packSize      Int       // 200
+  numberOfPacks Int       // 5
+
+  printedAt     DateTime?
+  status        String    @default("pending") // pending, printed, distributed
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  packs         Pack[]
+
+  @@index([status])
+}
+
+model Pack {
+  id           String   @id @default(cuid())
+  batchId      String
+  batch        Batch    @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  packNumber   Int      // 1, 2, 3, 4, 5
+  quantity     Int      // 200
+  price        Int      // 70000 (FCFA)
+
+  // QR Code Maître
+  masterQrCode String   @unique
+
+  // Info artisan (quand vendu)
+  soldTo       String?
+  soldAt       DateTime?
+  artisanPhone String?
+  artisanEmail String?
+
+  status       String   @default("available") // available, sold, activated
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  lots         PreActivatedLot[]
+
+  @@index([batchId])
+  @@index([status])
+  @@index([masterQrCode])
+}
+
+model PreActivatedLot {
+  id                String    @id @default(cuid())
+  packId            String
+  pack              Pack      @relation(fields: [packId], references: [id], onDelete: Cascade)
+
+  qrCode            String    @unique
+  isMaster          Boolean   @default(false)
+
+  status            String    @default("inactive") // inactive, active
+  activatedAt       DateTime?
+
+  // Infos produit (remplies à l'activation du pack)
+  productName       String?
+  contenance        String?
+  ingredients       String?
+  manufacturingDate DateTime?
+  expirationDate    DateTime?
+  artisanName       String?
+  contactPhone      String?
+  photoUrl          String?
+
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  scans             ArtisanScan[]
+
+  @@index([packId])
+  @@index([qrCode])
+  @@index([status])
+  @@index([isMaster])
+}
+
+model ArtisanScan {
+  id         String          @id @default(cuid())
+  lotId      String
+  lot        PreActivatedLot @relation(fields: [lotId], references: [id], onDelete: Cascade)
+
+  scannedAt  DateTime        @default(now())
+  country    String?
+  city       String?
+  deviceType String?
+
+  @@index([lotId])
+  @@index([scannedAt])
+}

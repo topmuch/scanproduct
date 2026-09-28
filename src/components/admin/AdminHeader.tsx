@@ -16,6 +16,7 @@ const PAGE_TITLES: Record<AdminPage, { breadcrumb: string; title: string }> = {
   plans: { breadcrumb: "Abonnements / Plans", title: "Configuration des Plans" },
   categories: { breadcrumb: "Catégories", title: "Gestion des Catégories" },
   blog: { breadcrumb: "Blog", title: "Blog & Articles" },
+  batches: { breadcrumb: "QR Artisans", title: "Production QR Artisans" },
   stats: { breadcrumb: "Statistiques", title: "Statistiques Globales" },
   support: { breadcrumb: "Support", title: "Support & Tickets" },
   "ticket-detail": { breadcrumb: "Support / Ticket", title: "Détail Ticket" },
