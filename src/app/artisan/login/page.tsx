@@ -1,150 +1,150 @@
-"use client";
-
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import type { Metadata } from "next";
 import Link from "next/link";
-import { Lock, LogIn, Phone, QrCode } from "lucide-react";
+import {
+  Camera,
+  BarChart3,
+  QrCode,
+  PencilLine,
+  CheckCircle2,
+} from "lucide-react";
+import { PublicHeader } from "@/components/public/PublicHeader";
+import { PublicFooter } from "@/components/public/PublicFooter";
+import { ArtisanLoginForm } from "./login-form";
 
 /**
  * /artisan/login — Connexion du portail ARTISAN (parcours informel).
+ *
+ * Refonte (demande utilisateur) : la page était un îlot amber isolé, sans
+ * menu ni footer. Elle utilise désormais la coquille standard du site public
+ * (PublicHeader avec menu + PublicFooter) et la charte VerifScan
+ * (#022150 marine / #10B981 émeraude / blanc), sur le même schéma
+ * split-screen que /login (Espace Fabricant). L'amber (#F59E0B) reste
+ * présent en touche discrète : c'est LA couleur identitaire de l'espace
+ * artisan (dashboard, badges) et elle fait partie de la palette du site.
  *
  * Identifiant = numéro de téléphone, mot de passe par défaut « 0000 »
  * (envoyé par WhatsApp à la vente du pack). Compte créé automatiquement à
  * la première connexion. Le JWT (30 j) est stocké en localStorage puis
  * l'artisan est redirigé vers /artisan/dashboard.
+ *
+ * NOTE : page serveur (metadata) + formulaire client (login-form.tsx) —
+ * les data-testid du formulaire (artisan-login-page, login-phone,
+ * login-password, login-submit, login-error) sont conservés : ils sont
+ * couverts par scripts/test-artisan-portal.ts.
  */
 
-const TOKEN_KEY = "verifscan_artisan_token";
+export const metadata: Metadata = {
+  title: "Connexion Artisan — VerifScan",
+  description:
+    "Espace artisan VerifScan : activez vos packs, publiez vos produits et suivez vos scans en temps réel. Connexion par numéro de téléphone.",
+  robots: { index: false, follow: false },
+};
+
+const BENEFITS = [
+  {
+    icon: QrCode,
+    text: "Activez vos packs en scannant le QR Code Maître",
+  },
+  {
+    icon: Camera,
+    text: "Publiez vos produits avec des photos prises au téléphone",
+  },
+  {
+    icon: BarChart3,
+    text: "Suivez vos scans et produits populaires en temps réel",
+  },
+  {
+    icon: PencilLine,
+    text: "Modifiez vos fiches produits à tout moment",
+  },
+];
 
 export default function ArtisanLoginPage() {
-  const router = useRouter();
-  const [phone, setPhone] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
-    try {
-      const res = await fetch("/api/artisan/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone, password }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data?.error || "Connexion impossible");
-        return;
-      }
-      localStorage.setItem(TOKEN_KEY, data.token);
-      if (data.artisan?.name) {
-        localStorage.setItem("verifscan_artisan_name", data.artisan.name);
-      }
-      router.push("/artisan/dashboard");
-    } catch {
-      setError("Erreur réseau. Vérifiez votre connexion.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
-    <main
-      className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-amber-400 via-amber-500 to-orange-500 px-4 py-10"
-      data-testid="artisan-login-page"
-    >
-      {/* Logo */}
-      <div className="mb-8 flex flex-col items-center gap-2">
-        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white shadow-lg">
-          <QrCode className="h-9 w-9 text-amber-500" />
-        </div>
-        <span className="text-2xl font-extrabold tracking-tight text-white drop-shadow-sm">
-          VerifScan
-        </span>
-        <span className="text-sm font-medium text-amber-100">
-          Espace artisan
-        </span>
-      </div>
+    <div className="flex min-h-screen flex-col bg-white">
+      {/* Menu du site (identique aux autres pages publiques) */}
+      <PublicHeader />
 
-      {/* Carte de connexion */}
-      <form
-        onSubmit={submit}
-        className="w-full max-w-sm rounded-3xl bg-white p-7 shadow-2xl"
+      <main
+        data-testid="artisan-login-page"
+        className="flex flex-1 flex-col bg-white"
       >
-        <h1 className="text-xl font-extrabold text-gray-900">Se connecter</h1>
-        <p className="mt-1 text-sm text-gray-500">
-          Accédez à vos produits, packs et statistiques de scans.
-        </p>
+        <div className="flex flex-1 flex-col lg:flex-row">
+          {/* ── Panneau de marque (desktop) — même famille que /login ── */}
+          <div className="relative hidden w-1/2 overflow-hidden bg-gradient-to-br from-[#022150] via-[#0A2B5F] to-[#10B981] lg:flex">
+            <div className="absolute inset-0 opacity-30">
+              <div className="absolute -left-20 top-20 h-72 w-72 rounded-full bg-white/20 blur-3xl" />
+              <div className="absolute right-10 top-1/3 h-96 w-96 rounded-full bg-[#10B981]/30 blur-3xl" />
+              <div className="absolute bottom-10 left-1/4 h-64 w-64 rounded-full bg-[#F59E0B]/20 blur-3xl" />
+            </div>
 
-        <label className="mt-5 block text-sm font-semibold text-gray-700" htmlFor="phone">
-          Numéro de téléphone
-        </label>
-        <div className="relative mt-1.5">
-          <Phone className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
-          <input
-            id="phone"
-            data-testid="login-phone"
-            type="tel"
-            inputMode="tel"
-            autoComplete="tel"
-            required
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            placeholder="77 123 45 67"
-            className="w-full rounded-xl border-2 border-gray-200 py-3 pl-11 pr-4 outline-none transition-colors focus:border-amber-500"
-          />
+            <div className="relative z-10 flex w-full flex-col justify-between p-12 text-white">
+              {/* Logo officiel (contient déjà le wordmark) */}
+              <Link href="/" className="flex items-center" aria-label="VerifScan accueil">
+                <img
+                  src="/verifscan-logo.webp?v=5"
+                  alt="VerifScan"
+                  className="h-14 w-auto shrink-0 brightness-0 invert"
+                  width={720}
+                  height={247}
+                />
+              </Link>
+
+              <div>
+                <p className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-wide backdrop-blur-sm">
+                  <span className="h-2 w-2 rounded-full bg-[#F59E0B]" />
+                  Espace Artisan
+                </p>
+                <h2 className="font-display text-4xl font-bold leading-tight">
+                  Votre savoir-faire,
+                  <br />
+                  authentifié au scan.
+                </h2>
+                <p className="mt-4 max-w-md text-[#DCE7F2]">
+                  Le portail simple des artisans VerifScan : activez vos packs,
+                  publiez vos produits et laissez vos clients vérifier
+                  l&apos;authenticité en un scan.
+                </p>
+
+                <ul className="mt-8 space-y-3">
+                  {BENEFITS.map(({ icon: Icon, text }) => (
+                    <li key={text} className="flex items-center gap-3 text-sm">
+                      <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/10 backdrop-blur-sm">
+                        <Icon className="h-5 w-5 text-[#34D399]" />
+                      </span>
+                      <span className="text-[#F0F9FF]">{text}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <p className="text-xs text-[#DCE7F2]/70">
+                © {new Date().getFullYear()} VerifScan — Dakar, Sénégal
+              </p>
+            </div>
+          </div>
+
+          {/* ── Zone formulaire ── */}
+          <div className="flex w-full flex-col items-center justify-center px-4 py-10 sm:px-6 lg:w-1/2 lg:py-12">
+            <ArtisanLoginForm />
+
+            <p className="mt-6 text-center text-xs text-[#9CA3AF]">
+              <Link href="/" className="transition-colors hover:text-[#6B7280]">
+                ← Retour à l&apos;accueil
+              </Link>
+            </p>
+
+            {/* Rassuration « vérifié » — rappel de la promesse du site */}
+            <div className="mt-8 flex items-center gap-2 text-xs font-medium text-[#6B7280]">
+              <CheckCircle2 className="h-4 w-4 text-[#10B981]" />
+              Produits vérifiables par vos clients sur verifscan.sn
+            </div>
+          </div>
         </div>
+      </main>
 
-        <label className="mt-4 block text-sm font-semibold text-gray-700" htmlFor="password">
-          Mot de passe
-        </label>
-        <div className="relative mt-1.5">
-          <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
-          <input
-            id="password"
-            data-testid="login-password"
-            type="password"
-            autoComplete="current-password"
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="0000"
-            className="w-full rounded-xl border-2 border-gray-200 py-3 pl-11 pr-4 outline-none transition-colors focus:border-amber-500"
-          />
-        </div>
-
-        {error && (
-          <p
-            data-testid="login-error"
-            className="mt-4 rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-600"
-          >
-            {error}
-          </p>
-        )}
-
-        <button
-          type="submit"
-          data-testid="login-submit"
-          disabled={loading}
-          className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 py-3.5 font-bold text-white shadow-lg shadow-amber-500/30 transition-transform active:scale-[0.98] disabled:opacity-60"
-        >
-          <LogIn className="h-5 w-5" />
-          {loading ? "Connexion..." : "Se connecter"}
-        </button>
-
-        <p className="mt-4 rounded-xl bg-amber-50 px-4 py-3 text-center text-[13px] text-amber-800">
-          💡 Mot de passe par défaut : <strong>0000</strong>
-        </p>
-      </form>
-
-      <Link
-        href="/"
-        className="mt-6 text-sm font-medium text-white/90 underline-offset-4 hover:underline"
-      >
-        ← Retour à l&apos;accueil
-      </Link>
-    </main>
+      {/* Footer du site (identique aux autres pages publiques) */}
+      <PublicFooter />
+    </div>
   );
 }
