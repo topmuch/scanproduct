@@ -3,6 +3,7 @@
 import { use, useState } from "react";
 import { useRouter } from "next/navigation";
 import { QrCode, CheckCircle2 } from "lucide-react";
+import PhotoPicker from "@/components/product/artisan/PhotoPicker";
 
 /**
  * /activer-pack/[masterCode] — formulaire d'activation EN MASSE du pack
@@ -219,17 +220,15 @@ export default function ActivatePackPage({
             </div>
           )}
 
+          {/* Photo produit : au choix, caméra du téléphone OU téléchargement
+              galerie/fichiers (demande utilisateur), avec aperçu immédiat. */}
           <div>
-            <label className={labelCls} htmlFor="photo">
-              Photo du produit
-            </label>
-            <input
-              id="photo"
-              type="file"
-              accept="image/*"
-              capture="environment"
-              onChange={(e) => set({ photo: e.target.files?.[0] || null })}
-              className="w-full text-sm text-gray-500 file:mr-4 file:rounded-xl file:border-0 file:bg-amber-100 file:px-4 file:py-3 file:text-sm file:font-semibold file:text-amber-700 hover:file:bg-amber-200"
+            <PhotoPicker
+              label="Photo du produit"
+              helpText="Prenez-la sur fond clair et bien nette, ou choisissez-la dans votre galerie."
+              maxCount={1}
+              files={form.photo ? [form.photo] : []}
+              onChange={(files) => set({ photo: files[0] ?? null })}
             />
           </div>
 
@@ -493,26 +492,14 @@ export default function ActivatePackPage({
                 />
               </div>
               <div>
-                <label className={labelCls} htmlFor="galleryPhotos">
-                  Photos de votre atelier (jusqu&rsquo;à 3)
-                </label>
-                <input
-                  id="galleryPhotos"
-                  type="file"
-                  accept="image/*"
+                <PhotoPicker
+                  label="Photos de votre atelier (jusqu'à 3)"
+                  helpText="Montrez votre savoir-faire : fabrication, matière première, finition. Caméra ou galerie, comme vous préférez."
+                  maxCount={3}
                   multiple
-                  capture="environment"
-                  onChange={(e) => {
-                    const files = Array.from(e.target.files ?? []).slice(0, 3);
-                    set({ galleryPhotos: files });
-                  }}
-                  className="w-full text-sm text-gray-500 file:mr-4 file:rounded-xl file:border-0 file:bg-amber-100 file:px-4 file:py-3 file:text-sm file:font-semibold file:text-amber-700 hover:file:bg-amber-200"
+                  files={form.galleryPhotos}
+                  onChange={(files) => set({ galleryPhotos: files })}
                 />
-                {form.galleryPhotos.length > 0 && (
-                  <p className="mt-2 text-xs text-green-700">
-                    {form.galleryPhotos.length} photo(s) sélectionnée(s)
-                  </p>
-                )}
               </div>
             </div>
           </div>
