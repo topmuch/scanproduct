@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { db } from "@/lib/db";
+import { normalizePhone } from "@/lib/artisan-auth";
 import {
   asciiHeader,
   ensureArtisanTables,
@@ -171,7 +173,28 @@ export async function POST(request: NextRequest) {
           data: sharedData,
         });
 
-        // 4. Enregistrer l'artisan sur le pack + statut activated
+        // 4. Enregistrer l'artisan sur le pack + statut activated.
+        //    Portail artisan : le compte Artisan est créé/lié (téléphone =
+        //    identifiant, mot de passe par défaut « 0000 ») pour que le
+        //    dashboard /artisan/dashboard affiche immédiatement le pack,
+        //    même si le pack n'a pas été « vendu » au préalable.
+        const normalizedPhone = normalizePhone(productData.contactPhone).replace(/^\+/, "");
+        let artisan = await tx.artisan.findUnique({ where: { phone: normalizedPhone } });
+        if (!artisan) {
+          artisan = await tx.artisan.create({
+            data: {
+              phone: normalizedPhone,
+              password: await bcrypt.hash("0000", 10),
+              name: productData.artisanName,
+            },
+          });
+        } else if (!artisan.name) {
+          artisan = await tx.artisan.update({
+            where: { id: artisan.id },
+            data: { name: productData.artisanName },
+          });
+        }
+
         await tx.pack.update({
           where: { id: masterLot.packId },
           data: {
@@ -179,6 +202,7 @@ export async function POST(request: NextRequest) {
             soldTo: productData.artisanName,
             soldAt: new Date(),
             artisanPhone: productData.contactPhone,
+            artisanId: artisan.id,
             artisanEmail: productData.contactEmail || null,
             instagramUrl: productData.instagramUrl || null,
             facebookUrl: productData.facebookUrl || null,

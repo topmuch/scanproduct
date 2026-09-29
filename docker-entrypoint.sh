@@ -134,7 +134,7 @@ fi
 #   3. NUCLEAR : CREATE TABLE IF NOT EXISTS en SQL brut via sqlite3 — ne peut
 #      pas échouer silencieusement (même technique que le fallback Product).
 if [ -f "$DB_FILE" ] && command -v sqlite3 >/dev/null 2>&1; then
-  ARTISAN_TABLES="Batch Pack PreActivatedLot ArtisanScan ArtisanReview"
+  ARTISAN_TABLES="Artisan Batch Pack PreActivatedLot ArtisanScan ArtisanReview"
   MISSING=""
   for T in $ARTISAN_TABLES; do
     T_EXISTS=$(sqlite3 "$DB_FILE" "SELECT name FROM sqlite_master WHERE type='table' AND name='$T';" 2>/dev/null)
@@ -153,7 +153,7 @@ if [ -f "$DB_FILE" ] && command -v sqlite3 >/dev/null 2>&1; then
   PACK_EXISTS=$(sqlite3 "$DB_FILE" "SELECT name FROM sqlite_master WHERE type='table' AND name='Pack';" 2>/dev/null)
   if [ -n "$PACK_EXISTS" ]; then
     PACK_COLS=$(sqlite3 "$DB_FILE" "PRAGMA table_info(Pack);" 2>/dev/null | cut -d'|' -f2)
-    for COL in artisanPhone artisanEmail instagramUrl facebookUrl tiktokUrl artisanPhotos productPrice productDesignation; do
+    for COL in artisanId artisanPhone artisanEmail instagramUrl facebookUrl tiktokUrl artisanPhotos productPrice productDesignation; do
       if ! echo "$PACK_COLS" | grep -qx "$COL"; then
         echo "  + ALTER TABLE Pack ADD COLUMN $COL (fallback nu)"
         sqlite3 "$DB_FILE" "ALTER TABLE Pack ADD COLUMN \"$COL\" TEXT;" 2>&1 | grep -v "duplicate column" || true
@@ -198,6 +198,16 @@ if [ -f "$DB_FILE" ] && command -v sqlite3 >/dev/null 2>&1; then
   if [ -n "$STILL_MISSING" ]; then
     echo "=== NUCLEAR FALLBACK : CREATE TABLE IF NOT EXISTS (SQL brut) pour:$STILL_MISSING ==="
     sqlite3 "$DB_FILE" <<'ARTISAN_DDL'
+CREATE TABLE IF NOT EXISTS "Artisan" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "phone" TEXT NOT NULL,
+    "password" TEXT NOT NULL DEFAULT '0000',
+    "name" TEXT,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL
+);
+CREATE UNIQUE INDEX IF NOT EXISTS "Artisan_phone_key" ON "Artisan"("phone");
+CREATE INDEX IF NOT EXISTS "Artisan_phone_idx" ON "Artisan"("phone");
 CREATE TABLE IF NOT EXISTS "Batch" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "totalQuantity" INTEGER NOT NULL,
@@ -220,6 +230,7 @@ CREATE TABLE IF NOT EXISTS "Pack" (
     "soldAt" DATETIME,
     "artisanPhone" TEXT,
     "artisanEmail" TEXT,
+    "artisanId" TEXT,
     "instagramUrl" TEXT,
     "facebookUrl" TEXT,
     "tiktokUrl" TEXT,
@@ -229,12 +240,14 @@ CREATE TABLE IF NOT EXISTS "Pack" (
     "status" TEXT NOT NULL DEFAULT 'available',
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL,
-    CONSTRAINT "Pack_batchId_fkey" FOREIGN KEY ("batchId") REFERENCES "Batch" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+    CONSTRAINT "Pack_batchId_fkey" FOREIGN KEY ("batchId") REFERENCES "Batch" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT "Pack_artisanId_fkey" FOREIGN KEY ("artisanId") REFERENCES "Artisan" ("id") ON DELETE SET NULL ON UPDATE CASCADE
 );
 CREATE UNIQUE INDEX IF NOT EXISTS "Pack_masterQrCode_key" ON "Pack"("masterQrCode");
 CREATE INDEX IF NOT EXISTS "Pack_batchId_idx" ON "Pack"("batchId");
 CREATE INDEX IF NOT EXISTS "Pack_status_idx" ON "Pack"("status");
 CREATE INDEX IF NOT EXISTS "Pack_masterQrCode_idx" ON "Pack"("masterQrCode");
+CREATE INDEX IF NOT EXISTS "Pack_artisanId_idx" ON "Pack"("artisanId");
 CREATE TABLE IF NOT EXISTS "PreActivatedLot" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "packId" TEXT NOT NULL,

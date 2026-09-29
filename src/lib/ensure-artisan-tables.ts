@@ -32,6 +32,7 @@ import { db } from "@/lib/db";
  */
 
 export const ARTISAN_TABLES = [
+  "Artisan",
   "Batch",
   "Pack",
   "PreActivatedLot",
@@ -41,6 +42,16 @@ export const ARTISAN_TABLES = [
 
 /** DDL artisana — une instruction par élément (Prisma = 1 statement par appel). */
 export const ARTISAN_DDL: string[] = [
+  `CREATE TABLE IF NOT EXISTS "Artisan" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "phone" TEXT NOT NULL,
+    "password" TEXT NOT NULL DEFAULT '0000',
+    "name" TEXT,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL
+)`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS "Artisan_phone_key" ON "Artisan"("phone")`,
+  `CREATE INDEX IF NOT EXISTS "Artisan_phone_idx" ON "Artisan"("phone")`,
   `CREATE TABLE IF NOT EXISTS "Batch" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "totalQuantity" INTEGER NOT NULL,
@@ -63,6 +74,7 @@ export const ARTISAN_DDL: string[] = [
     "soldAt" DATETIME,
     "artisanPhone" TEXT,
     "artisanEmail" TEXT,
+    "artisanId" TEXT,
     "instagramUrl" TEXT,
     "facebookUrl" TEXT,
     "tiktokUrl" TEXT,
@@ -72,12 +84,14 @@ export const ARTISAN_DDL: string[] = [
     "status" TEXT NOT NULL DEFAULT 'available',
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL,
-    CONSTRAINT "Pack_batchId_fkey" FOREIGN KEY ("batchId") REFERENCES "Batch" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+    CONSTRAINT "Pack_batchId_fkey" FOREIGN KEY ("batchId") REFERENCES "Batch" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT "Pack_artisanId_fkey" FOREIGN KEY ("artisanId") REFERENCES "Artisan" ("id") ON DELETE SET NULL ON UPDATE CASCADE
 )`,
   `CREATE UNIQUE INDEX IF NOT EXISTS "Pack_masterQrCode_key" ON "Pack"("masterQrCode")`,
   `CREATE INDEX IF NOT EXISTS "Pack_batchId_idx" ON "Pack"("batchId")`,
   `CREATE INDEX IF NOT EXISTS "Pack_status_idx" ON "Pack"("status")`,
   `CREATE INDEX IF NOT EXISTS "Pack_masterQrCode_idx" ON "Pack"("masterQrCode")`,
+  `CREATE INDEX IF NOT EXISTS "Pack_artisanId_idx" ON "Pack"("artisanId")`,
   `CREATE TABLE IF NOT EXISTS "PreActivatedLot" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "packId" TEXT NOT NULL,
@@ -142,6 +156,11 @@ export const ARTISAN_DDL: string[] = [
  */
 export const REQUIRED_COLUMNS: Record<string, Array<{ name: string; ddl: string }>> = {
   Pack: [
+    // artisanId : lien vers le compte Artisan (portail artisan, vente,
+    // dashboard). Les DB de prod creees avant cette colonne la recoivent via
+    // ALTER (sans contrainte FK - SQLite ne sait pas ajouter une FK par
+    // ALTER, et Prisma n'en a pas besoin pour les requetes/includes).
+    { name: "artisanId", ddl: `ALTER TABLE "Pack" ADD COLUMN "artisanId" TEXT` },
     { name: "artisanPhone", ddl: `ALTER TABLE "Pack" ADD COLUMN "artisanPhone" TEXT` },
     { name: "artisanEmail", ddl: `ALTER TABLE "Pack" ADD COLUMN "artisanEmail" TEXT` },
     { name: "instagramUrl", ddl: `ALTER TABLE "Pack" ADD COLUMN "instagramUrl" TEXT` },

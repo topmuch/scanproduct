@@ -800,6 +800,30 @@ model Post {
 //      formulaire unique → TOUTES les étiquettes du pack s'activent d'un coup
 //   5. Le client final scanne un QR produit → /a/<code> → page Artisan
 //      chaleureuse (ambre/stone) avec contact WhatsApp direct
+// ============================================================================
+// VerifScan - Compte ARTISAN (parcours informel)
+// ============================================================================
+// L'artisan informel n'a ni email ni entreprise : son NUMERO de telephone est
+// son identifiant. Compte cree automatiquement :
+//   - a la VENTE d'un pack par le SuperAdmin (POST /api/admin/sell-pack),
+//     avec le mot de passe par defaut « 0000 » envoye par WhatsApp ;
+//   - ou a la PREMIERE connexion sur /artisan/login (POST /api/artisan/login).
+// Le mot de passe est stocke HASHE (bcryptjs) - jamais renvoye par l'API.
+// ============================================================================
+model Artisan {
+  id        String   @id @default(cuid())
+  phone     String   @unique // identifiant de connexion (ex. "771234567")
+  password  String   @default("0000") // hash bcrypt du mot de passe
+  name      String?  // nom de l'artisan / de la marque
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  packs     Pack[]
+
+  @@index([phone])
+}
+
 model Batch {
   id            String    @id @default(cuid())
   totalQuantity Int       // 1000
@@ -835,6 +859,11 @@ model Pack {
   artisanPhone String?
   artisanEmail String?
 
+  // Compte Artisan lie au pack (cree a la vente par le SuperAdmin ou a
+  // l'activation). Nullable : les packs en stock ne sont lies a personne.
+  artisanId    String?
+  artisan      Artisan? @relation(fields: [artisanId], references: [id])
+
   // Réseaux sociaux de l'artisan (optionnels, remplis à l'activation)
   instagramUrl String?
   facebookUrl  String?
@@ -862,6 +891,7 @@ model Pack {
   @@index([batchId])
   @@index([status])
   @@index([masterQrCode])
+  @@index([artisanId])
 }
 
 model PreActivatedLot {

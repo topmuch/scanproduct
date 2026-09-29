@@ -6,20 +6,26 @@ import {
   buildUploadUrl,
 } from "@/lib/upload-config";
 import { db } from "@/lib/db";
+import { getArtisanFromToken, normalizePhone } from "@/lib/artisan-auth";
 
 /**
  * POST /api/artisan/upload
  *
- * Upload de la photo produit pour l'ACTIVATION ARTISANALE (sans compte).
+ * Upload de photos du parcours ARTISANAL (photo produit / galerie atelier).
  *
- * L'upload /api/upload historique exige une session FABRICANT — or l'artisan
- * n'a pas de compte. Cette route publique est bornée :
- *   1. `masterCode` (multipart field) doit exister en base, être isMaster,
- *      appartenir à un pack encore `inactive` → exploitable uniquement
- *      pendant l'activation d'un pack légitime.
- *   2. Image ≤ 5 Mo, format détecté par magic bytes (jpg/png/webp/gif).
- *   3. Fichier stocké dans UPLOAD_DIR (volume persistant), servi via
- *      /api/uploads/<fichier> comme les autres images.
+ * Deux modes d'autorisation :
+ *   1. ACTIVATION (sans compte) : champ `masterCode` multipart — le code
+ *      maître doit exister, être isMaster et appartenir à un pack encore
+ *      `inactive` → exploitable uniquement pendant l'activation légitime.
+ *   2. ÉDITION (portail artisan connecté) : JWT artisan en en-tête
+ *      `Authorization: Bearer` + champ `packId` — le pack doit appartenir à
+ *      l'artisan (artisanId, ou correspondance téléphone pour les packs
+ *      vendus avant l'introduction des comptes). Permet de changer la photo
+ *      d'un produit DÉJÀ activé depuis /artisan/products/<id>/edit.
+ *
+ * Contraintes fichier : image ≤ 5 Mo, format détecté par magic bytes
+ * (jpg/png/webp/gif). Stockage dans UPLOAD_DIR (volume persistant), servi
+ * via /api/uploads/<fichier>.
  */
 export const runtime = "nodejs";
 
@@ -49,20 +55,43 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Formulaire invalide" }, { status: 400 });
   }
 
-  // ── Garde : le pack doit être activable ────────────────────────────────
+  // ── Garde : ACTIVATION par code maître OU ÉDITION authentifiée ──────────
   const masterCode = String(formData.get("masterCode") || "").trim();
-  if (!masterCode.startsWith("MASTER-")) {
-    return NextResponse.json({ error: "Code maître invalide" }, { status: 400 });
-  }
-  const masterLot = await db.preActivatedLot.findUnique({
-    where: { qrCode: masterCode },
-    include: { pack: true },
-  });
-  if (!masterLot || !masterLot.isMaster) {
-    return NextResponse.json({ error: "Code maître inconnu" }, { status: 404 });
-  }
-  if (masterLot.pack.status === "activated" || masterLot.status === "active") {
-    return NextResponse.json({ error: "Ce pack est déjà activé" }, { status: 409 });
+  const packIdField = String(formData.get("packId") || "").trim();
+  const artisan = getArtisanFromToken(request);
+
+  if (masterCode.startsWith("MASTER-")) {
+    // Mode 1 : activation (sans compte) — le pack doit être activable
+    const masterLot = await db.preActivatedLot.findUnique({
+      where: { qrCode: masterCode },
+      include: { pack: true },
+    });
+    if (!masterLot || !masterLot.isMaster) {
+      return NextResponse.json({ error: "Code maître inconnu" }, { status: 404 });
+    }
+    if (masterLot.pack.status === "activated" || masterLot.status === "active") {
+      return NextResponse.json({ error: "Ce pack est déjà activé" }, { status: 409 });
+    }
+  } else if (artisan && packIdField) {
+    // Mode 2 : édition authentifiée — le pack doit appartenir à l'artisan
+    const pack = await db.pack.findUnique({ where: { id: packIdField } });
+    if (!pack) {
+      return NextResponse.json({ error: "Pack introuvable" }, { status: 404 });
+    }
+    const owned =
+      pack.artisanId === artisan.artisanId ||
+      (!pack.artisanId &&
+        !!pack.artisanPhone &&
+        normalizePhone(pack.artisanPhone) === artisan.phone);
+    if (!owned) {
+      // 404 volontaire : ne pas révéler l'existence d'un pack étranger
+      return NextResponse.json({ error: "Pack introuvable" }, { status: 404 });
+    }
+  } else {
+    return NextResponse.json(
+      { error: "Code maître invalide" },
+      { status: 400 }
+    );
   }
 
   // ── Fichier ────────────────────────────────────────────────────────────

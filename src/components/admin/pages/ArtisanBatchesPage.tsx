@@ -16,6 +16,7 @@ import {
   Stethoscope,
   CopyX,
   Pencil,
+  ShoppingCart,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -27,6 +28,7 @@ import {
   Button,
 } from "@/components/admin/ui";
 import { ModifyPackModal } from "./ModifyPackModal";
+import { SellPackModal } from "./SellPackModal";
 import { getScanOrigin } from "@/lib/qr-url";
 
 /**
@@ -78,6 +80,15 @@ export function ArtisanBatchesPage() {
   // par l'artisan — demande utilisateur : bouton « Modifier » à côté du QR)
   const [modifyingPack, setModifyingPack] = useState<{
     id: string;
+    masterQrCode: string;
+  } | null>(null);
+  // Pack en cours de VENTE (spec Phase 3 : SuperAdmin vend un pack à un
+  // artisan → compte créé + lien WhatsApp pour envoyer les codes)
+  const [sellingPack, setSellingPack] = useState<{
+    id: string;
+    packNumber: number;
+    quantity: number;
+    price: number;
     masterQrCode: string;
   } | null>(null);
 
@@ -534,6 +545,26 @@ export function ArtisanBatchesPage() {
                               {pack.artisanPhone ? ` · ${pack.artisanPhone}` : ""}
                             </div>
                           )}
+                          {pack.status === "available" && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() =>
+                                setSellingPack({
+                                  id: pack.id,
+                                  packNumber: pack.packNumber,
+                                  quantity: pack.quantity,
+                                  price: pack.price,
+                                  masterQrCode: pack.masterQrCode,
+                                })
+                              }
+                              title="Vendre ce pack à un artisan (compte + WhatsApp)"
+                              data-testid={`sell-btn-${pack.id}`}
+                            >
+                              <ShoppingCart className="mr-1 h-3.5 w-3.5" />
+                              Vendre
+                            </Button>
+                          )}
                           <a
                             href={`/a/${pack.masterQrCode}`}
                             target="_blank"
@@ -560,6 +591,15 @@ export function ArtisanBatchesPage() {
           masterQrCode={modifyingPack.masterQrCode}
           onClose={() => setModifyingPack(null)}
           onSaved={() => fetchBatches({ skipHeal: true })}
+        />
+      )}
+
+      {/* Modal de vente (SuperAdmin → pack disponible → artisan) */}
+      {sellingPack && (
+        <SellPackModal
+          pack={sellingPack}
+          onClose={() => setSellingPack(null)}
+          onSold={() => fetchBatches({ skipHeal: true })}
         />
       )}
     </PageContainer>
