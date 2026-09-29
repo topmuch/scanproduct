@@ -27,6 +27,7 @@ import {
   Button,
 } from "@/components/admin/ui";
 import { ModifyPackModal } from "./ModifyPackModal";
+import { getScanOrigin } from "@/lib/qr-url";
 
 /**
  * ArtisanBatchesPage — onglet « Production QR Artisans » du SuperAdmin.
@@ -470,21 +471,31 @@ export function ArtisanBatchesPage() {
                         key={pack.id}
                         className="flex gap-3 rounded-lg border border-[#E5E7EB] p-4"
                       >
-                        {/* QR du maître affiché en image — identique au PDF
-                            d'impression (encodage du code brut, couleur #022150).
-                            Bouton « Modifier » juste à côté (demande utilisateur) :
-                            le SuperAdmin corrige les données créées par l'artisan. */}
+                        {/* QR du maître affiché en image — SCANNABLE :
+                            encode l'URL publique {origin}/a/<code> (et non le
+                            code brut) pour que la caméra du téléphone ouvre
+                            directement la page (vue activation si le pack est
+                            inactif, fiche produit sinon). 128px + marge 2 pour
+                            un verrouillage caméra fiable. Bouton « Modifier »
+                            juste à côté (demande utilisateur) : le SuperAdmin
+                            corrige les données créées par l'artisan. */}
                         <div className="flex shrink-0 flex-col items-center gap-2">
-                          <div className="rounded-md border border-[#E5E7EB] bg-white p-1.5">
+                          <div
+                            className="rounded-md border border-[#E5E7EB] bg-white p-1.5"
+                            title="Scannez ce QR : il ouvre la page publique du pack"
+                          >
                             <QRCodeCanvas
-                              value={pack.masterQrCode}
-                              size={80}
+                              value={`${getScanOrigin().replace(/\/$/, "")}/a/${pack.masterQrCode}`}
+                              size={128}
                               fgColor="#022150"
                               bgColor="#FFFFFF"
                               level="M"
-                              marginSize={1}
+                              marginSize={2}
                             />
                           </div>
+                          <span className="text-center text-[10px] leading-tight text-[#6B7280]">
+                            Scan → fiche produit
+                          </span>
                           {pack.status === "activated" && (
                             <Button
                               variant="outline"

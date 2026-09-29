@@ -10,12 +10,18 @@ import { requireSuperAdmin } from "@/lib/admin-guard";
  * QR d'un batch (A4, 4 QR par ligne, Maître encadré en rouge + libellé
  * "MAÎTRE"). Marque le batch comme "printed" à la première génération.
  *
+ * Chaque QR encode l'URL PUBLIQUE {origin}/a/<code> (et non le code brut) :
+ * un scan avec la caméra du téléphone ouvre directement la page — vue
+ * « Activez votre pack » pour le Maître tant que le pack est inactif,
+ * fiche produit publique ensuite. Un QR contenant le code seul s'affiche
+ * comme du texte sans action → « non scannable » pour l'utilisateur.
+ *
  * Next 16 : le PDF est bufferisé puis renvoyé dans une Response (pas de
  * stream Node brut dans l'edge/runtime Next).
  */
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ batchId: string }> }
 ) {
   const session = await requireSuperAdmin();
@@ -23,6 +29,16 @@ export async function GET(
     return NextResponse.json({ error: "Non autorisé" }, { status: 403 });
   }
   const { batchId } = await params;
+
+  // Origine encodée dans les QR : celle du déploiement CONSULTÉ (sandbox,
+  // prod…) — même philosophie que getScanOrigin() côté client. Le domaine
+  // consulté est celui où le batch existe réellement ; NEXT_PUBLIC_SCAN_URL
+  // ne sert que de filet de sécurité.
+  const scanOrigin = (
+    request.nextUrl.origin ||
+    process.env.NEXT_PUBLIC_SCAN_URL ||
+    "https://verifscan.sn"
+  ).replace(/\/$/, "");
 
   const batch = await db.batch.findUnique({
     where: { id: batchId },
@@ -60,7 +76,7 @@ export async function GET(
     .fillColor("#555555")
     .text(
       "Étiquette MAÎTRE (encadrée rouge) : à donner à l'artisan — active tout le pack en un scan. " +
-        "URL publique des QR : https://verifscan.sn/a/<code>",
+        `Chaque QR ouvre la page publique : ${scanOrigin}/a/<code>`,
       { align: "center" }
     );
   doc.moveDown(1.5);
@@ -101,7 +117,8 @@ export async function GET(
       newPageIfNeeded(QR_SIZE + V_SPACING + 20);
 
       try {
-        const dataUrl = await QRCode.toDataURL(lot.qrCode, {
+        // URL publique complète = QR scannable (la caméra ouvre la page).
+        const dataUrl = await QRCode.toDataURL(`${scanOrigin}/a/${lot.qrCode}`, {
           width: QR_SIZE * 2,
           margin: 1,
           color: { dark: "#022150", light: "#FFFFFF" },
