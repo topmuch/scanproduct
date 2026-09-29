@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { QRCodeCanvas } from "qrcode.react";
 import {
   QrCode,
   Plus,
@@ -14,6 +15,7 @@ import {
   FlaskConical,
   Stethoscope,
   CopyX,
+  Pencil,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -24,6 +26,7 @@ import {
   Badge,
   Button,
 } from "@/components/admin/ui";
+import { ModifyPackModal } from "./ModifyPackModal";
 
 /**
  * ArtisanBatchesPage — onglet « Production QR Artisans » du SuperAdmin.
@@ -70,6 +73,12 @@ export function ArtisanBatchesPage() {
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
+  // Pack en cours de modification par le SuperAdmin (données produit créées
+  // par l'artisan — demande utilisateur : bouton « Modifier » à côté du QR)
+  const [modifyingPack, setModifyingPack] = useState<{
+    id: string;
+    masterQrCode: string;
+  } | null>(null);
 
   const [totalQuantity, setTotalQuantity] = useState(1000);
   const [packSize, setPackSize] = useState(200);
@@ -459,36 +468,70 @@ export function ArtisanBatchesPage() {
                     {batch.packs.map((pack) => (
                       <div
                         key={pack.id}
-                        className="rounded-lg border border-[#E5E7EB] p-4"
+                        className="flex gap-3 rounded-lg border border-[#E5E7EB] p-4"
                       >
-                        <div className="flex items-center justify-between">
-                          <span className="inline-flex items-center gap-1.5 text-[14px] font-semibold text-[#111827]">
-                            <Package className="h-4 w-4 text-[#022150]" />
-                            Pack {pack.packNumber}
-                          </span>
-                          {packBadge(pack.status)}
-                        </div>
-                        <div className="mt-2 font-mono text-[12px] font-bold text-[#022150]">
-                          {pack.masterQrCode}
-                        </div>
-                        <div className="mt-1 text-[12px] text-[#6B7280]">
-                          {pack.quantity} étiquettes ·{" "}
-                          {pack.price.toLocaleString("fr-FR")} FCFA
-                        </div>
-                        {pack.soldTo && (
-                          <div className="mt-1 text-[12px] text-[#6B7280]">
-                            Artisan : <strong>{pack.soldTo}</strong>
-                            {pack.artisanPhone ? ` · ${pack.artisanPhone}` : ""}
+                        {/* QR du maître affiché en image — identique au PDF
+                            d'impression (encodage du code brut, couleur #022150).
+                            Bouton « Modifier » juste à côté (demande utilisateur) :
+                            le SuperAdmin corrige les données créées par l'artisan. */}
+                        <div className="flex shrink-0 flex-col items-center gap-2">
+                          <div className="rounded-md border border-[#E5E7EB] bg-white p-1.5">
+                            <QRCodeCanvas
+                              value={pack.masterQrCode}
+                              size={80}
+                              fgColor="#022150"
+                              bgColor="#FFFFFF"
+                              level="M"
+                              marginSize={1}
+                            />
                           </div>
-                        )}
-                        <a
-                          href={`/a/${pack.masterQrCode}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="mt-2 inline-block text-[12px] font-medium text-[#022150] underline-offset-2 hover:underline"
-                        >
-                          Voir la page du maître →
-                        </a>
+                          {pack.status === "activated" && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() =>
+                                setModifyingPack({
+                                  id: pack.id,
+                                  masterQrCode: pack.masterQrCode,
+                                })
+                              }
+                              title="Modifier les informations produit créées par l'artisan"
+                            >
+                              <Pencil className="mr-1 h-3.5 w-3.5" />
+                              Modifier
+                            </Button>
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between">
+                            <span className="inline-flex items-center gap-1.5 text-[14px] font-semibold text-[#111827]">
+                              <Package className="h-4 w-4 text-[#022150]" />
+                              Pack {pack.packNumber}
+                            </span>
+                            {packBadge(pack.status)}
+                          </div>
+                          <div className="mt-2 font-mono text-[12px] font-bold text-[#022150]">
+                            {pack.masterQrCode}
+                          </div>
+                          <div className="mt-1 text-[12px] text-[#6B7280]">
+                            {pack.quantity} étiquettes ·{" "}
+                            {pack.price.toLocaleString("fr-FR")} FCFA
+                          </div>
+                          {pack.soldTo && (
+                            <div className="mt-1 text-[12px] text-[#6B7280]">
+                              Artisan : <strong>{pack.soldTo}</strong>
+                              {pack.artisanPhone ? ` · ${pack.artisanPhone}` : ""}
+                            </div>
+                          )}
+                          <a
+                            href={`/a/${pack.masterQrCode}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-2 inline-block text-[12px] font-medium text-[#022150] underline-offset-2 hover:underline"
+                          >
+                            Voir la page du maître →
+                          </a>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -497,6 +540,16 @@ export function ArtisanBatchesPage() {
             </Card>
           ))}
         </div>
+      )}
+
+      {/* Modal de modification (SuperAdmin → données produit de l'artisan) */}
+      {modifyingPack && (
+        <ModifyPackModal
+          packId={modifyingPack.id}
+          masterQrCode={modifyingPack.masterQrCode}
+          onClose={() => setModifyingPack(null)}
+          onSaved={() => fetchBatches({ skipHeal: true })}
+        />
       )}
     </PageContainer>
   );
