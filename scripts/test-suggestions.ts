@@ -116,6 +116,7 @@ const act = await req("/api/artisan/activate-pack", {
       instagramUrl: "https://instagram.com/aissata.cosmetics",
       facebookUrl: "https://facebook.com/aissata.cosmetics",
       tiktokUrl: "https://tiktok.com/@aissata",
+      productPrice: "5 000 FCFA",
       artisanPhotos: [
         "/api/uploads/artisan-atelier-1.jpg",
         "/api/uploads/artisan-atelier-2.jpg",
@@ -140,6 +141,7 @@ check("4f. ligne Facebook", html.includes("facebook.com/aissata.cosmetics") && h
 check("4g. ligne TikTok", html.includes("tiktok.com/@aissata") && html.includes(">TikTok<"));
 check("4h. galerie atelier", html.includes("atelier en images") && html.includes("artisan-atelier-1.jpg"));
 check("4i. bouton partager", html.includes("Partager ce produit authentique"));
+check("4k. prix affiché sur la page", html.includes("5 000 FCFA"));
 check("4j. section avis présente", html.includes("Avis des clients"));
 // (ScanTracker ne rend rien en HTML — il est validé par l'appel réel étape 5)
 

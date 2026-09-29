@@ -67,6 +67,7 @@ export const ARTISAN_DDL: string[] = [
     "facebookUrl" TEXT,
     "tiktokUrl" TEXT,
     "artisanPhotos" TEXT,
+    "productPrice" TEXT,
     "status" TEXT NOT NULL DEFAULT 'available',
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL,
@@ -146,6 +147,7 @@ export const REQUIRED_COLUMNS: Record<string, Array<{ name: string; ddl: string 
     { name: "facebookUrl", ddl: `ALTER TABLE "Pack" ADD COLUMN "facebookUrl" TEXT` },
     { name: "tiktokUrl", ddl: `ALTER TABLE "Pack" ADD COLUMN "tiktokUrl" TEXT` },
     { name: "artisanPhotos", ddl: `ALTER TABLE "Pack" ADD COLUMN "artisanPhotos" TEXT` },
+    { name: "productPrice", ddl: `ALTER TABLE "Pack" ADD COLUMN "productPrice" TEXT` },
   ],
   PreActivatedLot: [
     { name: "artisanBio", ddl: `ALTER TABLE "PreActivatedLot" ADD COLUMN "artisanBio" TEXT` },

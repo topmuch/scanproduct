@@ -24,6 +24,7 @@ type FormState = {
   instagramUrl: string;
   facebookUrl: string;
   tiktokUrl: string;
+  productPrice: string;
   artisanBio: string;
   usageTips: string;
 };
@@ -57,6 +58,7 @@ export default function ActivatePackPage({
     instagramUrl: "",
     facebookUrl: "",
     tiktokUrl: "",
+    productPrice: "",
     artisanBio: "",
     usageTips: "",
   });
@@ -120,6 +122,7 @@ export default function ActivatePackPage({
             instagramUrl: form.instagramUrl,
             facebookUrl: form.facebookUrl,
             tiktokUrl: form.tiktokUrl,
+            productPrice: form.productPrice,
             artisanPhotos: galleryUrls,
             artisanBio: form.artisanBio,
             usageTips: form.usageTips,
@@ -349,6 +352,25 @@ export default function ActivatePackPage({
               onChange={(e) => set({ contactEmail: e.target.value })}
               className={inputCls}
             />
+          </div>
+
+          {/* ── Prix affiché aux clients (optionnel) ── */}
+          <div>
+            <label className={labelCls} htmlFor="productPrice">
+              💰 Prix affiché aux clients (optionnel)
+            </label>
+            <input
+              id="productPrice"
+              type="text"
+              maxLength={40}
+              placeholder="Ex : 5 000 FCFA le pot"
+              value={form.productPrice}
+              onChange={(e) => set({ productPrice: e.target.value })}
+              className={inputCls}
+            />
+            <p className="mt-1 text-xs text-gray-500">
+              Texte libre : il s&rsquo;affiche sur votre page produit à côté de la contenance.
+            </p>
           </div>
 
           {/* ── Réseaux sociaux (optionnels) : visibilité sur la page produit ── */}

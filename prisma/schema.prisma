@@ -843,6 +843,10 @@ model Pack {
   // Galerie « L'atelier en images » — tableau JSON d'URLs (max 3)
   artisanPhotos String?
 
+  // Prix consommateur affiché sur la page produit (texte libre, ex. « 5 000 FCFA »)
+  // ⚠️ Distinct de `price` = prix B2B du pack de QR.
+  productPrice String?
+
   status       String   @default("available") // available, sold, activated
 
   createdAt    DateTime @default(now())

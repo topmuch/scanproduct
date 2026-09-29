@@ -49,6 +49,8 @@ const ProductDataSchema = z.object({
   tiktokUrl: z.string().trim().max(200).optional().or(z.literal("")),
   // Galerie « L'atelier en images » — tableau JSON d'URLs (max 3)
   artisanPhotos: z.array(z.string().max(500)).max(3).optional(),
+  // Prix consommateur affiché sur la page produit (texte libre, ex. « 5 000 FCFA »)
+  productPrice: z.string().trim().max(40).optional().or(z.literal("")),
 });
 
 const BodySchema = z.object({
@@ -183,6 +185,7 @@ export async function POST(request: NextRequest) {
               productData.artisanPhotos && productData.artisanPhotos.length > 0
                 ? JSON.stringify(productData.artisanPhotos)
                 : null,
+            productPrice: productData.productPrice || null,
           },
         });
 

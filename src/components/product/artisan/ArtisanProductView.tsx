@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import {
   Leaf,
@@ -18,6 +18,7 @@ import {
   Facebook,
   Check,
   AlertTriangle,
+  X,
 } from "lucide-react";
 import { ScanTracker } from "./ScanTracker";
 
@@ -76,6 +77,7 @@ type Props = {
     artisanName: string;
     contactPhone: string;
     contactEmail?: string | null;
+    productPrice?: string | null;
     photoUrl?: string | null;
     artisanBio?: string | null;
     usageTips?: string | null;
@@ -151,15 +153,60 @@ function formatDate(date: Date | null): string {
   });
 }
 
+/**
+ * Image avec filet de sécurité (fix revue #1) : si le fichier est ABSENT ou
+ * CASSÉ (404, upload perdu, lien mort), affiche un placeholder dégradé au
+ * lieu du texte alt brut — la page reste propre et professionnelle.
+ */
+function SafeImage({
+  src,
+  alt,
+  className = "",
+  fallbackClassName = "",
+  emoji = "🧴",
+  icon,
+}: {
+  src?: string | null;
+  alt: string;
+  className?: string;
+  fallbackClassName?: string;
+  emoji?: string;
+  icon?: ReactNode;
+}) {
+  const [failed, setFailed] = useState(false);
+  if (failed || !src) {
+    return (
+      <div
+        role="img"
+        aria-label={alt}
+        className={`flex items-center justify-center bg-gradient-to-br from-amber-200 via-orange-300 to-rose-300 ${className} ${fallbackClassName}`}
+      >
+        {icon ?? <span className="text-6xl">{emoji}</span>}
+      </div>
+    );
+  }
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src={src} alt={alt} className={className} onError={() => setFailed(true)} />
+  );
+}
+
 /** Normalise un numéro sénégalais/local vers le format international wa.me. */
-function toWhatsAppLink(phone: string, artisanName: string, productName: string): string {
+function toWhatsAppLink(
+  phone: string,
+  artisanName: string,
+  productName: string,
+  customMessage?: string
+): string {
   const digits = phone.replace(/\D/g, "");
   let international = digits;
   if (international.startsWith("00")) international = international.slice(2);
   else if (international.startsWith("221")) international = international;
   else if (international.startsWith("0")) international = `221${international.slice(1)}`;
   else if (international.length <= 9) international = `221${international}`;
-  const message = `Bonjour ${artisanName}, je suis intéressé(e) par votre ${productName} vu sur VerifScan.`;
+  const message =
+    customMessage ??
+    `Bonjour ${artisanName}, je suis intéressé(e) par votre ${productName} vu sur VerifScan.`;
   return `https://wa.me/${international}?text=${encodeURIComponent(message)}`;
 }
 
@@ -188,6 +235,15 @@ export function ArtisanProductView({
 
   // ── Partage : Web Share API, repli = copie du lien ──────────────────────
   const [shareCopied, setShareCopied] = useState(false);
+
+  // ── Lightbox galerie atelier (zoom plein écran, fermeture au clic) ──────
+  const [lightbox, setLightbox] = useState<string | null>(null);
+  useEffect(() => {
+    document.body.style.overflow = lightbox ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [lightbox]);
 
   async function handleShare() {
     const url = window.location.href;
@@ -256,6 +312,13 @@ export function ArtisanProductView({
   }
 
   const waLink = toWhatsAppLink(lot.contactPhone, lot.artisanName, lot.productName);
+  // Lien de SIGNALEMENT (bannière contrefaçon, fix revue #3) — message dédié
+  const waReportLink = toWhatsAppLink(
+    lot.contactPhone,
+    lot.artisanName,
+    lot.productName,
+    `Bonjour ${lot.artisanName}, je viens de scanner un QR code VerifScan (produit : ${lot.productName}) et une alerte de possible contrefaçon s'affiche. Je vous signale ce produit suspect.`
+  );
 
   // ── Fraîcheur : jours restants + progression réelle de la durée de vie ──
   const now = Date.now();
@@ -320,8 +383,16 @@ export function ArtisanProductView({
                 Ce QR code a été scanné depuis {regionLabel(counterfeitAlert.regionA)} puis{" "}
                 {regionLabel(counterfeitAlert.regionB)} en moins de 48 h (
                 {new Date(counterfeitAlert.detectedAt).toLocaleDateString("fr-FR")}). Un produit
-                physique ne voyage pas si vite — possible contrefaçon. En cas de doute, signalez-le
-                à l&rsquo;artisan.
+                physique ne voyage pas si vite — possible contrefaçon. En cas de doute,{" "}
+                <a
+                  href={waReportLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-bold text-white underline decoration-white/50 underline-offset-2 hover:decoration-white"
+                >
+                  signalez-le à l&rsquo;artisan sur WhatsApp
+                </a>
+                .
               </p>
             </div>
           </div>
@@ -330,14 +401,12 @@ export function ArtisanProductView({
 
       {/* ── 1. HERO IMAGE─────────────────────────────────────────────────── */}
       <div className="relative h-96 overflow-hidden bg-stone-200">
-        {lot.photoUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={lot.photoUrl} alt={lot.productName} className="h-full w-full object-cover" />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-amber-200 via-orange-300 to-rose-300">
-            <Leaf className="h-28 w-28 text-white/90" strokeWidth={1.5} />
-          </div>
-        )}
+        <SafeImage
+          src={lot.photoUrl}
+          alt={lot.productName}
+          className="h-full w-full object-cover"
+          icon={<Leaf className="h-28 w-28 text-white/90" strokeWidth={1.5} />}
+        />
 
         {/* Badge « Fait main » animé */}
         <div className="artisan-bounce-slow absolute right-5 top-5 rounded-full border-2 border-amber-200 bg-white/95 px-4 py-2 shadow-lg backdrop-blur-md">
@@ -418,11 +487,18 @@ export function ArtisanProductView({
             )}
           </button>
 
-          {lot.contenance && (
-            <div className="flex items-center gap-3">
-              <span className="rounded-full border border-amber-300/30 bg-amber-400/10 px-4 py-2 font-medium text-amber-200 shadow-sm">
-                ⚖️ {lot.contenance}
-              </span>
+          {(lot.contenance || lot.productPrice) && (
+            <div className="flex flex-wrap items-center gap-2">
+              {lot.contenance && (
+                <span className="rounded-full border border-amber-300/30 bg-amber-400/10 px-4 py-2 font-medium text-amber-200 shadow-sm">
+                  ⚖️ {lot.contenance}
+                </span>
+              )}
+              {lot.productPrice && (
+                <span className="rounded-full border border-emerald-300/40 bg-emerald-400/15 px-4 py-2 font-bold text-emerald-200 shadow-sm">
+                  💰 {lot.productPrice}
+                </span>
+              )}
             </div>
           )}
 
@@ -569,12 +645,20 @@ export function ArtisanProductView({
               <p className="mb-3 text-sm font-bold text-gray-800">📷 L&rsquo;atelier en images</p>
               <div className="grid grid-cols-3 gap-2">
                 {artisanPhotos.map((url) => (
-                  <img
+                  <button
                     key={url}
-                    src={url}
-                    alt={`Atelier de ${lot.artisanName}`}
-                    className="h-24 w-full rounded-2xl border border-amber-100 object-cover shadow-sm"
-                  />
+                    type="button"
+                    onClick={() => setLightbox(url)}
+                    aria-label={`Agrandir la photo de l'atelier de ${lot.artisanName}`}
+                    className="group h-24 cursor-zoom-in overflow-hidden rounded-2xl border border-amber-100 shadow-sm"
+                  >
+                    <SafeImage
+                      src={url}
+                      alt={`Atelier de ${lot.artisanName}`}
+                      className="h-24 w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      emoji="📷"
+                    />
+                  </button>
                 ))}
               </div>
             </div>
@@ -761,7 +845,9 @@ export function ArtisanProductView({
                 <Stars value={Math.round(avgRating)} />
               </div>
               <p className="text-sm text-gray-600">
-                {reviews.length} avis de clients ayant scanné ce produit
+                {reviews.length === 1
+                  ? "Avis d'un client ayant scanné ce produit"
+                  : `${reviews.length} avis de clients ayant scanné ce produit`}
               </p>
             </div>
           )}
@@ -876,12 +962,12 @@ export function ArtisanProductView({
                   className="overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm transition-shadow hover:shadow-lg"
                 >
                   <div className="flex h-32 items-center justify-center overflow-hidden bg-gradient-to-br from-amber-100 to-orange-100">
-                    {p.photoUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={p.photoUrl} alt={p.productName} className="h-full w-full object-cover" />
-                    ) : (
-                      <span className="text-4xl">🧴</span>
-                    )}
+                    <SafeImage
+                      src={p.photoUrl}
+                      alt={p.productName}
+                      className="h-full w-full object-cover"
+                      emoji="🧴"
+                    />
                   </div>
                   <div className="p-3">
                     <p className="truncate text-sm font-semibold text-gray-900">{p.productName}</p>
@@ -908,6 +994,31 @@ export function ArtisanProductView({
             <span className="text-xs font-medium">🔒 Historique sécurisé</span>
           </div>
         </div>
+        {/* Lightbox plein écran (galerie atelier — fix revue #5) */}
+        {lightbox && (
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Photo agrandie"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4"
+            onClick={() => setLightbox(null)}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={lightbox}
+              alt={`Atelier de ${lot.artisanName} en grand`}
+              className="max-h-full max-w-full rounded-2xl object-contain"
+            />
+            <button
+              type="button"
+              onClick={() => setLightbox(null)}
+              aria-label="Fermer"
+              className="absolute right-5 top-5 rounded-full bg-white/10 p-3 text-white transition-colors hover:bg-white/20"
+            >
+              <X className="h-6 w-6" />
+            </button>
+          </div>
+        )}
       </div>
     </main>
   );

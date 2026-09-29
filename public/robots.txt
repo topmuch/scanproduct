@@ -20,5 +20,10 @@ Disallow: /superadmin
 Disallow: /api
 Disallow: /offline
 Disallow: /login/admin
+# Pages produits artisans : noindex VOLONTAIRE (anti-contrefaçon — ne pas
+# référencer des codes QR individuels). Les crawlers sociaux (OG) passent
+# quand même et les bots bloqués ci-dessous respectent la directive.
+Disallow: /a/
+Disallow: /activer-pack
 
 Sitemap: https://verifscan.sn/sitemap.xml
