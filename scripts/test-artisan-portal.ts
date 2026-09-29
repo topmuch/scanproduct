@@ -466,7 +466,7 @@ async function main() {
     "pack activé visible",
     (await page.textContent("[data-testid='dashboard-packs']"))?.includes("Pack #2") === true
   );
-  const prodCard = page.locator("[data-testid='dashboard-products'] .rounded-xl.border");
+  const prodCard = page.locator("[data-testid='dashboard-products'] [data-testid^='product-card-']");
   check("produit activé affiché", (await prodCard.count()) >= 1);
   await page.screenshot({ path: "shots/artisan-portal-dashboard.png", fullPage: true });
 

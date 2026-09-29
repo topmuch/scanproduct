@@ -12,6 +12,7 @@
  */
 
 import { construireUrlQrPourLot, ErreurGs1 } from "./gs1";
+import { localhostify } from "./site-origin";
 
 /**
  * Resolves the absolute origin that QR codes should point to.
@@ -26,7 +27,10 @@ import { construireUrlQrPourLot, ErreurGs1 } from "./gs1";
  */
 export function getScanOrigin(): string {
   if (typeof window !== "undefined") {
-    return window.location.origin;
+    // localhostify : si quelqu'un navigue via 0.0.0.0 (adresse d'écoute,
+    // jamais navigable), on affiche localhost — purement cosmétique et
+    // préventif ; le domaine consulté normal est conservé tel quel.
+    return localhostify(window.location.origin);
   }
   return process.env.NEXT_PUBLIC_SCAN_URL || "https://verifscan.sn";
 }

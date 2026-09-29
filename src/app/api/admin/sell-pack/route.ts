@@ -9,6 +9,7 @@ import {
   ensureArtisanTables,
   isTableMissingError,
 } from "@/lib/ensure-artisan-tables";
+import { resolveSiteOrigin } from "@/lib/site-origin";
 
 /**
  * POST /api/admin/sell-pack — VENTE d'un pack de QR codes à un artisan
@@ -170,8 +171,12 @@ export async function POST(request: NextRequest) {
   }
 
   const { packId, artisanPhone, artisanName } = parsed.data;
-  // Origine consultée par le SuperAdmin → liens /artisan/login corrects
-  const origin = request.nextUrl.origin;
+  // Origine ROBUSTE (site-origin.ts) : derrière le proxy Coolify,
+  // request.nextUrl.origin renvoyait « https://0.0.0.0:80 » → lien mort
+  // dans le message WhatsApp. On retient x-forwarded-host (le domaine
+  // réellement consulté par le SuperAdmin), sinon l'origine directe,
+  // sinon NEXT_PUBLIC_APP_URL — jamais 0.0.0.0/localhost en production.
+  const origin = resolveSiteOrigin(request);
 
   try {
     return await run(packId, artisanPhone, artisanName, origin);

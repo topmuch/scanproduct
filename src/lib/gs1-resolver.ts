@@ -33,6 +33,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { applyRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { recordScan, isBotUserAgent } from "@/lib/public-data";
+import { resolveSiteOrigin } from "@/lib/site-origin";
 import {
   estUrlGs1,
   parserUrlGs1,
@@ -268,7 +269,11 @@ export async function gererRequeteResolver(
   });
   if (limite) return limite;
 
-  const origine = request.nextUrl.origin;
+  // Origine ROBUSTE (site-origin.ts) : derrière un proxy (Coolify),
+  // nextUrl.origin peut être l'adresse interne du conteneur (0.0.0.0:80)
+  // → les 302 de résolution GS1 emmenaient les téléphones vers une URL
+  // morte. Le domaine consulté (x-forwarded-host) gagne.
+  const origine = resolveSiteOrigin(request);
   const segmentsFiltres = segments.filter((s) => s.length > 0);
 
   // 2) Aucun segment (ex: GET /r) → page d'accueil.

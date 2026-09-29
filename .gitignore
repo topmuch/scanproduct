@@ -88,3 +88,4 @@ Thumbs.db
 
 # Debug screenshots (root level)
 *.png
+uploads/

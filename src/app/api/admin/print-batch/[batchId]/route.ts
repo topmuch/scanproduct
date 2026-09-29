@@ -3,6 +3,7 @@ import QRCode from "qrcode";
 import PDFDocument from "pdfkit";
 import { db } from "@/lib/db";
 import { requireSuperAdmin } from "@/lib/admin-guard";
+import { resolveSiteOrigin } from "@/lib/site-origin";
 
 /**
  * GET /api/admin/print-batch/[batchId]
@@ -30,15 +31,13 @@ export async function GET(
   }
   const { batchId } = await params;
 
-  // Origine encodée dans les QR : celle du déploiement CONSULTÉ (sandbox,
-  // prod…) — même philosophie que getScanOrigin() côté client. Le domaine
-  // consulté est celui où le batch existe réellement ; NEXT_PUBLIC_SCAN_URL
-  // ne sert que de filet de sécurité.
-  const scanOrigin = (
-    request.nextUrl.origin ||
-    process.env.NEXT_PUBLIC_SCAN_URL ||
-    "https://verifscan.sn"
-  ).replace(/\/$/, "");
+  // Origine encodée dans les QR : résolution ROBUSTE (site-origin.ts).
+  // Derrière le proxy Coolify, request.nextUrl.origin renvoie l'adresse
+  // interne du conteneur (https://0.0.0.0:80) → QR non scannables. On
+  // retient x-forwarded-host (le domaine réellement consulté), sinon
+  // l'origine directe, sinon NEXT_PUBLIC_APP_URL/SCAN_URL, et on ignore
+  // toujours 0.0.0.0/localhost en production.
+  const scanOrigin = resolveSiteOrigin(request);
 
   const batch = await db.batch.findUnique({
     where: { id: batchId },
