@@ -45,6 +45,21 @@ export function regionLabel(region: string): string {
   return REGION_LABELS[region.toLowerCase()] ?? region;
 }
 
+/**
+ * Fuseaux « non fiables » géographiquement : "UTC", "Etc/UTC", "Etc/GMT*"
+ * sont la valeur PAR DÉFAUT de serveurs, de navigateurs headless et de
+ * certaines WebViews — ils ne prouvent AUCUNE localisation réelle.
+ *
+ * Sans ce garde, un artisan testant son QR depuis un navigateur en UTC
+ * après un vrai scan en Afrique déclenchait une FAUSSE alerte « scanné
+ * depuis Afrique puis UTC ». Règle : une alerte exige DEUX régions
+ * réelles et distinctes — jamais une région par défaut.
+ */
+export function isReliableRegion(region: string): boolean {
+  const r = (region || "").toLowerCase();
+  return r !== "" && r !== "utc" && r !== "etc";
+}
+
 export type CounterfeitAlert = {
   detectedAt: string;
   regionA: string;
@@ -75,6 +90,36 @@ export async function detectCounterfeit(
   currentTimezone: string
 ): Promise<CounterfeitAlert | null> {
   try {
+    // Le fuseau COURANT est inexploitable (absent, UTC, Etc/*) → aucune
+    // conclusion géographique possible : on ne compare même pas.
+    if (!currentTimezone) return null;
+    const curRegion = regionOf(currentTimezone);
+    if (!isReliableRegion(curRegion)) return null;
+
+    // Auto-purge AVANT toute détection : une alerte historique fondée sur une
+    // région non fiable (ex. « Afrique puis UTC ») est un faux positif → on la
+    // retire dès le prochain scan fiable. La bannière disparaît sans
+    // intervention manuelle (le filtre d'affichage de /a/[code] la masque déjà
+    // en attendant).
+    const lot = await db.preActivatedLot.findUnique({
+      where: { id: lotId },
+      select: { counterfeitAlert: true },
+    });
+    let existing = parseCounterfeitAlert(lot?.counterfeitAlert);
+    if (
+      existing &&
+      (!isReliableRegion(existing.regionA) || !isReliableRegion(existing.regionB))
+    ) {
+      await db.preActivatedLot.update({
+        where: { id: lotId },
+        data: { counterfeitAlert: null },
+      });
+      console.log(
+        `[anti-contrefacon] Faux positif purgé (région non fiable) lot=${lotId}`
+      );
+      existing = null;
+    }
+
     const since = new Date(Date.now() - WINDOW_MS);
     const prevScans = await db.artisanScan.findMany({
       where: { lotId, scannedAt: { gte: since }, timezone: { not: null } },
@@ -83,18 +128,16 @@ export async function detectCounterfeit(
       select: { timezone: true },
     });
 
-    const curRegion = regionOf(currentTimezone);
-    const foreign = prevScans.find(
-      (s) => s.timezone && regionOf(s.timezone) !== curRegion
-    );
+    // Un scan précédent ne compte comme « étranger » que si SA région est
+    // elle aussi fiable (un scan UTC = région inconnue ≠ preuve de déplacement).
+    const foreign = prevScans.find((s) => {
+      if (!s.timezone) return false;
+      const region = regionOf(s.timezone);
+      return isReliableRegion(region) && region !== curRegion;
+    });
     if (!foreign?.timezone) return null;
 
     // Cooldown : une alerte récente existe déjà → ne pas re-alerter
-    const lot = await db.preActivatedLot.findUnique({
-      where: { id: lotId },
-      select: { counterfeitAlert: true },
-    });
-    const existing = parseCounterfeitAlert(lot?.counterfeitAlert);
     if (
       existing &&
       Date.now() - new Date(existing.detectedAt).getTime() < COOLDOWN_MS

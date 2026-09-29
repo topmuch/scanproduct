@@ -5,7 +5,10 @@ import { db } from "@/lib/db";
 import { ArtisanProductView } from "@/components/product/artisan/ArtisanProductView";
 import { InactiveMasterView } from "@/components/product/artisan/InactiveMasterView";
 import { InactiveProductView } from "@/components/product/artisan/InactiveProductView";
-import { parseCounterfeitAlert } from "@/lib/artisan-anti-counterfeit";
+import {
+  isReliableRegion,
+  parseCounterfeitAlert,
+} from "@/lib/artisan-anti-counterfeit";
 import { ensureArtisanTables, isTableMissingError } from "@/lib/ensure-artisan-tables";
 
 /**
@@ -212,12 +215,22 @@ export default async function ArtisanCodePage({
         contactPhone: lot.contactPhone ?? "",
         contactEmail: lot.pack.artisanEmail ?? null,
         productPrice: lot.pack.productPrice ?? null,
+        productDesignation: lot.pack.productDesignation ?? null,
         photoUrl: lot.photoUrl,
         artisanBio: lot.artisanBio,
         usageTips: lot.usageTips,
       }}
       scanCount={scanCount}
-      counterfeitAlert={parseCounterfeitAlert(lot.counterfeitAlert)}
+      counterfeitAlert={(() => {
+        const alert = parseCounterfeitAlert(lot.counterfeitAlert);
+        if (!alert) return null;
+        // Filet d'affichage : une alerte fondée sur une région non géographique
+        // (UTC / Etc/* — fuseau par défaut de certains navigateurs) est un faux
+        // positif → on ne la montre JAMAIS. Complète l'auto-purge de la lib.
+        return isReliableRegion(alert.regionA) && isReliableRegion(alert.regionB)
+          ? alert
+          : null;
+      })()}
       socials={{
         instagramUrl: lot.pack.instagramUrl,
         facebookUrl: lot.pack.facebookUrl,

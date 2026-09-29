@@ -26,11 +26,12 @@ import { ScanTracker } from "./ScanTracker";
  * ArtisanProductView — page produit artisanale ENGAGEANTE (scan client final).
  *
  * 11 sections (design 2026) :
- *   1.  Hero image pleine largeur + badge « Fait main » animé
- *   2.  Carte produit bleu foncé (nom, 5 étoiles jaunes, avis vérifié, artisan, contenance)
+ *   1.  Hero image pleine largeur
+ *   2.  Carte produit bleu foncé (nom, designation, fait main, 5 étoiles jaunes,
+ *       avis vérifié, artisan, contenance, prix)
  *   3.  Pourquoi choisir ce produit ? (4 avantages)
  *   4.  Composition naturelle (+ encadré sans allergènes)
- *   5.  Fraîcheur (badge jours restants, dates, barre de progression)
+ *   5.  Infos fabrication (badge jours restants, dates, barre de progression)
  *   6.  Histoire de l'artisan (bio + avatar)
  *   7.  Conseils d'utilisation (numérotés)
  *   8.  Bouton WhatsApp géant (pulse) + téléphone
@@ -78,6 +79,8 @@ type Props = {
     contactPhone: string;
     contactEmail?: string | null;
     productPrice?: string | null;
+    /** Désignation du produit : description courte sous le nom (champ artisan). */
+    productDesignation?: string | null;
     photoUrl?: string | null;
     artisanBio?: string | null;
     usageTips?: string | null;
@@ -174,6 +177,16 @@ function SafeImage({
   icon?: ReactNode;
 }) {
   const [failed, setFailed] = useState(false);
+
+  // ⚠️ Course d'hydratation : une image peut renvoyer 404 AVANT que le JS
+  // n'ait hydraté la page (typique en dev / connexion lente). L'événement
+  // `error` est alors émis sans listener React → perdu définitivement. Au
+  // montage du ref, on interroge l'état RÉEL de l'élément : une image déjà
+  // terminée avec naturalWidth === 0 a échoué → placeholder immédiat.
+  const imgRef = (el: HTMLImageElement | null) => {
+    if (el && el.complete && el.naturalWidth === 0) setFailed(true);
+  };
+
   if (failed || !src) {
     return (
       <div
@@ -187,7 +200,13 @@ function SafeImage({
   }
   return (
     // eslint-disable-next-line @next/next/no-img-element
-    <img src={src} alt={alt} className={className} onError={() => setFailed(true)} />
+    <img
+      ref={imgRef}
+      src={src}
+      alt={alt}
+      className={className}
+      onError={() => setFailed(true)}
+    />
   );
 }
 
@@ -320,6 +339,87 @@ export function ArtisanProductView({
     `Bonjour ${lot.artisanName}, je viens de scanner un QR code VerifScan (produit : ${lot.productName}) et une alerte de possible contrefaçon s'affiche. Je vous signale ce produit suspect.`
   );
 
+  // ── Coordonnées COMPACTES (retour utilisateur : 6-7 lignes empilées = trop
+  // long) — grille 2 colonnes de tuiles cliquables, chacune optionnelle.
+  type ContactTile = {
+    key: string;
+    href: string;
+    label: string;
+    value: string;
+    external?: boolean;
+    bg: string;
+    icon: ReactNode;
+  };
+  const contactTiles: ContactTile[] = [];
+  contactTiles.push({
+    key: "phone",
+    href: `tel:${lot.contactPhone}`,
+    label: "Téléphone",
+    value: lot.contactPhone,
+    bg: "bg-gradient-to-br from-amber-400 to-orange-500",
+    icon: <Phone className="h-4 w-4" />,
+  });
+  contactTiles.push({
+    key: "whatsapp",
+    href: waLink,
+    label: "WhatsApp",
+    value: "Message direct",
+    external: true,
+    bg: "bg-gradient-to-br from-green-500 to-emerald-600",
+    icon: (
+      <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
+        <path d={WHATSAPP_SVG_PATH} />
+      </svg>
+    ),
+  });
+  if (lot.contactEmail) {
+    contactTiles.push({
+      key: "email",
+      href: `mailto:${lot.contactEmail}`,
+      label: "Email",
+      value: lot.contactEmail,
+      bg: "bg-gradient-to-br from-sky-500 to-blue-600",
+      icon: <Mail className="h-4 w-4" />,
+    });
+  }
+  if (socials?.instagramUrl) {
+    contactTiles.push({
+      key: "instagram",
+      href: socials.instagramUrl,
+      label: "Instagram",
+      value: socials.instagramUrl.replace(/^https?:\/\//, "").replace(/\/$/, ""),
+      external: true,
+      bg: "bg-gradient-to-br from-pink-500 to-rose-600",
+      icon: <Instagram className="h-4 w-4" />,
+    });
+  }
+  if (socials?.facebookUrl) {
+    contactTiles.push({
+      key: "facebook",
+      href: socials.facebookUrl,
+      label: "Facebook",
+      value: socials.facebookUrl.replace(/^https?:\/\//, "").replace(/\/$/, ""),
+      external: true,
+      bg: "bg-gradient-to-br from-blue-600 to-blue-800",
+      icon: <Facebook className="h-4 w-4" />,
+    });
+  }
+  if (socials?.tiktokUrl) {
+    contactTiles.push({
+      key: "tiktok",
+      href: socials.tiktokUrl,
+      label: "TikTok",
+      value: socials.tiktokUrl.replace(/^https?:\/\//, "").replace(/\/$/, ""),
+      external: true,
+      bg: "bg-gradient-to-br from-slate-800 to-black",
+      icon: (
+        <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
+          <path d={TIKTOK_SVG_PATH} />
+        </svg>
+      ),
+    });
+  }
+
   // ── Fraîcheur : jours restants + progression réelle de la durée de vie ──
   const now = Date.now();
   const expTime = lot.expirationDate ? new Date(lot.expirationDate).getTime() : null;
@@ -408,19 +508,6 @@ export function ArtisanProductView({
           icon={<Leaf className="h-28 w-28 text-white/90" strokeWidth={1.5} />}
         />
 
-        {/* Badge « Fait main » animé */}
-        <div className="artisan-bounce-slow absolute right-5 top-5 rounded-full border-2 border-amber-200 bg-white/95 px-4 py-2 shadow-lg backdrop-blur-md">
-          <span className="flex items-center gap-2 text-sm font-bold text-amber-700">
-            <span className="text-lg">🌿</span> Fait main
-          </span>
-        </div>
-
-        {/* Badge « Produit Authentique » — sceau vert, preuve anti-contrefaçon */}
-        <div className="absolute left-5 top-5 flex items-center gap-2 rounded-full border border-emerald-300/60 bg-gradient-to-r from-emerald-600 to-green-500 px-4 py-2 shadow-xl">
-          <ShieldCheck className="h-5 w-5 text-white" strokeWidth={2.5} />
-          <span className="text-sm font-bold tracking-wide text-white">Produit Authentique</span>
-        </div>
-
         {/* Overlay gradient */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
       </div>
@@ -429,6 +516,20 @@ export function ArtisanProductView({
         {/* ── 2. CARTE PRODUIT PRINCIPALE (bleu foncé : titre → 5 étoiles → avis vérifié) ── */}
         <div className="rounded-3xl border border-blue-800/60 bg-gradient-to-br from-blue-950 via-blue-900 to-blue-950 p-7 shadow-xl transition-shadow duration-300 hover:shadow-2xl">
           <h1 className="mb-3 text-3xl font-bold text-white">{lot.productName}</h1>
+
+          {/* Chip « Fait main » sous le titre (demande utilisateur) */}
+          <div className="mb-3">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-300/30 bg-amber-400/15 px-3 py-1 text-xs font-bold text-amber-200">
+              <span className="text-sm">✋</span> Fait main
+            </span>
+          </div>
+
+          {/* Désignation du produit (champ artisan, optionnel) — sous le chip */}
+          {lot.productDesignation && (
+            <p className="mb-4 text-sm leading-relaxed text-blue-100/90">
+              {lot.productDesignation}
+            </p>
+          )}
 
           {/* 5 étoiles jaunes + badge « Avis vérifié » (toujours visibles) */}
           <div className="mb-3 flex flex-wrap items-center gap-2">
@@ -562,10 +663,10 @@ export function ArtisanProductView({
           </div>
         )}
 
-        {/* ── 5. FRAÎCHEUR GARANTIE ───────────────────────────────────────── */}
+        {/* ── 5. INFOS FABRICATION ─────────────────────────────────────── */}
         <div className="mt-6 rounded-3xl border border-stone-100 bg-white p-6 shadow-sm">
           <h2 className="mb-4 flex items-center gap-2 text-lg font-bold text-gray-900">
-            <CalendarDays className="h-5 w-5 text-amber-600" /> Fraîcheur garantie
+            <CalendarDays className="h-5 w-5 text-amber-600" /> Infos fabrication
           </h2>
 
           {isExpired ? (
@@ -702,128 +803,36 @@ export function ArtisanProductView({
               <span className="relative z-10">Contacter {lot.artisanName}</span>
             </a>
 
-            {/* Carte infos de contact — chaque ligne est cliquable */}
-            <div className="mt-4 rounded-3xl border border-stone-100 bg-white p-5 shadow-sm">
-              <h3 className="mb-4 flex items-center gap-2 text-base font-bold text-gray-900">
-                <span className="text-xl">📇</span> Coordonnées de l&rsquo;artisan
+            {/* Coordonnées COMPACTES — grille 2 colonnes (retour utilisateur :
+                6-7 lignes empilées = trop long). Chaque tuile reste cliquable. */}
+            <div className="mt-4 rounded-3xl border border-stone-100 bg-white p-4 shadow-sm">
+              <h3 className="mb-3 flex items-center gap-2 text-sm font-bold text-gray-900">
+                <span className="text-lg">📇</span> Coordonnées de l&rsquo;artisan
               </h3>
 
-              <div className="space-y-3">
-                {/* Ligne Téléphone */}
-                <a
-                  href={`tel:${lot.contactPhone}`}
-                  className="flex items-center gap-4 rounded-2xl border border-stone-200 bg-stone-50 p-4 transition-all hover:border-amber-300 hover:bg-amber-50"
-                >
-                  <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-orange-500 shadow-md">
-                    <Phone className="h-5 w-5 text-white" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Téléphone</p>
-                    <p className="truncate text-base font-bold text-gray-900">{lot.contactPhone}</p>
-                  </div>
-                  <span className="text-sm font-semibold text-amber-600">Appeler</span>
-                </a>
-
-                {/* Ligne WhatsApp */}
-                <a
-                  href={waLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-4 rounded-2xl border border-green-200 bg-green-50 p-4 transition-all hover:border-green-400 hover:bg-green-100"
-                >
-                  <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-green-500 to-emerald-600 shadow-md">
-                    <svg className="h-6 w-6 text-white" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
-                      <path d={WHATSAPP_SVG_PATH} />
-                    </svg>
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs font-medium uppercase tracking-wide text-gray-500">WhatsApp</p>
-                    <p className="truncate text-base font-bold text-gray-900">Message direct</p>
-                  </div>
-                  <span className="text-sm font-semibold text-green-700">Discuter</span>
-                </a>
-
-                {/* Ligne Email (affichée seulement si l'artisan l'a renseignée) */}
-                {lot.contactEmail && (
+              <div className="grid grid-cols-2 gap-2">
+                {contactTiles.map((c) => (
                   <a
-                    href={`mailto:${lot.contactEmail}`}
-                    className="flex items-center gap-4 rounded-2xl border border-sky-200 bg-sky-50 p-4 transition-all hover:border-sky-400 hover:bg-sky-100"
+                    key={c.key}
+                    href={c.href}
+                    {...(c.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+                    className="flex items-center gap-2.5 rounded-xl border border-stone-200 bg-stone-50 p-2.5 transition-colors hover:border-amber-300 hover:bg-amber-50"
                   >
-                    <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-sky-500 to-blue-600 shadow-md">
-                      <Mail className="h-5 w-5 text-white" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Email</p>
-                      <p className="truncate text-base font-bold text-gray-900">{lot.contactEmail}</p>
-                    </div>
-                    <span className="text-sm font-semibold text-sky-700">Écrire</span>
+                    <span
+                      className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-white shadow-sm ${c.bg}`}
+                    >
+                      {c.icon}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                        {c.label}
+                      </span>
+                      <span className="block truncate text-xs font-bold text-gray-900">
+                        {c.value}
+                      </span>
+                    </span>
                   </a>
-                )}
-
-                {/* Ligne Instagram (affichée seulement si renseignée) */}
-                {socials?.instagramUrl && (
-                  <a
-                    href={socials.instagramUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-4 rounded-2xl border border-pink-200 bg-pink-50 p-4 transition-all hover:border-pink-400 hover:bg-pink-100"
-                  >
-                    <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-pink-500 to-rose-600 shadow-md">
-                      <Instagram className="h-5 w-5 text-white" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Instagram</p>
-                      <p className="truncate text-base font-bold text-gray-900">
-                        {socials.instagramUrl.replace(/^https?:\/\//, "").replace(/\/$/, "")}
-                      </p>
-                    </div>
-                    <span className="text-sm font-semibold text-pink-600">Voir</span>
-                  </a>
-                )}
-
-                {/* Ligne Facebook (affichée seulement si renseignée) */}
-                {socials?.facebookUrl && (
-                  <a
-                    href={socials.facebookUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-4 rounded-2xl border border-blue-200 bg-blue-50 p-4 transition-all hover:border-blue-400 hover:bg-blue-100"
-                  >
-                    <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-blue-800 shadow-md">
-                      <Facebook className="h-5 w-5 text-white" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Facebook</p>
-                      <p className="truncate text-base font-bold text-gray-900">
-                        {socials.facebookUrl.replace(/^https?:\/\//, "").replace(/\/$/, "")}
-                      </p>
-                    </div>
-                    <span className="text-sm font-semibold text-blue-700">Voir</span>
-                  </a>
-                )}
-
-                {/* Ligne TikTok (affichée seulement si renseignée) */}
-                {socials?.tiktokUrl && (
-                  <a
-                    href={socials.tiktokUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-4 rounded-2xl border border-stone-300 bg-stone-100 p-4 transition-all hover:border-stone-500 hover:bg-stone-200"
-                  >
-                    <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-slate-800 to-black shadow-md">
-                      <svg className="h-5 w-5 text-white" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
-                        <path d={TIKTOK_SVG_PATH} />
-                      </svg>
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs font-medium uppercase tracking-wide text-gray-500">TikTok</p>
-                      <p className="truncate text-base font-bold text-gray-900">
-                        {socials.tiktokUrl.replace(/^https?:\/\//, "").replace(/\/$/, "")}
-                      </p>
-                    </div>
-                    <span className="text-sm font-semibold text-slate-800">Voir</span>
-                  </a>
-                )}
+                ))}
               </div>
             </div>
           </div>

@@ -847,6 +847,11 @@ model Pack {
   // ⚠️ Distinct de `price` = prix B2B du pack de QR.
   productPrice String?
 
+  // Désignation du produit : description courte affichée sous le nom
+  // sur la page publique (texte libre, ex. « Beurre de karité brut
+  // 100 % naturel, non raffiné, préparé à la main »).
+  productDesignation String?
+
   status       String   @default("available") // available, sold, activated
 
   createdAt    DateTime @default(now())

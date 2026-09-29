@@ -153,7 +153,7 @@ if [ -f "$DB_FILE" ] && command -v sqlite3 >/dev/null 2>&1; then
   PACK_EXISTS=$(sqlite3 "$DB_FILE" "SELECT name FROM sqlite_master WHERE type='table' AND name='Pack';" 2>/dev/null)
   if [ -n "$PACK_EXISTS" ]; then
     PACK_COLS=$(sqlite3 "$DB_FILE" "PRAGMA table_info(Pack);" 2>/dev/null | cut -d'|' -f2)
-    for COL in artisanPhone artisanEmail instagramUrl facebookUrl tiktokUrl artisanPhotos productPrice; do
+    for COL in artisanPhone artisanEmail instagramUrl facebookUrl tiktokUrl artisanPhotos productPrice productDesignation; do
       if ! echo "$PACK_COLS" | grep -qx "$COL"; then
         echo "  + ALTER TABLE Pack ADD COLUMN $COL (fallback nu)"
         sqlite3 "$DB_FILE" "ALTER TABLE Pack ADD COLUMN \"$COL\" TEXT;" 2>&1 | grep -v "duplicate column" || true
@@ -225,6 +225,7 @@ CREATE TABLE IF NOT EXISTS "Pack" (
     "tiktokUrl" TEXT,
     "artisanPhotos" TEXT,
     "productPrice" TEXT,
+    "productDesignation" TEXT,
     "status" TEXT NOT NULL DEFAULT 'available',
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL,

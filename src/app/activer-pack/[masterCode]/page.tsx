@@ -14,6 +14,7 @@ type FormState = {
   photo: File | null;
   galleryPhotos: File[];
   productName: string;
+  productDesignation: string;
   contenance: string;
   ingredients: string;
   manufacturingDate: string;
@@ -43,11 +44,14 @@ export default function ActivatePackPage({
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [totalActivated, setTotalActivated] = useState(0);
+  // Code du 1er produit activé (renvoyé par l'API) → bouton « Voir le produit activé »
+  const [firstCode, setFirstCode] = useState<string>("");
   const [error, setError] = useState<string>("");
   const [form, setForm] = useState<FormState>({
     photo: null,
     galleryPhotos: [],
     productName: "",
+    productDesignation: "",
     contenance: "",
     ingredients: "",
     manufacturingDate: "",
@@ -111,6 +115,7 @@ export default function ActivatePackPage({
           masterCode,
           productData: {
             productName: form.productName,
+            productDesignation: form.productDesignation,
             contenance: form.contenance,
             ingredients: form.ingredients,
             manufacturingDate: form.manufacturingDate,
@@ -134,6 +139,7 @@ export default function ActivatePackPage({
         throw new Error(data.error || "Erreur pendant l'activation");
       }
       setTotalActivated(data.activated ?? 0);
+      setFirstCode(typeof data.firstCode === "string" ? data.firstCode : "");
       setSuccess(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur inconnue");
@@ -163,10 +169,10 @@ export default function ActivatePackPage({
             </p>
           </div>
           <button
-            onClick={() => router.push("/")}
+            onClick={() => router.push(firstCode ? `/a/${firstCode}` : "/")}
             className="w-full rounded-xl bg-green-600 py-3 font-semibold text-white hover:bg-green-700"
           >
-            Retour à l'accueil
+            Voir le produit activé
           </button>
         </div>
       </div>
@@ -242,6 +248,27 @@ export default function ActivatePackPage({
               onChange={(e) => set({ productName: e.target.value })}
               className={inputCls}
             />
+          </div>
+
+          {/* Désignation du produit — description courte affichée sous le nom
+              sur la page publique (demande utilisateur) */}
+          <div>
+            <label className={labelCls} htmlFor="productDesignation">
+              Désignation du produit (optionnel)
+            </label>
+            <textarea
+              id="productDesignation"
+              rows={2}
+              maxLength={300}
+              placeholder="Ex : Beurre de karité brut 100 % naturel, non raffiné, préparé à la main à Dakar"
+              value={form.productDesignation}
+              onChange={(e) => set({ productDesignation: e.target.value })}
+              className={`${inputCls} resize-none`}
+            />
+            <p className="mt-1 text-xs text-gray-500">
+              Description courte affichée sous le nom du produit sur votre page
+              publique.
+            </p>
           </div>
 
           <div>

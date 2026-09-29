@@ -51,6 +51,8 @@ const ProductDataSchema = z.object({
   artisanPhotos: z.array(z.string().max(500)).max(3).optional(),
   // Prix consommateur affiché sur la page produit (texte libre, ex. « 5 000 FCFA »)
   productPrice: z.string().trim().max(40).optional().or(z.literal("")),
+  // Désignation du produit : description courte sous le nom sur la page publique
+  productDesignation: z.string().trim().max(300).optional().or(z.literal("")),
 });
 
 const BodySchema = z.object({
@@ -186,10 +188,16 @@ export async function POST(request: NextRequest) {
                 ? JSON.stringify(productData.artisanPhotos)
                 : null,
             productPrice: productData.productPrice || null,
+            productDesignation: productData.productDesignation || null,
           },
         });
 
-        return { activated: masterLot.pack.lots.length };
+        return {
+          activated: masterLot.pack.lots.length,
+          // Code du 1er produit activé → le bouton « Voir le produit activé »
+          // de l'écran de succès mène directement à la page publique.
+          firstCode: masterLot.pack.lots[0]?.qrCode ?? masterLot.qrCode,
+        };
       },
       { timeout: 20000 }
     );
@@ -197,6 +205,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       activated: result.activated,
+      firstCode: result.firstCode,
       message: `${result.activated} produits activés avec succès !`,
     });
   };

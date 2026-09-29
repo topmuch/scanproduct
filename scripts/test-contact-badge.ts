@@ -1,6 +1,7 @@
 /**
- * Vérification rapide des NOUVEAUX éléments demandés par l'utilisateur :
- *   A. Badge « Produit Authentique » en haut du produit (hero + carte)
+ * Vérification rapide des éléments demandés par l'utilisateur :
+ *   A. Hero SANS badges « Produit Authentique » / « Fait main » (supprimés)
+ *   A'. Carte bleue : bandeau « Produit Authentique » + chip « Fait main »
  *   B. Carte contact : Téléphone + WhatsApp (toujours) + Email (si fourni)
  *   C. Activation avec contactEmail → ligne mailto sur la page
  *   D. Activation SANS contactEmail → pas de ligne Email (masquée)
@@ -97,8 +98,12 @@ const page = await req(`/a/${master}`);
 const html = await page.text();
 console.log(`4. GET page produit: ${page.status}`);
 
-check("A. badge hero 'Produit Authentique'", html.includes("Produit Authentique"));
-check("A. badge avec bouclier (ShieldCheck) en hero", /absolute left-5 top-5[^"]*"/.test(html) && html.includes("Produit Authentique"));
+check("A. 'Produit Authentique' présent (bandeau carte bleue)", html.includes("Produit Authentique"));
+check(
+  "A'. hero SANS badges supprimés (demande utilisateur)",
+  !html.includes("absolute left-5 top-5") && !html.includes("artisan-bounce-slow")
+);
+check("A''. chip « Fait main » dans la carte bleue", html.includes("Fait main"));
 check("B. carte 'Coordonnées de l'artisan'", html.includes("Coordonnées de l"));
 check("B. ligne Téléphone", html.includes(">Téléphone<") && html.includes("tel:771234567"));
 check("B. ligne WhatsApp", html.includes("wa.me/221771234567") && html.includes("Message direct"));
