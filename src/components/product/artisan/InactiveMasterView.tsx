@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { QrCode, Sparkles, ShieldCheck } from "lucide-react";
+import { Logo } from "@/components/landing/Logo";
 
 /**
  * InactiveMasterView — ce que voit l'artisan quand il scanne le QR Code
@@ -16,6 +17,14 @@ export function InactiveMasterView({
   return (
     <main className="flex min-h-screen items-center justify-center bg-amber-50 p-4">
       <div className="w-full max-w-md">
+        {/* Logo officiel du site (demande utilisateur : le logo vu au scan
+            doit être LE logo VerifScan) */}
+        <div className="mb-6 flex justify-center">
+          <Link href="/" aria-label="VerifScan accueil">
+            <Logo size="md" />
+          </Link>
+        </div>
+
         <div className="mb-6 text-center">
           <div className="mb-3 inline-block rounded-full bg-amber-200 px-4 py-1 text-xs font-bold text-amber-800">
             QR CODE MAÎTRE

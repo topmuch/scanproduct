@@ -21,6 +21,7 @@ import {
   X,
 } from "lucide-react";
 import { ScanTracker } from "./ScanTracker";
+import { Logo } from "@/components/landing/Logo";
 
 /**
  * ArtisanProductView — page produit artisanale ENGAGEANTE (scan client final).
@@ -499,7 +500,16 @@ export function ArtisanProductView({
         </div>
       )}
 
+      {/* ── 0b. BARRE DE MARQUE — logo officiel du site (demande utilisateur :
+            le logo qui apparaît au scan doit être LE logo VerifScan) ────── */}
+      <div className="flex items-center justify-center border-b border-stone-100 bg-white py-3">
+        <Link href="/" aria-label="VerifScan accueil" className="inline-flex items-center">
+          <Logo size="md" />
+        </Link>
+      </div>
+
       {/* ── 1. HERO IMAGE─────────────────────────────────────────────────── */}
+
       <div className="relative h-96 overflow-hidden bg-stone-200">
         <SafeImage
           src={lot.photoUrl}
@@ -990,8 +1000,9 @@ export function ArtisanProductView({
 
         {/* ── 11. FOOTER VÉRIFICATION ─────────────────────────────────────── */}
         <div className="mb-8 rounded-3xl bg-gradient-to-br from-slate-900 to-slate-800 p-8 text-center shadow-xl">
-          <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-green-400 to-emerald-600 shadow-lg">
-            <ShieldCheck className="h-8 w-8 text-white" />
+          {/* Logo officiel du site (remplace l'emblème générique — demande utilisateur) */}
+          <div className="mb-4 flex justify-center">
+            <Logo variant="light" size="lg" />
           </div>
           <h3 className="mb-2 flex items-center justify-center gap-2 text-xl font-bold text-white">
             <Heart className="h-4 w-4 text-rose-400" /> Vérifié par VerifScan

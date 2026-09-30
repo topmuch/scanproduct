@@ -1,4 +1,6 @@
+import Link from "next/link";
 import { Hourglass, ShieldCheck } from "lucide-react";
+import { Logo } from "@/components/landing/Logo";
 
 /**
  * InactiveProductView — scan d'une étiquette ARTISAN-… tant que le pack
@@ -15,6 +17,13 @@ export function InactiveProductView({
   return (
     <main className="flex min-h-screen items-center justify-center bg-stone-50 p-4">
       <div className="w-full max-w-md text-center">
+        {/* Logo officiel du site (demande utilisateur : le logo vu au scan
+            doit être LE logo VerifScan) */}
+        <div className="mb-6 flex justify-center">
+          <Link href="/" aria-label="VerifScan accueil">
+            <Logo size="md" />
+          </Link>
+        </div>
         <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-amber-100">
           <Hourglass className="h-10 w-10 text-amber-600" />
         </div>
