@@ -188,6 +188,30 @@ export async function setUserSubscription(
     }
   })();
 
+  // Webhook sortant plan.activated (fire-and-forget, jamais bloquant).
+  // Uniquement pour l'activation MANUELLE par l'admin (cette fonction) — pas
+  // d'auto-provisioning legacy pour ne pas noyer les destinataires.
+  (async () => {
+    try {
+      const { fireWebhooks } = await import("@/lib/webhooks");
+      const owner = await db.user.findUnique({
+        where: { id: userId },
+        select: { email: true, companyName: true },
+      });
+      await fireWebhooks("plan.activated", {
+        subscriptionId: sub.id,
+        userId,
+        plan: planId,
+        planName: PLANS[planId].name,
+        expiresAt: expiresAt.toISOString(),
+        email: owner?.email ?? null,
+        companyName: owner?.companyName ?? null,
+      });
+    } catch (err) {
+      console.error("[subscription] webhook plan.activated failed:", err);
+    }
+  })();
+
   return {
     id: sub.id,
     plan: sub.plan,

@@ -175,6 +175,22 @@ export async function POST(req: NextRequest) {
       }
     })();
 
+    // 3) Webhook sortant user.registered (fire-and-forget, jamais bloquant).
+    (async () => {
+      try {
+        const { fireWebhooks } = await import("@/lib/webhooks");
+        await fireWebhooks("user.registered", {
+          userId: newUser.id,
+          name,
+          email,
+          companyName,
+          city: city || null,
+        });
+      } catch (err) {
+        console.error("[register] webhook user.registered failed:", err);
+      }
+    })();
+
     return NextResponse.json(
       { success: true, message: "Compte créé avec succès." },
       { status: 201 }

@@ -134,7 +134,7 @@ fi
 #   3. NUCLEAR : CREATE TABLE IF NOT EXISTS en SQL brut via sqlite3 — ne peut
 #      pas échouer silencieusement (même technique que le fallback Product).
 if [ -f "$DB_FILE" ] && command -v sqlite3 >/dev/null 2>&1; then
-  ARTISAN_TABLES="Artisan Batch Pack PreActivatedLot ArtisanScan ArtisanReview"
+  ARTISAN_TABLES="Artisan Batch Pack PreActivatedLot ArtisanScan ArtisanReview ApiKey Webhook"
   MISSING=""
   for T in $ARTISAN_TABLES; do
     T_EXISTS=$(sqlite3 "$DB_FILE" "SELECT name FROM sqlite_master WHERE type='table' AND name='$T';" 2>/dev/null)
@@ -301,6 +301,29 @@ CREATE TABLE IF NOT EXISTS "ArtisanReview" (
 );
 CREATE INDEX IF NOT EXISTS "ArtisanReview_lotId_idx" ON "ArtisanReview"("lotId");
 CREATE INDEX IF NOT EXISTS "ArtisanReview_createdAt_idx" ON "ArtisanReview"("createdAt");
+CREATE TABLE IF NOT EXISTS "ApiKey" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "name" TEXT NOT NULL,
+    "prefix" TEXT NOT NULL,
+    "keyHash" TEXT NOT NULL,
+    "active" BOOLEAN NOT NULL DEFAULT true,
+    "lastUsedAt" DATETIME,
+    "lastUsedIp" TEXT,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "revokedAt" DATETIME
+);
+CREATE UNIQUE INDEX IF NOT EXISTS "ApiKey_keyHash_key" ON "ApiKey"("keyHash");
+CREATE INDEX IF NOT EXISTS "ApiKey_active_idx" ON "ApiKey"("active");
+CREATE TABLE IF NOT EXISTS "Webhook" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "url" TEXT NOT NULL,
+    "events" TEXT NOT NULL,
+    "secret" TEXT NOT NULL,
+    "active" BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL
+);
+CREATE INDEX IF NOT EXISTS "Webhook_active_idx" ON "Webhook"("active");
 ARTISAN_DDL
     echo "  SQL fallback exécuté (exit $?)"
   fi

@@ -92,6 +92,24 @@ const run = async (request: NextRequest): Promise<NextResponse> => {
     }
   }
 
+  // Webhook sortant scan.verified (fire-and-forget — jamais dans le chemin
+  // critique du scan, erreurs loguées par lib/webhooks).
+  void (async () => {
+    try {
+      const { fireWebhooks } = await import("@/lib/webhooks");
+      await fireWebhooks("scan.verified", {
+        lotId: lot.id,
+        qrCode: code,
+        productName: lot.productName,
+        artisanName: lot.artisanName,
+        deviceType: deviceType || null,
+        timezone: timezone || null,
+      });
+    } catch (err) {
+      console.error("[track-scan] webhook scan.verified failed:", err);
+    }
+  })();
+
   return NextResponse.json({ ok: true });
 };
 

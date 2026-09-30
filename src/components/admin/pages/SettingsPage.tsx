@@ -422,14 +422,14 @@ function GeneralSection() {
             <input
               className={inputClass}
               data-testid="general-site-name"
-              value={values.siteName ?? "VerifScan"}
+              value={values.siteName ?? ""}
               onChange={(e) => setField("siteName", e.target.value)}
             />
           </Field>
           <Field label="Slogan">
             <input
               className={inputClass}
-              value={values.siteSlogan ?? "La vérité au bout du scan"}
+              value={values.siteSlogan ?? ""}
               onChange={(e) => setField("siteSlogan", e.target.value)}
             />
           </Field>
@@ -541,7 +541,7 @@ function GeneralSection() {
             <input
               className={inputClass}
               type="email"
-              value={values.contactEmail ?? "contact@verifscan.com"}
+              value={values.contactEmail ?? ""}
               onChange={(e) => setField("contactEmail", e.target.value)}
             />
           </Field>
@@ -551,7 +551,7 @@ function GeneralSection() {
           <Field label="Téléphone">
             <input
               className={inputClass}
-              value={values.contactPhone ?? "+221 78 485 88 22"}
+              value={values.contactPhone ?? ""}
               onChange={(e) => setField("contactPhone", e.target.value)}
             />
           </Field>
@@ -595,7 +595,7 @@ function GeneralSection() {
           <Field label="Adresse">
             <textarea
               className={textareaClass}
-              value={values.siteAddress ?? "Lot n°13, Ouest Foire, Dakar, Sénégal"}
+              value={values.siteAddress ?? ""}
               onChange={(e) => setField("siteAddress", e.target.value)}
             />
           </Field>
@@ -1682,107 +1682,674 @@ function SecuritySection() {
 }
 
 /* ============================================================
- * Section: API & Integrations
+ * Section: API & Integrations — RÉELLE
+ * Clés API (générées en DB, hashées SHA-256, affichées une fois)
+ * + webhooks sortants signés HMAC (lib/webhooks.ts).
+ * Endpoints backend : /api/admin/api-keys, /api/admin/webhooks,
+ * /api/v1/verify/[code] (public, auth Bearer).
  * ========================================================== */
 
-const WEBHOOKS: { id: string; url: string; events: string }[] = [];
+const API_V1_EVENTS: { id: string; label: string }[] = [
+  { id: "scan.verified", label: "Scan vérifié (QR authentique scanné)" },
+  { id: "user.registered", label: "Nouvelle inscription fabricant" },
+  { id: "report.created", label: "Signalement contrefaçon / ticket" },
+  { id: "plan.activated", label: "Activation d'un abonnement" },
+];
+
+type ApiKeyRow = {
+  id: string;
+  name: string;
+  masked: string;
+  active: boolean;
+  lastUsedAt: string | null;
+  lastUsedIp: string | null;
+  createdAt: string;
+  revokedAt: string | null;
+};
+
+type WebhookRow = {
+  id: string;
+  url: string;
+  events: string[];
+  secretMasked: string;
+  active: boolean;
+  createdAt: string;
+};
+
+const fmtDate = (iso: string | null) =>
+  iso
+    ? new Date(iso).toLocaleDateString("fr-FR", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      })
+    : "—";
 
 function ApiSection() {
-  // API key is loaded from the backend in a real deployment — here we just
-  // show a masked placeholder until the SuperAdmin can fetch the real key.
-  const [apiKey] = useState("");
-  const maskedKey = apiKey
-    ? `${apiKey.slice(0, 12)}${"•".repeat(16)}`
-    : "sk_live_•••••••••••••••• (non générée)";
+  const [keys, setKeys] = useState<ApiKeyRow[] | null>(null);
+  const [webhooks, setWebhooks] = useState<WebhookRow[] | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Génération de clé
+  const [keyName, setKeyName] = useState("");
+  const [generating, setGenerating] = useState(false);
+  const [newKey, setNewKey] = useState<string | null>(null);
+  const [newKeyName, setNewKeyName] = useState("");
+
+  // Webhook : formulaire d'ajout
+  const [showWebhookForm, setShowWebhookForm] = useState(false);
+  const [whUrl, setWhUrl] = useState("");
+  const [whEvents, setWhEvents] = useState<string[]>(["scan.verified"]);
+  const [whCreating, setWhCreating] = useState(false);
+  const [newSecret, setNewSecret] = useState<string | null>(null);
+  const [newSecretUrl, setNewSecretUrl] = useState("");
+
+  // Résultat du test d'un webhook (par id)
+  const [testResult, setTestResult] = useState<
+    Record<string, { ok: boolean; detail: string }>
+  >({});
+
+  // Confirmations en 2 temps (révocation / suppression)
+  const [armed, setArmed] = useState<string | null>(null);
+
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const [kRes, wRes] = await Promise.all([
+        fetch("/api/admin/api-keys", { cache: "no-store" }),
+        fetch("/api/admin/webhooks", { cache: "no-store" }),
+      ]);
+      if (kRes.ok) {
+        const data = await kRes.json();
+        setKeys(data.keys ?? []);
+      } else {
+        setKeys([]);
+      }
+      if (wRes.ok) {
+        const data = await wRes.json();
+        setWebhooks(data.webhooks ?? []);
+      } else {
+        setWebhooks([]);
+      }
+    } catch {
+      setKeys([]);
+      setWebhooks([]);
+      toast.error("Impossible de charger les clés et webhooks");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const generateKey = async () => {
+    const name = keyName.trim();
+    if (name.length < 2) {
+      toast.error("Donnez un libellé à la clé (min. 2 caractères)");
+      return;
+    }
+    setGenerating(true);
+    try {
+      const res = await fetch("/api/admin/api-keys", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error ?? "Génération impossible");
+        return;
+      }
+      setNewKey(data.key.key);
+      setNewKeyName(data.key.name);
+      setKeyName("");
+      toast.success("Clé générée — copiez-la maintenant");
+      await loadData();
+    } catch {
+      toast.error("Erreur réseau pendant la génération");
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const revokeKey = async (id: string, name: string) => {
+    if (armed !== id) {
+      setArmed(id);
+      setTimeout(() => setArmed((a) => (a === id ? null : a)), 4000);
+      return;
+    }
+    setArmed(null);
+    try {
+      const res = await fetch(`/api/admin/api-keys/${id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        toast.error(data.error ?? "Révocation impossible");
+        return;
+      }
+      toast.success(`Clé « ${name} » révoquée`);
+      await loadData();
+    } catch {
+      toast.error("Erreur réseau pendant la révocation");
+    }
+  };
+
+  const toggleWebhookForm = () => {
+    setShowWebhookForm((s) => !s);
+    setWhUrl("");
+    setWhEvents(["scan.verified"]);
+  };
+
+  const createWebhook = async () => {
+    setWhCreating(true);
+    try {
+      const res = await fetch("/api/admin/webhooks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: whUrl.trim(), events: whEvents }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error ?? "Création impossible");
+        return;
+      }
+      setNewSecret(data.secret);
+      setNewSecretUrl(data.webhook?.url ?? "");
+      setShowWebhookForm(false);
+      toast.success("Webhook créé — copiez le secret maintenant");
+      await loadData();
+    } catch {
+      toast.error("Erreur réseau pendant la création");
+    } finally {
+      setWhCreating(false);
+    }
+  };
+
+  const patchWebhook = async (
+    id: string,
+    body: Record<string, unknown>,
+    successMsg: string
+  ) => {
+    try {
+      const res = await fetch(`/api/admin/webhooks/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error ?? "Modification impossible");
+        return;
+      }
+      if (data.secret) {
+        setNewSecret(data.secret);
+        setNewSecretUrl(data.webhook?.url ?? "");
+        toast.success("Nouveau secret généré — copiez-le maintenant");
+      } else {
+        toast.success(successMsg);
+      }
+      await loadData();
+    } catch {
+      toast.error("Erreur réseau");
+    }
+  };
+
+  const deleteWebhook = async (id: string, url: string) => {
+    if (armed !== id) {
+      setArmed(id);
+      setTimeout(() => setArmed((a) => (a === id ? null : a)), 4000);
+      return;
+    }
+    setArmed(null);
+    try {
+      const res = await fetch(`/api/admin/webhooks/${id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        toast.error(data.error ?? "Suppression impossible");
+        return;
+      }
+      toast.success(`Webhook ${url} supprimé`);
+      await loadData();
+    } catch {
+      toast.error("Erreur réseau pendant la suppression");
+    }
+  };
+
+  const testWebhook = async (id: string) => {
+    setTestResult((t) => ({ ...t, [id]: { ok: true, detail: "envoi…" } }));
+    try {
+      const res = await fetch(`/api/admin/webhooks/${id}/test`, {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (!res.ok && res.status !== 404) {
+        setTestResult((t) => ({
+          ...t,
+          [id]: { ok: false, detail: data.error ?? "échec" },
+        }));
+        return;
+      }
+      setTestResult((t) => ({
+        ...t,
+        [id]: {
+          ok: Boolean(data.ok),
+          detail: data.ok
+            ? `livré (HTTP ${data.status})`
+            : (data.error ?? `échec (HTTP ${data.status ?? "—"})`),
+        },
+      }));
+    } catch {
+      setTestResult((t) => ({
+        ...t,
+        [id]: { ok: false, detail: "erreur réseau" },
+      }));
+    }
+  };
+
+  const apiBaseUrl =
+    typeof window !== "undefined"
+      ? `${window.location.origin}/api/v1`
+      : "/api/v1";
+
+  const curlExample = `curl -H "Authorization: Bearer sk_live_VOTRE_CLE" \\
+  ${apiBaseUrl}/verify/MASTER-XXXXXX-P01`;
 
   return (
     <Card>
       <CardHeader
         title="API & Intégrations"
-        subtitle="Clés, webhooks et documentation"
+        subtitle="Clés, webhooks et endpoint public de vérification"
       />
-      <div className="space-y-6 p-5">
-        <Field label="API publique — base URL">
+      <div className="space-y-8 p-5">
+        {/* ── Endpoint public ─────────────────────────────────────────── */}
+        <Field
+          label="API publique v1 — base URL"
+          hint="Authentifiez chaque requête avec la clé : en-tête Authorization: Bearer <clé> ou X-API-Key: <clé>."
+        >
           <div className="flex gap-2">
-            <ReadOnlyField value="https://api.verifscan.com/v1" />
-            <CopyButton value="https://api.verifscan.com/v1" label="" />
+            <ReadOnlyField value={`${apiBaseUrl}/verify/[code]`} />
+            <CopyButton value={`${apiBaseUrl}/verify/[code]`} label="" />
           </div>
         </Field>
 
-        <Field label="Clé API" hint="Utilisée pour authentifier les requêtes API">
-          <div className="flex flex-wrap gap-2">
-            <ReadOnlyField value={maskedKey} className="flex-1 min-w-[220px]" />
-            <Button
-              variant="outline"
-              onClick={() =>
-                toast.success("Nouvelle clé API générée", {
-                  description: "L'ancienne clé ne fonctionnera plus.",
-                })
-              }
+        {/* ── Clés API ────────────────────────────────────────────────── */}
+        <div>
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <p className="text-[14px] font-medium text-[#374151]">Clés API</p>
+          </div>
+
+          <div className="mb-4 flex flex-wrap items-end gap-2 rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] p-4">
+            <Field
+              label="Libellé de la nouvelle clé"
+              className="min-w-[200px] flex-1"
             >
-              <KeyRound className="h-4 w-4" /> Régénérer
+              <input
+                value={keyName}
+                onChange={(e) => setKeyName(e.target.value)}
+                placeholder="Ex. Intégration e-commerce"
+                maxLength={60}
+                data-testid="api-key-name"
+                className={inputClass}
+              />
+            </Field>
+            <Button
+              onClick={generateKey}
+              disabled={generating || keyName.trim().length < 2}
+              data-testid="api-generate"
+            >
+              {generating ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <KeyRound className="h-4 w-4" />
+              )}
+              Générer une clé
             </Button>
           </div>
-        </Field>
 
+          {newKey && (
+            <div
+              className="mb-4 rounded-lg border border-[#10B981] bg-[#ECFDF5] p-4"
+              data-testid="api-key-result"
+            >
+              <p className="mb-1 text-[13px] font-semibold text-[#065F46]">
+                Clé « {newKeyName} » générée — copiez-la MAINTENANT, elle ne
+                sera plus jamais affichée :
+              </p>
+              <div className="flex flex-wrap items-center gap-2">
+                <code
+                  className="flex-1 min-w-[240px] break-all rounded-md bg-white px-3 py-2 font-mono text-[13px] text-[#065F46]"
+                  data-testid="api-key-value"
+                >
+                  {newKey}
+                </code>
+                <CopyButton value={newKey} label="Copier la clé" />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setNewKey(null)}
+                  data-testid="api-key-result-close"
+                >
+                  J'ai copié — masquer
+                </Button>
+              </div>
+            </div>
+          )}
+
+          <div
+            className="overflow-hidden rounded-lg border border-[#E5E7EB]"
+            data-testid="api-keys-table"
+          >
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-[#E5E7EB] bg-[#F9FAFB] text-left text-[12px] font-semibold uppercase tracking-wide text-[#6B7280]">
+                  <th className="px-4 py-2.5">Libellé</th>
+                  <th className="px-4 py-2.5">Clé</th>
+                  <th className="px-4 py-2.5">Créée le</th>
+                  <th className="px-4 py-2.5">Dernier usage</th>
+                  <th className="px-4 py-2.5">Statut</th>
+                  <th className="px-4 py-2.5 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#F3F4F6]">
+                {loading || keys === null ? (
+                  <tr>
+                    <td colSpan={6} className="px-4 py-8 text-center">
+                      <Loader2 className="mx-auto h-5 w-5 animate-spin text-[#9CA3AF]" />
+                    </td>
+                  </tr>
+                ) : keys.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="px-4 py-8 text-center">
+                      <p className="text-[13px] text-[#6B7280]">
+                        Aucune clé API. Donnez un libellé ci-dessus puis
+                        cliquez sur « Générer une clé ».
+                      </p>
+                    </td>
+                  </tr>
+                ) : (
+                  keys.map((k) => (
+                    <tr key={k.id} className="hover:bg-[#F9FAFB]">
+                      <td className="px-4 py-3 text-[13px] font-medium text-[#111827]">
+                        {k.name}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="font-mono text-[12px] text-[#374151]">
+                          {k.masked}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-[13px] text-[#6B7280]">
+                        {fmtDate(k.createdAt)}
+                      </td>
+                      <td className="px-4 py-3 text-[13px] text-[#6B7280]">
+                        {k.lastUsedAt ? fmtDate(k.lastUsedAt) : "jamais"}
+                      </td>
+                      <td className="px-4 py-3">
+                        {k.active ? (
+                          <Badge color="green">Active</Badge>
+                        ) : (
+                          <Badge color="red">Révoquée</Badge>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        {k.active && (
+                          <button
+                            type="button"
+                            onClick={() => revokeKey(k.id, k.name)}
+                            data-testid={`api-revoke-${k.id}`}
+                            className={cn(
+                              "inline-flex h-8 items-center gap-1.5 rounded-md px-3 text-[12px] font-semibold transition-colors",
+                              armed === k.id
+                                ? "bg-[#EF4444] text-white"
+                                : "text-[#EF4444] hover:bg-[#FEE2E2]"
+                            )}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                            {armed === k.id ? "Confirmer ?" : "Révoquer"}
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+          <p className="mt-2 text-[12px] text-[#6B7280]">
+            La clé complète n'est affichée qu'une seule fois à la génération —
+            seuls le préfixe et la date de dernier usage sont conservés côté
+            VerifScan (empreinte SHA-256).
+          </p>
+        </div>
+
+        {/* ── Webhooks ────────────────────────────────────────────────── */}
         <div>
-          <div className="mb-3 flex items-center justify-between">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
             <p className="text-[14px] font-medium text-[#374151]">Webhooks</p>
             <Button
               variant="outline"
               size="sm"
-              onClick={() => toast.info("Ajout d'un nouveau webhook")}
+              onClick={toggleWebhookForm}
+              data-testid="webhook-toggle-form"
             >
-              <Plus className="h-4 w-4" /> Ajouter un webhook
+              {showWebhookForm ? (
+                "Annuler"
+              ) : (
+                <>
+                  <Plus className="h-4 w-4" /> Ajouter un webhook
+                </>
+              )}
             </Button>
           </div>
-          <div className="overflow-hidden rounded-lg border border-[#E5E7EB]">
+
+          {showWebhookForm && (
+            <div
+              className="mb-4 space-y-4 rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] p-4"
+              data-testid="webhook-form"
+            >
+              <Field
+                label="URL de destination"
+                hint="Le payload JSON est signé HMAC-SHA256 : en-tête X-VerifScan-Signature: sha256=<hmac du corps avec votre secret>."
+              >
+                <input
+                  value={whUrl}
+                  onChange={(e) => setWhUrl(e.target.value)}
+                  placeholder="https://votre-app.com/api/verifscan"
+                  data-testid="webhook-url"
+                  className={inputClass}
+                />
+              </Field>
+              <Field label="Événements à recevoir">
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  {API_V1_EVENTS.map((ev) => (
+                    <label
+                      key={ev.id}
+                      className="flex cursor-pointer items-center gap-2 text-[13px] text-[#374151]"
+                    >
+                      <Checkbox
+                        checked={whEvents.includes(ev.id)}
+                        onCheckedChange={(c) =>
+                          setWhEvents((prev) =>
+                            c
+                              ? [...prev, ev.id]
+                              : prev.filter((e) => e !== ev.id)
+                          )
+                        }
+                        data-testid={`webhook-event-${ev.id}`}
+                      />
+                      {ev.label}
+                    </label>
+                  ))}
+                </div>
+              </Field>
+              <div className="flex justify-end">
+                <Button
+                  onClick={createWebhook}
+                  disabled={whCreating || !whUrl.trim() || whEvents.length === 0}
+                  data-testid="webhook-create"
+                >
+                  {whCreating ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Webhook className="h-4 w-4" />
+                  )}
+                  Créer le webhook
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {newSecret && (
+            <div
+              className="mb-4 rounded-lg border border-[#10B981] bg-[#ECFDF5] p-4"
+              data-testid="webhook-secret-result"
+            >
+              <p className="mb-1 text-[13px] font-semibold text-[#065F46]">
+                Secret du webhook {newSecretUrl} — copiez-le MAINTENANT, il ne
+                sera plus jamais affiché :
+              </p>
+              <div className="flex flex-wrap items-center gap-2">
+                <code
+                  className="flex-1 min-w-[240px] break-all rounded-md bg-white px-3 py-2 font-mono text-[13px] text-[#065F46]"
+                  data-testid="webhook-secret-value"
+                >
+                  {newSecret}
+                </code>
+                <CopyButton value={newSecret} label="Copier le secret" />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setNewSecret(null)}
+                >
+                  J'ai copié — masquer
+                </Button>
+              </div>
+            </div>
+          )}
+
+          <div className="overflow-hidden rounded-lg border border-[#E5E7EB]" data-testid="webhooks-table">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-[#E5E7EB] bg-[#F9FAFB] text-left text-[12px] font-semibold uppercase tracking-wide text-[#6B7280]">
                   <th className="px-4 py-2.5">URL</th>
                   <th className="px-4 py-2.5">Événements</th>
+                  <th className="px-4 py-2.5">Actif</th>
                   <th className="px-4 py-2.5 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#F3F4F6]">
-                {WEBHOOKS.length === 0 ? (
+                {loading || webhooks === null ? (
                   <tr>
-                    <td colSpan={3} className="px-4 py-8 text-center">
+                    <td colSpan={4} className="px-4 py-8 text-center">
+                      <Loader2 className="mx-auto h-5 w-5 animate-spin text-[#9CA3AF]" />
+                    </td>
+                  </tr>
+                ) : webhooks.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="px-4 py-8 text-center">
                       <p className="text-[13px] text-[#6B7280]">
-                        Aucun webhook configuré. Cliquez sur « Ajouter un webhook »
-                        pour recevoir des notifications sur votre système.
+                        Aucun webhook configuré. Cliquez sur « Ajouter un
+                        webhook » pour recevoir les événements sur votre
+                        système.
                       </p>
                     </td>
                   </tr>
                 ) : (
-                  WEBHOOKS.map((w) => (
+                  webhooks.map((w) => (
                     <tr key={w.id} className="hover:bg-[#F9FAFB]">
                       <td className="px-4 py-3">
                         <span className="block max-w-[280px] truncate font-mono text-[13px] text-[#111827]">
                           {w.url}
                         </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className="text-[13px] text-[#6B7280]">
-                          {w.events}
+                        <span className="font-mono text-[11px] text-[#9CA3AF]">
+                          {w.secretMasked}
                         </span>
                       </td>
+                      <td className="px-4 py-3">
+                        <div className="flex flex-wrap gap-1">
+                          {w.events.map((e) => (
+                            <Badge key={e} color="gray">
+                              {e}
+                            </Badge>
+                          ))}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <Switch
+                          checked={w.active}
+                          onCheckedChange={(c) =>
+                            patchWebhook(
+                              w.id,
+                              { active: c },
+                              c ? "Webhook activé" : "Webhook désactivé"
+                            )
+                          }
+                          className={switchClass}
+                          data-testid={`webhook-active-${w.id}`}
+                        />
+                      </td>
                       <td className="px-4 py-3 text-right">
-                        <div className="inline-flex gap-1">
+                        <div className="inline-flex flex-wrap items-center justify-end gap-1">
+                          {testResult[w.id] && (
+                            <span
+                              className={cn(
+                                "mr-1 text-[11px] font-medium",
+                                testResult[w.id].ok
+                                  ? "text-[#10B981]"
+                                  : "text-[#EF4444]"
+                              )}
+                              data-testid={`webhook-test-result-${w.id}`}
+                            >
+                              {testResult[w.id].ok ? "✓" : "✗"}{" "}
+                              {testResult[w.id].detail}
+                            </span>
+                          )}
                           <button
                             type="button"
-                            onClick={() => toast.info("Édition du webhook")}
-                            className="flex h-8 w-8 items-center justify-center rounded-md text-[#6B7280] hover:bg-[#F0F4F9] hover:text-[#022150]"
-                            aria-label="Éditer"
+                            onClick={() => testWebhook(w.id)}
+                            data-testid={`webhook-test-${w.id}`}
+                            className="flex h-8 items-center gap-1 rounded-md px-2 text-[12px] font-semibold text-[#022150] hover:bg-[#F0F4F9]"
                           >
-                            <Pencil className="h-4 w-4" />
+                            <ExternalLink className="h-3.5 w-3.5" /> Tester
                           </button>
                           <button
                             type="button"
-                            onClick={() => toast.error("Webhook supprimé")}
-                            className="flex h-8 w-8 items-center justify-center rounded-md text-[#6B7280] hover:bg-[#FEE2E2] hover:text-[#EF4444]"
-                            aria-label="Supprimer"
+                            onClick={() =>
+                              patchWebhook(
+                                w.id,
+                                { regenerateSecret: true },
+                                ""
+                              )
+                            }
+                            className="flex h-8 w-8 items-center justify-center rounded-md text-[#6B7280] hover:bg-[#F0F4F9] hover:text-[#022150]"
+                            aria-label="Régénérer le secret"
+                            title="Régénérer le secret"
+                          >
+                            <RefreshCw className="h-4 w-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => deleteWebhook(w.id, w.url)}
+                            data-testid={`webhook-delete-${w.id}`}
+                            className={cn(
+                              "flex h-8 w-8 items-center justify-center rounded-md transition-colors",
+                              armed === w.id
+                                ? "bg-[#EF4444] text-white"
+                                : "text-[#6B7280] hover:bg-[#FEE2E2] hover:text-[#EF4444]"
+                            )}
+                            aria-label={
+                              armed === w.id
+                                ? "Confirmer la suppression"
+                                : "Supprimer"
+                            }
+                            title={
+                              armed === w.id ? "Confirmer ?" : "Supprimer"
+                            }
                           >
                             <Trash2 className="h-4 w-4" />
                           </button>
@@ -1796,23 +2363,26 @@ function ApiSection() {
           </div>
         </div>
 
-        <div className="flex items-center justify-between rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] px-4 py-3">
-          <div>
-            <p className="text-[14px] font-medium text-[#111827]">
-              Documentation API
-            </p>
-            <p className="text-[12px] text-[#6B7280]">
-              Référence complète, exemples cURL et SDK
-            </p>
+        {/* ── Exemple d'appel ─────────────────────────────────────────── */}
+        <div className="rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] p-4">
+          <div className="mb-2 flex items-center justify-between">
+            <div>
+              <p className="text-[14px] font-medium text-[#111827]">
+                Vérifier un produit via l'API
+              </p>
+              <p className="text-[12px] text-[#6B7280]">
+                GET /api/v1/verify/[code] — renvoie valid: true/false, le
+                produit et ses statistiques de scans.
+              </p>
+            </div>
+            <CopyButton value={curlExample} label="Copier l'exemple" />
           </div>
-          <a
-            href="https://docs.verifscan.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex h-10 items-center gap-1.5 rounded-lg border border-[#E5E7EB] bg-white px-4 text-[14px] font-semibold text-[#022150] transition-colors hover:bg-[#F0F4F9]"
+          <pre
+            className="overflow-x-auto rounded-md bg-[#022150] px-4 py-3 font-mono text-[12px] leading-relaxed text-[#E5E7EB]"
+            data-testid="api-curl-example"
           >
-            Voir la docs <ExternalLink className="h-4 w-4" />
-          </a>
+            {curlExample}
+          </pre>
         </div>
       </div>
     </Card>

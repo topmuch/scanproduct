@@ -191,6 +191,23 @@ export async function POST(request: NextRequest) {
       }
     })();
 
+    // Webhook sortant report.created (fire-and-forget, jamais bloquant)
+    (async () => {
+      try {
+        const { fireWebhooks } = await import("@/lib/webhooks");
+        await fireWebhooks("report.created", {
+          ticketId: ticket.id,
+          reference,
+          lotId,
+          reason,
+          priority,
+          contactEmail: contactEmail || null,
+        });
+      } catch (err) {
+        console.error("[POST /api/reports] webhook report.created failed:", err);
+      }
+    })();
+
     // Revalidate the scan page so any state change is reflected
     revalidatePath(`/p/${lotId}`);
     if (lot.reference) {

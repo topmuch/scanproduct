@@ -978,3 +978,43 @@ model ArtisanReview {
   @@index([lotId])
   @@index([createdAt])
 }
+
+// ============================================================================
+// VerifScan API publique — clés d'accès (Paramètres SuperAdmin → API & Intégrations)
+// La clé complète n'est affichée qu'UNE seule fois à la création (pattern
+// Stripe) ; la base ne stocke que son SHA-256 (une fuite de la DB ne compromet
+// pas les clés) + le préfixe pour l'affichage masqué dans l'UI.
+// Usage : Authorization: Bearer sk_live_... ou X-API-Key: sk_live_...
+// ============================================================================
+model ApiKey {
+  id         String    @id @default(cuid())
+  name       String // libellé lisible ("Intégration e-commerce", "App partenaire"…)
+  prefix     String // ex. "sk_live_ab12cd34" (affichable sans danger)
+  keyHash    String    @unique // SHA-256 hex de la clé complète
+  active     Boolean   @default(true)
+  lastUsedAt DateTime?
+  lastUsedIp String?
+  createdAt  DateTime  @default(now())
+  revokedAt  DateTime?
+
+  @@index([active])
+}
+
+// ============================================================================
+// VerifScan API — webhooks sortants (Paramètres SuperAdmin → API & Intégrations)
+// À chaque événement (scan vérifié, inscription, signalement, activation de
+// plan), chaque webhook actif abonné reçoit un POST JSON signé HMAC-SHA256 :
+// en-têtes X-VerifScan-Event + X-VerifScan-Signature: sha256=<hmac hex>.
+// `events` = liste CSV (ex. "scan.verified,user.registered") ou "*" (tout).
+// ============================================================================
+model Webhook {
+  id        String   @id @default(cuid())
+  url       String
+  events    String // CSV des événements ou "*"
+  secret    String // secret HMAC dédié à CE webhook (affiché une fois, régénérable)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([active])
+}

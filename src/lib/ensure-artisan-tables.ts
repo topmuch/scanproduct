@@ -145,7 +145,34 @@ export const ARTISAN_DDL: string[] = [
 )`,
   `CREATE INDEX IF NOT EXISTS "ArtisanReview_lotId_idx" ON "ArtisanReview"("lotId")`,
   `CREATE INDEX IF NOT EXISTS "ArtisanReview_createdAt_idx" ON "ArtisanReview"("createdAt")`,
+  // ── Tables de l'API publique (clés + webhooks, Paramètres → API) ──
+  `CREATE TABLE IF NOT EXISTS "ApiKey" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "name" TEXT NOT NULL,
+    "prefix" TEXT NOT NULL,
+    "keyHash" TEXT NOT NULL,
+    "active" BOOLEAN NOT NULL DEFAULT true,
+    "lastUsedAt" DATETIME,
+    "lastUsedIp" TEXT,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "revokedAt" DATETIME
+)`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS "ApiKey_keyHash_key" ON "ApiKey"("keyHash")`,
+  `CREATE INDEX IF NOT EXISTS "ApiKey_active_idx" ON "ApiKey"("active")`,
+  `CREATE TABLE IF NOT EXISTS "Webhook" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "url" TEXT NOT NULL,
+    "events" TEXT NOT NULL,
+    "secret" TEXT NOT NULL,
+    "active" BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL
+)`,
+  `CREATE INDEX IF NOT EXISTS "Webhook_active_idx" ON "Webhook"("active")`,
 ];
+
+/** Tables de l'API publique (clés + webhooks) — reportées dans le dashboard de santé. */
+export const ADMIN_API_TABLES = ["ApiKey", "Webhook"] as const;
 
 /**
  * Colonnes ajoutées au schéma APRÈS le premier déploiement — les tables de
@@ -340,4 +367,18 @@ export async function ensureArtisanTables(): Promise<HealResult> {
     console.log(`[ensure-artisan-tables] Auto-réparation — ${parts.join(" | ")}`);
   }
   return result;
+}
+
+/**
+ * Détecte une erreur Prisma « enregistrement introuvable » (P2025) — le code
+ * vit dans error.code, PAS dans le message (une regex sur le message rate
+ * l'erreur : leçon du test DELETE clé inconnue → 404).
+ */
+export function isRecordMissingError(error: unknown): boolean {
+  if (typeof error === "object" && error !== null) {
+    const code = (error as { code?: unknown }).code;
+    if (code === "P2025") return true;
+  }
+  const msg = error instanceof Error ? error.message : String(error);
+  return /P2025|required but was not found|not found/i.test(msg);
 }
