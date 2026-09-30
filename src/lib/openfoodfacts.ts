@@ -17,7 +17,7 @@ const OFF_BASE = "https://world.openfoodfacts.org";
 // NOTE: HTTP headers must be ASCII (ByteString). Avoid em dashes / accents
 // here or Node's fetch will throw "Cannot convert argument to a ByteString".
 const OFF_USER_AGENT =
-  "VerifScan/1.0 (https://verifscan.sn - product traceability platform)";
+  "VerifScan/1.0 (https://verifscan.com - product traceability platform)";
 
 // ---------------------------------------------------------------------------
 // Types — mirror the OFF JSON payload (only the fields we care about)

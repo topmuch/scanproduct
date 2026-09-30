@@ -174,7 +174,7 @@ export async function POST(request: NextRequest) {
             serie,
             fallbackUrl: `${
               process.env.NEXT_PUBLIC_SCAN_URL?.replace(/\/$/, "") ||
-              "https://verifscan.sn"
+              "https://verifscan.com"
             }/p/${lot.id}?code=${uniqueCode}`,
           });
           scanUrl = construit.url;
@@ -188,7 +188,7 @@ export async function POST(request: NextRequest) {
           );
           scanUrl = `${
             process.env.NEXT_PUBLIC_SCAN_URL?.replace(/\/$/, "") ||
-            "https://verifscan.sn"
+            "https://verifscan.com"
           }/p/${lot.id}?code=${uniqueCode}`;
           format = "STANDARD";
           codeImprime = uniqueCode;

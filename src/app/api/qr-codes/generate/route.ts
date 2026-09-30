@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
     // `/p/<lotId>` so scanning opens the lot's digital passport page.
     const baseUrl =
       process.env.NEXT_PUBLIC_SCAN_URL?.replace(/\/$/, "") ||
-      "https://verifscan.sn";
+      "https://verifscan.com";
     // Pre-existing TypeScript inference: `const qrCodes = []` is inferred as
     // `never[]`, which then rejects the `.push(...)` below. Annotate the
     // array explicitly so the push type-checks cleanly.

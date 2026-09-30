@@ -6,7 +6,7 @@
 //
 // Triggered by an external scheduler (Coolify Scheduled Task / crontab).
 // Recommended schedule: daily at 08:00 (server time).
-//   Example Coolify task: curl -s https://verifscan.sn/api/cron/subscription-alerts?secret=$CRON_SECRET
+//   Example Coolify task: curl -s https://verifscan.com/api/cron/subscription-alerts?secret=$CRON_SECRET
 //
 // Behaviour: for every ACTIVE fabricant, check the ACTIVE Subscription row
 // (auto-provisioned for legacy users) and email alerts at J-7 / J-3, then a

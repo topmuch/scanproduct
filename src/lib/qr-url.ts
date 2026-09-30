@@ -32,7 +32,7 @@ export function getScanOrigin(): string {
     // préventif ; le domaine consulté normal est conservé tel quel.
     return localhostify(window.location.origin);
   }
-  return process.env.NEXT_PUBLIC_SCAN_URL || "https://verifscan.sn";
+  return process.env.NEXT_PUBLIC_SCAN_URL || "https://verifscan.com";
 }
 
 /**

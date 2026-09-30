@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { buildAlternates } from "@/lib/seo";
 import Link from "next/link";
 import {
   Target,
@@ -18,18 +19,20 @@ import {
 import { PublicHeader } from "@/components/public/PublicHeader";
 import { PublicFooter } from "@/components/public/PublicFooter";
 
-export const metadata: Metadata = {
+export async function generateMetadata(): Promise<Metadata> {
+  return {
   title: "À propos — VerifScan",
   description:
     "VerifScan est né au Sénégal pour offrir aux fabricants ouest-africains un passeport numérique qui garantit l'authenticité, la traçabilité et la transparence de leurs produits.",
-  alternates: { canonical: "/a-propos" },
+  alternates: await buildAlternates("/a-propos"),
   openGraph: {
     title: "À propos — VerifScan",
     description:
       "Découvrez la mission, la vision et les valeurs de VerifScan, le passeport numérique pour l'agro-industrie ouest-africaine.",
     type: "website",
   },
-};
+  };
+}
 
 const VALUES = [
   {

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { buildAlternates } from "@/lib/seo";
 import { Header } from "@/components/landing/Header";
 import { Footer } from "@/components/landing/Footer";
 import { CatalogHero } from "@/components/landing/CatalogHero";
@@ -16,11 +17,12 @@ import { FeaturesBar } from "@/components/landing/FeaturesBar";
 // pre-render at build time, which fails in Docker (no DB file during build).
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
+export async function generateMetadata(): Promise<Metadata> {
+  return {
   title: "Catalogue produits authentifiés — VerifScan | Traçabilité & passeport numérique",
   description:
     "Parcourez le catalogue des produits authentifiés VerifScan : alimentaire, cosmétique, agro-industrie. Chaque produit possède son passeport numérique QR code — authenticité vérifiée, traçabilité complète du lot, lutte anti-contrefaçon. Sénégal, Afrique de l'Ouest.",
-  alternates: { canonical: "/produits" },
+  alternates: await buildAlternates("/produits"),
   openGraph: {
     title: "Catalogue produits authentifiés — VerifScan",
     description:
@@ -29,7 +31,8 @@ export const metadata: Metadata = {
     type: "website",
     images: ["/og-image.png?v=6"],
   },
-};
+  };
+}
 
 export default function CatalogPage() {
   // No top padding here — CatalogHero has its own pt-16 lg:pt-20 so the dark

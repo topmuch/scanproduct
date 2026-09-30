@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { buildAlternates } from "@/lib/seo";
 import { PublicHeader } from "@/components/public/PublicHeader";
 import { PublicFooter } from "@/components/public/PublicFooter";
 import { ContactForm } from "@/components/public/ContactForm";
@@ -9,12 +10,13 @@ import {
 } from "@/lib/contact";
 import { MessageCircle, Navigation, MapPin, Clock } from "lucide-react";
 
-export const metadata: Metadata = {
+export async function generateMetadata(): Promise<Metadata> {
+  return {
   title:
     "Contact & Itinéraire — VerifScan Dakar (Ouest Foire) | Email, Téléphone, Carte",
   description:
     "Contactez VerifScan : contact@verifscan.com · +221 78 485 88 22 · Lot n°13, Ouest Foire, Dakar, Sénégal. Carte Google Maps, itinéraire, horaires et formulaire — réponse sous 24h.",
-  alternates: { canonical: "/contact" },
+  alternates: await buildAlternates("/contact"),
   openGraph: {
     title: "Contact & Itinéraire — VerifScan Dakar (Ouest Foire)",
     description:
@@ -23,7 +25,8 @@ export const metadata: Metadata = {
     type: "website",
     images: ["/og-image.png?v=6"],
   },
-};
+  };
+}
 
 /**
  * JSON-LD — LocalBusiness avec adresse postale complète, géolocalisation
@@ -33,14 +36,14 @@ function LocalBusinessJsonLd() {
   const data = {
     "@context": "https://schema.org",
     "@type": "LocalBusiness",
-    "@id": "https://verifscan.sn/#localbusiness",
+    "@id": "https://verifscan.com/#localbusiness",
     name: "VerifScan",
     description:
       "Passeport numérique produit : traçabilité alimentaire et cosmétique, authentification QR code, lutte contre la contrefaçon.",
-    url: "https://verifscan.sn/contact",
+    url: "https://verifscan.com/contact",
     telephone: "+221784858822",
     email: "contact@verifscan.com",
-    image: "https://verifscan.sn/og-image.png",
+    image: "https://verifscan.com/og-image.png",
     priceRange: "$$",
     address: {
       "@type": "PostalAddress",

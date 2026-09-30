@@ -25,6 +25,8 @@ import {
   Pencil,
   ExternalLink,
   Loader2,
+  Globe,
+  TrendingUp,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -55,6 +57,7 @@ import { cn } from "@/lib/utils";
 
 type SectionKey =
   | "general"
+  | "seo"
   | "email"
   | "payment"
   | "security"
@@ -68,6 +71,7 @@ const SECTIONS: {
   icon: React.ComponentType<{ className?: string }>;
 }[] = [
   { key: "general", label: "Général", icon: Settings },
+  { key: "seo", label: "SEO & Référencement", icon: Globe },
   { key: "email", label: "Email & Notifications", icon: Mail },
   { key: "payment", label: "Paiement", icon: CreditCard },
   { key: "security", label: "Sécurité", icon: Shield },
@@ -78,6 +82,7 @@ const SECTIONS: {
 
 const SECTION_TITLES: Record<SectionKey, string> = {
   general: "Paramètres généraux",
+  seo: "SEO & Référencement",
   email: "Email & Notifications",
   payment: "Configuration des paiements",
   security: "Paramètres de sécurité",
@@ -283,7 +288,14 @@ function GeneralSection() {
   const [favError, setFavError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Fetch the current favicon URL on mount.
+  // ── Persisted general settings (GET/PUT /api/admin/settings) ──────
+  // Fields are CONTROLLED and backed by the Setting table — the save
+  // button performs a real PUT (this used to be a mock toast-only button).
+  const [values, setValues] = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  // Fetch the current favicon URL + persisted settings on mount.
   useEffect(() => {
     let cancelled = false;
     fetch("/api/admin/settings/favicon")
@@ -294,10 +306,59 @@ function GeneralSection() {
       .catch(() => {
         /* non-fatal — default placeholder is shown */
       });
+    fetch("/api/admin/settings")
+      .then((r) => (r.ok ? r.json() : { settings: {} }))
+      .then((data) => {
+        if (!cancelled) setValues(data.settings ?? {});
+      })
+      .catch(() => {
+        /* non-fatal — defaults are shown */
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
     return () => {
       cancelled = true;
     };
   }, []);
+
+  function setField(key: string, value: string) {
+    setValues((v) => ({ ...v, [key]: value }));
+  }
+
+  async function handleSave() {
+    setSaving(true);
+    try {
+      const res = await fetch("/api/admin/settings", {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          siteName: values.siteName ?? "",
+          siteSlogan: values.siteSlogan ?? "",
+          siteUrl: values.siteUrl ?? "",
+          contactEmail: values.contactEmail ?? "",
+          contactPhone: values.contactPhone ?? "",
+          timezone: values.timezone ?? "",
+          defaultLanguage: values.defaultLanguage ?? "",
+          siteAddress: values.siteAddress ?? "",
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.error || "Échec de l'enregistrement.");
+      }
+      setValues(data.settings ?? values);
+      toast.success("Paramètres généraux enregistrés");
+    } catch (err) {
+      const msg =
+        err instanceof Error
+          ? err.message
+          : "Erreur lors de l'enregistrement.";
+      toast.error(msg);
+    } finally {
+      setSaving(false);
+    }
+  }
 
   async function handleFaviconChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -341,12 +402,18 @@ function GeneralSection() {
       <div className="space-y-6 p-5">
         <FormRow>
           <Field label="Nom de la plateforme">
-            <input className={inputClass} defaultValue="VerifScan" />
+            <input
+              className={inputClass}
+              data-testid="general-site-name"
+              value={values.siteName ?? "VerifScan"}
+              onChange={(e) => setField("siteName", e.target.value)}
+            />
           </Field>
           <Field label="Slogan">
             <input
               className={inputClass}
-              defaultValue="La vérité au bout du scan"
+              value={values.siteSlogan ?? "La vérité au bout du scan"}
+              onChange={(e) => setField("siteSlogan", e.target.value)}
             />
           </Field>
         </FormRow>
@@ -441,33 +508,52 @@ function GeneralSection() {
         </Field>
 
         <FormRow>
-          <Field label="URL du site">
-            <input className={inputClass} defaultValue="https://verifscan.sn" />
+          <Field
+            label="URL du site"
+            hint="Domaine canonique utilisé pour le SEO (canonical, sitemap, hreflang)"
+          >
+            <input
+              className={inputClass}
+              data-testid="general-site-url"
+              placeholder="https://verifscan.com"
+              value={values.siteUrl ?? ""}
+              onChange={(e) => setField("siteUrl", e.target.value)}
+            />
           </Field>
           <Field label="Email de contact">
             <input
               className={inputClass}
-              defaultValue="contact@verifscan.com"
+              type="email"
+              value={values.contactEmail ?? "contact@verifscan.com"}
+              onChange={(e) => setField("contactEmail", e.target.value)}
             />
           </Field>
         </FormRow>
 
         <FormRow>
           <Field label="Téléphone">
-            <input className={inputClass} defaultValue="+221 77 123 45 67" />
+            <input
+              className={inputClass}
+              value={values.contactPhone ?? "+221 78 485 88 22"}
+              onChange={(e) => setField("contactPhone", e.target.value)}
+            />
           </Field>
           <Field label="Fuseau horaire">
-            <Select defaultValue="Africa/Dakar">
+            <Select
+              value={values.timezone || "Africa/Dakar"}
+              onValueChange={(v) => setField("timezone", v)}
+            >
               <SelectTrigger className={selectTriggerClass}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="Africa/Dakar">Africa/Dakar (GMT)</SelectItem>
                 <SelectItem value="Europe/Paris">Europe/Paris (CET)</SelectItem>
+                <SelectItem value="Europe/Brussels">Europe/Brussels (CET)</SelectItem>
+                <SelectItem value="Europe/Zurich">Europe/Zurich (CET)</SelectItem>
+                <SelectItem value="America/Toronto">America/Toronto (EST)</SelectItem>
+                <SelectItem value="America/New_York">America/New_York (EST)</SelectItem>
                 <SelectItem value="UTC">UTC</SelectItem>
-                <SelectItem value="America/New_York">
-                  America/New_York (EST)
-                </SelectItem>
               </SelectContent>
             </Select>
           </Field>
@@ -475,7 +561,10 @@ function GeneralSection() {
 
         <FormRow>
           <Field label="Langue par défaut">
-            <Select defaultValue="fr">
+            <Select
+              value={values.defaultLanguage || "fr"}
+              onValueChange={(v) => setField("defaultLanguage", v)}
+            >
               <SelectTrigger className={selectTriggerClass}>
                 <SelectValue />
               </SelectTrigger>
@@ -489,16 +578,356 @@ function GeneralSection() {
           <Field label="Adresse">
             <textarea
               className={textareaClass}
-              defaultValue="Dakar, Sénégal"
+              value={values.siteAddress ?? "Lot n°13, Ouest Foire, Dakar, Sénégal"}
+              onChange={(e) => setField("siteAddress", e.target.value)}
             />
           </Field>
         </FormRow>
       </div>
       <CardFooter>
         <Button
-          onClick={() => toast.success("Paramètres généraux enregistrés")}
+          onClick={handleSave}
+          disabled={saving || loading}
+          data-testid="general-save"
         >
-          <Save className="h-4 w-4" /> Enregistrer les modifications
+          {saving ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" /> Enregistrement…
+            </>
+          ) : (
+            <>
+              <Save className="h-4 w-4" /> Enregistrer les modifications
+            </>
+          )}
+        </Button>
+      </CardFooter>
+    </Card>
+  );
+}
+
+/* ============================================================
+ * Section: SEO & Référencement
+ * ========================================================== */
+
+function SeoSection() {
+  // ── Persisted SEO settings (GET/PUT /api/admin/settings) ──────────
+  const [values, setValues] = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  // ── OpenGraph image upload ────────────────────────────────────────
+  const [ogUploading, setOgUploading] = useState(false);
+  const [ogError, setOgError] = useState<string | null>(null);
+  const ogInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/admin/settings")
+      .then((r) => (r.ok ? r.json() : { settings: {} }))
+      .then((data) => {
+        if (!cancelled) setValues(data.settings ?? {});
+      })
+      .catch(() => {
+        /* non-fatal — defaults are shown */
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  function setField(key: string, value: string) {
+    setValues((v) => ({ ...v, [key]: value }));
+  }
+
+  async function handleSave() {
+    setSaving(true);
+    try {
+      const res = await fetch("/api/admin/settings", {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          seoTitle: values.seoTitle ?? "",
+          seoDescription: values.seoDescription ?? "",
+          seoKeywords: values.seoKeywords ?? "",
+          googleVerification: values.googleVerification ?? "",
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.error || "Échec de l'enregistrement.");
+      }
+      setValues(data.settings ?? values);
+      toast.success("Paramètres SEO enregistrés");
+    } catch (err) {
+      const msg =
+        err instanceof Error
+          ? err.message
+          : "Erreur lors de l'enregistrement.";
+      toast.error(msg);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleOgImageChange(
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setOgError(null);
+    setOgUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/admin/settings/og-image", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.url) {
+        throw new Error(
+          data.error || "Échec de l'upload de l'image OpenGraph.",
+        );
+      }
+      setValues((v) => ({ ...v, ogImageUrl: data.url }));
+      toast.success("Image OpenGraph mise à jour");
+    } catch (err) {
+      const msg =
+        err instanceof Error ? err.message : "Erreur lors de l'upload.";
+      setOgError(msg);
+      toast.error(msg);
+    } finally {
+      setOgUploading(false);
+      if (ogInputRef.current) ogInputRef.current.value = "";
+    }
+  }
+
+  // ── Google snippet preview values ─────────────────────────────────
+  const siteUrl =
+    values.siteUrl?.trim() || "https://verifscan.com";
+  const previewTitle =
+    values.seoTitle?.trim() ||
+    "VerifScan — Passeport numérique produit | Traçabilité alimentaire & cosmétique, anti-contrefaçon par QR code";
+  const previewDesc =
+    values.seoDescription?.trim() ||
+    "VerifScan est le passeport numérique de vos produits alimentaires et cosmétiques : un QR code unique qui garantit l'authenticité, assure la traçabilité du lot et protège votre marque contre la contrefaçon et la fraude.";
+
+  return (
+    <Card>
+      <CardHeader
+        title="SEO & Référencement"
+        subtitle="Optimisez la visibilité de VerifScan sur Google, Bing et les réseaux sociaux"
+      />
+      <div className="space-y-6 p-5">
+        {/* ── Aperçu Google ─────────────────────────────────────── */}
+        <Field
+          label="Aperçu du résultat Google"
+          hint="Exemple de rendu approximatif — le titre et la description peuvent être tronqués par Google."
+        >
+          <div className="rounded-xl border border-[#E5E7EB] bg-white p-4">
+            <div className="flex items-center gap-2">
+              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[#F0F4F9]">
+                <span className="text-[11px] font-bold text-[#022150]">V</span>
+              </div>
+              <div className="leading-tight">
+                <p className="text-[12px] text-[#202124]">
+                  {siteUrl.replace(/^https?:\/\//, "")}
+                </p>
+                <p className="text-[11px] text-[#4D5156]">
+                  https://{siteUrl.replace(/^https?:\/\//, "")}
+                </p>
+              </div>
+            </div>
+            <p className="mt-1.5 truncate text-[18px] leading-snug text-[#1A0DAB]">
+              {previewTitle}
+            </p>
+            <p className="mt-0.5 line-clamp-2 text-[13px] leading-snug text-[#4D5156]">
+              {previewDesc}
+            </p>
+          </div>
+        </Field>
+
+        <Field
+          label="Titre SEO (balise title par défaut)"
+          hint="Recommandé : 50–60 caractères pour éviter la troncature. Peut inclure la marque et les mots-clés principaux."
+        >
+          <input
+            className={inputClass}
+            data-testid="seo-input-title"
+            placeholder="VerifScan — Passeport numérique produit | Anti-contrefaçon QR"
+            maxLength={120}
+            value={values.seoTitle ?? ""}
+            onChange={(e) => setField("seoTitle", e.target.value)}
+          />
+          <p
+            className={cn(
+              "text-[12px]",
+              (values.seoTitle ?? "").length > 60
+                ? "text-[#F59E0B]"
+                : "text-[#6B7280]",
+            )}
+          >
+            {(values.seoTitle ?? "").length} / 120 caractères
+          </p>
+        </Field>
+
+        <Field
+          label="Meta description"
+          hint="Recommandé : 140–160 caractères. Affichée sous le titre dans les résultats de recherche."
+        >
+          <textarea
+            className={textareaClass}
+            data-testid="seo-input-description"
+            placeholder="VerifScan est le passeport numérique de vos produits : QR code unique, authenticité garantie, traçabilité complète, protection anti-contrefaçon…"
+            maxLength={320}
+            value={values.seoDescription ?? ""}
+            onChange={(e) => setField("seoDescription", e.target.value)}
+          />
+          <p
+            className={cn(
+              "text-[12px]",
+              (values.seoDescription ?? "").length > 160
+                ? "text-[#F59E0B]"
+                : "text-[#6B7280]",
+            )}
+          >
+            {(values.seoDescription ?? "").length} / 320 caractères
+          </p>
+        </Field>
+
+        <Field
+          label="Mots-clés"
+          hint="Séparés par des virgules. Marchés visés : Sénégal, France, Belgique, Suisse, Canada (ex : traçabilité QR code, anti-contrefaçon France)."
+        >
+          <textarea
+            className={textareaClass}
+            data-testid="seo-input-keywords"
+            placeholder="passeport numérique produit, QR code traçabilité, anti-contrefaçon, traçabilité alimentaire France, cosmétique authentique Belgique…"
+            value={values.seoKeywords ?? ""}
+            onChange={(e) => setField("seoKeywords", e.target.value)}
+          />
+        </Field>
+
+        {/* ── Image OpenGraph ───────────────────────────────────── */}
+        <Field
+          label="Image de partage (OpenGraph / Twitter)"
+          hint="1200×630 px recommandé — PNG, JPG, WebP, GIF (5 MB max). Affichée lors des partages sur Facebook, X/LinkedIn, WhatsApp…"
+        >
+          <input
+            ref={ogInputRef}
+            type="file"
+            accept="image/png,image/jpeg,image/webp,image/gif"
+            onChange={handleOgImageChange}
+            className="hidden"
+            data-testid="seo-upload-og"
+          />
+          <div className="flex flex-col gap-3 rounded-lg border-2 border-dashed border-[#E5E7EB] bg-[#F9FAFB] p-4 sm:flex-row sm:items-center">
+            <div className="flex h-[63px] w-[120px] shrink-0 items-center justify-center overflow-hidden rounded-lg border border-[#E5E7EB] bg-white">
+              {values.ogImageUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={values.ogImageUrl}
+                  alt="Image OpenGraph actuelle"
+                  className="h-full w-full object-cover"
+                  data-testid="seo-og-preview"
+                  onError={(e) => {
+                    (e.currentTarget as HTMLImageElement).style.display =
+                      "none";
+                  }}
+                />
+              ) : (
+                <span className="text-[11px] text-[#9CA3AF]">1200×630</span>
+              )}
+            </div>
+            <div className="flex-1">
+              <p className="text-[13px] font-medium text-[#111827]">
+                {values.ogImageUrl
+                  ? "Image OpenGraph personnalisée active"
+                  : "Image OpenGraph par défaut (/og-image.png)"}
+              </p>
+              <p className="mt-0.5 text-[12px] text-[#6B7280]">
+                {ogUploading
+                  ? "Upload en cours…"
+                  : "Cliquez sur « Changer » pour téléverser une nouvelle image"}
+              </p>
+              {ogError && (
+                <p className="mt-1 text-[12px] font-medium text-[#EF4444]">
+                  {ogError}
+                </p>
+              )}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={ogUploading}
+              onClick={() => ogInputRef.current?.click()}
+              data-testid="seo-og-change"
+            >
+              {ogUploading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" /> Upload…
+                </>
+              ) : (
+                <>
+                  <Upload className="h-4 w-4" /> Changer
+                </>
+              )}
+            </Button>
+          </div>
+        </Field>
+
+        {/* ── Google Search Console ─────────────────────────────── */}
+        <Field
+          label="Code de vérification Google Search Console"
+          hint="Collez le code fourni par la Search Console (contenu du meta google-site-verification). Ajoutez aussi verifscan.com comme propriété « Domaine »."
+        >
+          <input
+            className={inputClass}
+            data-testid="seo-input-gsc"
+            placeholder="Ex : google-site-verification=abc123def456…"
+            value={values.googleVerification ?? ""}
+            onChange={(e) => setField("googleVerification", e.target.value)}
+          />
+        </Field>
+
+        <div className="rounded-lg border border-[#DBEAFE] bg-[#EFF6FF] p-4">
+          <div className="flex items-start gap-3">
+            <TrendingUp className="mt-0.5 h-5 w-5 shrink-0 text-[#2563EB]" />
+            <div className="text-[13px] leading-relaxed text-[#1E40AF]">
+              <p className="font-medium">
+                Référencement multilingue automatique
+              </p>
+              <p className="mt-1 text-[#3B82F6]">
+                VerifScan déclare automatiquement les balises hreflang
+                (fr-FR, fr-BE, fr-CH, fr-CA, fr-SN) et les données structurées
+                zoneServed pour la France, la Belgique, la Suisse, le Canada et
+                le Sénégal. Déclarez le domaine dans la Google Search Console et
+                soumettez https://{siteUrl.replace(/^https?:\/\//, "")}
+                /sitemap.xml pour démarrer l'indexation.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <CardFooter>
+        <Button
+          onClick={handleSave}
+          disabled={saving || loading}
+          data-testid="seo-save"
+        >
+          {saving ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" /> Enregistrement…
+            </>
+          ) : (
+            <>
+              <Save className="h-4 w-4" /> Enregistrer les modifications
+            </>
+          )}
         </Button>
       </CardFooter>
     </Card>
@@ -575,7 +1004,7 @@ function EmailSection() {
             <Field label="Utilisateur">
               <input
                 className={inputClass}
-                defaultValue="noreply@verifscan.sn"
+                defaultValue="noreply@verifscan.com"
               />
             </Field>
             <Field label="Mot de passe">
@@ -698,7 +1127,7 @@ function EmailSection() {
             label="Email destinataire"
             className="max-w-md"
           >
-            <input className={inputClass} defaultValue="admin@verifscan.sn" />
+            <input className={inputClass} defaultValue="admin@verifscan.com" />
           </Field>
         </div>
         <CardFooter>
@@ -739,25 +1168,25 @@ function PaymentSection() {
       enabled: true,
       connected: true,
       mode: "test",
-      webhook: "https://api.verifscan.sn/webhooks/cinetpay",
+      webhook: "https://api.verifscan.com/webhooks/cinetpay",
     },
     stripe: {
       enabled: false,
       connected: false,
       mode: "test",
-      webhook: "https://api.verifscan.sn/webhooks/stripe",
+      webhook: "https://api.verifscan.com/webhooks/stripe",
     },
     orange: {
       enabled: true,
       connected: true,
       mode: "production",
-      webhook: "https://api.verifscan.sn/webhooks/orange-money",
+      webhook: "https://api.verifscan.com/webhooks/orange-money",
     },
     wave: {
       enabled: false,
       connected: false,
       mode: "test",
-      webhook: "https://api.verifscan.sn/webhooks/wave",
+      webhook: "https://api.verifscan.com/webhooks/wave",
     },
   });
 
@@ -989,7 +1418,7 @@ function SecuritySection() {
           >
             <textarea
               className={textareaClass}
-              defaultValue={"https://verifscan.sn\nhttps://admin.verifscan.sn\nhttps://app.verifscan.sn"}
+              defaultValue={"https://verifscan.com\nhttps://admin.verifscan.com\nhttps://app.verifscan.com"}
             />
           </Field>
           <Field label="Méthodes autorisées">
@@ -1048,8 +1477,8 @@ function ApiSection() {
       <div className="space-y-6 p-5">
         <Field label="API publique — base URL">
           <div className="flex gap-2">
-            <ReadOnlyField value="https://api.verifscan.sn/v1" />
-            <CopyButton value="https://api.verifscan.sn/v1" label="" />
+            <ReadOnlyField value="https://api.verifscan.com/v1" />
+            <CopyButton value="https://api.verifscan.com/v1" label="" />
           </div>
         </Field>
 
@@ -1150,7 +1579,7 @@ function ApiSection() {
             </p>
           </div>
           <a
-            href="https://docs.verifscan.sn"
+            href="https://docs.verifscan.com"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex h-10 items-center gap-1.5 rounded-lg border border-[#E5E7EB] bg-white px-4 text-[14px] font-semibold text-[#022150] transition-colors hover:bg-[#F0F4F9]"
@@ -1477,6 +1906,7 @@ export function SettingsPage() {
             </h3>
           </div>
           {active === "general" && <GeneralSection />}
+          {active === "seo" && <SeoSection />}
           {active === "email" && <EmailSection />}
           {active === "payment" && <PaymentSection />}
           {active === "security" && <SecuritySection />}

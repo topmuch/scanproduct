@@ -6,7 +6,7 @@
 //
 // Triggered by an external scheduler (Coolify Scheduled Task / crontab).
 // Recommended schedule: daily at 08:00.
-//   Example Coolify task: curl -s https://verifscan.sn/api/cron/expiry-alerts?secret=$CRON_SECRET
+//   Example Coolify task: curl -s https://verifscan.com/api/cron/expiry-alerts?secret=$CRON_SECRET
 //
 // Behaviour: for every ACTIVE fabricant, find ACTIVE lots whose expiryDate
 // falls within 30 days, group them into urgency buckets (≤7 j / ≤15 j /

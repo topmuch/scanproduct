@@ -64,7 +64,7 @@ export default function CGUPage() {
         <ul className="ml-5 list-disc space-y-2">
           <li>
             <strong>Plateforme</strong> : désigne le service VerifScan,
-            accessible à l&apos;adresse verifscan.sn, incluant l&apos;espace
+            accessible à l&apos;adresse verifscan.com, incluant l&apos;espace
             fabricant, le catalogue public et les pages produits
             associées.
           </li>

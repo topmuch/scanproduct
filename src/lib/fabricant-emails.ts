@@ -27,7 +27,7 @@ import { createNotification, type NotificationSeverity } from "@/lib/notificatio
 const APP_URL = (
   process.env.NEXTAUTH_URL ??
   process.env.NEXT_PUBLIC_APP_URL ??
-  "https://verifscan.sn"
+  "https://verifscan.com"
 ).replace(/\/$/, "");
 
 const DAY_MS = 24 * 60 * 60 * 1000;

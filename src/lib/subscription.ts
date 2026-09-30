@@ -35,7 +35,7 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 const APP_URL = (
   process.env.NEXTAUTH_URL ??
   process.env.NEXT_PUBLIC_APP_URL ??
-  "https://verifscan.sn"
+  "https://verifscan.com"
 ).replace(/\/$/, "");
 
 function escapeHtml(input: string | null | undefined): string {

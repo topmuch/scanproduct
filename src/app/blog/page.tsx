@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { buildAlternates } from "@/lib/seo";
 import Link from "next/link";
 import {
   Newspaper,
@@ -26,9 +27,10 @@ import { db } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
-const SITE_URL = "https://verifscan.sn";
+const SITE_URL = "https://verifscan.com";
 
-export const metadata: Metadata = {
+export async function generateMetadata(): Promise<Metadata> {
+  return {
   title: "Blog — Traçabilité, export & anti-contrefaçon | VerifScan",
   description:
     "Le blog VerifScan : guides pratiques pour exporter vers l'UE et les USA, passeport numérique, traçabilité alimentaire et cosmétique, lutte contre la contrefaçon en Afrique de l'Ouest.",
@@ -41,7 +43,7 @@ export const metadata: Metadata = {
     "anti-contrefaçon",
     "QR code traçabilité",
   ],
-  alternates: { canonical: "/blog" },
+  alternates: await buildAlternates("/blog"),
   openGraph: {
     title: "Blog — Traçabilité, export & anti-contrefaçon | VerifScan",
     description:
@@ -49,7 +51,8 @@ export const metadata: Metadata = {
     url: `${SITE_URL}/blog`,
     type: "website",
   },
-};
+  };
+}
 
 const CATEGORY_COLORS: Record<string, string> = {
   Traçabilité: "#022150",

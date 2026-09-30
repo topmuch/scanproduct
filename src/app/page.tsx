@@ -1,3 +1,17 @@
+import type { Metadata } from "next";
+import { buildAlternates } from "@/lib/seo";
+
+/**
+ * Metadata de la page d'accueil — canonical absolu + hreflang multi-pays
+ * (fr-FR, fr-BE, fr-CH, fr-CA, fr-SN) pour le référencement francophone.
+ * Le titre/description héritent du layout (pilotés par les settings SEO).
+ */
+export async function generateMetadata(): Promise<Metadata> {
+  return {
+    alternates: await buildAlternates("/"),
+  };
+}
+
 import { Header } from "@/components/landing/Header";
 import { Hero } from "@/components/landing/Hero";
 import { CatalogSlider } from "@/components/landing/CatalogSlider";

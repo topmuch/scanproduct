@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { db } from "@/lib/db";
 import { INDUSTRIES } from "@/lib/industries";
+import { getSiteUrl } from "@/lib/seo";
 
 /**
  * Sitemap dynamique (/sitemap.xml).
@@ -10,15 +11,17 @@ import { INDUSTRIES } from "@/lib/industries";
  *   (accès direct Prisma — le sitemap tourne côté serveur). En cas d'erreur
  *   DB (build sans base, incident), on sert les routes statiques quand même
  *   pour ne jamais renvoyer un sitemap vide ou en erreur.
+ * - L'origine canonique est résolue dynamiquement (Setting siteUrl éditée
+ *   par le SuperAdmin → fallback verifscan.com) via getSiteUrl().
  *
  * Référencé dans public/robots.txt (directive Sitemap).
  */
-const SITE_URL = "https://verifscan.sn";
 
 export const dynamic = "force-dynamic";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
+  const SITE_URL = await getSiteUrl();
 
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: `${SITE_URL}/`, lastModified: now, changeFrequency: "weekly", priority: 1 },

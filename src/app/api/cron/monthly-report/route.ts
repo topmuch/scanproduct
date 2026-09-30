@@ -6,7 +6,7 @@
 //
 // Triggered by an external scheduler (Coolify Scheduled Task / crontab).
 // Recommended schedule: 1st of each month at 08:00 (server time).
-//   Example Coolify task: curl -s https://verifscan.sn/api/cron/monthly-report?secret=$CRON_SECRET
+//   Example Coolify task: curl -s https://verifscan.com/api/cron/monthly-report?secret=$CRON_SECRET
 //
 // Behaviour: for every ACTIVE fabricant, aggregate the PREVIOUS calendar
 // month (lots générés, scans par produit, demandes de devis reçues,

@@ -133,7 +133,7 @@ export function computeSiteOrigin(inputs: OriginInputs): string {
           "Configurez NEXT_PUBLIC_APP_URL=https://votre-domaine dans Coolify."
       );
     }
-    return localhostify(raw || env || "https://verifscan.sn");
+    return localhostify(raw || env || "https://verifscan.com");
   }
 
   // Développement :

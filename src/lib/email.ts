@@ -29,7 +29,7 @@ import { db } from "@/lib/db";
 // SMTP configuration
 // ---------------------------------------------------------------------------
 
-const DEFAULT_FROM = "VerifScan <no-reply@verifscan.sn>";
+const DEFAULT_FROM = "VerifScan <no-reply@verifscan.com>";
 
 function smtpHost(): string | undefined {
   const v = process.env.SMTP_HOST;

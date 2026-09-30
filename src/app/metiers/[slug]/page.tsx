@@ -4,6 +4,7 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ArrowRight, Check, Sparkles } from "lucide-react";
 import { INDUSTRIES, getIndustry } from "@/lib/industries";
+import { buildAlternates } from "@/lib/seo";
 
 /**
  * /metiers/[slug] — pages réelles des 12 métiers (ex-modale des cards de la
@@ -12,7 +13,7 @@ import { INDUSTRIES, getIndustry } from "@/lib/industries";
  * et JSON-LD BreadcrumbList + Service.
  */
 
-const SITE_URL = "https://verifscan.sn";
+const SITE_URL = "https://verifscan.com";
 
 export function generateStaticParams() {
   return INDUSTRIES.map((i) => ({ slug: i.id }));
@@ -41,7 +42,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       "traçabilité alimentaire",
       "VerifScan",
     ],
-    alternates: { canonical: `/metiers/${industry.id}` },
+    alternates: await buildAlternates(`/metiers/${industry.id}`),
     openGraph: {
       title,
       description,

@@ -16,6 +16,7 @@ import {
 import { PublicHeader } from "@/components/public/PublicHeader";
 import { PublicFooter } from "@/components/public/PublicFooter";
 import { db } from "@/lib/db";
+import { buildAlternates } from "@/lib/seo";
 
 /**
  * /blog/[slug] — page article du blog VerifScan.
@@ -29,7 +30,7 @@ import { db } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
-const SITE_URL = "https://verifscan.sn";
+const SITE_URL = "https://verifscan.com";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -63,7 +64,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     keywords: post.seoKeywords
       ? post.seoKeywords.split(",").map((k) => k.trim()).filter(Boolean)
       : undefined,
-    alternates: { canonical: `/blog/${post.slug}` },
+    alternates: await buildAlternates(`/blog/${post.slug}`),
     openGraph: {
       title,
       description,

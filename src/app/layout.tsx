@@ -3,7 +3,13 @@ import localFont from "next/font/local";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
-import { getFaviconUrl } from "@/lib/settings";
+import { getSettings, getFaviconUrl, SETTING_KEYS } from "@/lib/settings";
+import {
+  DEFAULT_SITE_URL,
+  DEFAULT_CONTACT_EMAIL,
+  DEFAULT_CONTACT_PHONE,
+  parseKeywords,
+} from "@/lib/seo";
 import { ServiceWorkerRegister } from "@/components/pwa/ServiceWorkerRegister";
 import { InstallPrompt } from "@/components/pwa/InstallPrompt";
 
@@ -79,9 +85,11 @@ export const viewport: Viewport = {
  */
 /**
  * Site public — utilisé par metadataBase, OpenGraph et le sitemap.
- * Le domaine verifscan.sn est le domaine canonique du site vitrine + scan.
+ * Le domaine verifscan.com est le domaine canonique du site vitrine + scan.
+ * Le SuperAdmin peut le remplacer dans Paramètres → Général (Setting
+ * "siteUrl") — voir getSiteUrl() dans lib/seo.ts pour la résolution.
  */
-export const SITE_URL = "https://verifscan.sn";
+export const SITE_URL = DEFAULT_SITE_URL;
 
 // Cache-buster des icônes : incrémenter à chaque changement de logo/favicon
 // pour contourner le cache navigateur/PWA.
@@ -152,19 +160,49 @@ export const SITE_KEYWORDS = [
 ];
 
 export async function generateMetadata(): Promise<Metadata> {
-  const faviconUrl = await getFaviconUrl();
+  // Une seule lecture DB groupée pour toutes les clés (cache 60s).
+  const [faviconUrl, settings] = await Promise.all([
+    getFaviconUrl(),
+    getSettings([
+      SETTING_KEYS.siteName,
+      SETTING_KEYS.siteSlogan,
+      SETTING_KEYS.siteUrl,
+      SETTING_KEYS.seoTitle,
+      SETTING_KEYS.seoDescription,
+      SETTING_KEYS.seoKeywords,
+      SETTING_KEYS.ogImageUrl,
+      SETTING_KEYS.googleVerification,
+    ]),
+  ]);
   const icon = faviconUrl || `/icon.png${ICON_V}`;
 
+  const siteName = settings[SETTING_KEYS.siteName]?.trim() || "VerifScan";
+  const siteSlogan =
+    settings[SETTING_KEYS.siteSlogan]?.trim() || "La vérité au bout du scan";
+  const siteUrl =
+    settings[SETTING_KEYS.siteUrl]?.trim()?.replace(/\/+$/, "") ||
+    process.env.NEXT_PUBLIC_APP_URL?.trim()?.replace(/\/+$/, "") ||
+    DEFAULT_SITE_URL;
+  const seoTitle = settings[SETTING_KEYS.seoTitle]?.trim();
+  const seoDescription = settings[SETTING_KEYS.seoDescription]?.trim();
+  const seoKeywords = parseKeywords(settings[SETTING_KEYS.seoKeywords]);
+  const ogImageUrl =
+    settings[SETTING_KEYS.ogImageUrl]?.trim() || `/og-image.png${ICON_V}`;
+  const googleVerification =
+    settings[SETTING_KEYS.googleVerification]?.trim() || undefined;
+
   return {
-    metadataBase: new URL(SITE_URL),
+    metadataBase: new URL(siteUrl),
     title: {
       default:
+        seoTitle ||
         "VerifScan — Passeport numérique produit | Traçabilité alimentaire & cosmétique, anti-contrefaçon par QR code",
       template: "%s",
     },
     description:
+      seoDescription ||
       "VerifScan est le passeport numérique de vos produits alimentaires et cosmétiques : un QR code unique qui garantit l'authenticité, assure la traçabilité du lot et protège votre marque contre la contrefaçon et la fraude. Sénégal, Afrique de l'Ouest, Europe francophone et Canada.",
-    keywords: SITE_KEYWORDS,
+    keywords: seoKeywords.length > 0 ? seoKeywords : SITE_KEYWORDS,
     authors: [{ name: "VerifScan" }],
     creator: "VerifScan",
     publisher: "VerifScan",
@@ -196,18 +234,22 @@ export async function generateMetadata(): Promise<Metadata> {
       shortcut: icon,
     },
     manifest: "/manifest.json",
+    verification: googleVerification
+      ? { google: googleVerification }
+      : undefined,
     openGraph: {
-      title: "VerifScan — Passeport numérique produit | La vérité au bout du scan",
+      title: seoTitle || `${siteName} — Passeport numérique produit | ${siteSlogan}`,
       description:
+        seoDescription ||
         "Le passeport numérique qui renforce la confiance de vos clients et protège votre marque contre la contrefaçon : traçabilité alimentaire et cosmétique par QR code, vérification d'authenticité en un scan.",
       url: "/",
-      siteName: "VerifScan",
+      siteName,
       type: "website",
-      locale: "fr_SN",
-      alternateLocale: ["fr_FR", "fr_CA", "fr_BE"],
+      locale: "fr_FR",
+      alternateLocale: ["fr_SN", "fr_BE", "fr_CH", "fr_CA"],
       images: [
         {
-          url: "/og-image.png?v=6",
+          url: ogImageUrl,
           width: 1200,
           height: 630,
           alt: "VerifScan — Passeport numérique produit : traçabilité et authenticité par QR code",
@@ -216,10 +258,11 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     twitter: {
       card: "summary_large_image",
-      title: "VerifScan — Passeport numérique produit",
+      title: seoTitle || `${siteName} — Passeport numérique produit`,
       description:
+        seoDescription ||
         "Garantissez l'authenticité de vos produits en un scan. Traçabilité alimentaire & cosmétique, lutte contre la contrefaçon par QR code.",
-      images: ["/og-image.png?v=6"],
+      images: [ogImageUrl],
     },
   };
 }
@@ -228,30 +271,51 @@ export async function generateMetadata(): Promise<Metadata> {
  * JSON-LD — données structurées Google (rich results).
  * Organization : identité de marque, contact, zone desservie (francophonie).
  * WebSite : association du nom du site au domaine canonique.
+ * Les valeurs (domaine, email, téléphone, adresse) suivent les settings
+ * édités par le SuperAdmin — fallback sur les constantes par défaut.
  */
-function JsonLd() {
+async function JsonLd() {
+  const [siteUrl, contact] = await Promise.all([
+    getSettings([SETTING_KEYS.siteUrl]),
+    getSettings([
+      SETTING_KEYS.contactEmail,
+      SETTING_KEYS.contactPhone,
+      SETTING_KEYS.siteAddress,
+    ]),
+  ]);
+  const url =
+    siteUrl[SETTING_KEYS.siteUrl]?.trim()?.replace(/\/+$/, "") ||
+    process.env.NEXT_PUBLIC_APP_URL?.trim()?.replace(/\/+$/, "") ||
+    DEFAULT_SITE_URL;
+  const email =
+    contact[SETTING_KEYS.contactEmail]?.trim() || DEFAULT_CONTACT_EMAIL;
+  const phone =
+    contact[SETTING_KEYS.contactPhone]?.trim() || DEFAULT_CONTACT_PHONE;
+  const address = contact[SETTING_KEYS.siteAddress]?.trim() ||
+    "Lot n°13, Ouest Foire, Dakar, Sénégal";
+
   const organization = {
     "@context": "https://schema.org",
     "@type": "Organization",
-    "@id": `${SITE_URL}/#organization`,
+    "@id": `${url}/#organization`,
     name: "VerifScan",
-    url: SITE_URL,
-    logo: `${SITE_URL}/icon-512.png`,
+    url,
+    logo: `${url}/icon-512.png`,
     description:
       "Passeport numérique produit : traçabilité alimentaire et cosmétique, authentification par QR code et lutte contre la contrefaçon pour les fabricants.",
-    email: "contact@verifscan.com",
-    telephone: "+221784858822",
+    email,
+    telephone: phone,
     address: {
       "@type": "PostalAddress",
-      streetAddress: "Lot n°13, Ouest Foire",
+      streetAddress: address,
       addressLocality: "Dakar",
       addressCountry: "SN",
     },
     contactPoint: [
       {
         "@type": "ContactPoint",
-        telephone: "+221784858822",
-        email: "contact@verifscan.com",
+        telephone: phone,
+        email,
         contactType: "customer service",
         availableLanguage: ["fr"],
       },
@@ -269,11 +333,11 @@ function JsonLd() {
   const website = {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    "@id": `${SITE_URL}/#website`,
-    url: SITE_URL,
+    "@id": `${url}/#website`,
+    url,
     name: "VerifScan",
     inLanguage: "fr",
-    publisher: { "@id": `${SITE_URL}/#organization` },
+    publisher: { "@id": `${url}/#organization` },
   };
 
   return (

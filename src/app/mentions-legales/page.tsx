@@ -35,10 +35,10 @@ export default function MentionsLegalesPage() {
         <p>
           La plateforme VerifScan, accessible à l&apos;adresse{" "}
           <a
-            href="https://verifscan.sn"
+            href="https://verifscan.com"
             className="font-medium text-[#022150] underline-offset-2 hover:underline"
           >
-            https://verifscan.sn
+            https://verifscan.com
           </a>
           , est éditée par :
         </p>

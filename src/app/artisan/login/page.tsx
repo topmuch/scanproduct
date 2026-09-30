@@ -137,7 +137,7 @@ export default function ArtisanLoginPage() {
             {/* Rassuration « vérifié » — rappel de la promesse du site */}
             <div className="mt-8 flex items-center gap-2 text-xs font-medium text-[#6B7280]">
               <CheckCircle2 className="h-4 w-4 text-[#10B981]" />
-              Produits vérifiables par vos clients sur verifscan.sn
+              Produits vérifiables par vos clients sur verifscan.com
             </div>
           </div>
         </div>

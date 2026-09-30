@@ -99,8 +99,38 @@ export async function getSettings(
 export const SETTING_KEYS = {
   /** Public URL of the site favicon (e.g. "/api/uploads/site/favicon.png"). */
   faviconUrl: "faviconUrl",
-  /** Optional: site name override (defaults to "VerifScan"). */
+  /** Site name shown in the UI + metadata (defaults to "VerifScan"). */
   siteName: "siteName",
+  /** Tagline shown in the UI (defaults to "La vérité au bout du scan"). */
+  siteSlogan: "siteSlogan",
+  /**
+   * Canonical public origin of the site, e.g. "https://verifscan.com".
+   * Drives metadataBase, canonical URLs, hreflang alternates, the sitemap,
+   * JSON-LD and OpenGraph URLs. Falls back to DEFAULT_SITE_URL (lib/seo.ts)
+   * when absent.
+   */
+  siteUrl: "siteUrl",
+  /** Public contact email (defaults to "contact@verifscan.com"). */
+  contactEmail: "contactEmail",
+  /** Public contact phone (defaults to "+221784858822"). */
+  contactPhone: "contactPhone",
+  /** IANA timezone of the platform (defaults to "Africa/Dakar"). */
+  timezone: "timezone",
+  /** Default UI language code (defaults to "fr"). */
+  defaultLanguage: "defaultLanguage",
+  /** Free-form address displayed in the UI / JSON-LD. */
+  siteAddress: "siteAddress",
+  // ── SEO ──────────────────────────────────────────────────────────────────
+  /** <title> default — overrides the static default in layout.tsx. */
+  seoTitle: "seoTitle",
+  /** Meta description — overrides the static default in layout.tsx. */
+  seoDescription: "seoDescription",
+  /** Comma-separated keywords — overrides SITE_KEYWORDS when non-empty. */
+  seoKeywords: "seoKeywords",
+  /** Public URL of the uploaded OpenGraph image (e.g. "/api/uploads/site/og-image.png"). */
+  ogImageUrl: "ogImageUrl",
+  /** Google Search Console verification token (meta google-site-verification). */
+  googleVerification: "googleVerification",
 } as const;
 
 /**

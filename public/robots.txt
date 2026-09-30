@@ -26,4 +26,4 @@ Disallow: /login/admin
 Disallow: /a/
 Disallow: /activer-pack
 
-Sitemap: https://verifscan.sn/sitemap.xml
+Sitemap: https://verifscan.com/sitemap.xml

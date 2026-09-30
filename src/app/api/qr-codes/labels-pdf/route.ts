@@ -145,7 +145,7 @@ export async function POST(request: NextRequest) {
     // au standard GS1 Digital Link (l'AI 21 y est optionnel).
     // Produit sans GTIN → comportement historique /p/<lotId>?code=….
     const baseUrl =
-      process.env.NEXT_PUBLIC_SCAN_URL?.replace(/\/$/, "") || "https://verifscan.sn";
+      process.env.NEXT_PUBLIC_SCAN_URL?.replace(/\/$/, "") || "https://verifscan.com";
     const lotParId = new Map(lots.map((l) => [l.id, l]));
     const qrBuffers: Buffer[] = [];
     for (const label of labels) {
