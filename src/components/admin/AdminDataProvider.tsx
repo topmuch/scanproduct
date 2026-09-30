@@ -30,6 +30,10 @@ type AdminDataContextValue = {
   data: AdminData;
   // Mutators — each optimistically updates local state and persists via API
   updateUser: (id: string, patch: Partial<Maker>) => Promise<void>;
+  // Removes a user from the local cache (subscriptions mirror users). The
+  // API call itself is handled by the confirmation dialog so it can surface
+  // errors; this just keeps the UI consistent once deletion succeeded.
+  removeUserLocally: (id: string) => void;
   addTicket: (ticket: Ticket) => void;
   updateTicket: (id: string, patch: Partial<Ticket>) => Promise<void>;
   setCategories: (cats: AdminCategory[]) => void;
@@ -133,6 +137,10 @@ export function AdminDataProvider({
     }
   }, []);
 
+  const removeUserLocally = useCallback((id: string) => {
+    setUsers((prev) => prev.filter((u) => u.id !== id));
+  }, []);
+
   const addTicket = useCallback((ticket: Ticket) => {
     setTickets((prev) => [ticket, ...prev]);
   }, []);
@@ -169,12 +177,13 @@ export function AdminDataProvider({
     () => ({
       data,
       updateUser,
+      removeUserLocally,
       addTicket,
       updateTicket,
       setCategories,
       refreshStats,
     }),
-    [data, updateUser, addTicket, updateTicket, setCategories, refreshStats]
+    [data, updateUser, removeUserLocally, addTicket, updateTicket, setCategories, refreshStats]
   );
 
   return <AdminDataContext.Provider value={value}>{children}</AdminDataContext.Provider>;

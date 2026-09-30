@@ -6,6 +6,7 @@ import {
   Eye,
   Pencil,
   Pause,
+  Trash2,
   Wallet,
   Smartphone,
   CreditCard,
@@ -21,8 +22,9 @@ import {
   type Maker,
   type Plan,
 } from "@/lib/admin-server-data";
-import { useAdminData } from "@/components/admin/AdminDataProvider";
+import { useAdminData, useAdminMutations } from "@/components/admin/AdminDataProvider";
 import { useAdminNav } from "@/lib/admin-store";
+import { DeleteUserDialog } from "./DeleteUserDialog";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -187,10 +189,12 @@ const SUMMARY_CARDS_FN = (mrr: number, arr: number, retentionRate: number, churn
 export function SubscriptionsPage() {
   const { openDetail, setPage } = useAdminNav();
   const { subscriptions: MAKERS_TABLE, stats: GLOBAL_KPI } = useAdminData();
+  const { removeUserLocally } = useAdminMutations();
   const [activeTab, setActiveTab] = useState<TabKey>("Tous");
   const [planFilter, setPlanFilter] = useState<PlanFilter | "Tous">("Tous");
   const [paymentFilter, setPaymentFilter] = useState<PaymentFilter | "Tous">("Tous");
   const [dateFilter, setDateFilter] = useState<DateFilter | "Tous">("Tous");
+  const [deleteTarget, setDeleteTarget] = useState<Maker | null>(null);
 
   const filtered = useMemo(() => {
     return MAKERS_TABLE.filter((m) => {
@@ -367,6 +371,14 @@ export function SubscriptionsPage() {
                           >
                             <Pause className="h-4 w-4" />
                           </button>
+                          <button
+                            type="button"
+                            onClick={() => setDeleteTarget(maker)}
+                            title="Supprimer définitivement le compte"
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-[#6B7280] transition-colors hover:bg-[#FEE2E2] hover:text-[#DC2626]"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -419,6 +431,27 @@ export function SubscriptionsPage() {
           Configuration des plans
         </Button>
       </div>
+
+      {/* Delete account confirmation modal (definitive deletion) */}
+      {deleteTarget && (
+        <DeleteUserDialog
+          user={deleteTarget}
+          onClose={() => setDeleteTarget(null)}
+          onDeleted={(result) => {
+            removeUserLocally(deleteTarget.id);
+            setDeleteTarget(null);
+            toast.success(
+              `Abonnement de « ${result.companyName} » résilié — compte supprimé définitivement`,
+              {
+                description:
+                  result.products > 0 || result.lots > 0
+                    ? `${result.products} produit(s) et ${result.lots} lot(s) supprimés avec le compte.`
+                    : "Le compte et toutes ses données ont été supprimés.",
+              }
+            );
+          }}
+        />
+      )}
     </PageContainer>
   );
 }

@@ -28,6 +28,7 @@ import {
 } from "@/lib/admin-server-data";
 import { useAdminData, useAdminMutations } from "@/components/admin/AdminDataProvider";
 import { useAdminNav } from "@/lib/admin-store";
+import { DeleteUserDialog } from "./DeleteUserDialog";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -88,13 +89,14 @@ function downloadCSV(rows: Maker[]) {
 export function UsersPage() {
   const { openDetail } = useAdminNav();
   const { users: makers } = useAdminData();
-  const { updateUser } = useAdminMutations();
+  const { updateUser, removeUserLocally } = useAdminMutations();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"Tous" | UserStatus>("Tous");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [pageSize, setPageSize] = useState<20 | 50 | 100>(20);
   const [modalOpen, setModalOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Maker | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
 
   // Close the row dropdown on outside click.
@@ -416,11 +418,7 @@ export function UsersPage() {
                               type="button"
                               onClick={() => {
                                 setOpenMenuId(null);
-                                setSelectedIds((prev) => {
-                                  const next = new Set(prev);
-                                  next.delete(m.id);
-                                  return next;
-                                });
+                                setDeleteTarget(m);
                               }}
                               className="flex w-full items-center gap-2.5 px-4 py-2 text-[13px] font-medium text-[#EF4444] hover:bg-[#FEF2F2]"
                             >
@@ -507,6 +505,27 @@ export function UsersPage() {
           </div>
         </div>
       </Card>
+
+      {/* Delete fabricant confirmation modal (definitive deletion) */}
+      {deleteTarget && (
+        <DeleteUserDialog
+          user={deleteTarget}
+          onClose={() => setDeleteTarget(null)}
+          onDeleted={(result) => {
+            removeUserLocally(deleteTarget.id);
+            setDeleteTarget(null);
+            toast.success(
+              `Fabricant « ${result.companyName} » supprimé définitivement`,
+              {
+                description:
+                  result.products > 0 || result.lots > 0
+                    ? `${result.products} produit(s) et ${result.lots} lot(s) supprimés avec le compte.`
+                    : "Le compte et toutes ses données ont été supprimés.",
+              }
+            );
+          }}
+        />
+      )}
 
       {/* Add fabricant modal */}
       {modalOpen && (

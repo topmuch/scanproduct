@@ -175,12 +175,26 @@ export async function PATCH(
 }
 
 // ---------------------------------------------------------------------------
-// DELETE — soft delete via SUSPENDED status (we never hard-delete fabricants
-// because of foreign-key integrity: scans, lots, products reference them)
+// DELETE — DEFINITIVE deletion of a fabricant (or super admin) and ALL their
+// data, in a single transaction with explicit deleteMany (old production
+// SQLite databases may lack FK CASCADE constraints, so we never rely on them
+// — same lesson as pack deletion).
+//
+// Safety rails:
+//   1. SuperAdmin session required (403 otherwise)
+//   2. Nominative confirmation: body { confirmation } must equal the account
+//      email exactly (400 otherwise)
+//   3. Self-deletion forbidden (400)
+//   4. The last SUPERADMIN cannot be deleted (400)
+//   5. Full audit log entry after success
 // ---------------------------------------------------------------------------
 
+const DeleteSchema = z.object({
+  confirmation: z.string().min(1, "Confirmation requise"),
+});
+
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await requireSuperAdmin();
@@ -190,25 +204,157 @@ export async function DELETE(
 
   const { id } = await params;
 
+  // Rail 3 — never delete yourself.
+  if (session.user?.id && session.user.id === id) {
+    return NextResponse.json(
+      { error: "Vous ne pouvez pas supprimer votre propre compte." },
+      { status: 400 }
+    );
+  }
+
+  let body: unknown;
   try {
-    const updated = await db.user.update({
+    body = await request.json();
+  } catch {
+    return NextResponse.json(
+      { error: "Confirmation requise (corps JSON attendu)." },
+      { status: 400 }
+    );
+  }
+
+  const parsed = DeleteSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: "Confirmation requise.", issues: parsed.error.flatten() },
+      { status: 400 }
+    );
+  }
+
+  try {
+    const target = await db.user.findUnique({
       where: { id },
-      data: { status: "SUSPENDED" },
+      select: { id: true, email: true, companyName: true, role: true },
     });
 
+    if (!target) {
+      return NextResponse.json({ error: "Compte introuvable (déjà supprimé ?)" }, { status: 404 });
+    }
+
+    // Rail 2 — nominative confirmation must match the account email exactly.
+    if (parsed.data.confirmation.trim() !== target.email) {
+      return NextResponse.json(
+        {
+          error:
+            "La confirmation ne correspond pas à l'email du compte. La suppression a été annulée.",
+        },
+        { status: 400 }
+      );
+    }
+
+    // Rail 4 — protect the last SUPERADMIN.
+    if (target.role === "SUPERADMIN") {
+      const superAdminCount = await db.user.count({ where: { role: "SUPERADMIN" } });
+      if (superAdminCount <= 1) {
+        return NextResponse.json(
+          { error: "Impossible de supprimer le dernier compte Super Admin." },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Pre-compute the data graph owned by this user so we can delete every
+    // child row explicitly (old prod DBs have no FK cascades).
+    const productIds = (
+      await db.product.findMany({ where: { fabricantId: id }, select: { id: true } })
+    ).map((p) => p.id);
+    const lotIds = (
+      await db.lot.findMany({ where: { fabricantId: id }, select: { id: true } })
+    ).map((l) => l.id);
+    const conversationIds = (
+      await db.aiConversation.findMany({ where: { userId: id }, select: { id: true } })
+    ).map((c) => c.id);
+
+    const result = await db.$transaction(async (tx) => {
+      // 1) Lot children (history, certifications, scans, reviews, QR codes)
+      if (lotIds.length > 0) {
+        await tx.lotHistory.deleteMany({ where: { lotId: { in: lotIds } } });
+        await tx.lotCertification.deleteMany({ where: { lotId: { in: lotIds } } });
+        await tx.scan.deleteMany({ where: { lotId: { in: lotIds } } });
+        await tx.review.deleteMany({ where: { lotId: { in: lotIds } } });
+        await tx.qRCode.deleteMany({ where: { lotId: { in: lotIds } } });
+      }
+
+      // 2) Reviews received as fabricant (any product/lot) + product reviews
+      await tx.review.deleteMany({ where: { fabricantId: id } });
+      if (productIds.length > 0) {
+        await tx.review.deleteMany({ where: { productId: { in: productIds } } });
+      }
+
+      // 3) Lots, marketplace inquiries, products, fabricant certifications
+      await tx.lot.deleteMany({ where: { fabricantId: id } });
+      await tx.marketplaceInquiry.deleteMany({ where: { fabricantId: id } });
+      if (productIds.length > 0) {
+        await tx.product.deleteMany({ where: { id: { in: productIds } } });
+      }
+      await tx.certification.deleteMany({ where: { fabricantId: id } });
+
+      // 4) AI conversations + messages
+      if (conversationIds.length > 0) {
+        await tx.aiMessage.deleteMany({ where: { conversationId: { in: conversationIds } } });
+      }
+      await tx.aiConversation.deleteMany({ where: { userId: id } });
+
+      // 5) Notifications, preferences, subscriptions
+      await tx.notification.deleteMany({ where: { userId: id } });
+      await tx.notificationPreference.deleteMany({ where: { userId: id } });
+      await tx.subscription.deleteMany({ where: { userId: id } });
+
+      // 6) Detach nullable references (history is preserved, denormalized
+      //    display fields keep the rows renderable)
+      await tx.ticket.updateMany({ where: { userId: id }, data: { userId: null } });
+      await tx.emailLog.updateMany({ where: { userId: id }, data: { userId: null } });
+      await tx.auditLog.updateMany({ where: { userId: id }, data: { userId: null } });
+      await tx.scan.updateMany({ where: { userId: id }, data: { userId: null } });
+      await tx.review.updateMany({ where: { userId: id }, data: { userId: null } });
+
+      // 7) Finally, the account itself
+      const deleted = await tx.user.delete({ where: { id }, select: { id: true, email: true } });
+      return deleted;
+    });
+
+    // Audit log (after commit so it logs a completed action)
     await db.auditLog.create({
       data: {
         userId: session.user?.id ?? null,
-        action: "SUSPEND_USER",
+        action: "DELETE_USER",
         entity: "User",
         entityId: id,
-        metadata: JSON.stringify({ softDelete: true }),
+        metadata: JSON.stringify({
+          email: target.email,
+          companyName: target.companyName,
+          role: target.role,
+          products: productIds.length,
+          lots: lotIds.length,
+          definitive: true,
+        }),
       },
     });
 
-    return NextResponse.json({ ok: true, id: updated.id });
+    return NextResponse.json({
+      ok: true,
+      id: result.id,
+      deleted: {
+        email: target.email,
+        companyName: target.companyName,
+        products: productIds.length,
+        lots: lotIds.length,
+      },
+    });
   } catch (error) {
     console.error("[DELETE /api/admin/users/[id]] Error:", error);
-    return NextResponse.json({ error: "Failed to delete user" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Échec de la suppression du compte (transaction annulée)." },
+      { status: 500 }
+    );
   }
 }
