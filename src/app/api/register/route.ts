@@ -131,6 +131,50 @@ export async function POST(req: NextRequest) {
       })
       .catch(() => undefined);
 
+    // ── Notifications (fire-and-forget — NEVER block / fail the signup) ──
+    // 1) SuperAdmin alert "Nouvelle inscription" (in-app bell + email gated
+    //    by the notifSignup toggle & notifEmailRecipient settings).
+    (async () => {
+      try {
+        const { notifySuperAdmins } = await import("@/lib/notifications");
+        const result = await notifySuperAdmins({
+          toggle: "notifSignup",
+          type: "new_user",
+          title: "Nouvelle inscription",
+          message: `${name} (${email}) vient de créer un compte fabricant${
+            companyName ? ` — ${companyName}` : ""
+          }${city ? ` à ${city}` : ""}.`,
+          severity: "success",
+          data: {
+            userId: newUser.id,
+            name,
+            email,
+            companyName,
+            city: city || null,
+          },
+          emailSubject: "VerifScan — Nouvelle inscription",
+        });
+        console.log(
+          `[register] admin notification: created=${result.created} emailed=${result.emailed} status=${result.emailStatus ?? "-"} to=${result.emailedTo ?? "-"}`,
+        );
+      } catch (err) {
+        console.error("[register] SuperAdmin notification failed:", err);
+      }
+    })();
+
+    // 2) Welcome + email verification mail to the new user (link valid 48 h).
+    (async () => {
+      try {
+        const { sendVerificationEmail } = await import("@/lib/verify-email");
+        const result = await sendVerificationEmail(newUser);
+        console.log(
+          `[register] verification email: status=${result.status ?? "-"} to=${newUser.email}`,
+        );
+      } catch (err) {
+        console.error("[register] verification email failed:", err);
+      }
+    })();
+
     return NextResponse.json(
       { success: true, message: "Compte créé avec succès." },
       { status: 201 }

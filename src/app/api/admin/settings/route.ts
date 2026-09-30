@@ -7,6 +7,7 @@ import {
   setSetting,
   SETTING_KEYS,
 } from "@/lib/settings";
+import { resetEmailTransporter } from "@/lib/email";
 
 /**
  * Site settings API for the SuperAdmin dashboard.
@@ -49,7 +50,33 @@ const SEO_KEYS = [
   SETTING_KEYS.googleVerification,
 ] as const;
 
-const EDITABLE_KEYS = [...GENERAL_KEYS, ...SEO_KEYS];
+const EMAIL_KEYS = [
+  SETTING_KEYS.smtpHost,
+  SETTING_KEYS.smtpPort,
+  SETTING_KEYS.smtpUser,
+  SETTING_KEYS.smtpPass,
+  SETTING_KEYS.smtpSecure,
+  SETTING_KEYS.smtpFrom,
+] as const;
+
+const NOTIF_KEYS = [
+  SETTING_KEYS.notifSignup,
+  SETTING_KEYS.notifPayment,
+  SETTING_KEYS.notifTicket,
+  SETTING_KEYS.notifSecurity,
+  SETTING_KEYS.notifQuota,
+  SETTING_KEYS.notifEmailRecipient,
+] as const;
+
+const EDITABLE_KEYS = [
+  ...GENERAL_KEYS,
+  ...SEO_KEYS,
+  ...EMAIL_KEYS,
+  ...NOTIF_KEYS,
+];
+
+/** Setting keys that require a transporter rebuild after an update. */
+const SMTP_TRANSPORTER_KEYS: string[] = [...EMAIL_KEYS];
 
 /** Trim-or-empty helper for optional string fields. */
 const trimmed = z
@@ -57,6 +84,15 @@ const trimmed = z
   .max(2000)
   .transform((s) => s.trim())
   .optional();
+
+/** Boolean settings are stored as "true"/"false" strings (Setting.value is String). */
+const boolSetting = z.enum(["true", "false"]).optional();
+
+/** SMTP port: "" clears it, otherwise an integer 1–65535 (stored as string). */
+const portSetting = z
+  .union([z.literal(""), z.coerce.number().int().min(1).max(65535)])
+  .optional()
+  .transform((v) => (v === undefined ? undefined : String(v)));
 
 const putSchema = z
   .object({
@@ -81,6 +117,22 @@ const putSchema = z
       .string()
       .max(200)
       .transform((s) => s.trim())
+      .optional(),
+    // ── SMTP ──────────────────────────────────────────────────────────────
+    smtpHost: z.string().max(255).transform((s) => s.trim()).optional(),
+    smtpPort: portSetting,
+    smtpUser: z.string().max(255).transform((s) => s.trim()).optional(),
+    smtpPass: z.string().max(255).transform((s) => s.trim()).optional(),
+    smtpSecure: boolSetting,
+    smtpFrom: z.string().max(320).transform((s) => s.trim()).optional(),
+    // ── Admin notifications ───────────────────────────────────────────────
+    notifSignup: boolSetting,
+    notifPayment: boolSetting,
+    notifTicket: boolSetting,
+    notifSecurity: boolSetting,
+    notifQuota: boolSetting,
+    notifEmailRecipient: z
+      .union([z.literal(""), z.string().email()])
       .optional(),
   })
   .refine((obj) => Object.values(obj).some((v) => v !== undefined), {
@@ -168,6 +220,11 @@ export async function PUT(request: NextRequest) {
       { error: "Erreur base de données lors de l'enregistrement." },
       { status: 500 },
     );
+  }
+
+  // SMTP settings changed → force sendEmail() to rebuild its transporter.
+  if (updatedKeys.some((k) => SMTP_TRANSPORTER_KEYS.includes(k))) {
+    resetEmailTransporter();
   }
 
   if (updatedKeys.length > 0) {

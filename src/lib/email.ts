@@ -24,64 +24,229 @@
 import nodemailer from "nodemailer";
 import type { Transporter } from "nodemailer";
 import { db } from "@/lib/db";
+import { getSettings, SETTING_KEYS } from "@/lib/settings";
 
 // ---------------------------------------------------------------------------
 // SMTP configuration
 // ---------------------------------------------------------------------------
+// Resolution order (per field):
+//   1. Setting table  (Admin → Paramètres → Email & Notifications)
+//   2. Environment    (SMTP_HOST / SMTP_PORT / SMTP_USER / SMTP_PASS / SMTP_FROM)
+//   3. Defaults
+//
+// The SMTP server is considered "configured" when host AND user AND pass
+// are all non-empty in whichever source wins (settings take priority as a
+// whole block, so a half-filled settings form falls back to env entirely).
 
 const DEFAULT_FROM = "VerifScan <no-reply@verifscan.com>";
 
-function smtpHost(): string | undefined {
-  const v = process.env.SMTP_HOST;
-  return v && v.trim().length > 0 ? v.trim() : undefined;
+/** Setting keys that make up the SMTP configuration block. */
+export const SMTP_SETTING_KEYS = [
+  SETTING_KEYS.smtpHost,
+  SETTING_KEYS.smtpPort,
+  SETTING_KEYS.smtpUser,
+  SETTING_KEYS.smtpPass,
+  SETTING_KEYS.smtpSecure,
+  SETTING_KEYS.smtpFrom,
+] as const;
+
+function clean(value: string | undefined): string | undefined {
+  const v = value?.trim();
+  return v ? v : undefined;
 }
-function smtpUser(): string | undefined {
-  const v = process.env.SMTP_USER;
-  return v && v.trim().length > 0 ? v.trim() : undefined;
+
+export interface EffectiveEmailConfig {
+  host?: string;
+  port: number;
+  secure: boolean;
+  user?: string;
+  pass?: string;
+  from: string;
+  /** Where the winning config block came from. */
+  source: "settings" | "env" | "none";
+  /** true when host+user+pass are all present (mail can actually be sent). */
+  configured: boolean;
 }
-function smtpPass(): string | undefined {
-  const v = process.env.SMTP_PASS;
-  return v && v.trim().length > 0 ? v.trim() : undefined;
-}
-function smtpPort(): number {
-  const raw = Number(process.env.SMTP_PORT);
-  return Number.isFinite(raw) && raw > 0 ? raw : 587;
+
+function buildConfig(fields: {
+  host?: string;
+  portRaw?: string;
+  user?: string;
+  pass?: string;
+  secureRaw?: string;
+  from?: string;
+  source: EffectiveEmailConfig["source"];
+}): EffectiveEmailConfig {
+  const host = clean(fields.host);
+  const user = clean(fields.user);
+  const pass = clean(fields.pass);
+  const port = Number(fields.portRaw) > 0 ? Math.floor(Number(fields.portRaw)) : 587;
+  const secureRaw = clean(fields.secureRaw);
+  const secure =
+    secureRaw === "true" || secureRaw === "ssl"
+      ? true
+      : secureRaw === "false" || secureRaw === "tls" || secureRaw === "none"
+        ? false
+        : port === 465;
+  const from = clean(fields.from) ?? DEFAULT_FROM;
+  return {
+    host,
+    port,
+    secure,
+    user,
+    pass,
+    from,
+    source: fields.source,
+    configured: Boolean(host && user && pass),
+  };
 }
 
 /**
- * Returns true only when SMTP_HOST AND SMTP_USER AND SMTP_PASS are all set.
- * Used to decide whether to actually send mail or to log to console (dev mode).
+ * Resolve the effective SMTP configuration: Settings table first, then env.
+ * Safe on unmigrated DBs (getSettings fails gracefully → env fallback).
+ */
+export async function getEmailConfig(): Promise<EffectiveEmailConfig> {
+  let s: Record<string, string> = {};
+  try {
+    s = await getSettings([...SMTP_SETTING_KEYS]);
+  } catch {
+    s = {};
+  }
+
+  const dbHost = clean(s[SETTING_KEYS.smtpHost]);
+  const dbUser = clean(s[SETTING_KEYS.smtpUser]);
+  const dbPass = clean(s[SETTING_KEYS.smtpPass]);
+  if (dbHost && dbUser && dbPass) {
+    return buildConfig({
+      host: dbHost,
+      portRaw: s[SETTING_KEYS.smtpPort],
+      user: dbUser,
+      pass: dbPass,
+      secureRaw: s[SETTING_KEYS.smtpSecure],
+      from: s[SETTING_KEYS.smtpFrom],
+      source: "settings",
+    });
+  }
+
+  const envHost = clean(process.env.SMTP_HOST);
+  const envUser = clean(process.env.SMTP_USER);
+  const envPass = clean(process.env.SMTP_PASS);
+  if (envHost && envUser && envPass) {
+    return buildConfig({
+      host: envHost,
+      portRaw: process.env.SMTP_PORT,
+      user: envUser,
+      pass: envPass,
+      secureRaw: undefined,
+      from: process.env.SMTP_FROM,
+      source: "env",
+    });
+  }
+
+  // Nothing usable — still return a "from" so skipped logs look correct.
+  const partialFrom =
+    clean(s[SETTING_KEYS.smtpFrom]) ?? clean(process.env.SMTP_FROM) ?? DEFAULT_FROM;
+  return {
+    host: dbHost ?? envHost,
+    port: Number(s[SETTING_KEYS.smtpPort] ?? process.env.SMTP_PORT) > 0
+      ? Math.floor(Number(s[SETTING_KEYS.smtpPort] ?? process.env.SMTP_PORT))
+      : 587,
+    secure: false,
+    user: dbUser ?? envUser,
+    pass: dbPass ?? envPass,
+    from: partialFrom,
+    source: "none",
+    configured: false,
+  };
+}
+
+/**
+ * Legacy env-only check (kept for callers that cannot await). Prefer
+ * `getEmailConfig().configured` for the real answer.
  */
 export function isEmailConfigured(): boolean {
-  return Boolean(smtpHost() && smtpUser() && smtpPass());
+  return Boolean(
+    clean(process.env.SMTP_HOST) && clean(process.env.SMTP_USER) && clean(process.env.SMTP_PASS),
+  );
 }
 
 /**
- * Returns the configured "From" address (SMTP_FROM env or the default).
+ * Returns the configured "From" address (settings → SMTP_FROM env → default).
  */
 export function getEmailFrom(): string {
   const v = process.env.SMTP_FROM;
   return v && v.trim().length > 0 ? v.trim() : DEFAULT_FROM;
 }
 
+/**
+ * Verify an SMTP connection (used by /api/admin/test-smtp). Never throws.
+ * Returns `{ ok: true }` or `{ ok: false, error }`.
+ */
+export async function verifySmtpConnection(cfg: {
+  host: string;
+  port: number;
+  secure: boolean;
+  user?: string;
+  pass?: string;
+}): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const transporter = nodemailer.createTransport({
+      host: cfg.host,
+      port: cfg.port,
+      secure: cfg.secure,
+      auth: cfg.user && cfg.pass ? { user: cfg.user, pass: cfg.pass } : undefined,
+      connectionTimeout: 10_000,
+      greetingTimeout: 8_000,
+      socketTimeout: 15_000,
+      tls: { rejectUnauthorized: false },
+    });
+    await transporter.verify();
+    transporter.close();
+    return { ok: true };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return { ok: false, error: msg.slice(0, 300) };
+  }
+}
+
 // ---------------------------------------------------------------------------
-// Lazy transporter singleton
+// Lazy transporter singleton — keyed by config fingerprint so a settings
+// change (or env change) transparently creates a fresh transporter.
 // ---------------------------------------------------------------------------
 
 let _transporter: Transporter | null = null;
+let _fingerprint = "";
 
-function getTransporter(): Transporter {
-  if (_transporter) return _transporter;
+function getTransporter(cfg: EffectiveEmailConfig): Transporter {
+  const fingerprint = JSON.stringify([
+    cfg.host,
+    cfg.port,
+    cfg.secure,
+    cfg.user,
+    cfg.pass,
+  ]);
+  if (_transporter && _fingerprint === fingerprint) return _transporter;
   _transporter = nodemailer.createTransport({
-    host: smtpHost(),
-    port: smtpPort(),
-    secure: smtpPort() === 465,
-    auth: {
-      user: smtpUser(),
-      pass: smtpPass(),
-    },
+    host: cfg.host,
+    port: cfg.port,
+    secure: cfg.secure,
+    auth: cfg.user && cfg.pass ? { user: cfg.user, pass: cfg.pass } : undefined,
+    connectionTimeout: 10_000,
+    greetingTimeout: 8_000,
+    socketTimeout: 15_000,
+    tls: { rejectUnauthorized: false },
   });
+  _fingerprint = fingerprint;
   return _transporter;
+}
+
+/**
+ * Force the next sendEmail() to rebuild the transporter (called after the
+ * SuperAdmin saves new SMTP settings).
+ */
+export function resetEmailTransporter(): void {
+  _transporter = null;
+  _fingerprint = "";
 }
 
 // ---------------------------------------------------------------------------
@@ -153,7 +318,8 @@ function truncateBody(body: string | undefined): string | null {
  */
 export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult> {
   const { to, subject, html, text, userId } = input;
-  const from = getEmailFrom();
+  const cfg = await getEmailConfig();
+  const from = cfg.from;
   const bodyForLog = truncateBody(text || html);
 
   // 1) Create the EmailLog row as "queued" — try/catch so DB hiccups don't
@@ -177,8 +343,9 @@ export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult>
     console.error("[email] Failed to create EmailLog row:", err);
   }
 
-  // 2) Dev mode — SMTP not configured: mark skipped + console.log.
-  if (!isEmailConfigured()) {
+  // 2) Not configured — mark skipped + console.log (body is fully logged
+  //    so dev environments can still "read" the mail).
+  if (!cfg.configured) {
     console.log(
       `[email:skipped] to=${to} subject="${subject}" body="${(text || html || "").slice(0, 200)}"`,
     );
@@ -197,7 +364,7 @@ export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult>
 
   // 3) Configured — actually send via SMTP.
   try {
-    const transporter = getTransporter();
+    const transporter = getTransporter(cfg);
     await transporter.sendMail({
       from,
       to,

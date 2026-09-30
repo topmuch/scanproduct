@@ -159,6 +159,35 @@ export async function setUserSubscription(
     console.error("[subscription] Failed to sync plan setting:", err);
   }
 
+  // SuperAdmin notification: an admin assigning a plan = payment/subscription
+  // event. Fire-and-forget (bell + email gated by the notifPayment toggle).
+  (async () => {
+    try {
+      const { notifySuperAdmins } = await import("@/lib/notifications");
+      const owner = await db.user.findUnique({
+        where: { id: userId },
+        select: { email: true, companyName: true },
+      });
+      await notifySuperAdmins({
+        toggle: "notifPayment",
+        type: "subscription",
+        title: "Nouvel abonnement activé",
+        message: `Plan « ${PLANS[planId].name} » activé pour ${owner?.email ?? userId}${owner?.companyName ? ` (${owner.companyName})` : ""} — valable jusqu'au ${expiresAt.toLocaleDateString("fr-FR")}.`,
+        severity: "success",
+        data: {
+          subscriptionId: sub.id,
+          userId,
+          plan: planId,
+          planName: PLANS[planId].name,
+          expiresAt: expiresAt.toISOString(),
+        },
+        emailSubject: "VerifScan — Nouvel abonnement activé",
+      });
+    } catch (err) {
+      console.error("[subscription] SuperAdmin payment notification failed:", err);
+    }
+  })();
+
   return {
     id: sub.id,
     plan: sub.plan,

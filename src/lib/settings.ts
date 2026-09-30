@@ -131,6 +131,32 @@ export const SETTING_KEYS = {
   ogImageUrl: "ogImageUrl",
   /** Google Search Console verification token (meta google-site-verification). */
   googleVerification: "googleVerification",
+  // ── Email / SMTP (Admin → Paramètres → Email & Notifications) ─────────────
+  /** SMTP server hostname (takes priority over SMTP_HOST env when full). */
+  smtpHost: "smtpHost",
+  /** SMTP port as a string ("587", "465", …). */
+  smtpPort: "smtpPort",
+  /** SMTP username. */
+  smtpUser: "smtpUser",
+  /** SMTP password (plain — superadmin-only setting, SQLite local). */
+  smtpPass: "smtpPass",
+  /** "true" (SSL/direct) or "false" (STARTTLS/plain). Empty = auto (465). */
+  smtpSecure: "smtpSecure",
+  /** From header, e.g. "VerifScan <no-reply@verifscan.com>". */
+  smtpFrom: "smtpFrom",
+  // ── Admin notification toggles ────────────────────────────────────────────
+  /** Notify admins of new signups ("true"/"false"). */
+  notifSignup: "notifSignup",
+  /** Notify admins when a subscription/payment is activated. */
+  notifPayment: "notifPayment",
+  /** Notify admins of new support tickets / consumer reports. */
+  notifTicket: "notifTicket",
+  /** Notify admins of security events (suspensions, etc.). */
+  notifSecurity: "notifSecurity",
+  /** Notify admins when a fabricant exceeds its QR quota. */
+  notifQuota: "notifQuota",
+  /** Recipient of admin notification emails (falls back to first superadmin). */
+  notifEmailRecipient: "notifEmailRecipient",
 } as const;
 
 /**

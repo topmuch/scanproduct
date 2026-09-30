@@ -28,6 +28,7 @@ const VALID_TYPES: NotificationType[] = [
   "lot_expiring",
   "new_inquiry",
   "monthly_report",
+  "new_user",
 ];
 const VALID_SEVERITIES: NotificationSeverity[] = ["info", "success", "warning", "critical"];
 

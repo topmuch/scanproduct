@@ -173,6 +173,24 @@ export async function POST(request: NextRequest) {
       console.error("[POST /api/reports] Notification failed:", notifErr);
     }
 
+    // Notify the SuperAdmins (bell + email gated by the notifTicket toggle)
+    (async () => {
+      try {
+        const { notifySuperAdmins } = await import("@/lib/notifications");
+        await notifySuperAdmins({
+          toggle: "notifTicket",
+          type: "ticket_update",
+          title: "Nouveau ticket support",
+          message: `${subject} — référencé ${reference}${contactEmail ? ` (contact : ${contactEmail})` : ""}.`,
+          severity: priority === "Haute" ? "warning" : "info",
+          data: { ticketId: ticket.id, reference, category: "Signalement", reason },
+          emailSubject: `VerifScan — Nouveau ticket ${reference}`,
+        });
+      } catch (err) {
+        console.error("[POST /api/reports] SuperAdmin notification failed:", err);
+      }
+    })();
+
     // Revalidate the scan page so any state change is reflected
     revalidatePath(`/p/${lotId}`);
     if (lot.reference) {

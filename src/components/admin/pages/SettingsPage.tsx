@@ -132,17 +132,34 @@ function FormRow({ children }: { children: React.ReactNode }) {
 
 function PasswordInput({
   defaultValue,
+  value,
+  onChange,
+  placeholder,
   className,
+  testId,
 }: {
   defaultValue?: string;
+  value?: string;
+  onChange?: (v: string) => void;
+  placeholder?: string;
   className?: string;
+  testId?: string;
 }) {
   const [show, setShow] = useState(false);
+  const controlled = typeof value === "string" && typeof onChange === "function";
   return (
     <div className={cn("relative", className)}>
       <input
         type={show ? "text" : "password"}
-        defaultValue={defaultValue}
+        value={controlled ? value : undefined}
+        defaultValue={controlled ? undefined : defaultValue}
+        placeholder={placeholder}
+        data-testid={testId}
+        onChange={
+          controlled
+            ? (e) => (onChange as (v: string) => void)(e.target.value)
+            : undefined
+        }
         className={cn(inputClass, "pr-10")}
       />
       <button
@@ -967,18 +984,142 @@ const EMAIL_TEMPLATES = [
 ];
 
 const ADMIN_NOTIFS = [
-  { id: "signup", label: "Nouvelle inscription", default: true },
-  { id: "payment", label: "Nouveau paiement", default: true },
-  { id: "ticket", label: "Ticket support", default: true },
-  { id: "security", label: "Alerte sécurité", default: true },
-  { id: "quota", label: "Quota dépassé", default: true },
+  { id: "notifSignup", label: "Nouvelle inscription", testId: "notif-toggle-signup" },
+  { id: "notifPayment", label: "Nouveau paiement", testId: "notif-toggle-payment" },
+  { id: "notifTicket", label: "Ticket support", testId: "notif-toggle-ticket" },
+  { id: "notifSecurity", label: "Alerte sécurité", testId: "notif-toggle-security" },
+  { id: "notifQuota", label: "Quota dépassé", testId: "notif-toggle-quota" },
 ];
 
+type SmtpTestState =
+  | { kind: "idle" }
+  | { kind: "loading" }
+  | { kind: "ok"; message: string }
+  | { kind: "error"; message: string };
+
 function EmailSection() {
-  const [encryption, setEncryption] = useState("tls");
-  const [notifs, setNotifs] = useState<Record<string, boolean>>(() =>
-    Object.fromEntries(ADMIN_NOTIFS.map((n) => [n.id, n.default]))
-  );
+  // ── Persisted SMTP + notification settings (GET/PUT /api/admin/settings) ──
+  // Fields are CONTROLLED and backed by the Setting table. Saving performs a
+  // real PUT (this section used to be a mock toast-only UI) and "Tester la
+  // connexion" performs a REAL SMTP handshake via /api/admin/test-smtp.
+  const [values, setValues] = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [testState, setTestState] = useState<SmtpTestState>({ kind: "idle" });
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/admin/settings")
+      .then((r) => (r.ok ? r.json() : { settings: {} }))
+      .then((data) => {
+        if (!cancelled) setValues(data.settings ?? {});
+      })
+      .catch(() => {
+        /* non-fatal — defaults are shown */
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  function setField(key: string, value: string) {
+    setValues((v) => ({ ...v, [key]: value }));
+  }
+
+  /** Effective boolean for a "true"/"false" toggle (default: true). */
+  function toggleOn(key: string): boolean {
+    return values[key] !== "false";
+  }
+
+  async function handleSave() {
+    setSaving(true);
+    try {
+      const res = await fetch("/api/admin/settings", {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          smtpHost: values.smtpHost ?? "",
+          smtpPort: values.smtpPort ?? "",
+          smtpUser: values.smtpUser ?? "",
+          smtpPass: values.smtpPass ?? "",
+          smtpSecure: toggleOn("smtpSecure") ? "true" : "false",
+          smtpFrom: values.smtpFrom ?? "",
+          notifSignup: toggleOn("notifSignup") ? "true" : "false",
+          notifPayment: toggleOn("notifPayment") ? "true" : "false",
+          notifTicket: toggleOn("notifTicket") ? "true" : "false",
+          notifSecurity: toggleOn("notifSecurity") ? "true" : "false",
+          notifQuota: toggleOn("notifQuota") ? "true" : "false",
+          notifEmailRecipient: values.notifEmailRecipient ?? "",
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.error || "Échec de l'enregistrement.");
+      }
+      setValues((v) => ({ ...v, ...(data.settings ?? {}) }));
+      setTestState({ kind: "idle" });
+      toast.success("Configuration email enregistrée");
+    } catch (err) {
+      const msg =
+        err instanceof Error
+          ? err.message
+          : "Erreur lors de l'enregistrement.";
+      toast.error(msg);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleTest() {
+    setTestState({ kind: "loading" });
+    try {
+      const hasFormConfig =
+        (values.smtpHost ?? "").trim() !== "" &&
+        (values.smtpUser ?? "").trim() !== "" &&
+        (values.smtpPass ?? "").trim() !== "";
+      const res = await fetch("/api/admin/test-smtp", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          // Ad-hoc test of the FORM values when they are complete — the
+          // superadmin can validate before saving. Server falls back to the
+          // effective config otherwise.
+          ...(hasFormConfig
+            ? {
+                host: values.smtpHost,
+                port: values.smtpPort ? Number(values.smtpPort) : undefined,
+                user: values.smtpUser,
+                pass: values.smtpPass,
+                secure: toggleOn("smtpSecure"),
+                from: values.smtpFrom || undefined,
+              }
+            : {}),
+          to: values.notifEmailRecipient || undefined,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success) {
+        throw new Error(
+          data.error ||
+            "Le test SMTP a échoué — vérifiez la configuration du serveur.",
+        );
+      }
+      const message: string =
+        data.message || "Connexion SMTP validée — email de test envoyé.";
+      setTestState({ kind: "ok", message });
+      toast.success(message);
+    } catch (err) {
+      const msg =
+        err instanceof Error
+          ? err.message
+          : "Erreur inconnue pendant le test SMTP.";
+      setTestState({ kind: "error", message: msg });
+      toast.error(msg);
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -986,71 +1127,200 @@ function EmailSection() {
       <Card>
         <CardHeader
           title="Configuration SMTP"
-          subtitle="Serveur d'envoi d'emails transactionnels"
+          subtitle="Serveur d'envoi d'emails transactionnels — utilisé par les notifications, la validation d'email et les alertes"
         />
         <div className="space-y-5 p-5">
           <FormRow>
-            <Field label="Serveur SMTP">
+            <Field
+              label="Serveur SMTP"
+              hint="Ex. smtp.gmail.com, smtp.hostinger.com, mail.verifscan.com"
+            >
               <input
                 className={inputClass}
-                defaultValue="smtp.gmail.com"
+                data-testid="email-smtp-host"
+                placeholder="smtp.gmail.com"
+                value={values.smtpHost ?? ""}
+                onChange={(e) => setField("smtpHost", e.target.value)}
               />
             </Field>
-            <Field label="Port">
-              <input className={inputClass} defaultValue="587" />
+            <Field label="Port" hint="587 (TLS) ou 465 (SSL)">
+              <input
+                className={inputClass}
+                data-testid="email-smtp-port"
+                placeholder="587"
+                value={values.smtpPort ?? ""}
+                onChange={(e) => setField("smtpPort", e.target.value)}
+              />
             </Field>
           </FormRow>
           <FormRow>
-            <Field label="Utilisateur">
+            <Field label="Utilisateur" hint="Adresse du compte d'envoi">
               <input
                 className={inputClass}
-                defaultValue="noreply@verifscan.com"
+                data-testid="email-smtp-user"
+                placeholder="noreply@verifscan.com"
+                value={values.smtpUser ?? ""}
+                onChange={(e) => setField("smtpUser", e.target.value)}
               />
             </Field>
             <Field label="Mot de passe">
-              <PasswordInput defaultValue="***************" />
+              <PasswordInput
+                value={values.smtpPass ?? ""}
+                onChange={(v) => setField("smtpPass", v)}
+                placeholder="••••••••••"
+                testId="email-smtp-pass"
+              />
             </Field>
           </FormRow>
-          <Field label="Chiffrement">
-            <RadioGroup
-              value={encryption}
-              onValueChange={setEncryption}
-              className="flex flex-wrap gap-5 pt-1"
+          <FormRow>
+            <Field
+              label="Expéditeur (From)"
+              hint="Format : Nom <adresse@domaine>"
             >
-              {[
-                { v: "tls", l: "TLS" },
-                { v: "ssl", l: "SSL" },
-                { v: "none", l: "Aucun" },
-              ].map((o) => (
-                <label
-                  key={o.v}
-                  className="inline-flex cursor-pointer items-center gap-2 text-[14px] text-[#374151]"
-                >
-                  <RadioGroupItem value={o.v} />
-                  {o.l}
-                </label>
-              ))}
-            </RadioGroup>
-          </Field>
+              <input
+                className={inputClass}
+                data-testid="email-from"
+                placeholder="VerifScan <no-reply@verifscan.com>"
+                value={values.smtpFrom ?? ""}
+                onChange={(e) => setField("smtpFrom", e.target.value)}
+              />
+            </Field>
+            <Field label="Chiffrement">
+              <div className="flex h-10 items-center gap-3">
+                <Switch
+                  className={switchClass}
+                  checked={toggleOn("smtpSecure")}
+                  onCheckedChange={(v) => setField("smtpSecure", v ? "true" : "false")}
+                  aria-label="Chiffrement SSL direct"
+                />
+                <span className="text-[13px] text-[#374151]">
+                  SSL direct (port 465) — désactivé : STARTTLS/plain (587)
+                </span>
+              </div>
+            </Field>
+          </FormRow>
         </div>
         <CardFooter className="justify-between">
-          <div className="flex items-center gap-2 text-[13px] font-medium text-[#065F46]">
-            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#D1FAE5] text-[10px]">
-              ✅
-            </span>
-            Connexion réussie
+          {/* Real test status — the old "✅ Connexion réussie" was hardcoded */}
+          <div className="flex items-center gap-2 text-[13px] font-medium">
+            {testState.kind === "idle" && (
+              <span className="text-[#6B7280]">
+                Testez la connexion après enregistrement
+              </span>
+            )}
+            {testState.kind === "loading" && (
+              <span className="inline-flex items-center gap-2 text-[#022150]">
+                <Loader2 className="h-4 w-4 animate-spin" /> Test en cours…
+              </span>
+            )}
+            {testState.kind === "ok" && (
+              <span
+                className="inline-flex items-center gap-2 text-[#065F46]"
+                data-testid="smtp-test-ok"
+              >
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#D1FAE5]">
+                  <Check className="h-3 w-3" />
+                </span>
+                {testState.message}
+              </span>
+            )}
+            {testState.kind === "error" && (
+              <span
+                className="inline-flex items-center gap-2 text-[#B91C1C]"
+                data-testid="smtp-test-error"
+              >
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#FEE2E2] text-[10px]">
+                  !
+                </span>
+                {testState.message}
+              </span>
+            )}
           </div>
           <div className="flex gap-3">
             <Button
               variant="outline"
-              onClick={() => toast.success("Test SMTP — Connexion réussie")}
+              onClick={handleTest}
+              disabled={loading || saving || testState.kind === "loading"}
+              data-testid="email-test"
             >
               <RefreshCw className="h-4 w-4" /> Tester la connexion
             </Button>
-            <Button onClick={() => toast.success("Configuration SMTP enregistrée")}>
-              <Save className="h-4 w-4" /> Enregistrer
+            <Button
+              onClick={handleSave}
+              disabled={saving || loading}
+              data-testid="email-save"
+            >
+              {saving ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" /> Enregistrement…
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4" /> Enregistrer
+                </>
+              )}
             </Button>
           </div>
+        </CardFooter>
+      </Card>
+
+      {/* Admin notifications */}
+      <Card>
+        <CardHeader
+          title="Notifications administrateur"
+          subtitle="Alertes internes (cloche admin) + emails au destinataire ci-dessous"
+        />
+        <div className="space-y-4 p-5">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {ADMIN_NOTIFS.map((n) => (
+              <label
+                key={n.id}
+                className="flex items-center justify-between gap-3 rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] px-4 py-3"
+              >
+                <span className="text-[14px] font-medium text-[#374151]">
+                  {n.label}
+                </span>
+                <Switch
+                  className={switchClass}
+                  checked={toggleOn(n.id)}
+                  onCheckedChange={(v) => setField(n.id, v ? "true" : "false")}
+                  aria-label={n.label}
+                  data-testid={n.testId}
+                />
+              </label>
+            ))}
+          </div>
+          <Field
+            label="Email destinataire"
+            hint="Les notifications admin partent vers cette adresse (vide : premier compte SuperAdmin)"
+            className="max-w-md"
+          >
+            <input
+              className={inputClass}
+              type="email"
+              data-testid="notif-recipient"
+              placeholder="admin@verifscan.com"
+              value={values.notifEmailRecipient ?? ""}
+              onChange={(e) => setField("notifEmailRecipient", e.target.value)}
+            />
+          </Field>
+        </div>
+        <CardFooter>
+          <Button
+            onClick={handleSave}
+            disabled={saving || loading}
+            data-testid="notif-save"
+          >
+            {saving ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" /> Enregistrement…
+              </>
+            ) : (
+              <>
+                <Save className="h-4 w-4" /> Enregistrer
+              </>
+            )}
+          </Button>
         </CardFooter>
       </Card>
 
@@ -1058,7 +1328,7 @@ function EmailSection() {
       <Card>
         <CardHeader
           title="Templates d'emails"
-          subtitle="Personnalisez les emails envoyés aux utilisateurs"
+          subtitle="Aperçu des emails automatiques envoyés par la plateforme"
         />
         <div className="divide-y divide-[#F3F4F6]">
           {EMAIL_TEMPLATES.map((tpl) => (
@@ -1094,49 +1364,6 @@ function EmailSection() {
             </div>
           ))}
         </div>
-      </Card>
-
-      {/* Admin notifications */}
-      <Card>
-        <CardHeader
-          title="Notifications administrateur"
-          subtitle="Alertes reçues par email"
-        />
-        <div className="space-y-4 p-5">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            {ADMIN_NOTIFS.map((n) => (
-              <label
-                key={n.id}
-                className="flex items-center justify-between gap-3 rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] px-4 py-3"
-              >
-                <span className="text-[14px] font-medium text-[#374151]">
-                  {n.label}
-                </span>
-                <Switch
-                  className={switchClass}
-                  checked={notifs[n.id]}
-                  onCheckedChange={(v) =>
-                    setNotifs((prev) => ({ ...prev, [n.id]: v }))
-                  }
-                  aria-label={n.label}
-                />
-              </label>
-            ))}
-          </div>
-          <Field
-            label="Email destinataire"
-            className="max-w-md"
-          >
-            <input className={inputClass} defaultValue="admin@verifscan.com" />
-          </Field>
-        </div>
-        <CardFooter>
-          <Button
-            onClick={() => toast.success("Notifications enregistrées")}
-          >
-            <Save className="h-4 w-4" /> Enregistrer
-          </Button>
-        </CardFooter>
       </Card>
     </div>
   );

@@ -248,7 +248,11 @@ async function main() {
 
   console.log("6. Metadata réelles sur la home");
   // Le cache settings (60s) est invalidé par chaque PUT/POST (setSetting).
-  const homeHtml = await (await fetch(`${BASE}/`)).text();
+  // ⚠️ Bun's fetch respecte le cache HTTP : sans "no-store", la home peut
+  // être servie depuis un cache local périmé (token GSC d'un run précédent).
+  const homeHtml = await (
+    await fetch(`${BASE}/`, { cache: "no-store" } as RequestInit)
+  ).text();
   check("title = seoTitle", homeHtml.includes(`<title>${SEO_TITLE}</title>`) || homeHtml.includes(SEO_TITLE.slice(0, 40)));
   check(
     "og:image = image uploadée",
@@ -366,6 +370,14 @@ async function main() {
   await page.waitForSelector("text=Aperçu du résultat Google", { timeout: 15_000 });
   check("section SEO affichée avec aperçu Google", true);
 
+  // Les champs contrôlés se remplissent quand le GET /api/admin/settings
+  // résout — attendre la valeur réelle avant de lire (race condition).
+  await page.waitForFunction(
+    () =>
+      (document.querySelector('[data-testid="seo-input-title"]') as HTMLInputElement)
+        ?.value?.length > 0,
+    { timeout: 15_000 },
+  );
   const seoTitleValue = await page
     .getByTestId("seo-input-title")
     .inputValue();
@@ -402,9 +414,12 @@ async function main() {
   const navSeo2 = page.locator("text=SEO & Référencement").first();
   await navSeo2.click();
   await page.waitForSelector("text=Aperçu du résultat Google", { timeout: 15_000 });
+  // Le preview OG n'apparaît qu'après la résolution du GET settings + le
+  // chargement de l'image — attendre la visibilité réelle.
   const ogPreviewVisible = await page
     .getByTestId("seo-og-preview")
-    .isVisible()
+    .waitFor({ state: "visible", timeout: 15_000 })
+    .then(() => true)
     .catch(() => false);
   check("preview image OG visible après reload", ogPreviewVisible);
 

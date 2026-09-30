@@ -22,6 +22,7 @@
 
 import { db } from "@/lib/db";
 import { sendEmail } from "@/lib/email";
+import { getSettings, SETTING_KEYS } from "@/lib/settings";
 import { parseJsonObject } from "@/lib/utils";
 
 // ---------------------------------------------------------------------------
@@ -39,7 +40,8 @@ export type NotificationType =
   | "subscription"
   | "lot_expiring"
   | "new_inquiry"
-  | "monthly_report";
+  | "monthly_report"
+  | "new_user";
 
 export type NotificationSeverity = "info" | "success" | "warning" | "critical";
 
@@ -71,7 +73,19 @@ export const DEFAULT_PREFS: Record<NotificationType, ChannelPrefs> = {
   lot_expiring: { in_app: true, email: true, sms: false },
   new_inquiry: { in_app: true, email: true, sms: false },
   monthly_report: { in_app: true, email: true, sms: false },
+  new_user: { in_app: true, email: true, sms: false },
 };
+
+/**
+ * Admin notification toggle keys (Settings table, "true"/"false").
+ * Mapped 1:1 with the switches in Admin → Paramètres → Email & Notifications.
+ */
+export type AdminNotifToggleKey =
+  | "notifSignup"
+  | "notifPayment"
+  | "notifTicket"
+  | "notifSecurity"
+  | "notifQuota";
 
 export interface UserPrefs {
   /** Global email opt-in (master switch). */
@@ -196,6 +210,152 @@ export async function updateNotificationPreference(
     data,
   });
   return updated;
+}
+
+// ---------------------------------------------------------------------------
+// SuperAdmin broadcast
+// ---------------------------------------------------------------------------
+
+export interface NotifySuperAdminsInput {
+  /**
+   * Which admin toggle (Admin → Paramètres → Email & Notifications) gates the
+   * EMAIL channel. When omitted, no email is sent (in-app only).
+   */
+  toggle?: AdminNotifToggleKey;
+  type: NotificationType;
+  title: string;
+  message: string;
+  severity?: NotificationSeverity;
+  data?: Record<string, unknown>;
+  emailSubject?: string;
+  emailHtml?: string;
+}
+
+export interface NotifySuperAdminsResult {
+  /** Number of Notification rows created (one per superadmin). */
+  created: number;
+  emailed: boolean;
+  emailStatus?: "sent" | "failed" | "skipped";
+  /** Recipient the email was actually sent to (when emailed attempted). */
+  emailedTo?: string;
+  /** Present when the toggle was "false" — email intentionally not sent. */
+  skippedByToggle?: boolean;
+}
+
+/**
+ * Notify every SUPERADMIN user of a platform-level event.
+ *
+ * Guarantees:
+ *   - In-app Notification rows are ALWAYS created (bell) — they never depend
+ *     on SMTP being configured.
+ *   - The EMAIL channel is gated by the admin toggle stored in the Setting
+ *     table (notifSignup / notifPayment / notifTicket / notifSecurity /
+ *     notifQuota, default "true").
+ *   - The email goes to Setting notifEmailRecipient when set, otherwise to
+ *     the first superadmin's own email.
+ *   - NEVER throws: callers can fire-and-forget this safely. DB/SMTP errors
+ *     are logged and reflected in the result.
+ */
+export async function notifySuperAdmins(
+  input: NotifySuperAdminsInput,
+): Promise<NotifySuperAdminsResult> {
+  const { toggle, type, title, message } = input;
+  const severity: NotificationSeverity = input.severity ?? "info";
+  const dataJson = JSON.stringify(input.data ?? {});
+
+  try {
+    const superadmins = await db.user.findMany({
+      where: { role: "SUPERADMIN" },
+      select: { id: true, email: true },
+      orderBy: { createdAt: "asc" },
+    });
+
+    if (superadmins.length === 0) {
+      console.warn("[notifySuperAdmins] No SUPERADMIN user found — notification dropped.");
+      return { created: 0, emailed: false };
+    }
+
+    // 1) In-app rows for every superadmin (forced in_app-only so the
+    //    email recipient logic below stays the single source of truth).
+    const createdIds: string[] = [];
+    for (const admin of superadmins) {
+      try {
+        const row = await db.notification.create({
+          data: {
+            userId: admin.id,
+            type,
+            title,
+            message,
+            severity,
+            data: dataJson,
+            channels: JSON.stringify(["in_app"]),
+          },
+        });
+        createdIds.push(row.id);
+      } catch (err) {
+        console.error("[notifySuperAdmins] Failed to create notification row:", err);
+      }
+    }
+
+    // 2) Email channel — gated by the admin toggle + recipient setting.
+    if (!toggle) {
+      return { created: createdIds.length, emailed: false };
+    }
+
+    let toggleValue = "true";
+    try {
+      const s = await getSettings([SETTING_KEYS[toggle], SETTING_KEYS.notifEmailRecipient]);
+      toggleValue = s[SETTING_KEYS[toggle]] ?? "true";
+      const recipient = s[SETTING_KEYS.notifEmailRecipient]?.trim();
+      if (recipient) {
+        // Stored on input for the send below.
+        (input as NotifySuperAdminsInput & { _recipient?: string })._recipient = recipient;
+      }
+    } catch {
+      // default toggle "true" applies
+    }
+
+    if (toggleValue !== "true") {
+      return { created: createdIds.length, emailed: false, skippedByToggle: true };
+    }
+
+    const recipient =
+      (input as NotifySuperAdminsInput & { _recipient?: string })._recipient ||
+      superadmins[0].email;
+    if (!recipient) {
+      return { created: createdIds.length, emailed: false, emailStatus: "skipped" };
+    }
+
+    const html = input.emailHtml ?? renderNotificationEmail(title, message, severity);
+    const subject = input.emailSubject ?? title;
+    const result = await sendEmail({
+      to: recipient,
+      subject,
+      html,
+      text: message,
+    });
+
+    // Stamp the in-app rows with the email outcome (best-effort).
+    if (result.success) {
+      await Promise.all(
+        createdIds.map((id) =>
+          db.notification
+            .update({ where: { id }, data: { emailedAt: new Date(), emailedTo: recipient } })
+            .catch(() => undefined),
+        ),
+      );
+    }
+
+    return {
+      created: createdIds.length,
+      emailed: result.success,
+      emailStatus: result.status,
+      emailedTo: recipient,
+    };
+  } catch (err) {
+    console.error("[notifySuperAdmins] Unexpected failure:", err);
+    return { created: 0, emailed: false, emailStatus: "failed" };
+  }
 }
 
 // ---------------------------------------------------------------------------

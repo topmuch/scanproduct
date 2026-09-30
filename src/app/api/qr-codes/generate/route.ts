@@ -200,6 +200,32 @@ export async function POST(request: NextRequest) {
             remaining: usage.remaining,
           },
         }).catch(() => undefined);
+
+        // SuperAdmin alert when a fabricant hits 100% (gated by notifQuota)
+        if (isExceeded) {
+          import("@/lib/notifications")
+            .then(async ({ notifySuperAdmins }) => {
+              const owner = await db.user.findUnique({
+                where: { id: userId },
+                select: { email: true, companyName: true },
+              });
+              await notifySuperAdmins({
+                toggle: "notifQuota",
+                type: "quota_exceeded",
+                title: "Quota QR dépassé",
+                message: `${owner?.email ?? userId}${owner?.companyName ? ` (${owner.companyName})` : ""} a atteint sa limite de QR codes (${usage.used}/${usage.limit}). Les nouvelles générations seront bloquées.`,
+                severity: "warning",
+                data: {
+                  userId,
+                  used: usage.used,
+                  limit: usage.limit,
+                  percent: usage.percent,
+                },
+                emailSubject: "VerifScan — Quota QR dépassé",
+              });
+            })
+            .catch(() => undefined);
+        }
       })
       .catch(() => undefined);
 

@@ -147,6 +147,26 @@ export async function PATCH(
       },
     });
 
+    // Security alert to the SuperAdmins when an account is suspended
+    if (data.status === "SUSPENDED") {
+      (async () => {
+        try {
+          const { notifySuperAdmins } = await import("@/lib/notifications");
+          await notifySuperAdmins({
+            toggle: "notifSecurity",
+            type: "system",
+            title: "Alerte sécurité",
+            message: `Le compte ${updated.email}${updated.companyName ? ` (${updated.companyName})` : ""} a été suspendu par l'administration.`,
+            severity: "warning",
+            data: { userId: id, email: updated.email, action: "SUSPEND_USER" },
+            emailSubject: "VerifScan — Alerte sécurité : compte suspendu",
+          });
+        } catch (err) {
+          console.error("[PATCH /api/admin/users/[id]] security notification failed:", err);
+        }
+      })();
+    }
+
     return NextResponse.json(updated);
   } catch (error) {
     console.error("[PATCH /api/admin/users/[id]] Error:", error);
