@@ -206,7 +206,24 @@ export async function POST(request: NextRequest) {
     });
 
     try {
-      const batchIdShort = batch.id.slice(0, 8).toUpperCase();
+      // Segmente l'id du batch pour les codes (MASTER-<short>-P01). PIÈGE
+      // cuid : les premiers caractères encodent le timestamp → DEUX batchs
+      // créés la même seconde partagent leurs 8 premiers caractères, et le
+      // 2e échoue en P2002 (unique masterQrCode) → 500. On allonge donc le
+      // segment jusqu'à unicité en DB (cas normal : 8 chars, inchangé).
+      let batchIdShort = batch.id.slice(0, 8).toUpperCase();
+      const lengths = [8, 10, 12, 16, 24];
+      for (const len of lengths) {
+        const candidate = batch.id.slice(0, len).toUpperCase();
+        const clash = await db.pack.findFirst({
+          where: { masterQrCode: { startsWith: `MASTER-${candidate}-` } },
+          select: { id: true },
+        });
+        if (!clash) {
+          batchIdShort = candidate;
+          break;
+        }
+      }
 
       // Un pack = une transaction (atomicité du pack, chunks SQLite-friendly)
       for (let packNum = 1; packNum <= numberOfPacks; packNum++) {

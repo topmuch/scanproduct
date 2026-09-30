@@ -133,10 +133,37 @@ export default async function ArtisanCodePage({
 }) {
   const { code } = await params;
 
-  const lot = await db.preActivatedLot.findUnique({
-    where: { qrCode: code },
-    include: { pack: { include: { lots: true } } },
-  });
+  // Requête principale PROTÉGÉE : en prod, une DB persistante créée avant
+  // l'ajout de colonnes au schéma (ex. productPrice/productDesignation de
+  // l'activation flexible) fait échouer findUnique avec P2022 → « Application
+  // error » sur TOUS les QR scannés. Auto-réparation au moment de l'erreur
+  // (ALTER TABLE ADD COLUMN via le même canal Prisma) puis rejeu UNE fois —
+  // même stratégie que les routes API (activate-pack, track-scan…).
+  const loadLot = () =>
+    db.preActivatedLot.findUnique({
+      where: { qrCode: code },
+      include: { pack: { include: { lots: true } } },
+    });
+
+  let lot: Awaited<ReturnType<typeof loadLot>> = null;
+  try {
+    lot = await loadLot();
+  } catch (error) {
+    if (isTableMissingError(error)) {
+      const heal = await ensureArtisanTables();
+      if (heal.ok) {
+        try {
+          lot = await loadLot();
+        } catch (retryError) {
+          console.error("[a/[code]] rejeu après auto-réparation échoué:", retryError);
+        }
+      } else {
+        console.error("[a/[code]] auto-réparation impossible:", heal.errors);
+      }
+    } else {
+      throw error;
+    }
+  }
 
   if (!lot) {
     notFound();

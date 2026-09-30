@@ -17,6 +17,7 @@ import {
   CopyX,
   Pencil,
   ShoppingCart,
+  Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -302,6 +303,72 @@ export function ArtisanBatchesPage() {
     setTimeout(fetchBatches, 1500);
   };
 
+  // ── Suppression de packs (demande utilisateur : « un bouton supprimer et
+  // un bouton tout supprimer » — nettoyage des anciens packs cassés/test).
+  const [deletingPack, setDeletingPack] = useState<string | null>(null);
+  const deletePack = async (pack: PackItem) => {
+    const msg =
+      `Supprimer le Pack ${pack.packNumber} (${pack.quantity} étiquettes) ?\n\n` +
+      `Le QR Maître ${pack.masterQrCode} et TOUTES ses étiquettes deviendront\n` +
+      `inutilisables (scans et avis inclus). Action DÉFINITIVE.`;
+    if (!window.confirm(msg)) return;
+    setDeletingPack(pack.id);
+    try {
+      const res = await fetch(`/api/admin/packs/${pack.id}`, { method: "DELETE" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+      toast.success(
+        `Pack ${pack.packNumber} supprimé (${data.lotsDeleted} étiquettes, ${data.scansDeleted} scans)`,
+        { duration: 8000 }
+      );
+      await fetchBatches({ skipHeal: true });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Suppression impossible");
+    } finally {
+      setDeletingPack(null);
+    }
+  };
+
+  const [deletingAll, setDeletingAll] = useState(false);
+  const deleteAllPacks = async () => {
+    const packsTotal = batches.reduce((n, b) => n + b.packs.length, 0);
+    if (packsTotal === 0) {
+      toast.info("Aucun pack à supprimer");
+      return;
+    }
+    // Double confirmation : la purge est TOTALE (batchs + packs + étiquettes
+    // + scans + avis). Le 2e confirm énonce la phrase exacte envoyée à l'API
+    // (garde-fou serveur : { confirmation: "TOUT SUPPRIMER" }).
+    if (
+      !window.confirm(
+        `Tout supprimer : ${batches.length} batch(s), ${packsTotal} pack(s) et\n` +
+          `toutes les étiquettes, scans et avis associés ?\n\nACTION DÉFINITIVE — pensez à sauvegarder la base avant.`
+      )
+    )
+      return;
+    if (!window.confirm(`Confirmer UNE DEUXIÈME FOIS : tout supprimer définitivement ?`)) return;
+    setDeletingAll(true);
+    try {
+      const res = await fetch("/api/admin/packs", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ confirmation: "TOUT SUPPRIMER" }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+      toast.success(
+        `Purge terminée : ${data.batchesDeleted} batch(s), ${data.packsDeleted} pack(s), ` +
+          `${data.lotsDeleted} étiquettes, ${data.scansDeleted} scans`,
+        { duration: 10000 }
+      );
+      await fetchBatches({ skipHeal: true });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Purge impossible");
+    } finally {
+      setDeletingAll(false);
+    }
+  };
+
   const numberOfPacks =
     packSize > 0 && totalQuantity % packSize === 0
       ? Math.floor(totalQuantity / packSize)
@@ -327,6 +394,18 @@ export function ArtisanBatchesPage() {
             >
               <CopyX className={`mr-1 h-4 w-4 ${deduping ? "animate-pulse" : ""}`} />
               Doublons
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={deleteAllPacks}
+              disabled={deletingAll || batches.length === 0}
+              className="border-red-200 text-red-600 hover:bg-red-50"
+              title="Supprime DÉFINITIVEMENT tous les batchs, packs, étiquettes, scans et avis"
+              data-testid="delete-all-packs"
+            >
+              <Trash2 className={`mr-1 h-4 w-4 ${deletingAll ? "animate-pulse" : ""}`} />
+              {deletingAll ? "Purge…" : "Tout supprimer"}
             </Button>
             <Button variant="outline" size="sm" onClick={() => fetchBatches()} disabled={loading}>
               <RefreshCw className={`mr-1 h-4 w-4 ${loading ? "animate-spin" : ""}`} />
@@ -566,6 +645,18 @@ export function ArtisanBatchesPage() {
                               Vendre
                             </Button>
                           )}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => deletePack(pack)}
+                            disabled={deletingPack === pack.id}
+                            className="border-red-200 text-red-600 hover:bg-red-50"
+                            title={`Supprimer définitivement ce pack (${pack.quantity} étiquettes, scans et avis inclus)`}
+                            data-testid={`delete-pack-${pack.id}`}
+                          >
+                            <Trash2 className="mr-1 h-3.5 w-3.5" />
+                            {deletingPack === pack.id ? "Suppression…" : "Supprimer"}
+                          </Button>
                           <a
                             href={`/a/${pack.masterQrCode}`}
                             target="_blank"
