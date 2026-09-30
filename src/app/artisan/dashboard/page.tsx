@@ -50,6 +50,8 @@ type DashboardData = {
     price: number;
     masterQrCode: string;
     status: string;
+    activatedCount: number;
+    remaining: number;
     totalScans: number;
     createdAt: string;
   }>;
@@ -85,6 +87,13 @@ function statusPackBadge(status: string) {
       <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-700 ring-1 ring-emerald-200">
         <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
         Activé
+      </span>
+    );
+  if (status === "partial")
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-bold text-amber-700 ring-1 ring-amber-200">
+        <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+        Partiel
       </span>
     );
   if (status === "sold")
@@ -544,27 +553,65 @@ export default function ArtisanDashboardPage() {
                     {data.packs.map((p) => (
                       <div
                         key={p.id}
-                        className="flex items-center justify-between gap-3 rounded-xl border border-gray-100 bg-gradient-to-r from-gray-50/80 to-white px-4 py-3.5 transition-colors hover:border-violet-200"
+                        className="rounded-xl border border-gray-100 bg-gradient-to-r from-gray-50/80 to-white px-4 py-3.5 transition-colors hover:border-violet-200"
                       >
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2">
-                            <p className="text-sm font-extrabold text-gray-900">
-                              Pack #{p.packNumber}
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                              <p className="text-sm font-extrabold text-gray-900">
+                                Pack #{p.packNumber}
+                              </p>
+                              {statusPackBadge(p.status)}
+                            </div>
+                            <p className="mt-0.5 truncate font-mono text-[10.5px] text-gray-400">
+                              {p.masterQrCode}
                             </p>
-                            {statusPackBadge(p.status)}
                           </div>
-                          <p className="mt-0.5 truncate font-mono text-[10.5px] text-gray-400">
-                            {p.masterQrCode}
-                          </p>
+                          <div className="flex shrink-0 items-center gap-1.5">
+                            <span className="rounded-lg bg-blue-50 px-2 py-1 text-[11px] font-bold text-blue-600">
+                              {p.quantity} QR
+                            </span>
+                            <span className="rounded-lg bg-orange-50 px-2 py-1 text-[11px] font-bold text-orange-600">
+                              {p.totalScans} scans
+                            </span>
+                          </div>
                         </div>
-                        <div className="flex shrink-0 items-center gap-1.5">
-                          <span className="rounded-lg bg-blue-50 px-2 py-1 text-[11px] font-bold text-blue-600">
-                            {p.quantity} QR
-                          </span>
-                          <span className="rounded-lg bg-orange-50 px-2 py-1 text-[11px] font-bold text-orange-600">
-                            {p.totalScans} scans
-                          </span>
-                        </div>
+                        {/* Progression d'activation (pack partiel) + CTA continuer */}
+                        {p.status === "partial" && (
+                          <div className="mt-3" data-testid="pack-progress">
+                            <div className="mb-1.5 flex items-center justify-between text-[11px] font-bold">
+                              <span className="text-emerald-700">
+                                {p.activatedCount}/{p.quantity} QR activés
+                              </span>
+                              <span className="text-amber-600">
+                                {p.remaining} restant{p.remaining > 1 ? "s" : ""}
+                              </span>
+                            </div>
+                            <div className="h-2 w-full overflow-hidden rounded-full bg-emerald-100">
+                              <div
+                                className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-500"
+                                style={{
+                                  width: `${
+                                    p.quantity > 0
+                                      ? Math.min(
+                                          Math.round((p.activatedCount / p.quantity) * 100),
+                                          100
+                                        )
+                                      : 0
+                                  }%`,
+                                }}
+                              />
+                            </div>
+                            <a
+                              href={`/activer-pack/${p.masterQrCode}`}
+                              data-testid="continue-pack-activation"
+                              className="mt-2.5 inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 py-2 text-[12px] font-extrabold text-white shadow-sm transition-transform active:scale-[0.98]"
+                            >
+                              <QrCode className="h-3.5 w-3.5" />
+                              Continuer l&apos;activation ({p.remaining} restants)
+                            </a>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>

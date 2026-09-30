@@ -271,9 +271,12 @@ async function main() {
   const target = await fetch(`${BASE}/a/${masterCode}`);
   const html = await target.text();
   check("4a. GET /a/<master> → 200", target.status === 200);
+  // NB : les segments interpolés React sont coupés par des marqueurs <!-- -->
+  // dans le HTML → on n'asserte que sur du texte statique de la vue.
   check(
-    "4b. la page scannée propose l'activation du pack (« Activez tout votre pack »)",
-    html.includes("Activez tout votre pack"),
+    "4b. la page scannée propose l'activation (choix des 2 modes)",
+    html.includes("Activer par produits diff") &&
+      html.includes("Pack officiel VerifScan"),
   );
 
   await browser.close();

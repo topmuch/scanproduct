@@ -61,8 +61,10 @@ const run = async (request: NextRequest): Promise<NextResponse> => {
     where: { qrCode: code },
     include: { pack: { select: { artisanEmail: true, status: true } } },
   });
-  // Lot inconnu/inactif → silencieux (pas d'info aux faux scanners)
-  if (!lot || lot.status !== "active" || lot.pack.status !== "activated") {
+  // Lot inconnu/inactif → silencieux (pas d'info aux faux scanners).
+  // Le statut du LOT décide : un pack partiel (activation flexible) expose
+  // déjà ses produits actifs au scan.
+  if (!lot || lot.status !== "active") {
     return NextResponse.json({ ok: true });
   }
 

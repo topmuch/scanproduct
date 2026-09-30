@@ -170,8 +170,9 @@ export async function GET(request: NextRequest, ctx: RouteCtx) {
         instagramUrl: pack.instagramUrl ?? "",
         facebookUrl: pack.facebookUrl ?? "",
         tiktokUrl: pack.tiktokUrl ?? "",
-        productPrice: pack.productPrice ?? "",
-        productDesignation: pack.productDesignation ?? "",
+        // Activation flexible : le lot porte SON prix / SA désignation
+        productPrice: lot.productPrice ?? pack.productPrice ?? "",
+        productDesignation: lot.productDesignation ?? pack.productDesignation ?? "",
         artisanPhotos: gallery,
       },
     });
@@ -270,6 +271,10 @@ export async function PUT(request: NextRequest, ctx: RouteCtx) {
       artisanName: pd.artisanName,
       contactPhone: pd.contactPhone,
       photoUrl: pd.photoUrl || null,
+      // Activation flexible : prix + désignation portés PAR LOT (chaque
+      // groupe produit garde les siens, même dans un pack multi-produits).
+      productPrice: pd.productPrice || null,
+      productDesignation: pd.productDesignation || null,
       artisanBio: pd.artisanBio || null,
       usageTips: pd.usageTips || null,
     };
@@ -280,6 +285,17 @@ export async function PUT(request: NextRequest, ctx: RouteCtx) {
           tx.preActivatedLot.update({ where: { id: g.id }, data: sharedLotData })
         )
       );
+
+      // Pack mono-produit uniquement : on reflète prix/désignation au
+      // niveau pack (compat lectures historiques). Un pack multi-produits
+      // (activation flexible) garde ses valeurs PAR LOT — écrire ici
+      // écraserait les autres produits.
+      const productGroupCount = await tx.preActivatedLot.findMany({
+        where: { packId: pack.id, status: "active", isMaster: false },
+        distinct: ["productName"],
+        select: { productName: true },
+      });
+      const singleProduct = productGroupCount.length <= 1;
 
       // Champs pack (mêmes pouvoirs que le formulaire d'activation).
       // ⚠️ artisanId n'est JAMAIS modifié ici : l'artisan ne peut pas
@@ -292,8 +308,12 @@ export async function PUT(request: NextRequest, ctx: RouteCtx) {
           instagramUrl: pd.instagramUrl || null,
           facebookUrl: pd.facebookUrl || null,
           tiktokUrl: pd.tiktokUrl || null,
-          productPrice: pd.productPrice || null,
-          productDesignation: pd.productDesignation || null,
+          ...(singleProduct
+            ? {
+                productPrice: pd.productPrice || null,
+                productDesignation: pd.productDesignation || null,
+              }
+            : {}),
           ...(typeof pd.artisanPhotos !== "undefined"
             ? {
                 artisanPhotos:

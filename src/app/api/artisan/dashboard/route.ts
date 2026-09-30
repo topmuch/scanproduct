@@ -135,6 +135,12 @@ const run = async (artisanId: string, phone: string): Promise<NextResponse> => {
       price: p.price,
       masterQrCode: p.masterQrCode,
       status: p.status,
+      // Progression d'activation (mode flexible : pack partiellement activé)
+      activatedCount: p.lots.filter((l) => !l.isMaster && l.status === "active").length,
+      remaining: Math.max(
+        p.quantity - p.lots.filter((l) => !l.isMaster && l.status === "active").length,
+        0
+      ),
       totalScans: p.lots.reduce((s, l) => s + l._count.scans, 0),
       createdAt: p.createdAt.toISOString(),
     })),

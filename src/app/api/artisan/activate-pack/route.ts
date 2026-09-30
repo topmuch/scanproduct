@@ -12,9 +12,14 @@ import {
 /**
  * POST /api/artisan/activate-pack
  *
- * Activation EN MASSE du pack artisanal : l'artisan scanne le QR Code
- * Maître et remplit un formulaire unique — TOUTES les étiquettes du pack
- * reçoivent les mêmes infos produit et passent `active`.
+ * Activation EN MASSE du pack artisanal (MODE 1 — « tout le pack d'un coup »)
+ * : l'artisan scanne le QR Code Maître et remplit un formulaire unique —
+ * TOUTES les étiquettes ENCORE INACTIVES du pack reçoivent les mêmes infos
+ * produit et passent `active`.
+ *
+ * Compatible packs PARTIELS (activation flexible par groupes) : si une
+ * partie des étiquettes est déjà active, ce formulaire active le RESTANT
+ * — le maître/pack ne passent « activated » qu'une fois tout activé.
  *
  * Sécurité :
  * - Transaction atomique + garde `status === 'inactive'` → double
@@ -138,7 +143,15 @@ export async function POST(request: NextRequest) {
         if (!masterLot || !masterLot.isMaster) {
           throw new Error("CODE_INVALIDE:Code maître inconnu");
         }
-        if (masterLot.status === "active" || masterLot.pack.status === "activated") {
+        // Pack partiel autorisé : on active uniquement les étiquettes
+        // encore inactives (le reste a pu être activé par groupes via
+        // /api/artisan/activate-groups).
+        const inactiveLots = masterLot.pack.lots.filter((l) => l.status === "inactive");
+        if (
+          masterLot.status === "active" ||
+          masterLot.pack.status === "activated" ||
+          inactiveLots.length === 0
+        ) {
           throw new Error("DEJA_ACTIVE:Ce pack a déjà été activé");
         }
 
@@ -153,15 +166,19 @@ export async function POST(request: NextRequest) {
           artisanName: productData.artisanName,
           contactPhone: productData.contactPhone,
           photoUrl: productData.photoUrl || null,
+          // Par-lot aussi (activation flexible) — l'overwrite pack ci-dessous
+          // garde la compatibilité avec les lectures historiques.
+          productPrice: productData.productPrice || null,
+          productDesignation: productData.productDesignation || null,
           artisanBio: productData.artisanBio || null,
           usageTips: productData.usageTips || null,
         };
 
-        // 2. Activer toutes les étiquettes produit du pack
+        // 2. Activer les étiquettes produit ENCORE INACTIVES du pack
         await Promise.all(
-          masterLot.pack.lots.map((lot) =>
+          inactiveLots.map((lot) =>
             tx.preActivatedLot.update({
-              where: { id: lot.id, status: "inactive" },
+              where: { id: lot.id },
               data: sharedData,
             })
           )
@@ -195,10 +212,15 @@ export async function POST(request: NextRequest) {
           });
         }
 
+        const fullyActivated =
+          inactiveLots.length +
+            masterLot.pack.lots.filter((l) => l.status === "active").length >=
+          masterLot.pack.quantity;
+
         await tx.pack.update({
           where: { id: masterLot.packId },
           data: {
-            status: "activated",
+            status: fullyActivated ? "activated" : "partial",
             soldTo: productData.artisanName,
             soldAt: new Date(),
             artisanPhone: productData.contactPhone,
@@ -217,10 +239,10 @@ export async function POST(request: NextRequest) {
         });
 
         return {
-          activated: masterLot.pack.lots.length,
+          activated: inactiveLots.length,
           // Code du 1er produit activé → le bouton « Voir le produit activé »
           // de l'écran de succès mène directement à la page publique.
-          firstCode: masterLot.pack.lots[0]?.qrCode ?? masterLot.qrCode,
+          firstCode: inactiveLots[0]?.qrCode ?? masterLot.qrCode,
         };
       },
       { timeout: 20000 }

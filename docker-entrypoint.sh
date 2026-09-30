@@ -166,7 +166,7 @@ if [ -f "$DB_FILE" ] && command -v sqlite3 >/dev/null 2>&1; then
   LOT_EXISTS=$(sqlite3 "$DB_FILE" "SELECT name FROM sqlite_master WHERE type='table' AND name='PreActivatedLot';" 2>/dev/null)
   if [ -n "$LOT_EXISTS" ]; then
     LOT_COLS=$(sqlite3 "$DB_FILE" "PRAGMA table_info(PreActivatedLot);" 2>/dev/null | cut -d'|' -f2)
-    for COL in artisanBio usageTips counterfeitAlert; do
+    for COL in artisanBio usageTips counterfeitAlert productPrice productDesignation; do
       if ! echo "$LOT_COLS" | grep -qx "$COL"; then
         echo "  + ALTER TABLE PreActivatedLot ADD COLUMN $COL (fallback nu)"
         sqlite3 "$DB_FILE" "ALTER TABLE PreActivatedLot ADD COLUMN \"$COL\" TEXT;" 2>&1 | grep -v "duplicate column" || true
@@ -263,6 +263,8 @@ CREATE TABLE IF NOT EXISTS "PreActivatedLot" (
     "artisanName" TEXT,
     "contactPhone" TEXT,
     "photoUrl" TEXT,
+    "productPrice" TEXT,
+    "productDesignation" TEXT,
     "artisanBio" TEXT,
     "usageTips" TEXT,
     "counterfeitAlert" TEXT,
@@ -318,14 +320,14 @@ ARTISAN_DDL
     # Colonnes artisanales attendues sur les tables existantes (schéma récent)
     LOT_COLS=$(sqlite3 "$DB_FILE" "PRAGMA table_info(PreActivatedLot);" 2>/dev/null | cut -d'|' -f2)
     LOT_MISSING=""
-    for COL in artisanBio usageTips counterfeitAlert; do
+    for COL in artisanBio usageTips counterfeitAlert productPrice productDesignation; do
       echo "$LOT_COLS" | grep -qx "$COL" || LOT_MISSING="$LOT_MISSING $COL"
     done
     if [ -n "$LOT_MISSING" ]; then
       echo "CRITICAL: colonnes PreActivatedLot manquantes après fallback:$LOT_MISSING"
       echo "La génération de batches renverra HTTP 500 (P2022 column does not exist)."
     else
-      echo "  ✓ Vérification finale : tables artisanales + colonnes (artisanBio/usageTips/counterfeitAlert) en place"
+      echo "  ✓ Vérification finale : tables artisanales + colonnes lot (bio/tips/alerte/prix/désignation) en place"
     fi
   fi
 fi

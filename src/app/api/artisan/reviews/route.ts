@@ -60,9 +60,10 @@ const run = async (request: NextRequest): Promise<NextResponse> => {
 
   const lot = await db.preActivatedLot.findUnique({
     where: { qrCode: code },
-    select: { id: true, status: true, pack: { select: { status: true } } },
+    select: { id: true, status: true },
   });
-  if (!lot || lot.status !== "active" || lot.pack.status !== "activated") {
+  // Le statut du LOT décide (pack partiel = produits actifs notables).
+  if (!lot || lot.status !== "active") {
     return NextResponse.json(
       { error: "Ce produit n'accepte pas d'avis pour le moment" },
       { status: 404 }

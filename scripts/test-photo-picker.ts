@@ -109,6 +109,9 @@ async function main() {
 
   await page.goto(`${BASE}/activer-pack/${master}`, { waitUntil: "networkidle" });
 
+  // Écran de choix des 2 modes (activation flexible) → Mode 1 « tout d'un coup »
+  await page.getByTestId("choose-simple").click();
+
   // 2a. Les deux modes sont proposés sur les deux pickers
   const cameraButtons = page.getByRole("button", { name: "Prendre une photo" });
   const downloadButtons = page.getByRole("button", { name: "Télécharger" });
@@ -169,8 +172,8 @@ async function main() {
   await page.fill("#artisanName", "Artisan PhotoPicker Test");
   await page.fill("#contactPhone", "771234567");
 
-  await page.getByRole("button", { name: "Activer tous mes produits" }).click();
-  await page.waitForSelector("text=Pack activé avec succès", { timeout: 30_000 });
+  await page.getByTestId("activation-submit").click();
+  await page.waitForSelector("text=QR codes activés", { timeout: 30_000 });
   check("3. activation complète (upload caméra + galerie inclus)", true);
 
   // 3b. Le bouton « Voir le produit activé » mène bien au produit

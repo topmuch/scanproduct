@@ -67,6 +67,7 @@ type BatchItem = {
 
 const packBadge = (status: string) => {
   if (status === "activated") return <Badge color="green">Activé</Badge>;
+  if (status === "partial") return <Badge color="yellow">Partiel</Badge>;
   if (status === "sold") return <Badge color="orange">Vendu</Badge>;
   return <Badge color="gray">Disponible</Badge>;
 };

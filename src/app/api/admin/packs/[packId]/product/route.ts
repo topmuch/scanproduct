@@ -79,6 +79,8 @@ async function loadPackWithMaster(packId: string) {
           artisanName: true,
           contactPhone: true,
           photoUrl: true,
+          productPrice: true,
+          productDesignation: true,
           artisanBio: true,
           usageTips: true,
         },
@@ -102,7 +104,7 @@ function prefillResponse(loaded: NonNullable<Awaited<ReturnType<typeof loadPackW
     },
     productData: {
       productName: master?.productName ?? "",
-      productDesignation: pack.productDesignation ?? "",
+      productDesignation: master?.productDesignation ?? pack.productDesignation ?? "",
       contenance: master?.contenance ?? "",
       ingredients: master?.ingredients ?? "",
       manufacturingDate: isoDate(master?.manufacturingDate),
@@ -116,7 +118,7 @@ function prefillResponse(loaded: NonNullable<Awaited<ReturnType<typeof loadPackW
       instagramUrl: pack.instagramUrl ?? "",
       facebookUrl: pack.facebookUrl ?? "",
       tiktokUrl: pack.tiktokUrl ?? "",
-      productPrice: pack.productPrice ?? "",
+      productPrice: master?.productPrice ?? pack.productPrice ?? "",
     },
   };
 }
@@ -205,19 +207,46 @@ export async function PATCH(request: NextRequest, ctx: RouteCtx) {
       artisanName: pd.artisanName,
       contactPhone: pd.contactPhone,
       photoUrl: pd.photoUrl || null,
+      // Activation flexible : prix + désignation portés PAR LOT
+      productPrice: pd.productPrice || null,
+      productDesignation: pd.productDesignation || null,
       artisanBio: pd.artisanBio || null,
       usageTips: pd.usageTips || null,
     };
 
+    // GROUPE PRODUIT du maître (pas tout le pack) : en activation flexible,
+    // un pack contient plusieurs produits — la correction du SuperAdmin ne
+    // doit toucher QUE le produit affiché par le formulaire (celui du
+    // maître), jamais les autres groupes.
+    const allLots = await db.preActivatedLot.findMany({
+      where: { packId: pack.id },
+      select: { id: true, isMaster: true, productName: true },
+    });
+    const masterName = allLots.find((l) => l.isMaster)?.productName ?? null;
+    const targetLots =
+      masterName === null
+        ? allLots
+        : allLots.filter(
+            (l) => (l.productName ?? "") === masterName || l.isMaster,
+          );
+
     await db.$transaction(async (tx) => {
       await Promise.all(
-        pack.lots.map((lot) =>
+        targetLots.map((lot) =>
           tx.preActivatedLot.update({
             where: { id: lot.id },
             data: sharedLotData,
           }),
         ),
       );
+
+      // Pack mono-produit uniquement : prix/désignation reflétés au niveau
+      // pack (les packs multi-produits gardent leurs valeurs PAR LOT).
+      const productGroupCount = await tx.preActivatedLot.findMany({
+        where: { packId: pack.id, status: "active", isMaster: false },
+        distinct: ["productName"],
+        select: { productName: true },
+      });
       await tx.pack.update({
         where: { id: pack.id },
         data: {
@@ -227,8 +256,12 @@ export async function PATCH(request: NextRequest, ctx: RouteCtx) {
           instagramUrl: pd.instagramUrl || null,
           facebookUrl: pd.facebookUrl || null,
           tiktokUrl: pd.tiktokUrl || null,
-          productPrice: pd.productPrice || null,
-          productDesignation: pd.productDesignation || null,
+          ...(productGroupCount.length <= 1
+            ? {
+                productPrice: pd.productPrice || null,
+                productDesignation: pd.productDesignation || null,
+              }
+            : {}),
         },
       });
     });
@@ -240,7 +273,7 @@ export async function PATCH(request: NextRequest, ctx: RouteCtx) {
         entity: "Pack",
         entityId: packId,
         metadata: JSON.stringify({
-          lotsUpdated: pack.lots.length,
+          lotsUpdated: targetLots.length,
           productName: pd.productName,
           artisanName: pd.artisanName,
         }),
@@ -249,7 +282,7 @@ export async function PATCH(request: NextRequest, ctx: RouteCtx) {
 
     return {
       status: 200,
-      body: { success: true, lotsUpdated: pack.lots.length },
+      body: { success: true, lotsUpdated: targetLots.length },
     };
   };
 

@@ -915,6 +915,13 @@ model PreActivatedLot {
   contactPhone      String?
   photoUrl          String?
 
+  // Prix consommateur + désignation PAR PRODUIT (activation flexible :
+  // un pack peut contenir plusieurs produits différents — chaque lot porte
+  // les siens ; fallback sur Pack.productPrice/productDesignation pour les
+  // packs mono-produit historiques).
+  productPrice       String?
+  productDesignation String?
+
   // Page publique engageante : histoire de l'artisan + conseils d'utilisation
   artisanBio        String? // texte libre (section "L'histoire de l'artisan")
   usageTips         String? // un conseil par ligne (section "Conseils d'utilisation")

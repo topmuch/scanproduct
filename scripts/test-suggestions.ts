@@ -76,8 +76,10 @@ if (!sessJson.user) process.exit(1);
 const formPage = await req("/activer-pack/MASTER-TEST-ROUTE");
 const formHtml = await formPage.text();
 check(
-  "0. /activer-pack/[masterCode] rend le formulaire",
-  formPage.status === 200 && formHtml.includes("Activez tout votre pack")
+  "0. /activer-pack/[masterCode] rend la page (écran maître inconnu)",
+  formPage.status === 200 &&
+    (formHtml.includes("Code maître inconnu") ||
+      formHtml.includes("Comment voulez-vous activer"))
 );
 
 // ── 2. Deux batchs identiques rapprochés (pour le test doublons #11) ─────

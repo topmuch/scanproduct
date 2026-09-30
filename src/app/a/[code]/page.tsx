@@ -65,7 +65,7 @@ export async function generateMetadata({
 
   const productName = lot.productName ?? "Produit artisanal";
   const artisanName = lot.artisanName ?? "Artisan";
-  const isActive = lot.status === "active" && lot.pack.status === "activated";
+  const isActive = lot.status === "active"; // pack partiel = produits actifs visibles
   const description = isActive
     ? `Produit Authentique vérifié par VerifScan — fabriqué à la main par ${artisanName}. Photos, fraîcheur, avis clients et contact direct.`
     : `Découvrez ${productName} de ${artisanName} sur VerifScan — la traçabilité artisanale.`;
@@ -135,16 +135,38 @@ export default async function ArtisanCodePage({
 
   const lot = await db.preActivatedLot.findUnique({
     where: { qrCode: code },
-    include: { pack: true },
+    include: { pack: { include: { lots: true } } },
   });
 
   if (!lot) {
     notFound();
   }
 
-  if (lot.status === "inactive" || lot.pack.status !== "activated") {
+  // UN LOT ACTIF EST TOUJOURS VISIBLE — même si le pack n'est que partiel
+  // (activation flexible : 100 karité actives sur 200, les 100 autres
+  // attendent). Seul le statut du LOT décide de la vue.
+  if (lot.status === "inactive") {
     if (lot.isMaster) {
-      return <InactiveMasterView masterCode={lot.qrCode} packSize={lot.pack.quantity} />;
+      // Progression d'activation (mode flexible : plusieurs produits)
+      const productLots = lot.pack.lots.filter((l) => !l.isMaster);
+      const activatedCount = productLots.filter((l) => l.status === "active").length;
+      const groupMap = new Map<string, { productName: string; count: number }>();
+      for (const l of productLots
+        .filter((l) => l.status === "active")
+        .sort((a, b) => a.qrCode.localeCompare(b.qrCode))) {
+        const name = l.productName ?? "Produit sans nom";
+        const g = groupMap.get(name);
+        if (g) g.count += 1;
+        else groupMap.set(name, { productName: name, count: 1 });
+      }
+      return (
+        <InactiveMasterView
+          masterCode={lot.qrCode}
+          packSize={lot.pack.quantity}
+          activatedCount={activatedCount}
+          groups={[...groupMap.values()]}
+        />
+      );
     }
     return (
       <InactiveProductView
@@ -214,8 +236,10 @@ export default async function ArtisanCodePage({
         artisanName: lot.artisanName ?? "Artisan",
         contactPhone: lot.contactPhone ?? "",
         contactEmail: lot.pack.artisanEmail ?? null,
-        productPrice: lot.pack.productPrice ?? null,
-        productDesignation: lot.pack.productDesignation ?? null,
+        // Activation flexible : chaque lot porte SON prix / SA désignation
+        // (fallback pack pour les packs mono-produit historiques)
+        productPrice: lot.productPrice ?? lot.pack.productPrice ?? null,
+        productDesignation: lot.productDesignation ?? lot.pack.productDesignation ?? null,
         photoUrl: lot.photoUrl,
         artisanBio: lot.artisanBio,
         usageTips: lot.usageTips,

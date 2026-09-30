@@ -107,6 +107,8 @@ export const ARTISAN_DDL: string[] = [
     "artisanName" TEXT,
     "contactPhone" TEXT,
     "photoUrl" TEXT,
+    "productPrice" TEXT,
+    "productDesignation" TEXT,
     "artisanBio" TEXT,
     "usageTips" TEXT,
     "counterfeitAlert" TEXT,
@@ -177,6 +179,14 @@ export const REQUIRED_COLUMNS: Record<string, Array<{ name: string; ddl: string 
     { name: "artisanBio", ddl: `ALTER TABLE "PreActivatedLot" ADD COLUMN "artisanBio" TEXT` },
     { name: "usageTips", ddl: `ALTER TABLE "PreActivatedLot" ADD COLUMN "usageTips" TEXT` },
     { name: "counterfeitAlert", ddl: `ALTER TABLE "PreActivatedLot" ADD COLUMN "counterfeitAlert" TEXT` },
+    // Activation flexible : prix + désignation PAR PRODUIT (chaque lot du
+    // groupe porte les siens ; les packs mono-produit gardent le fallback
+    // Pack.productPrice / Pack.productDesignation).
+    { name: "productPrice", ddl: `ALTER TABLE "PreActivatedLot" ADD COLUMN "productPrice" TEXT` },
+    {
+      name: "productDesignation",
+      ddl: `ALTER TABLE "PreActivatedLot" ADD COLUMN "productDesignation" TEXT`,
+    },
   ],
   ArtisanScan: [
     { name: "timezone", ddl: `ALTER TABLE "ArtisanScan" ADD COLUMN "timezone" TEXT` },

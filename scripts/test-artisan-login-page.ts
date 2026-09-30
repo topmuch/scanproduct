@@ -61,7 +61,14 @@ function check(label: string, ok: boolean, extra = "") {
   // ── Cycle de rendu du formulaire (erreur mauvais mdp → login-error) ──
   // NB : première connexion = auto-création du compte (pas d'erreur). Pour
   // déclencher le 401 il faut un compte EXISTANT + mauvais mot de passe.
-  // 770000001 existe (créé plus haut dans ce run avec « mauvaismdp »).
+  // On garantit l'existence de 770000001 : 1er POST avec le mdp par défaut
+  // 0000 (auto-création) AVANT le mauvais mot de passe — immunité aux DB
+  // fraîches (environnement recyclé).
+  await fetch(`${BASE}/api/artisan/login`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ phone: "770000001", password: "0000" }),
+  });
   await page.fill("[data-testid='login-phone']", "770000001");
   await page.fill("[data-testid='login-password']", "ceci-nest-pas-le-mdp");
   await page.click("[data-testid='login-submit']");
