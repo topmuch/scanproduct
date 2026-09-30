@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireSuperAdmin } from "@/lib/admin-guard";
 import nodemailer from "nodemailer";
 import {
+  friendlySmtpError,
   getEmailConfig,
   sendEmail,
   verifySmtpConnection,
@@ -98,6 +99,9 @@ export async function POST(request: NextRequest) {
       typeof input.secure === "boolean" ? input.secure : port === 465;
     const to = input.to?.trim() || input.from?.trim() || "test@verifscan.com";
 
+    // Auto-fallback: if the encryption mode mismatches the port (OpenSSL
+    // "wrong version number"), verifySmtpConnection retries once with the
+    // opposite mode and reports which one worked via `secureUsed`.
     const verify = await verifySmtpConnection({
       host: input.host!.trim(),
       port,
@@ -113,12 +117,13 @@ export async function POST(request: NextRequest) {
         error: verify.error ?? "Connexion SMTP impossible.",
       });
     }
+    const usedSecure = verify.secureUsed ?? secure;
 
     try {
       const transporter = nodemailer.createTransport({
         host: input.host!.trim(),
         port,
-        secure,
+        secure: usedSecure,
         auth: { user: input.user!.trim(), pass: input.pass!.trim() },
         connectionTimeout: 10_000,
         greetingTimeout: 8_000,
@@ -133,11 +138,18 @@ export async function POST(request: NextRequest) {
         html: `<p>Test d'envoi effectué le <strong>${new Date().toLocaleString("fr-FR")}</strong> depuis <strong>Paramètres → Email &amp; Notifications</strong>.</p><p>Si vous lisez cet email, votre configuration SMTP fonctionne : les notifications (nouvelles inscriptions, tickets, alertes) partiront bien vers ce serveur.</p>`,
       });
       transporter.close();
+      const autoFixed = usedSecure !== secure;
+      const message =
+        `Email de test envoyé à ${to} — vérifiez la boîte de réception.` +
+        (autoFixed
+          ? ` Mode de chiffrement corrigé automatiquement : ${usedSecure ? "SSL direct" : "STARTTLS"} — enregistrez pour conserver ce réglage.`
+          : "");
       return NextResponse.json({
         success: true,
         configured: true,
         source: "form",
-        message: `Email de test envoyé à ${to} — vérifiez la boîte de réception.`,
+        secureUsed: usedSecure,
+        message,
       });
     } catch (error) {
       const msg = error instanceof Error ? error.message : String(error);
@@ -145,7 +157,7 @@ export async function POST(request: NextRequest) {
         success: false,
         configured: true,
         source: "form",
-        error: msg.slice(0, 300),
+        error: friendlySmtpError(msg, { port, secure: usedSecure }).slice(0, 400),
       });
     }
   }

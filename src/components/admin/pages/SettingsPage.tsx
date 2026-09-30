@@ -1034,6 +1034,21 @@ function EmailSection() {
     return values[key] !== "false";
   }
 
+  /**
+   * SSL switch for SMTP — explicit saved value wins; when never saved
+   * (empty/undefined) auto-detect from the port convention: 465 = SSL direct,
+   * anything else (587/25/2525) = STARTTLS. Matches the backend buildConfig
+   * fallback, so the UI no longer forces secure=true on a 587 port (which
+   * caused OpenSSL "wrong version number").
+   */
+  function secureOn(): boolean {
+    const v = (values.smtpSecure ?? "").trim();
+    if (v === "true") return true;
+    if (v === "false") return false;
+    const port = (values.smtpPort ?? "").trim();
+    return port === "465" || port === "2465";
+  }
+
   async function handleSave() {
     setSaving(true);
     try {
@@ -1045,7 +1060,7 @@ function EmailSection() {
           smtpPort: values.smtpPort ?? "",
           smtpUser: values.smtpUser ?? "",
           smtpPass: values.smtpPass ?? "",
-          smtpSecure: toggleOn("smtpSecure") ? "true" : "false",
+          smtpSecure: secureOn() ? "true" : "false",
           smtpFrom: values.smtpFrom ?? "",
           notifSignup: toggleOn("notifSignup") ? "true" : "false",
           notifPayment: toggleOn("notifPayment") ? "true" : "false",
@@ -1075,6 +1090,7 @@ function EmailSection() {
 
   async function handleTest() {
     setTestState({ kind: "loading" });
+    const requestedSecure = secureOn();
     try {
       const hasFormConfig =
         (values.smtpHost ?? "").trim() !== "" &&
@@ -1093,7 +1109,7 @@ function EmailSection() {
                 port: values.smtpPort ? Number(values.smtpPort) : undefined,
                 user: values.smtpUser,
                 pass: values.smtpPass,
-                secure: toggleOn("smtpSecure"),
+                secure: requestedSecure,
                 from: values.smtpFrom || undefined,
               }
             : {}),
@@ -1107,8 +1123,20 @@ function EmailSection() {
             "Le test SMTP a échoué — vérifiez la configuration du serveur.",
         );
       }
-      const message: string =
+      // The server may have auto-corrected the encryption mode (SSL vs
+      // STARTTLS mismatch) — reflect the working mode in the form and tell
+      // the user to save it.
+      const usedSecure: boolean =
+        typeof data.secureUsed === "boolean" ? data.secureUsed : requestedSecure;
+      if (usedSecure !== requestedSecure) {
+        setField("smtpSecure", usedSecure ? "true" : "false");
+      }
+      const base: string =
         data.message || "Connexion SMTP validée — email de test envoyé.";
+      const message =
+        usedSecure !== requestedSecure
+          ? `${base} (mode corrigé automatiquement : ${usedSecure ? "SSL direct" : "STARTTLS"} — enregistrez pour conserver)`
+          : base;
       setTestState({ kind: "ok", message });
       toast.success(message);
     } catch (err) {
@@ -1143,13 +1171,24 @@ function EmailSection() {
                 onChange={(e) => setField("smtpHost", e.target.value)}
               />
             </Field>
-            <Field label="Port" hint="587 (TLS) ou 465 (SSL)">
+            <Field
+              label="Port"
+              hint="587 (STARTTLS), 465 (SSL) — le commutateur s'ajuste automatiquement"
+            >
               <input
                 className={inputClass}
                 data-testid="email-smtp-port"
                 placeholder="587"
                 value={values.smtpPort ?? ""}
-                onChange={(e) => setField("smtpPort", e.target.value)}
+                onChange={(e) => {
+                  const v = e.target.value.trim();
+                  setField("smtpPort", v);
+                  // Auto-adjust the encryption switch to the port convention
+                  // (same behavior as mail clients: 465 = SSL, 587 = STARTTLS).
+                  if (v === "465" || v === "2465") setField("smtpSecure", "true");
+                  else if (v === "587" || v === "25" || v === "2525")
+                    setField("smtpSecure", "false");
+                }}
               />
             </Field>
           </FormRow>
@@ -1189,12 +1228,12 @@ function EmailSection() {
               <div className="flex h-10 items-center gap-3">
                 <Switch
                   className={switchClass}
-                  checked={toggleOn("smtpSecure")}
+                  checked={secureOn()}
                   onCheckedChange={(v) => setField("smtpSecure", v ? "true" : "false")}
                   aria-label="Chiffrement SSL direct"
                 />
                 <span className="text-[13px] text-[#374151]">
-                  SSL direct (port 465) — désactivé : STARTTLS/plain (587)
+                  SSL direct (port 465) — désactivé : STARTTLS (port 587). En cas d'erreur, VerifScan détecte le bon mode automatiquement.
                 </span>
               </div>
             </Field>

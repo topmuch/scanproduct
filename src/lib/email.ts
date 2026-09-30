@@ -55,6 +55,115 @@ function clean(value: string | undefined): string | undefined {
   return v ? v : undefined;
 }
 
+// ---------------------------------------------------------------------------
+// TLS mismatch detection & friendly errors
+// ---------------------------------------------------------------------------
+// The #1 user-reported SMTP failure is OpenSSL
+// "ssl3_get_record:wrong version number" — the client spoke TLS but the server
+// answered in plain text (or the reverse): the `secure` flag does not match
+// what the port expects (465 = implicit TLS, 587 = STARTTLS). Instead of
+// asking users to understand SSL vs STARTTLS we detect the mismatch and
+// transparently retry ONCE with the opposite mode.
+
+const TLS_MISMATCH_RE = /wrong version number|ssl routines|unexpected message|bad record header/i;
+
+/** Failures where switching the encryption mode CANNOT help — these happen
+ *  after a successful handshake (auth/message phase) or are transport-level
+ *  issues independent of TLS mode (dead port, DNS). Anything else (TLS
+ *  mismatch, timeout, reset, "Connection closed", EOF during handshake…)
+ *  is worth ONE retry with the opposite mode: error strings vary between
+ *  Node ("ssl3_get_record:wrong version number") and Bun ("Connection
+ *  closed") runtimes, so we retry broadly and exclude narrowly. */
+const NO_RETRY_RE =
+  /535|530|invalid login|authent|eauth|550|551|553|554|message failed|relay|sender address|recipient|econnrefused|enotfound|eai_again|dns/i;
+
+/** The server answered in the WRONG channel (TLS client vs plain server or
+ *  TLS server answered an alert to a plain client). */
+export function isTlsMismatchError(msg: string): boolean {
+  return TLS_MISMATCH_RE.test(msg || "");
+}
+
+/** True when flipping the encryption mode and retrying ONCE is worth it. */
+function shouldRetryWithOtherMode(msg: string): boolean {
+  return !NO_RETRY_RE.test(msg || "");
+}
+
+/**
+ * Translate raw SMTP/OpenSSL errors into actionable French messages.
+ * The raw technical detail is kept in parentheses for EmailLog/debugging.
+ */
+export function friendlySmtpError(
+  raw: string,
+  cfg?: { port?: number; secure?: boolean },
+): string {
+  const msg = (raw || "").trim();
+  if (!msg) return "Erreur SMTP inconnue";
+  const m = msg.toLowerCase();
+  const port = cfg?.port;
+  const mode = cfg?.secure === true ? "SSL direct" : "STARTTLS";
+  const hint =
+    port !== undefined
+      ? " Astuce : port 465 = SSL direct (commutateur activé), port 587 = STARTTLS (commutateur désactivé)."
+      : "";
+  const rawShort = msg.slice(0, 140);
+
+  if (isTlsMismatchError(msg)) {
+    return `Incompatibilité de chiffrement sur le port ${port ?? "?"} — le serveur n'attend pas du « ${mode} » sur ce port. Changez le commutateur SSL (VerifScan le détecte aussi automatiquement).${hint} (${rawShort})`;
+  }
+  if (
+    m.includes("535") ||
+    m.includes("530") ||
+    m.includes("invalid login") ||
+    m.includes("authenticationfailed") ||
+    m.includes("authentication failed") ||
+    m.includes("bad credentials") ||
+    m.includes("eauth")
+  ) {
+    return `Authentification refusée par le serveur SMTP — vérifiez l'utilisateur et le mot de passe (certains hébergeurs exigent un mot de passe d'application ou un compte SMTP dédié). (${rawShort})`;
+  }
+  if (m.includes("enotfound") || m.includes("eai_again") || m.includes("econnrefused")) {
+    return m.includes("econnrefused")
+      ? `Connexion refusée — aucun service SMTP n'écoute sur ${port ?? "ce port"}. Vérifiez le port du serveur.${hint} (${rawShort})`
+      : `Serveur SMTP introuvable — vérifiez l'adresse du serveur (ex. smtp.hostinger.com). (${rawShort})`;
+  }
+  if (m.includes("etimedout") || m.includes("timeout") || m.includes("esockettimedout")) {
+    return `Délai dépassé — le serveur ne répond pas sur le port ${port ?? "?"} (port bloqué par l'hébergeur ou mauvais mode de chiffrement ?).${hint} (${rawShort})`;
+  }
+  if (
+    m.includes("550") ||
+    m.includes("553") ||
+    m.includes("sender address") ||
+    m.includes("not permitted") ||
+    m.includes("relay")
+  ) {
+    return `Le serveur a refusé l'expéditeur ou le destinataire — vérifiez le champ « Expéditeur (From) » (doit appartenir au domaine du compte SMTP) et l'adresse de destination. (${rawShort})`;
+  }
+  if (m.includes("self signed") || m.includes("certificate")) {
+    return `Problème de certificat TLS du serveur SMTP (certificat auto-signé ou invalide). (${rawShort})`;
+  }
+  return msg.slice(0, 300);
+}
+
+/** Shared nodemailer transport options (timeouts + self-signed tolerance). */
+function transportOptions(cfg: {
+  host?: string;
+  port: number;
+  secure: boolean;
+  user?: string;
+  pass?: string;
+}) {
+  return {
+    host: cfg.host,
+    port: cfg.port,
+    secure: cfg.secure,
+    auth: cfg.user && cfg.pass ? { user: cfg.user, pass: cfg.pass } : undefined,
+    connectionTimeout: 10_000,
+    greetingTimeout: 8_000,
+    socketTimeout: 15_000,
+    tls: { rejectUnauthorized: false },
+  };
+}
+
 export interface EffectiveEmailConfig {
   host?: string;
   port: number;
@@ -178,11 +287,7 @@ export function getEmailFrom(): string {
   return v && v.trim().length > 0 ? v.trim() : DEFAULT_FROM;
 }
 
-/**
- * Verify an SMTP connection (used by /api/admin/test-smtp). Never throws.
- * Returns `{ ok: true }` or `{ ok: false, error }`.
- */
-export async function verifySmtpConnection(cfg: {
+async function attemptVerify(cfg: {
   host: string;
   port: number;
   secure: boolean;
@@ -190,23 +295,54 @@ export async function verifySmtpConnection(cfg: {
   pass?: string;
 }): Promise<{ ok: boolean; error?: string }> {
   try {
-    const transporter = nodemailer.createTransport({
-      host: cfg.host,
-      port: cfg.port,
-      secure: cfg.secure,
-      auth: cfg.user && cfg.pass ? { user: cfg.user, pass: cfg.pass } : undefined,
-      connectionTimeout: 10_000,
-      greetingTimeout: 8_000,
-      socketTimeout: 15_000,
-      tls: { rejectUnauthorized: false },
-    });
+    const transporter = nodemailer.createTransport(transportOptions(cfg));
     await transporter.verify();
     transporter.close();
     return { ok: true };
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    return { ok: false, error: msg.slice(0, 300) };
+    return { ok: false, error: msg };
   }
+}
+
+/**
+ * Verify an SMTP connection (used by /api/admin/test-smtp). Never throws.
+ *
+ * Auto-fallback: if the configured encryption mode mismatches what the port
+ * expects (the classic "wrong version number" OpenSSL error — e.g. SSL direct
+ * on a 587/STARTTLS port, or STARTTLS against a 465 implicit-TLS server), the
+ * handshake is retried ONCE with the opposite mode. On success the caller
+ * receives `secureUsed` so the UI can auto-correct the saved setting.
+ *
+ * Returns `{ ok: true, secureUsed }` or `{ ok: false, error }` (French,
+ * actionable message).
+ */
+export async function verifySmtpConnection(cfg: {
+  host: string;
+  port: number;
+  secure: boolean;
+  user?: string;
+  pass?: string;
+}): Promise<{ ok: boolean; secureUsed?: boolean; error?: string }> {
+  const first = await attemptVerify(cfg);
+  if (first.ok) return { ok: true, secureUsed: cfg.secure };
+
+  // Retry only when the failure pattern is consistent with a mode mismatch:
+  //   secure=true  → "wrong version number" / timeout (TLS client vs plain server)
+  //   secure=false → greeting timeout / ECONNRESET / TLS alert (plain client
+  //                  vs implicit-TLS server)
+  const rawErr = first.error ?? "";
+  if (!shouldRetryWithOtherMode(rawErr)) {
+    return { ok: false, error: friendlySmtpError(rawErr, cfg) };
+  }
+
+  const flipped = { ...cfg, secure: !cfg.secure };
+  const second = await attemptVerify(flipped);
+  if (second.ok) return { ok: true, secureUsed: flipped.secure };
+  return {
+    ok: false,
+    error: friendlySmtpError(second.error ?? rawErr, flipped),
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -217,25 +353,30 @@ export async function verifySmtpConnection(cfg: {
 let _transporter: Transporter | null = null;
 let _fingerprint = "";
 
+/**
+ * Remembered `secure` mode per host|port|user — when a send only succeeds
+ * after a TLS-mode flip (auto-fallback), subsequent sends reuse the working
+ * mode instead of failing first every time.
+ */
+const _workingSecure = new Map<string, boolean>();
+
+function secureCacheKey(cfg: EffectiveEmailConfig): string {
+  return `${cfg.host ?? ""}|${cfg.port}|${cfg.user ?? ""}`;
+}
+
 function getTransporter(cfg: EffectiveEmailConfig): Transporter {
+  const effectiveSecure = _workingSecure.get(secureCacheKey(cfg)) ?? cfg.secure;
   const fingerprint = JSON.stringify([
     cfg.host,
     cfg.port,
-    cfg.secure,
+    effectiveSecure,
     cfg.user,
     cfg.pass,
   ]);
   if (_transporter && _fingerprint === fingerprint) return _transporter;
-  _transporter = nodemailer.createTransport({
-    host: cfg.host,
-    port: cfg.port,
-    secure: cfg.secure,
-    auth: cfg.user && cfg.pass ? { user: cfg.user, pass: cfg.pass } : undefined,
-    connectionTimeout: 10_000,
-    greetingTimeout: 8_000,
-    socketTimeout: 15_000,
-    tls: { rejectUnauthorized: false },
-  });
+  _transporter = nodemailer.createTransport(
+    transportOptions({ ...cfg, secure: effectiveSecure }),
+  );
   _fingerprint = fingerprint;
   return _transporter;
 }
@@ -362,45 +503,64 @@ export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult>
     return { success: true, status: "skipped", logId };
   }
 
-  // 3) Configured — actually send via SMTP.
-  try {
-    const transporter = getTransporter(cfg);
-    await transporter.sendMail({
-      from,
-      to,
-      subject,
-      html,
-      text,
-    });
+  // 3) Configured — actually send via SMTP, with ONE automatic retry when the
+  //    encryption mode mismatches the port (wrong version number / handshake
+  //    failure). The working mode is remembered for subsequent sends.
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const currentSecure = _workingSecure.get(secureCacheKey(cfg)) ?? cfg.secure;
+    try {
+      const transporter = getTransporter(cfg);
+      await transporter.sendMail({
+        from,
+        to,
+        subject,
+        html,
+        text,
+      });
 
-    if (logId) {
-      try {
-        await db.emailLog.update({
-          where: { id: logId },
-          data: { status: "sent", sentAt: new Date() },
-        });
-      } catch (err) {
-        console.error("[email] Failed to update EmailLog → sent:", err);
+      if (logId) {
+        try {
+          await db.emailLog.update({
+            where: { id: logId },
+            data: { status: "sent", sentAt: new Date() },
+          });
+        } catch (err) {
+          console.error("[email] Failed to update EmailLog → sent:", err);
+        }
       }
-    }
 
-    return { success: true, status: "sent", logId };
-  } catch (err) {
-    const errorMsg =
-      err instanceof Error ? err.message : "Unknown SMTP error";
-
-    if (logId) {
-      try {
-        await db.emailLog.update({
-          where: { id: logId },
-          data: { status: "failed", error: errorMsg },
+      return { success: true, status: "sent", logId };
+    } catch (err) {
+      const rawMsg = err instanceof Error ? err.message : "Unknown SMTP error";
+      const retryable =
+        attempt === 0 && shouldRetryWithOtherMode(rawMsg);
+      if (!retryable) {
+        const errorMsg = friendlySmtpError(rawMsg, {
+          port: cfg.port,
+          secure: currentSecure,
         });
-      } catch (updateErr) {
-        console.error("[email] Failed to update EmailLog → failed:", updateErr);
+        if (logId) {
+          try {
+            await db.emailLog.update({
+              where: { id: logId },
+              data: { status: "failed", error: errorMsg },
+            });
+          } catch (updateErr) {
+            console.error("[email] Failed to update EmailLog → failed:", updateErr);
+          }
+        }
+        console.error(`[email:failed] to=${to} subject="${subject}" error=${errorMsg}`);
+        return { success: false, status: "failed", error: errorMsg, logId };
       }
-    }
 
-    console.error(`[email:failed] to=${to} subject="${subject}" error=${errorMsg}`);
-    return { success: false, status: "failed", error: errorMsg, logId };
+      // TLS mode mismatch — flip and retry once.
+      _workingSecure.set(secureCacheKey(cfg), !currentSecure);
+      resetEmailTransporter();
+      console.warn(
+        `[email] Encryption mode mismatch (secure=${currentSecure} on port ${cfg.port}) — retrying with secure=${!currentSecure}`,
+      );
+    }
   }
+  // Unreachable: the loop always returns on attempt 1 (retryable=false).
+  return { success: false, status: "failed", error: "Unknown SMTP error", logId };
 }

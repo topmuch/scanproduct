@@ -248,11 +248,26 @@ async function main() {
 
   console.log("6. Metadata réelles sur la home");
   // Le cache settings (60s) est invalidé par chaque PUT/POST (setSetting).
-  // ⚠️ Bun's fetch respecte le cache HTTP : sans "no-store", la home peut
-  // être servie depuis un cache local périmé (token GSC d'un run précédent).
-  const homeHtml = await (
-    await fetch(`${BASE}/`, { cache: "no-store" } as RequestInit)
-  ).text();
+  // ⚠️ Deux pièges de cache ici :
+  //   1. Bun's fetch respecte le cache HTTP → "cache: no-store" obligatoire ;
+  //   2. le serveur dev peut servir une version du rendu / antérieure au PUT
+  //      (fenêtre de revalidation) → on REPOLL la home jusqu'à ~10 s pour ne
+  //      pas échouer sur un rendu en retard (le code est correct, cf. les
+  //      autres pages qui rendent la meta immédiatement).
+  async function fetchHome(): Promise<string> {
+    return (
+      await fetch(`${BASE}/?gscprobe=${Date.now()}-${Math.random()}`, {
+        cache: "no-store",
+      } as RequestInit)
+    ).text();
+  }
+  let homeHtml = await fetchHome();
+  const gscNeedle = `name="google-site-verification" content="${GSC_TOKEN}"`;
+  const deadline = Date.now() + 12_000;
+  while (!homeHtml.includes(gscNeedle) && Date.now() < deadline) {
+    await new Promise((r) => setTimeout(r, 1500));
+    homeHtml = await fetchHome();
+  }
   check("title = seoTitle", homeHtml.includes(`<title>${SEO_TITLE}</title>`) || homeHtml.includes(SEO_TITLE.slice(0, 40)));
   check(
     "og:image = image uploadée",
