@@ -76,6 +76,8 @@ verify-*.png
 # Build info
 *.tsbuildinfo
 tsconfig.tsbuildinfo
+# Baked deploy marker (created by the Dockerfile build; locally only for tests)
+/.deploy-commit
 
 # User-uploaded images (runtime data — keep the .gitkeep only)
 public/uploads/products/*

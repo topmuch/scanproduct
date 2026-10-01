@@ -3,6 +3,22 @@
 # issues (sharp, @img/sharp-libvips-*, etc.). Bun is pinned to the exact
 # version used to generate bun.lock locally, avoiding lockfile-semantics
 # drift between bun versions.
+#
+# ── v3: SINGLE SOURCE OF TRUTH (COPY . .) ────────────────────────────────
+# History: this Dockerfile used to `git clone` GitHub INSIDE the build.
+# That created a SECOND source of truth: Coolify checks out commit X, but
+# the image code came from whatever `git clone --branch main` fetched (or
+# from a CACHED clone layer, since Docker caches RUN layers). Result: the
+# container could run code NEWER than the checked-out Dockerfile (route
+# present) while the deploy-verification (commit SHA) was broken — exactly
+# the "commit:null + old UI in production" incident of Oct 2026.
+#
+# Now: the image is built from the BUILD CONTEXT (= what Coolify checked
+# out) via `COPY . .`. Code and Dockerfile always come from the SAME
+# commit. Docker invalidates the COPY layer automatically whenever any
+# source file changes → a Redeploy can NEVER ship stale code anymore.
+# The deployed commit is baked from the context's .git (100% independent
+# of Coolify env injection) and reported by GET /api/health.
 FROM node:20-bookworm-slim
 
 # Install required packages + native build tools (python3, make, g++)
@@ -33,102 +49,41 @@ RUN npm install -g bun@${BUN_VERSION} && \
 
 WORKDIR /app
 
-# Optional GitHub token — bypasses anonymous rate limits on codeload.github.com
-# (HTTP 429 too many requests) and is required for private repos.
-# In Coolify: set "GITHUB_TOKEN" as a Build Environment Variable.
-ARG GITHUB_TOKEN=""
-ARG GIT_BRANCH=main
-#
-# SOURCE_COMMIT — the SHA of the commit being deployed. If the build
-# environment injects it (Coolify build arg, CI, etc.) it is used verbatim
-# AND referenced inside the clone RUN below to invalidate the cached layer.
-# OBSERVED IN PRODUCTION: this Coolify instance does NOT pass SOURCE_COMMIT
-# as a build arg (it stayed "unknown" → /api/health reported commit:null),
-# so the code below ALSO bakes the commit from the clone itself
-# (git -C /app-tmp rev-parse HEAD) — 100% independent of Coolify.
-# CACHEBUST (manual override) still wins if configured in Coolify.
+# SOURCE_COMMIT — Coolify may inject the deployed SHA as a build arg.
+# Used as a FALLBACK only: the primary source is `git rev-parse HEAD`
+# executed on the build context itself (see the bake step below).
+# CACHEBUST — manual escape hatch: set it to any new value in Coolify
+# build args to force a full rebuild (rarely needed now: the COPY layer
+# invalidates automatically on every source change).
 ARG SOURCE_COMMIT="unknown"
 ARG CACHEBUST=""
 
-# ── AUTOMATIC CACHE-BUST (the reliable one) ──────────────────────────────
-# The branch's Atom feed changes content on EVERY push. Docker's ADD from a
-# remote URL re-downloads/re-checks the file on EVERY build and invalidates
-# this layer (and everything after it: clone → bun install → build) whenever
-# its content differs. Without this, Docker reuses the cached clone layer
-# and the container keeps running STALE CODE after a Redeploy — the exact
-# production incident that shipped a fix hours late. The feed lives on the
-# same host as the clone itself, so if GitHub is unreachable the build was
-# already doomed: ADD adds no new failure mode. The downloaded file is tiny
-# and inert (kept at /app/.github-feed.atom, never read at runtime).
-ADD https://github.com/topmuch/scanproduct/commits/main.atom /app/.github-feed.atom
+# ── 1. Dependencies (cached between source changes) ──────────────────────
+COPY package.json bun.lock ./
+RUN bun install --frozen-lockfile --no-progress
 
-# Expose the deployed commit to the runtime so /api/health can report it
-# (curl /api/health → "commit": "<sha>" — instant deploy verification).
-ENV DEPLOY_COMMIT=${SOURCE_COMMIT}
-
-# Clone source from GitHub using `git clone` instead of curl+tar.
-#
-# WHY: codeload.github.com (the tarball endpoint) rate-limits anonymous
-# downloads with HTTP 429 after a few requests. The 429 response body is
-# plain text, so `tar` fails with "invalid magic / short read". git clone
-# uses the github.com HTTPS endpoint (not codeload) which is more resilient
-# and also supports authentication via the URL when GITHUB_TOKEN is set.
-#
-# The install step uses --frozen-lockfile for reproducibility, with a
-# verbose fallback so the REAL error is surfaced if the frozen install
-# fails (otherwise BuildKit only shows the summary line).
-RUN echo "=== Deploy commit (SOURCE_COMMIT): ${SOURCE_COMMIT:-unknown} | cachebust: ${CACHEBUST:-none} ===" && \
-    echo "=== Cloning source (branch=$GIT_BRANCH) ===" && \
-    rm -rf /app/* /app/.[!.]* 2>/dev/null || true; \
-    if [ -n "$GITHUB_TOKEN" ]; then \
-      echo "  Using authenticated clone (GITHUB_TOKEN set)"; \
-      git clone --depth 1 --branch "$GIT_BRANCH" \
-        "https://x-access-token:${GITHUB_TOKEN}@github.com/topmuch/scanproduct.git" \
-        /app-tmp; \
-    else \
-      echo "  Using anonymous clone (public repo)"; \
-      git clone --depth 1 --branch "$GIT_BRANCH" \
-        https://github.com/topmuch/scanproduct.git \
-        /app-tmp; \
-    fi && \
-    echo "=== Baking deployed commit into /app/.deploy-commit ===" && \
-    if [ -n "$SOURCE_COMMIT" ] && [ "$SOURCE_COMMIT" != "unknown" ]; then \
-      echo -n "$SOURCE_COMMIT" > /app/.deploy-commit && \
-      echo "  source: Coolify SOURCE_COMMIT → $SOURCE_COMMIT"; \
-    else \
-      git -C /app-tmp rev-parse HEAD > /app/.deploy-commit && \
-      echo "  source: cloned git HEAD  → $(cat /app/.deploy-commit)"; \
-    fi && \
-    rm -rf /app-tmp/.git && \
-    sh -c 'cp -a /app-tmp/. /app/' && \
-    rm -rf /app-tmp && \
-    echo "=== Clone successful ===" && \
-    ls -la package.json bun.lock && \
-    echo "=== bun version ===" && \
-    bun --version && \
-    echo "=== System info ===" && \
-    uname -a && \
-    cat /etc/os-release | head -3 && \
-    echo "=== Disk space ===" && \
-    df -h / /tmp && \
-    echo "=== Memory ===" && \
-    free -h 2>/dev/null || cat /proc/meminfo | head -5 && \
-    echo "=== Installing dependencies (frozen lockfile) ===" && \
-    (bun install --frozen-lockfile --no-progress || \
-      (echo "==========================================" && \
-       echo "Frozen install failed — retrying with verbose output" && \
-       echo "to surface the real error:" && \
-       echo "==========================================" && \
-       bun install --verbose && \
-       echo "NOTE: lockfile was out of sync — non-frozen install succeeded."))
-
-# Generate Prisma Client
+# ── 2. Prisma client (schema cached separately) ──────────────────────────
+COPY prisma ./prisma
 RUN bunx prisma generate
 
-# Build the application
-ENV NEXT_TELEMETRY_DISABLED=1
-ENV DATABASE_URL=file:/app/data/scanproduct.db
-ENV NODE_OPTIONS="--max-old-space-size=4096"
+# ── 3. Application source (= the commit Coolify checked out) ─────────────
+# .git IS included in the context (not .dockerignore-d) so the bake step
+# can read the exact deployed SHA. It is removed from the final image
+# right after baking.
+COPY . .
+
+# ── 4. Bake the deployed commit into /app/.deploy-commit ─────────────────
+# Priority: context git HEAD (the truth) → Coolify SOURCE_COMMIT → a
+# build-timestamp marker so /api/health NEVER reports a silently-stale
+# deploy without evidence. .git is deleted afterwards to keep the image
+# lean.
+RUN { git rev-parse HEAD 2>/dev/null || true; } > /tmp/.baked-sha; \
+    SHA="$(cat /tmp/.baked-sha 2>/dev/null)"; \
+    if [ -z "$SHA" ]; then SHA="$SOURCE_COMMIT"; fi; \
+    if [ -z "$SHA" ] || [ "$SHA" = "unknown" ]; then SHA="unknown-build-$(date +%Y%m%d-%H%M%S)"; fi; \
+    echo -n "$SHA" > /app/.deploy-commit && \
+    echo "=== Baked deployed commit: $SHA (cachebust=${CACHEBUST:-none}) ===" && \
+    rm -rf /app/.git /tmp/.baked-sha
 
 # IMPORTANT: create the uploads AND data directories BEFORE `next build`.
 # - uploads: so the build doesn't fail if it traverses public/uploads.
@@ -143,28 +98,25 @@ ENV NODE_OPTIONS="--max-old-space-size=4096"
 # matching the Coolify persistent volume mount — singular "product").
 RUN mkdir -p /app/public/uploads/product /app/data && \
     chmod -R 777 /app/public/uploads /app/data
+
+# ── 5. Build ──────────────────────────────────────────────────────────────
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV DATABASE_URL=file:/app/data/scanproduct.db
+ENV NODE_OPTIONS="--max-old-space-size=4096"
+# next.config.ts reads /app/.deploy-commit at build time and inlines it
+# as NEXT_PUBLIC_DEPLOY_COMMIT into the client AND server bundles — the
+# commit reported by /api/health survives even if the file is missing at
+# runtime.
 RUN bun run build
 
-# Create the persistent data + uploads directories with permissive
-# permissions so the Node process can write SQLite + uploaded files
-# regardless of the user Coolify runs the container as.
-#
-# /app/public/uploads/product is where /api/upload writes at runtime
-# (UPLOAD_DIR env var points here, singular "product"). This path
-# matches the Coolify persistent volume mount:
-#   SOURCE:      /var/lib/coolify/volumes/scanproduct-uploads/product
-#   DESTINATION: /app/public/uploads/product
-# The dedicated serve route /api/uploads/[...path] reads from this
-# directory and streams files with the correct Content-Type (detected
-# from magic bytes), so uploads persist across redeployments.
-RUN mkdir -p /app/data /app/public/uploads/product && \
-    chmod -R 777 /app/public/uploads /app/data && \
-    cp /app/.deploy-commit /app/.next/standalone/.deploy-commit 2>/dev/null || true
+# The .deploy-commit is ALSO copied next to the standalone server as a
+# belt-and-suspenders fallback (the health route reads both paths).
+RUN cp /app/.deploy-commit /app/.next/standalone/.deploy-commit 2>/dev/null || true
 
-# The entrypoint script (docker-entrypoint.sh) was already extracted into
-# /app by the `tar xzf` step above (it's committed to the GitHub repo).
-# We just need to ensure it's executable — git doesn't always preserve
-# the executable bit across platforms / tarball extraction.
+# The entrypoint script (docker-entrypoint.sh) comes from the build
+# context (it's committed to the GitHub repo). Just ensure it's
+# executable — git doesn't always preserve the executable bit across
+# platforms / tarball extraction.
 #
 # This script:
 #   1. Runs `prisma db push` with `yes y |` piped to stdin to bypass

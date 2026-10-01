@@ -10,9 +10,16 @@ node_modules
 tsconfig.tsbuildinfo
 
 # --- Version control --------------------------------------------------------
-.git
+# NOTE: .git is deliberately NOT ignored since the Dockerfile v3 (COPY . .):
+# the bake step reads `git rev-parse HEAD` from the build context to stamp
+# the exact deployed commit into /app/.deploy-commit (reported by
+# /api/health). It is deleted from the image right after baking.
 .gitignore
 .gitattributes
+
+# Never ship a locally-baked deploy marker — the Dockerfile always bakes a
+# fresh one from the context's git HEAD.
+.deploy-commit
 
 # --- Logs -------------------------------------------------------------------
 *.log
@@ -24,10 +31,13 @@ yarn-error.log*
 
 # --- Local SQLite database & runtime data -----------------------------------
 # The DB file lives on a persistent volume at runtime; never bake it in.
+data/
 db/*.db
 db/*.db-journal
 db/*.db-wal
 db/*.db-shm
+*.db
+*.db-journal
 
 # --- Tests & tooling (not needed in the production image) -------------------
 tests/

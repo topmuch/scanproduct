@@ -42,6 +42,8 @@ type Stats = {
   lots: number;
   qrCodes: number;
   scans: number;
+  /** Répartition des designs QR (diagnostic : tous les QR doivent être "badge" sauf choix explicite). */
+  qrByDesign: { badge: number; classic: number };
 };
 
 type HealthResponse = {
@@ -61,19 +63,40 @@ type HealthResponse = {
 };
 
 /**
- * Read the git commit baked into the image at build time. The Dockerfile
- * writes SOURCE_COMMIT (injected by Coolify) into /app/.deploy-commit and
- * sets DEPLOY_COMMIT. Lets anyone verify what is actually running with a
- * single `curl /api/health` — catches stale-code cache deploys instantly.
+ * Resolve the git commit running in this container.
+ *
+ * Resolution chain (first valid wins):
+ *   1. NEXT_PUBLIC_DEPLOY_COMMIT — inlined into the server bundle at BUILD
+ *      time by next.config.ts (reads /app/.deploy-commit written by the
+ *      Dockerfile bake step). Most reliable: survives any runtime file
+ *      disappearance because it is baked INTO the JavaScript itself.
+ *   2. DEPLOY_COMMIT env var (Coolify SOURCE_COMMIT injection).
+ *   3. /app/.deploy-commit file (baked by the Dockerfile).
+ *   4. ./.deploy-commit relative to cwd (standalone fallback copy).
+ *
+ * Lets anyone verify what is actually running with a single
+ * `curl /api/health` — catches stale-code deploys instantly.
  */
 function getDeployedCommit(): string | null {
-  const fromEnv = process.env.DEPLOY_COMMIT?.trim();
-  if (fromEnv && fromEnv !== "unknown") return fromEnv;
-  try {
-    const fromFile = fs.readFileSync("/app/.deploy-commit", "utf8").trim();
-    if (fromFile && fromFile !== "unknown") return fromFile;
-  } catch {
-    // File missing (local dev) — expected.
+  const candidates: Array<string | null | undefined> = [
+    process.env.NEXT_PUBLIC_DEPLOY_COMMIT,
+    process.env.DEPLOY_COMMIT,
+  ];
+  for (const c of candidates) {
+    const v = c?.trim();
+    if (v && v !== "unknown") return v;
+  }
+  const paths = [
+    "/app/.deploy-commit",
+    path.join(process.cwd(), ".deploy-commit"),
+  ];
+  for (const p of paths) {
+    try {
+      const fromFile = fs.readFileSync(p, "utf8").trim();
+      if (fromFile && fromFile !== "unknown") return fromFile;
+    } catch {
+      // File missing (local dev / standalone layout) — try next candidate.
+    }
   }
   return null;
 }
@@ -203,7 +226,19 @@ export async function GET() {
     db.lot.count(),
     db.qRCode.count(),
     db.scan.count(),
+    // Répartition des designs QR : diagnostique en un coup d'œil si les
+    // lignes en base sont bien "badge" (design officiel) ou "classic".
+    db.qRCode.groupBy({ by: ["design"], _count: { _all: true } }),
   ]);
+
+  const qrByDesign: Stats["qrByDesign"] = { badge: 0, classic: 0 };
+  if (statsPromise[5].status === "fulfilled") {
+    for (const row of statsPromise[5].value) {
+      const n = Number(row._count?._all ?? 0);
+      if (row.design === "classic") qrByDesign.classic += n;
+      else qrByDesign.badge += n;
+    }
+  }
 
   const stats: Stats = {
     users: statsPromise[0].status === "fulfilled" ? Number(statsPromise[0].value) : 0,
@@ -211,6 +246,7 @@ export async function GET() {
     lots: statsPromise[2].status === "fulfilled" ? Number(statsPromise[2].value) : 0,
     qrCodes: statsPromise[3].status === "fulfilled" ? Number(statsPromise[3].value) : 0,
     scans: statsPromise[4].status === "fulfilled" ? Number(statsPromise[4].value) : 0,
+    qrByDesign,
   };
 
   // ── Aggregate status ──────────────────────────────────────────────────
