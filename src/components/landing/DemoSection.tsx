@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { RefreshCw, ShieldCheck, QrCode, Eye } from "lucide-react";
-import { QRCodeCanvas } from "qrcode.react";
+import { BadgeQRPreview } from "@/components/fabricant/BadgeQRPreview";
 import { getScanOrigin } from "@/lib/qr-utils";
 import { AnimatedSection } from "./AnimatedSection";
 import { SectionBadge } from "./SectionBadge";
@@ -127,7 +127,7 @@ export function DemoSection() {
                   <p className="text-sm font-semibold text-[#111827]">pour voir le catalogue VerifScan</p>
                 </div>
                 <div className="rounded-lg border-2 border-[#022150]/20 bg-white p-2">
-                  <QRCodeCanvas value={`${getScanOrigin()}/produits`} size={64} level="M" marginSize={1} />
+                  <BadgeQRPreview value={`${getScanOrigin()}/produits`} size={72} />
                 </div>
               </div>
             </motion.div>

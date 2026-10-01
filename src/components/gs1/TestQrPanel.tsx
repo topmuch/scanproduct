@@ -12,7 +12,7 @@
  */
 
 import { useSyncExternalStore } from "react";
-import { QRCodeCanvas } from "qrcode.react";
+import { BadgeQRPreview } from "@/components/fabricant/BadgeQRPreview";
 import {
   genererUrlGs1,
   genererUrlStandard,
@@ -54,7 +54,8 @@ function CarteQr({
       </div>
 
       <div className="rounded-xl border border-slate-100 bg-white p-3">
-        <QRCodeCanvas value={url} size={200} level="M" marginSize={1} />
+        {/* Design officiel « LABEL VERIFSCAN » — cercle jaune, QR noir au centre */}
+        <BadgeQRPreview value={url} size={210} />
       </div>
 
       <code className="w-full break-all rounded-lg bg-slate-50 px-3 py-2 text-[11px] leading-relaxed text-slate-600">

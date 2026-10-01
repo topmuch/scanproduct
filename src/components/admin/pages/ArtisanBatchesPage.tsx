@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { QRCodeCanvas } from "qrcode.react";
+import { BadgeQRPreview } from "@/components/fabricant/BadgeQRPreview";
 import {
   QrCode,
   Plus,
@@ -575,13 +575,9 @@ export function ArtisanBatchesPage() {
                             className="rounded-md border border-[#E5E7EB] bg-white p-1.5"
                             title="Scannez ce QR : il ouvre la page publique du pack"
                           >
-                            <QRCodeCanvas
+                            <BadgeQRPreview
                               value={`${getScanOrigin().replace(/\/$/, "")}/a/${pack.masterQrCode}`}
                               size={128}
-                              fgColor="#022150"
-                              bgColor="#FFFFFF"
-                              level="M"
-                              marginSize={2}
                             />
                           </div>
                           <span className="text-center text-[10px] leading-tight text-[#6B7280]">

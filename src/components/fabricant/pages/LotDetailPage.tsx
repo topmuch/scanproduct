@@ -15,11 +15,11 @@ import {
   QrCode,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { QRCodeCanvas } from "qrcode.react";
 import { formatNombre } from "@/lib/fabricant-types";
 import { useFabricantNav } from "@/lib/fabricant-store";
 import { useFabricantData } from "../FabricantDataProvider";
-import { downloadQRCode } from "@/lib/qr-utils";
+import { downloadBadgeQR } from "@/lib/qr-utils";
+import { BadgeQRPreview } from "../BadgeQRPreview";
 import { construireUrlQrClient } from "@/lib/qr-url";
 import { ProductImage } from "@/components/fabricant/ProductImage";
 import { toast } from "sonner";
@@ -135,9 +135,12 @@ export function LotDetailPage() {
   function handleDownloadQR() {
     // Encode la même URL publique que la génération serveur (GS1 ou
     // standard selon le barcode du produit) pour un QR téléchargé
-    // identique à ce qui est imprimé.
+    // identique à ce qui est imprimé — design officiel « LABEL VERIFSCAN ».
     const qr = urlQrDuLot();
-    downloadQRCode(qr.url, `${lot!.numero}-qr${qr.format === "GS1" ? "-gs1" : ""}.png`);
+    downloadBadgeQR(
+      qr.url,
+      `${lot!.numero}-qr${qr.format === "GS1" ? "-gs1" : ""}.png`
+    );
     toast.success(
       qr.format === "GS1"
         ? `QR code GS1 de ${lot!.numero} téléchargé`
@@ -526,15 +529,7 @@ function ActionButton({
 }
 
 function RealMiniQR({ value }: { value: string }) {
-  return (
-    <QRCodeCanvas
-      value={value}
-      size={84}
-      level="M"
-      marginSize={0}
-      fgColor="#111827"
-      bgColor="#FFFFFF"
-      style={{ width: "100%", height: "auto" }}
-    />
-  );
+  // Design officiel « LABEL VERIFSCAN » (cercle jaune, QR noir au centre) —
+  // même rendu que la grille QR Codes et les téléchargements.
+  return <BadgeQRPreview value={value} size={84} />;
 }

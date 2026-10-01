@@ -1,10 +1,11 @@
 "use client";
 
 import * as React from "react";
-import { QRCodeSVG } from "qrcode.react";
+import { BadgeQRPreview } from "@/components/fabricant/BadgeQRPreview";
 
 /**
- * ProductQRCode — vrai QR code scannable affiché à côté du produit.
+ * ProductQRCode — design officiel « LABEL VERIFSCAN » (badge jaune, QR noir
+ * au centre) affiché à côté du produit.
  *
  * - Encode l'URL absolue `${origin}/p/[lotId]` (récupérée côté client via
  *   window.location.origin) afin que le scan depuis n'importe quel appareil
@@ -13,8 +14,8 @@ import { QRCodeSVG } from "qrcode.react";
  *   pour éviter un mismatch de hydration, puis on passe à l'absolue après mount.
  * - Taille par défaut : 76px ≈ 2cm à 96dpi (1cm = 37.8px @ 96dpi).
  * - SVG vectoriel : reste net à toute taille, imprimable.
- * - Quiet zone (marginSize=1) + fond blanc + foreground noir pur pour
- *   garantir la scannabilité par n'importe quel lecteur de QR.
+ * - Quiet zone fournie par le jaune du badge + modules noirs sur fond clair
+ *   pour garantir la scannabilité par n'importe quel lecteur de QR.
  */
 
 type Props = {
@@ -52,14 +53,7 @@ export function ProductQRCode({
       role="img"
       aria-label={`QR code à scanner pour ouvrir le passeport numérique du produit ${productId ?? lotId}`}
     >
-      <QRCodeSVG
-        value={url}
-        size={size}
-        level="M"
-        marginSize={1}
-        bgColor="#FFFFFF"
-        fgColor="#000000"
-      />
+      <BadgeQRPreview value={url} size={size} />
     </div>
   );
 }

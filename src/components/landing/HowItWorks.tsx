@@ -1,7 +1,6 @@
 "use client";
 
 import { FileText, QrCode, TrendingUp, ArrowRight } from "lucide-react";
-import { QRCodeCanvas } from "qrcode.react";
 import { getScanUrl } from "@/lib/qr-utils";
 import { AnimatedSection } from "./AnimatedSection";
 import { SectionBadge } from "./SectionBadge";
