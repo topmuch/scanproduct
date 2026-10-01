@@ -30,10 +30,21 @@ WORKDIR /app
 # In Coolify: set "GITHUB_TOKEN" as a Build Environment Variable.
 ARG GITHUB_TOKEN=""
 ARG GIT_BRANCH=main
-# Pass --build-arg CACHEBUST=<unique> (e.g. commit SHA or timestamp) to force
-# Docker to re-run the git clone layer and pick up the latest commit. Without
-# this, Docker may use a cached layer that contains stale code.
-ARG CACHEBUST="default"
+#
+# SOURCE_COMMIT — injected automatically by Coolify on every deploy (the
+# SHA of the commit being deployed). We reference it inside the clone RUN
+# below so Docker INVALIDATES the cached clone layer whenever a new commit
+# is deployed. Without this, Docker happily reuses the cached layer and the
+# container keeps running STALE CODE even after a Redeploy (this is exactly
+# what happened: fix pushed 22:38 UTC, container rebuilt 22:43 UTC from a
+# cached clone that predated the push — production never got the fix).
+# CACHEBUST (manual override) still wins if configured in Coolify.
+ARG SOURCE_COMMIT="unknown"
+ARG CACHEBUST=""
+
+# Expose the deployed commit to the runtime so /api/health can report it
+# (curl /api/health → "commit": "<sha>" — instant deploy verification).
+ENV DEPLOY_COMMIT=${SOURCE_COMMIT}
 
 # Clone source from GitHub using `git clone` instead of curl+tar.
 #
@@ -46,7 +57,8 @@ ARG CACHEBUST="default"
 # The install step uses --frozen-lockfile for reproducibility, with a
 # verbose fallback so the REAL error is surfaced if the frozen install
 # fails (otherwise BuildKit only shows the summary line).
-RUN echo "=== Cache bust: $CACHEBUST ===" && \
+RUN echo "=== Deploy commit (SOURCE_COMMIT): $SOURCE_COMMIT | cachebust: ${CACHEBUST:-none} ===" && \
+    echo -n "${SOURCE_COMMIT}" > /app/.deploy-commit && \
     echo "=== Cloning source (branch=$GIT_BRANCH) ===" && \
     rm -rf /app/* /app/.[!.]* 2>/dev/null || true && \
     if [ -n "$GITHUB_TOKEN" ]; then \
@@ -119,7 +131,8 @@ RUN bun run build
 # directory and streams files with the correct Content-Type (detected
 # from magic bytes), so uploads persist across redeployments.
 RUN mkdir -p /app/data /app/public/uploads/product && \
-    chmod -R 777 /app/public/uploads /app/data
+    chmod -R 777 /app/public/uploads /app/data && \
+    cp /app/.deploy-commit /app/.next/standalone/.deploy-commit 2>/dev/null || true
 
 # The entrypoint script (docker-entrypoint.sh) was already extracted into
 # /app by the `tar xzf` step above (it's committed to the GitHub repo).

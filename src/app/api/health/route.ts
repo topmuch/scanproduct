@@ -45,6 +45,8 @@ type HealthResponse = {
   timestamp: string;
   service: string;
   version: string;
+  /** Git commit deployed in this container (from Coolify SOURCE_COMMIT). */
+  commit: string | null;
   uptime: number;
   checks: {
     database: DbCheck;
@@ -53,6 +55,24 @@ type HealthResponse = {
   };
   stats: Stats;
 };
+
+/**
+ * Read the git commit baked into the image at build time. The Dockerfile
+ * writes SOURCE_COMMIT (injected by Coolify) into /app/.deploy-commit and
+ * sets DEPLOY_COMMIT. Lets anyone verify what is actually running with a
+ * single `curl /api/health` — catches stale-code cache deploys instantly.
+ */
+function getDeployedCommit(): string | null {
+  const fromEnv = process.env.DEPLOY_COMMIT?.trim();
+  if (fromEnv && fromEnv !== "unknown") return fromEnv;
+  try {
+    const fromFile = fs.readFileSync("/app/.deploy-commit", "utf8").trim();
+    if (fromFile && fromFile !== "unknown") return fromFile;
+  } catch {
+    // File missing (local dev) — expected.
+  }
+  return null;
+}
 
 /**
  * Production-grade health-check endpoint used by Coolify / Docker HEALTHCHECK,
@@ -186,6 +206,7 @@ export async function GET() {
     timestamp: new Date().toISOString(),
     service: SERVICE_NAME,
     version: SERVICE_VERSION,
+    commit: getDeployedCommit(),
     uptime: Math.round(process.uptime() * 100) / 100,
     checks: {
       database: dbCheck,

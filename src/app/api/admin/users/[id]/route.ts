@@ -316,6 +316,13 @@ export async function DELETE(
       await tx.auditLog.updateMany({ where: { userId: id }, data: { userId: null } });
       await tx.scan.updateMany({ where: { userId: id }, data: { userId: null } });
       await tx.review.updateMany({ where: { userId: id }, data: { userId: null } });
+      // Defensive: QR codes stamped with this fabricant but living on a lot
+      // NOT owned by them (legacy/anomalous rows) would break user.delete
+      // with a FK error on old prod databases that enforce constraints.
+      await tx.qRCode.updateMany({
+        where: { fabricantId: id, NOT: { lotId: { in: lotIds } } },
+        data: { fabricantId: null },
+      });
 
       // 7) Finally, the account itself
       const deleted = await tx.user.delete({ where: { id }, select: { id: true, email: true } });
