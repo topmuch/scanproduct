@@ -5,7 +5,7 @@
 import { writeFileSync, mkdirSync, execSync } from "fs";
 import { execSync as sx } from "child_process";
 
-const BASE = "http://localhost:3000";
+const BASE = process.env.TEST_BASE_URL || "http://localhost:3000";
 const OUT = "/home/z/my-project/scripts/export-test";
 mkdirSync(OUT, { recursive: true });
 

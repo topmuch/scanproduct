@@ -11,7 +11,7 @@
 import { writeFileSync, mkdirSync, existsSync, unlinkSync } from "fs";
 import { execSync } from "child_process";
 
-const BASE = "http://localhost:3000";
+const BASE = process.env.TEST_BASE_URL || "http://localhost:3000";
 const OUT = "/home/z/my-project/download/qr-concepts";
 mkdirSync(OUT, { recursive: true });
 

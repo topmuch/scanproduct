@@ -33,6 +33,71 @@ const bakedDeployCommit: string | null =
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  // ── Modules externalisés par Turbopack (output: standalone) ────────
+  // pdfkit (polices à l'exécution) et archiver (ESM pur) NE SONT PAS
+  // tracés par le output file tracing (nft.json vide) → absents du
+  // standalone → HTTP 500 sur les téléchargements (export ZIP, PDF).
+  // Ce défaut force leur inclusion ; le filet de sécurité complet est
+  // assuré par scripts/fix-standalone-deps.mjs (build + docker-entrypoint).
+  outputFileTracingIncludes: {
+    "/api/**": [
+      "./node_modules/pdfkit/**/*",
+      "./node_modules/archiver/**/*",
+      "./node_modules/@noble/ciphers/**/*",
+      "./node_modules/@noble/hashes/**/*",
+      "./node_modules/@swc/helpers/**/*",
+      "./node_modules/abort-controller/**/*",
+      "./node_modules/async/**/*",
+      "./node_modules/b4a/**/*",
+      "./node_modules/balanced-match/**/*",
+      "./node_modules/bare-events/**/*",
+      "./node_modules/bare-fs/**/*",
+      "./node_modules/bare-path/**/*",
+      "./node_modules/bare-stream/**/*",
+      "./node_modules/bare-url/**/*",
+      "./node_modules/base64-js/**/*",
+      "./node_modules/brace-expansion/**/*",
+      "./node_modules/brotli/**/*",
+      "./node_modules/buffer/**/*",
+      "./node_modules/buffer-crc32/**/*",
+      "./node_modules/clone/**/*",
+      "./node_modules/compress-commons/**/*",
+      "./node_modules/concat-map/**/*",
+      "./node_modules/crc-32/**/*",
+      "./node_modules/crc32-stream/**/*",
+      "./node_modules/dfa/**/*",
+      "./node_modules/event-target-shim/**/*",
+      "./node_modules/events/**/*",
+      "./node_modules/events-universal/**/*",
+      "./node_modules/fast-deep-equal/**/*",
+      "./node_modules/fast-fifo/**/*",
+      "./node_modules/fflate/**/*",
+      "./node_modules/fontkit/**/*",
+      "./node_modules/ieee754/**/*",
+      "./node_modules/is-stream/**/*",
+      "./node_modules/lazystream/**/*",
+      "./node_modules/linebreak/**/*",
+      "./node_modules/minimatch/**/*",
+      "./node_modules/normalize-path/**/*",
+      "./node_modules/pako/**/*",
+      "./node_modules/png-js/**/*",
+      "./node_modules/process/**/*",
+      "./node_modules/readable-stream/**/*",
+      "./node_modules/readdir-glob/**/*",
+      "./node_modules/restructure/**/*",
+      "./node_modules/safe-buffer/**/*",
+      "./node_modules/streamx/**/*",
+      "./node_modules/string_decoder/**/*",
+      "./node_modules/tar-stream/**/*",
+      "./node_modules/teex/**/*",
+      "./node_modules/text-decoder/**/*",
+      "./node_modules/tiny-inflate/**/*",
+      "./node_modules/tslib/**/*",
+      "./node_modules/unicode-properties/**/*",
+      "./node_modules/unicode-trie/**/*",
+      "./node_modules/zip-stream/**/*",
+    ],
+  },
   // Inline the deployed commit at build time (client + server bundles).
   env: bakedDeployCommit
     ? { NEXT_PUBLIC_DEPLOY_COMMIT: bakedDeployCommit }

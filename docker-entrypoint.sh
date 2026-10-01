@@ -481,6 +481,22 @@ sharp(Buffer.from('<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height
   cd /app
 fi
 
+# ── 5d. SELF-HEAL modules externalisés (pdfkit, archiver, …) ──────────────
+# Incident oct. 2026 : le build standalone externalise pdfkit (createRequire)
+# et archiver (ESM pur) mais le file tracing ne les copie JAMAIS dans
+# .next/standalone/node_modules → « Cannot find module » → HTTP 500
+# « Internal Server Error » sur TOUS les téléchargements (export ZIP des QR,
+# PDF print-batch admin, PDF étiquettes). Ce self-heal tourne à CHAQUE boot,
+# indépendamment du Dockerfile utilisé (la leçon de l'incident sharp) : il
+# copie la closure complète depuis /app/node_modules puis smoke-teste les
+# imports depuis le standalone. Idempotent : ne copie que ce qui manque.
+if [ -f /app/scripts/fix-standalone-deps.mjs ] && command -v node >/dev/null 2>&1; then
+  cd /app && node /app/scripts/fix-standalone-deps.mjs --boot || {
+    echo "WARN: self-heal modules externalisés a échoué — les exports ZIP/PDF peuvent renvoyer 500"
+  }
+  cd /app
+fi
+
 # ── 6. Start the Next.js standalone server ────────────────────────────────
 echo "=== Starting server ==="
 exec node .next/standalone/server.js

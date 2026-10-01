@@ -9,7 +9,7 @@
 import { writeFileSync, mkdirSync } from "fs";
 import { execSync } from "child_process";
 
-const BASE = "http://localhost:3000";
+const BASE = process.env.TEST_BASE_URL || "http://localhost:3000";
 const OUT = "/home/z/my-project/scripts/export-test";
 mkdirSync(OUT, { recursive: true });
 
