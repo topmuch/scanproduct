@@ -31,16 +31,28 @@ WORKDIR /app
 ARG GITHUB_TOKEN=""
 ARG GIT_BRANCH=main
 #
-# SOURCE_COMMIT — injected automatically by Coolify on every deploy (the
-# SHA of the commit being deployed). We reference it inside the clone RUN
-# below so Docker INVALIDATES the cached clone layer whenever a new commit
-# is deployed. Without this, Docker happily reuses the cached layer and the
-# container keeps running STALE CODE even after a Redeploy (this is exactly
-# what happened: fix pushed 22:38 UTC, container rebuilt 22:43 UTC from a
-# cached clone that predated the push — production never got the fix).
+# SOURCE_COMMIT — the SHA of the commit being deployed. If the build
+# environment injects it (Coolify build arg, CI, etc.) it is used verbatim
+# AND referenced inside the clone RUN below to invalidate the cached layer.
+# OBSERVED IN PRODUCTION: this Coolify instance does NOT pass SOURCE_COMMIT
+# as a build arg (it stayed "unknown" → /api/health reported commit:null),
+# so the code below ALSO bakes the commit from the clone itself
+# (git -C /app-tmp rev-parse HEAD) — 100% independent of Coolify.
 # CACHEBUST (manual override) still wins if configured in Coolify.
 ARG SOURCE_COMMIT="unknown"
 ARG CACHEBUST=""
+
+# ── AUTOMATIC CACHE-BUST (the reliable one) ──────────────────────────────
+# The branch's Atom feed changes content on EVERY push. Docker's ADD from a
+# remote URL re-downloads/re-checks the file on EVERY build and invalidates
+# this layer (and everything after it: clone → bun install → build) whenever
+# its content differs. Without this, Docker reuses the cached clone layer
+# and the container keeps running STALE CODE after a Redeploy — the exact
+# production incident that shipped a fix hours late. The feed lives on the
+# same host as the clone itself, so if GitHub is unreachable the build was
+# already doomed: ADD adds no new failure mode. The downloaded file is tiny
+# and inert (kept at /app/.github-feed.atom, never read at runtime).
+ADD https://github.com/topmuch/scanproduct/commits/main.atom /app/.github-feed.atom
 
 # Expose the deployed commit to the runtime so /api/health can report it
 # (curl /api/health → "commit": "<sha>" — instant deploy verification).
@@ -57,10 +69,9 @@ ENV DEPLOY_COMMIT=${SOURCE_COMMIT}
 # The install step uses --frozen-lockfile for reproducibility, with a
 # verbose fallback so the REAL error is surfaced if the frozen install
 # fails (otherwise BuildKit only shows the summary line).
-RUN echo "=== Deploy commit (SOURCE_COMMIT): $SOURCE_COMMIT | cachebust: ${CACHEBUST:-none} ===" && \
-    echo -n "${SOURCE_COMMIT}" > /app/.deploy-commit && \
+RUN echo "=== Deploy commit (SOURCE_COMMIT): ${SOURCE_COMMIT:-unknown} | cachebust: ${CACHEBUST:-none} ===" && \
     echo "=== Cloning source (branch=$GIT_BRANCH) ===" && \
-    rm -rf /app/* /app/.[!.]* 2>/dev/null || true && \
+    rm -rf /app/* /app/.[!.]* 2>/dev/null || true; \
     if [ -n "$GITHUB_TOKEN" ]; then \
       echo "  Using authenticated clone (GITHUB_TOKEN set)"; \
       git clone --depth 1 --branch "$GIT_BRANCH" \
@@ -71,6 +82,14 @@ RUN echo "=== Deploy commit (SOURCE_COMMIT): $SOURCE_COMMIT | cachebust: ${CACHE
       git clone --depth 1 --branch "$GIT_BRANCH" \
         https://github.com/topmuch/scanproduct.git \
         /app-tmp; \
+    fi && \
+    echo "=== Baking deployed commit into /app/.deploy-commit ===" && \
+    if [ -n "$SOURCE_COMMIT" ] && [ "$SOURCE_COMMIT" != "unknown" ]; then \
+      echo -n "$SOURCE_COMMIT" > /app/.deploy-commit && \
+      echo "  source: Coolify SOURCE_COMMIT → $SOURCE_COMMIT"; \
+    else \
+      git -C /app-tmp rev-parse HEAD > /app/.deploy-commit && \
+      echo "  source: cloned git HEAD  → $(cat /app/.deploy-commit)"; \
     fi && \
     rm -rf /app-tmp/.git && \
     sh -c 'cp -a /app-tmp/. /app/' && \
