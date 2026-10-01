@@ -1,0 +1,89 @@
+# =============================================================================
+# VerifScan — Dockerfile « INLINE COOLIFY » (auto-suffisant, sans contexte)
+# =============================================================================
+# UTILISATION : coller TOUT ce fichier dans le champ « Dockerfile » de la
+# ressource Coolify (mode contenu inline). Il est utilisé quand la ressource
+# Coolify n'attache PAS le dépôt au build (contexte vide : « transferring
+# context: 10kB »), ce qui fait échouer tout `COPY package.json …`.
+#
+# Stratégie : le build clone lui-même le dépôt GitHub public (source de
+# vérité unique = branche main), bake le SHA exact cloné dans
+# /app/.deploy-commit (visible par GET /api/health), puis build le
+# standalone avec les mêmes réparations que le Dockerfile du dépôt.
+#
+# ANTI-STALE : l'ADD ci-dessous télécharge le flux Atom des commits. À
+# chaque `git push`, son contenu (et son ETag/Last-Modified) change →
+# BuildKit invalide le cache des couches suivantes → le clone est TOUJOURS
+# frais. (Mécanisme déjà validé lors de l'incident oct. 2026.)
+# =============================================================================
+
+FROM node:20-bookworm-slim
+
+# ── Paquets système ────────────────────────────────────────────────────────
+# git        : clonage du dépôt + bake du SHA
+# sqlite3    : réparations SQL de l'entrypoint
+# fontconfig + fonts-dejavu-core : INDISPENSABLES au rendu SVG de sharp
+#   (texte du badge « LABEL VERIFSCAN » visible en production)
+# python3/make/g++ : fallback de compilation pour tout module natif
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+      git curl file ca-certificates \
+      libc6 sqlite3 \
+      fontconfig fonts-dejavu-core \
+      python3 make g++ \
+      && \
+    fc-cache -f && \
+    rm -rf /var/lib/apt/lists/*
+
+# ── Bun épinglé (même version que bun.lock) ───────────────────────────────
+ARG BUN_VERSION=1.3.14
+RUN npm install -g bun@${BUN_VERSION} && \
+    bun --version && \
+    which bun
+
+WORKDIR /app
+
+# ── CACHE-BUST ─────────────────────────────────────────────────────────────
+# Doit rester AVANT le RUN de clonage : à chaque push, le flux Atom change
+# → BuildKit invalide les couches suivantes → clone toujours à jour.
+ADD https://github.com/topmuch/scanproduct/commits/main.atom /tmp/cachebust.atom
+
+# ── 1. Clone du dépôt (source de vérité) + bake du SHA déployé ────────────
+RUN git clone --depth 1 --single-branch https://github.com/topmuch/scanproduct.git /app && \
+    SHA="$(git -C /app rev-parse HEAD)" && \
+    echo -n "$SHA" > /app/.deploy-commit && \
+    echo "=== Cloned deployed commit: $SHA ===" && \
+    rm -rf /app/.git && \
+    mkdir -p /app/public/uploads/product /app/data && \
+    chmod -R 777 /app/public/uploads /app/data
+
+# ── 2. Dépendances + client Prisma ─────────────────────────────────────────
+RUN bun install --frozen-lockfile --no-progress
+RUN bunx prisma generate
+
+# ── 3. Build standalone (inclut fix-standalone-sharp.sh et
+#       fix-standalone-deps.mjs via le script build du dépôt) ──────────────
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV DATABASE_URL=file:/app/data/scanproduct.db
+ENV NODE_OPTIONS="--max-old-space-size=4096"
+RUN bun run build
+
+# Le SHA est aussi copié à côté du serveur standalone (filet de sécurité
+# pour GET /api/health).
+RUN cp /app/.deploy-commit /app/.next/standalone/.deploy-commit
+
+# ── 4. Démarrage ───────────────────────────────────────────────────────────
+# L'entrypoint (venu du clone) : prisma db push + fallback SQL + seed
+# idempotent + self-heal sharp/pdfkit/archiver + démarrage du serveur.
+RUN chmod +x /app/docker-entrypoint.sh
+
+EXPOSE 3000
+
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
+ENV DATABASE_URL=file:/app/data/scanproduct.db
+# DOIT correspondre au chemin du volume persistant configuré dans Coolify
+# (montage unique « product » → /app/public/uploads/product).
+ENV UPLOAD_DIR=/app/public/uploads/product
+
+CMD ["/app/docker-entrypoint.sh"]
