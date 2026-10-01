@@ -35,6 +35,21 @@ const ROOT = process.cwd();
  *  les chunks ; archiver ESM pur non tracé. */
 const ROOT_PACKAGES = ["pdfkit", "archiver"];
 
+/** Binaires natifs sharp : les DEUX variants libc sont embarqués car la
+ *  détection libc du conteneur d'exécution n'est pas maîtrisable —
+ *  incident oct. 2026 : Coolify construisait l'image depuis un Dockerfile
+ *  INLINE périmé (node:20-alpine = musl) au lieu du Dockerfile du repo
+ *  (node:20-bookworm-slim = glibc). Sur musl, le loader sharp exige
+ *  @img/sharp-linuxmusl-x64 ; sur glibc, @img/sharp-linux-x64. Copier les
+ *  deux (~40 Mo) rend le standalone fonctionnel quel que soit la base.
+ *  (fix-standalone-sharp.sh copie déjà le glibc ; ce script le complète.) */
+const SHARP_VARIANTS = [
+  "@img/sharp-linux-x64",
+  "@img/sharp-libvips-linux-x64",
+  "@img/sharp-linuxmusl-x64",
+  "@img/sharp-libvips-linuxmusl-x64",
+];
+
 /** Closure transitive complète, pré-calculée depuis bun.lock (voir
  *  scripts/audit-standalone-deps.mjs pour recalculer si deps changent). */
 const CLOSURE = [
@@ -61,7 +76,7 @@ if (!existsSync(STANDALONE_NM)) {
 }
 
 let copies = 0, deja = 0, absents = 0;
-for (const pkg of CLOSURE) {
+for (const pkg of [...CLOSURE, ...SHARP_VARIANTS]) {
   const dst = path.join(STANDALONE_NM, pkg);
   const src = path.join(SRC_NM, pkg);
   if (!existsSync(src)) {
@@ -82,7 +97,7 @@ for (const pkg of CLOSURE) {
   }
 }
 console.log(
-  `fix-standalone-deps: ${copies} paquets copiés, ${deja} déjà présents, ${absents} absents de node_modules (closure ${ROOT_PACKAGES.join(" + ")})`
+  `fix-standalone-deps: ${copies} paquets copiés, ${deja} déjà présents, ${absents} absents de node_modules (closure ${ROOT_PACKAGES.join(" + ")} + variants sharp glibc/musl)`
 );
 
 // ── Smoke test : importer les racines DEPUIS le standalone ──────────
@@ -91,16 +106,18 @@ const smoke = spawnSync(
   [
     "--input-type=module",
     "-e",
-    `import('pdfkit').then(()=>console.log('  pdfkit OK')).then(()=>import('archiver')).then(()=>console.log('  archiver OK'))`,
+    `import('pdfkit').then(()=>console.log('  pdfkit OK')).then(()=>import('archiver')).then(()=>console.log('  archiver OK')).then(()=>import('sharp')).then(s=>console.log('  sharp OK v'+s.default.versions.sharp)).catch(e=>{console.error(e.message); process.exit(1)})`,
   ],
   { cwd: STANDALONE_NM, encoding: "utf8", timeout: 30000 }
 );
 const ok = smoke.status === 0;
 if (ok) {
-  console.log("fix-standalone-deps: smoke OK — pdfkit + archiver chargeables depuis le standalone");
+  console.log(
+    "fix-standalone-deps: smoke OK — pdfkit + archiver + sharp chargeables depuis le standalone"
+  );
 } else {
   const msg = (smoke.stderr || smoke.stdout || "").trim().split("\n").slice(-4).join("\n  ");
-  console.error(`fix-standalone-deps: SMOKE ÉCHEC — un téléchargement (ZIP/PDF) renverra 500 :\n  ${msg}`);
+  console.error(`fix-standalone-deps: SMOKE ÉCHEC — téléchargements (ZIP/PDF/rendus PNG) en 500 :\n  ${msg}`);
   if (!BOOT) process.exit(1);
   console.error("  (mode boot : le serveur démarre quand même)");
 }
