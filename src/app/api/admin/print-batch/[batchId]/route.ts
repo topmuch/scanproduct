@@ -1,15 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
-import QRCode from "qrcode";
 import PDFDocument from "pdfkit";
 import { db } from "@/lib/db";
 import { requireSuperAdmin } from "@/lib/admin-guard";
 import { resolveSiteOrigin } from "@/lib/site-origin";
+import { renderQRBuffer } from "@/lib/qr-server";
 
 /**
  * GET /api/admin/print-batch/[batchId]
  * SuperAdmin-only — génère le PDF d'impression de TOUTES les étiquettes
  * QR d'un batch (A4, 4 QR par ligne, Maître encadré en rouge + libellé
  * "MAÎTRE"). Marque le batch comme "printed" à la première génération.
+ *
+ * ── Design officiel « LABEL VERIFSCAN » ──────────────────────────
+ * Chaque étiquette porte le badge officiel (cercle jaune #F8E805, textes
+ * en arc, QR noir au centre) rendu côté serveur par qr-badge.ts — le
+ * même rendu que les QR fabricant (render-badge, labels-pdf, export-zip).
+ * Historique : ce PDF utilisait un QR brut bleu (#022150) généré par
+ * qrcode.toDataURL — « l'ancien design » signalé par le client.
  *
  * Chaque QR encode l'URL PUBLIQUE {origin}/a/<code> (et non le code brut) :
  * un scan avec la caméra du téléphone ouvre directement la page — vue
@@ -69,7 +76,7 @@ export async function GET(
     .font("Helvetica")
     .fillColor("#374151")
     .text(
-      `Batch ${batch.id.slice(0, 8).toUpperCase()} · ${batch.totalQuantity} QR codes · ${batch.numberOfPacks} packs de ${batch.packSize}`,
+      `Batch ${batch.id.slice(0, 8).toUpperCase()} · ${batch.totalQuantity} QR codes · ${batch.numberOfPacks} packs de ${batch.packSize} · Design officiel LABEL VERIFSCAN`,
       { align: "center" }
     )
     .fillColor("#555555")
@@ -117,14 +124,18 @@ export async function GET(
 
       try {
         // URL publique complète = QR scannable (la caméra ouvre la page).
-        const dataUrl = await QRCode.toDataURL(`${scanOrigin}/a/${lot.qrCode}`, {
-          width: QR_SIZE * 2,
-          margin: 1,
-          color: { dark: "#022150", light: "#FFFFFF" },
+        // Design officiel « LABEL VERIFSCAN » : rendu badge serveur (sharp)
+        // — cohérent avec render-badge / labels-pdf / export-zip. Le badge
+        // impose ECC Q (modules plus grands à l'impression) et un QR noir
+        // centré dans le cercle jaune.
+        const rendered = await renderQRBuffer(`${scanOrigin}/a/${lot.qrCode}`, {
+          size: 512,
+          design: "badge",
+          errorCorrectionLevel: "Q",
         });
         const x = LEFT + col * (QR_SIZE + H_SPACING);
 
-        doc.image(dataUrl, x, y, { width: QR_SIZE, height: QR_SIZE });
+        doc.image(rendered.buffer, x, y, { width: QR_SIZE, height: QR_SIZE });
 
         // Libellé du code sous le QR
         doc

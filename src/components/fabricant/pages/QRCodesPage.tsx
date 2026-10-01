@@ -418,6 +418,49 @@ export function QRCodesPage() {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [notice, setNotice] = useState<string | null>(null);
+  const [exportingZip, setExportingZip] = useState(false);
+
+  // ── Export ZIP (design officiel « LABEL VERIFSCAN ») ────────────────
+  // Re-rendu serveur : chaque QR sort avec le design à jour (badge jaune),
+  // indépendamment de la date de génération. Garde-fou serveur : 300 QR.
+  const exporterZip = async (ids: string[], label: string) => {
+    if (ids.length === 0 || exportingZip) return;
+    if (ids.length > 300) {
+      toast.error(
+        `Maximum 300 QR codes par export ZIP (demandé : ${ids.length}) — affinez vos filtres`
+      );
+      return;
+    }
+    setExportingZip(true);
+    toast.info(`📦 Export ZIP de ${ids.length} QR codes en cours…`);
+    try {
+      const res = await fetch("/api/qr-codes/export-zip", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ qrIds: ids }),
+      });
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}));
+        throw new Error(json.error || "Échec de l'export ZIP");
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `verifscan-qr-${ids.length}-${new Date()
+        .toISOString()
+        .slice(0, 10)}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success(`✅ ${label} téléchargé (design LABEL VERIFSCAN)`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erreur d'export ZIP");
+    } finally {
+      setExportingZip(false);
+    }
+  };
 
   // Reset to page 1 whenever filters change — using the "adjust during render"
   // pattern recommended by React instead of setState-in-effect.
@@ -538,9 +581,12 @@ export function QRCodesPage() {
 
       {/* Header */}
       <PageHeader title="Mes QR Codes" subtitle={`${formatNombre(usedQuota)} QR codes générés`}>
-        <OutlineButton onClick={() => setNotice("📦 Export ZIP en cours de préparation…")}>
-          <Download className="h-4 w-4" />
-          Exporter tout
+        <OutlineButton
+          onClick={() => exporterZip(filtered.map((q) => q.id), "Archive ZIP")}
+          disabled={exportingZip || filtered.length === 0}
+        >
+          <Download className={"h-4 w-4" + (exportingZip ? " animate-pulse" : "")} />
+          {exportingZip ? "Export en cours…" : "Exporter tout (ZIP)"}
         </OutlineButton>
         <GradientButton onClick={() => setModalOpen(true)}>
           <Plus className="h-4 w-4" />
@@ -683,10 +729,11 @@ export function QRCodesPage() {
             </button>
             <button
               type="button"
-              onClick={() => setNotice(`📦 Export ZIP de ${selectedIds.size} QR codes…`)}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-[#E5E7EB] bg-white px-3 py-1.5 text-[12px] font-semibold text-[#374151] transition-colors hover:bg-[#F9FAFB]"
+              onClick={() => exporterZip(Array.from(selectedIds), "Export ZIP de la sélection")}
+              disabled={exportingZip}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-[#E5E7EB] bg-white px-3 py-1.5 text-[12px] font-semibold text-[#374151] transition-colors hover:bg-[#F9FAFB] disabled:opacity-50"
             >
-              Exporter ZIP
+              {exportingZip ? "Export…" : "Exporter ZIP"}
             </button>
             <button
               type="button"

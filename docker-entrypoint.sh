@@ -427,6 +427,60 @@ nohup sh -c '
 ' >/dev/null 2>&1 &
 echo "  Boucle backup quotidien démarrée (rétention 14)"
 
+# ── 5c. AUTO-RÉPARATION sharp (binaires natifs du standalone) ─────────────
+# INCIDENT PROD (oct. 2026) : le "output file tracing" de Next.js/Turbopack
+# copie bien @img/sharp-linux-x64 (sharp-*.node) mais OMET libvips-cpp.so
+# (@img/sharp-libvips-linux-x64/lib/, 18 Mo) quand les dépendances sont
+# installées avec bun (hardlinks). Résultat : ERR_DLOPEN_FAILED → HTTP 500
+# sur TOUT rendu PNG serveur (render-badge = design « LABEL VERIFSCAN »,
+# generate, bulk-generate, labels-pdf, export-zip).
+# Ce bloc s'exécute À CHAQUE DÉMARRAGE, indépendamment du Dockerfile utilisé
+# par la plateforme de déploiement :
+#   1. copie les paquets natifs complets depuis /app/node_modules (toujours
+#      présent dans l'image) vers le node_modules du standalone s'ils y sont
+#      incomplets ;
+#   2. exporte LD_LIBRARY_PATH vers le dossier libvips (filet de sécurité
+#      même si la copie échoue) ;
+#   3. smoke-teste un vrai rendu PNG et l'affiche dans les logs de deploy.
+STANDALONE_NM="/app/.next/standalone/node_modules"
+SRC_VIPS="/app/node_modules/@img/sharp-libvips-linux-x64"
+SRC_SHARP="/app/node_modules/@img/sharp-linux-x64"
+DST_VIPS="$STANDALONE_NM/@img/sharp-libvips-linux-x64"
+DST_SHARP="$STANDALONE_NM/@img/sharp-linux-x64"
+
+if [ -d "$SRC_VIPS/lib" ]; then
+  export LD_LIBRARY_PATH="$SRC_VIPS/lib:${LD_LIBRARY_PATH:-}"
+fi
+
+if [ -d "$STANDALONE_NM" ] && [ -d "$SRC_VIPS/lib" ]; then
+  if [ ! -f "$DST_VIPS/lib/libvips-cpp.so.8.18.3" ] && [ ! -f "$DST_VIPS/lib/libvips-cpp.so.8" ]; then
+    echo "=== Self-heal sharp: libvips-cpp absent du standalone → copie depuis /app/node_modules ==="
+    mkdir -p "$DST_VIPS"
+    cp -rL "$SRC_VIPS/." "$DST_VIPS/" 2>&1 | tail -1 || true
+    echo "  ✓ sharp-libvips-linux-x64 copié ($(du -sh "$DST_VIPS" 2>/dev/null | cut -f1))"
+  else
+    echo "  ✓ libvips déjà présent dans le standalone"
+  fi
+  if [ -d "$SRC_SHARP/lib" ] && ! ls "$DST_SHARP"/lib/sharp-linux-x64-*.node >/dev/null 2>&1; then
+    echo "=== Self-heal sharp: binding .node absent du standalone → copie ==="
+    mkdir -p "$DST_SHARP"
+    cp -rL "$SRC_SHARP/." "$DST_SHARP/" 2>&1 | tail -1 || true
+  fi
+fi
+
+# Smoke test : un rendu PNG réel via le sharp du STANDALONE (celui que le
+# serveur utilise). Le résultat est visible dans les logs Coolify.
+if [ -f "$STANDALONE_NM/sharp/package.json" ]; then
+  cd /app/.next/standalone && node -e "
+const sharp = require('sharp');
+sharp(Buffer.from('<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\"><rect width=\"16\" height=\"16\" fill=\"#F8E805\"/></svg>'))
+  .png().toBuffer()
+  .then(b => console.log('=== sharp self-test OK (' + b.length + ' octets) — rendu PNG serveur opérationnel ==='))
+  .catch(e => console.error('=== sharp self-test ÉCHEC (les rendus PNG serveur renverront 500) ===', e.message));
+" || true
+  cd /app
+fi
+
 # ── 6. Start the Next.js standalone server ────────────────────────────────
 echo "=== Starting server ==="
 exec node .next/standalone/server.js
