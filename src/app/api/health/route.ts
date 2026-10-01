@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import * as fs from "node:fs";
+import * as path from "node:path";
 import { db } from "@/lib/db";
+import { UPLOAD_DIR } from "@/lib/upload-config";
 
 // Always run on the Node.js runtime (not Edge) and never cache.
 export const runtime = "nodejs";
@@ -30,6 +32,8 @@ type DiskCheck = {
   status: "ok" | "warn";
   uploadDir: string;
   writable: boolean;
+  /** Populated when the directory is missing or the write probe fails. */
+  error: string | null;
 };
 
 type Stats = {
@@ -143,26 +147,48 @@ export async function GET() {
   }
 
   // ── Disk check ───────────────────────────────────────────────────────
-  // Verify that the upload directory is writable. In production this is
-  // typically /app/uploads/products (mounted volume); in dev it falls back
-  // to <cwd>/public/uploads/products.
-  const uploadDir =
-    process.env.UPLOAD_DIR && process.env.UPLOAD_DIR.trim() !== ""
-      ? process.env.UPLOAD_DIR.trim()
-      : "/app/uploads/products";
+  // Verify that the upload directory is writable — using the SAME source of
+  // truth as the upload API (src/lib/upload-config.ts), so the check can
+  // never drift from where files are actually written.
+  //
+  // History: this check used to hardcode /app/uploads/products as fallback,
+  // which NEVER existed in the container (the real dir is
+  // /app/public/uploads/product per the Coolify volume mount) → the whole
+  // health endpoint permanently reported status:"degraded" with
+  // disk.writable:false even though uploads worked fine.
+  //
+  // The check is also SELF-HEALING: if the directory is missing (fresh
+  // volume, changed mount, manual wipe) it is recreated on the spot instead
+  // of failing forever. Writability is tested with a real probe file —
+  // fs.accessSync(W_OK) always succeeds for root, even on read-only mounts.
+  const uploadDir = UPLOAD_DIR;
 
   let diskCheck: DiskCheck = {
-    status: "ok",
+    status: "warn",
     uploadDir,
     writable: false,
+    error: "not-run",
   };
   try {
-    fs.accessSync(uploadDir, fs.constants.W_OK);
-    diskCheck = { status: "ok", uploadDir, writable: true };
-  } catch {
-    // Directory missing or not writable — warn (not down) because the app
-    // can still serve read-only traffic.
-    diskCheck = { status: "warn", uploadDir, writable: false };
+    // Self-heal: create the directory (and parents) if missing.
+    fs.mkdirSync(uploadDir, { recursive: true });
+    // Real write probe: write + delete a temp file.
+    const probe = path.join(
+      uploadDir,
+      `.health-probe-${process.pid}-${Date.now()}`,
+    );
+    fs.writeFileSync(probe, "ok");
+    fs.unlinkSync(probe);
+    diskCheck = { status: "ok", uploadDir, writable: true, error: null };
+  } catch (err) {
+    // Directory truly unwritable — warn (not down) because the app can
+    // still serve read-only traffic; uploads will fail until fixed.
+    diskCheck = {
+      status: "warn",
+      uploadDir,
+      writable: false,
+      error: err instanceof Error ? err.message : String(err),
+    };
   }
 
   // ── Stats ─────────────────────────────────────────────────────────────
