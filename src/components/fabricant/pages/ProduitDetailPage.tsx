@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { QRCodeCanvas } from "qrcode.react";
 import {
   ArrowLeft,
   Pencil,
@@ -39,7 +38,8 @@ import {
 import { useFabricantNav } from "@/lib/fabricant-store";
 import { useFabricantData } from "../FabricantDataProvider";
 import { ProductImage } from "@/components/fabricant/ProductImage";
-import { downloadQRCode } from "@/lib/qr-utils";
+import { downloadBadgeQR } from "@/lib/qr-utils";
+import { BadgeQRPreview } from "../BadgeQRPreview";
 import { construireUrlQrClient } from "@/lib/qr-url";
 import { toast } from "sonner";
 
@@ -429,7 +429,12 @@ export function ProduitDetailPage() {
   });
 
   function handleDownloadQR() {
-    downloadQRCode(scanUrl, `qr-${product!.nom.replace(/\s+/g, "-").toLowerCase()}.png`);
+    // Design officiel « LABEL VERIFSCAN » (cercle jaune, QR noir au centre)
+    // rendu par le serveur — 1200 px = 1016 DPI à 3 cm d'impression.
+    downloadBadgeQR(
+      scanUrl,
+      `qr-${product!.nom.replace(/\s+/g, "-").toLowerCase()}.png`
+    );
     toast.success("QR code téléchargé");
   }
 
@@ -662,18 +667,11 @@ export function ProduitDetailPage() {
             </div>
           </SectionCard>
 
-          {/* QR code — REAL scannable QR code using qrcode.react */}
+          {/* QR code — design officiel « LABEL VERIFSCAN » (badge jaune) */}
           <SectionCard title="QR code du produit" subtitle="Scannez pour voir la fiche publique">
             <div className="flex flex-col items-center">
               <div className="rounded-xl border border-[#E5E7EB] bg-white p-3 shadow-sm">
-                <QRCodeCanvas
-                  value={scanUrl}
-                  size={180}
-                  level="M"
-                  marginSize={1}
-                  fgColor="#111827"
-                  bgColor="#FFFFFF"
-                />
+                <BadgeQRPreview value={scanUrl} size={190} />
               </div>
               <span
                 className={

@@ -23,7 +23,7 @@ import {
   ProgressBar,
   PillFilter,
 } from "@/components/fabricant/ui";
-import { formatNombre } from "@/lib/fabricant-types";
+import { formatNombre, type QRCode as QrCodeItem } from "@/lib/fabricant-types";
 import { useFabricantData } from "../FabricantDataProvider";
 import { downloadQrPng } from "@/lib/qr-utils";
 import { BadgeQRPreview } from "../BadgeQRPreview";
@@ -414,6 +414,7 @@ export function QRCodesPage() {
   const [dateFilter, setDateFilter] = useState<DateFilter>("30j");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [modalOpen, setModalOpen] = useState(false);
+  const [previewQr, setPreviewQr] = useState<QrCodeItem | null>(null);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [notice, setNotice] = useState<string | null>(null);
@@ -766,10 +767,15 @@ export function QRCodesPage() {
                   />
                 </label>
 
-                {/* QR image */}
+                {/* QR image — design officiel « LABEL VERIFSCAN » (défaut)
+                    ou QR classique si le design a été désactivé à la génération */}
                 <div className="flex justify-center pt-2">
                   <div className="rounded-md border border-[#F3F4F6] p-2">
-                    <QRCodeDisplay value={urlQrDe(q).url} size={150} />
+                    {q.design !== "classic" ? (
+                      <BadgeQRPreview value={urlQrDe(q).url} size={150} />
+                    ) : (
+                      <QRCodeDisplay value={urlQrDe(q).url} size={150} />
+                    )}
                   </div>
                 </div>
 
@@ -828,7 +834,7 @@ export function QRCodesPage() {
                   <button
                     type="button"
                     title="Voir"
-                    onClick={() => setNotice(`👁️ Aperçu de ${q.code}`)}
+                    onClick={() => setPreviewQr(q)}
                     className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[#E5E7EB] bg-white text-[#374151] transition-colors hover:bg-[#F9FAFB]"
                   >
                     <Eye className="h-4 w-4" />
@@ -968,6 +974,92 @@ export function QRCodesPage() {
         onClose={() => setModalOpen(false)}
         onSuccess={(msg) => setNotice(msg)}
       />
+
+      {/* Preview modal — design officiel « LABEL VERIFSCAN » en grand */}
+      {previewQr && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+          onClick={() => setPreviewQr(null)}
+        >
+          <div
+            className="w-full max-w-md overflow-hidden rounded-xl bg-white shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-[#F3F4F6] px-6 py-4">
+              <div>
+                <h3 className="text-[15px] font-bold text-[#022150]">
+                  Aperçu du QR code
+                </h3>
+                <p className="truncate font-mono text-[12px] text-[#6B7280]">
+                  {previewQr.code}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPreviewQr(null)}
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-[#6B7280] transition-colors hover:bg-[#F3F4F6]"
+                aria-label="Fermer"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="flex flex-col items-center px-6 py-6">
+              {previewQr.design !== "classic" ? (
+                <BadgeQRPreview value={urlQrDe(previewQr).url} size={250} />
+              ) : (
+                <QRCodeDisplay value={urlQrDe(previewQr).url} size={230} />
+              )}
+              <div className="mt-4 w-full rounded-lg bg-[#F9FAFB] p-3 text-center">
+                <p className="truncate text-[13px] font-semibold text-[#111827]">
+                  {previewQr.produitNom}
+                </p>
+                <p className="mt-0.5 text-[12px] text-[#6B7280]">
+                  Lot {previewQr.lotNumero} · {formatDate(previewQr.dateGeneration)} ·{" "}
+                  📱 {formatNombre(previewQr.scans)} scans
+                </p>
+                <span
+                  className={
+                    "mt-2 inline-block rounded px-1.5 py-px text-[9px] font-semibold " +
+                    (urlQrDe(previewQr).format === "GS1"
+                      ? "bg-[#ECFDF5] text-[#047857]"
+                      : "bg-[#F0F4F9] text-[#011D46]")
+                  }
+                >
+                  {urlQrDe(previewQr).format === "GS1" ? "GS1 Digital Link" : "Standard"}
+                </span>
+              </div>
+              {previewQr.design !== "classic" && (
+                <p className="mt-3 text-center text-[11px] leading-relaxed text-[#9CA3AF]">
+                  Design officiel « LABEL VERIFSCAN » — QR noir sur cercle jaune,
+                  imprimable dès 3 cm (300 DPI).
+                </p>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center justify-end gap-2 border-t border-[#F3F4F6] px-6 py-4">
+              <OutlineButton onClick={() => setPreviewQr(null)}>Fermer</OutlineButton>
+              <GradientButton
+                onClick={async () => {
+                  const qr = urlQrDe(previewQr);
+                  try {
+                    await downloadQrPng(previewQr, qr.url);
+                    toast.success(`QR code ${previewQr.code} téléchargé`);
+                  } catch {
+                    toast.error(`Échec du téléchargement de ${previewQr.code}`);
+                  }
+                }}
+              >
+                <Download className="h-4 w-4" />
+                Télécharger PNG
+              </GradientButton>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

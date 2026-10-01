@@ -51,17 +51,31 @@ export function saveBlobAsFile(blob: Blob, filename: string): void {
 }
 
 /**
- * Télécharge le PNG d'un QR : image persistée (bulk-generate) si elle
- * existe, sinon rendu à la demande avec le design « LABEL VERIFSCAN ».
+ * Télécharge le PNG d'un QR :
+ *   - design "badge" (défaut) → rendu à la demande « LABEL VERIFSCAN » via
+ *     /api/qr-codes/render-badge. Les PNG persistés ANCIENS (bulk générés
+ *     avant l'introduction du design) ne doivent PAS être servis : ils sont
+ *     au design classique — d'où le re-rendu systématique.
+ *   - design "classic" → PNG persisté (bulk-generate) s'il existe, sinon
+ *     rendu à la demande.
  *
- * @param qr       { imageUrl?, code } — l'QR tel qu'exposé par le dashboard.
+ * @param qr       { imageUrl?, code, design? } — le QR tel qu'exposé par le dashboard.
  * @param scanUrl  L'URL scannable construite côté client (urlQrDe).
  */
 export async function downloadQrPng(
-  qr: { imageUrl?: string | null; code: string },
+  qr: {
+    imageUrl?: string | null;
+    code: string;
+    design?: "badge" | "classic";
+  },
   scanUrl: string
 ): Promise<void> {
-  // 1. PNG persisté (rendu exact au moment de la génération).
+  // 1. Design officiel → rendu à la demande (garantit le badge à jour).
+  if (qr.design !== "classic") {
+    await downloadBadgeQR(scanUrl, `qr-${qr.code}.png`);
+    return;
+  }
+  // 2. Design classique : PNG persisté (rendu exact au moment de la génération).
   if (qr.imageUrl) {
     try {
       const res = await fetch(qr.imageUrl);
@@ -73,7 +87,7 @@ export async function downloadQrPng(
       // réseau/404 → repli sur le rendu à la demande.
     }
   }
-  // 2. Rendu à la demande (design officiel).
+  // 3. Repli : rendu à la demande (badge).
   await downloadBadgeQR(scanUrl, `qr-${qr.code}.png`);
 }
 

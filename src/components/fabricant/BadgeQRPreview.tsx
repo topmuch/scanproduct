@@ -1,5 +1,6 @@
 "use client";
 
+import { useId } from "react";
 import { QRCodeCanvas } from "qrcode.react";
 
 /**
@@ -11,6 +12,9 @@ import { QRCodeCanvas } from "qrcode.react";
  * Rendu en SVG navigateur (textPath natif) avec la même géométrie que le
  * module serveur `src/lib/qr-badge.ts` — approximation typographique
  * (police système) suffisante pour un aperçu instantané sans appel API.
+ *
+ * ⚠️ Les IDs SVG (arcs textPath) sont uniques par instance (useId) :
+ * la grille de QR codes affiche jusqu'à 12 badges simultanément.
  */
 export function BadgeQRPreview({
   value,
@@ -19,6 +23,11 @@ export function BadgeQRPreview({
   value: string;
   size?: number;
 }) {
+  // useId renvoie « :r1: » — les deux-points sont neutralisés pour une
+  // référence fragment SVG (#id) fiable dans tous les navigateurs.
+  const uid = useId().replace(/:/g, "");
+  const arcTopId = `vs-arc-top-${uid}`;
+  const arcBotId = `vs-arc-bot-${uid}`;
   return (
     <div className="relative" style={{ width: size, height: size }}>
       <svg
@@ -28,8 +37,8 @@ export function BadgeQRPreview({
       >
         <circle cx="500" cy="500" r="472" fill="#F8E805" />
         <defs>
-          <path id="vs-arc-top" d="M 48,500 A 452,452 0 0 1 952,500" fill="none" />
-          <path id="vs-arc-bot" d="M 48,500 A 452,452 0 0 0 952,500" fill="none" />
+          <path id={arcTopId} d="M 48,500 A 452,452 0 0 1 952,500" fill="none" />
+          <path id={arcBotId} d="M 48,500 A 452,452 0 0 0 952,500" fill="none" />
         </defs>
         <text
           fontFamily="system-ui, Arial, sans-serif"
@@ -38,7 +47,7 @@ export function BadgeQRPreview({
           letterSpacing="14"
           fill="#000000"
         >
-          <textPath href="#vs-arc-top" startOffset="50%" textAnchor="middle">
+          <textPath href={`#${arcTopId}`} startOffset="50%" textAnchor="middle">
             LABEL VERIFSCAN
           </textPath>
         </text>
@@ -49,7 +58,7 @@ export function BadgeQRPreview({
           letterSpacing="4"
           fill="#000000"
         >
-          <textPath href="#vs-arc-bot" startOffset="50%" textAnchor="middle">
+          <textPath href={`#${arcBotId}`} startOffset="50%" textAnchor="middle">
             SCANNEZ POUR EN SAVOIR PLUS
           </textPath>
         </text>
