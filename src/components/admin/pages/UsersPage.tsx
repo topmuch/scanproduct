@@ -16,6 +16,7 @@ import {
   X,
   Shield,
   Package,
+  Loader2,
 } from "lucide-react";
 import { PageContainer, Card, Badge, SectionTitle, Button } from "@/components/admin/ui";
 import {
@@ -29,6 +30,7 @@ import {
 import { useAdminData, useAdminMutations } from "@/components/admin/AdminDataProvider";
 import { useAdminNav } from "@/lib/admin-store";
 import { DeleteUserDialog } from "./DeleteUserDialog";
+import { ChangePlanDialog } from "./UserDetailDialogs";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -97,7 +99,39 @@ export function UsersPage() {
   const [pageSize, setPageSize] = useState<20 | 50 | 100>(20);
   const [modalOpen, setModalOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Maker | null>(null);
+  const [editTarget, setEditTarget] = useState<Maker | null>(null);
+  const [planTargets, setPlanTargets] = useState<Maker[] | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
+
+  // Ouvre WhatsApp (champ whatsapp sinon téléphone) avec un message pré-rempli.
+  function openWhatsApp(m: Maker) {
+    const digits = (m.whatsapp ?? (m.phone !== "—" ? m.phone : "")).replace(/\D/g, "");
+    if (!digits) {
+      toast.error(`Aucun numéro WhatsApp/téléphone pour « ${m.company} ».`);
+      return;
+    }
+    window.open(
+      `https://wa.me/${digits}?text=${encodeURIComponent(
+        `Bonjour ${m.company}, c'est l'équipe VerifScan. Nous vous contactons au sujet de votre compte.`,
+      )}`,
+      "_blank",
+      "noopener,noreferrer",
+    );
+  }
+
+  // Suspend tous les comptes sélectionnés (PATCH séquentiel + update local).
+  async function suspendSelected() {
+    const targets = makers.filter((m) => selectedIds.has(m.id) && m.status !== "Suspendu");
+    for (const m of targets) {
+      await updateUser(m.id, { status: "Suspendu" });
+    }
+    toast.success(
+      targets.length > 0
+        ? `${targets.length} compte(s) suspendu(s)`
+        : "Les comptes sélectionnés sont déjà suspendus",
+    );
+    clearSelection();
+  }
 
   // Close the row dropdown on outside click.
   useEffect(() => {
@@ -230,11 +264,17 @@ export function UsersPage() {
               sélectionné(s)
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <Button size="sm" variant="outline" onClick={clearSelection}>
+              <Button size="sm" variant="outline" onClick={suspendSelected}>
                 <Pause className="h-3.5 w-3.5" />
                 Suspendre la sélection
               </Button>
-              <Button size="sm" variant="outline" onClick={clearSelection}>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() =>
+                  setPlanTargets(makers.filter((m) => selectedIds.has(m.id)))
+                }
+              >
                 <RefreshCw className="h-3.5 w-3.5" />
                 Changer de plan
               </Button>
@@ -369,7 +409,10 @@ export function UsersPage() {
                             </button>
                             <button
                               type="button"
-                              onClick={() => setOpenMenuId(null)}
+                              onClick={() => {
+                                setOpenMenuId(null);
+                                setEditTarget(m);
+                              }}
                               className="flex w-full items-center gap-2.5 px-4 py-2 text-[13px] font-medium text-[#374151] hover:bg-[#F9FAFB]"
                             >
                               <Pencil className="h-4 w-4 text-[#6B7280]" />
@@ -377,7 +420,10 @@ export function UsersPage() {
                             </button>
                             <button
                               type="button"
-                              onClick={() => setOpenMenuId(null)}
+                              onClick={() => {
+                                setOpenMenuId(null);
+                                setPlanTargets([m]);
+                              }}
                               className="flex w-full items-center gap-2.5 px-4 py-2 text-[13px] font-medium text-[#374151] hover:bg-[#F9FAFB]"
                             >
                               <RefreshCw className="h-4 w-4 text-[#6B7280]" />
@@ -407,7 +453,10 @@ export function UsersPage() {
                             </button>
                             <button
                               type="button"
-                              onClick={() => setOpenMenuId(null)}
+                              onClick={() => {
+                                setOpenMenuId(null);
+                                openWhatsApp(m);
+                              }}
                               className="flex w-full items-center gap-2.5 px-4 py-2 text-[13px] font-medium text-[#374151] hover:bg-[#F9FAFB]"
                             >
                               <MessageCircle className="h-4 w-4 text-[#10B981]" />
@@ -527,8 +576,8 @@ export function UsersPage() {
         />
       )}
 
-      {/* Add fabricant modal */}
-      {modalOpen && (
+      {/* Add fabricant modal (mode création) — ou mode édition d'un compte */}
+      {modalOpen && !editTarget && (
         <AddMakerModal
           onClose={() => setModalOpen(false)}
           onSubmit={async (data) => {
@@ -556,6 +605,35 @@ export function UsersPage() {
           }}
         />
       )}
+
+      {/* Édition d'un fabricant existant (menu ⋮ → Modifier) */}
+      {editTarget && (
+        <AddMakerModal
+          editUser={editTarget}
+          onClose={() => setEditTarget(null)}
+          onSubmit={async () => {}}
+          onUpdated={(updated) => {
+            updateUser(updated.id, updated);
+            setEditTarget(null);
+            toast.success(`Compte « ${updated.company} » mis à jour`);
+          }}
+        />
+      )}
+
+      {/* Changement de plan (menu ligne ou sélection groupée) */}
+      {planTargets && planTargets.length > 0 && (
+        <ChangePlanDialog
+          makers={planTargets}
+          onClose={() => setPlanTargets(null)}
+          onDone={(newPlan) => {
+            setPlanTargets(null);
+            const mrr =
+              newPlan === "Starter" ? 10000 : newPlan === "Pro" ? 25000 : newPlan === "Enterprise" ? 75000 : 0;
+            planTargets.forEach((m) => updateUser(m.id, { plan: newPlan, mrr }));
+            clearSelection();
+          }}
+        />
+      )}
     </PageContainer>
   );
 }
@@ -569,6 +647,8 @@ const LOGO_COLORS = ["#022150", "#10B981", "#F59E0B", "#8B5CF6", "#EC4899", "#06
 function AddMakerModal({
   onClose,
   onSubmit,
+  editUser,
+  onUpdated,
 }: {
   onClose: () => void;
   onSubmit: (data: {
@@ -582,13 +662,18 @@ function AddMakerModal({
     status: UserStatus;
     logoColor: string;
   }) => void;
+  /** Présent → mode ÉDITION (PATCH) au lieu de création (POST). */
+  editUser?: Maker;
+  onUpdated?: (updated: Pick<Maker, "id" | "company" | "contactName" | "phone" | "address">) => void;
 }) {
-  const [role, setRole] = useState<UserRole>("FABRICANT");
-  const [company, setCompany] = useState("");
-  const [contactName, setContactName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("+221 ");
-  const [address, setAddress] = useState("Dakar, Sénégal");
+  const isEdit = Boolean(editUser);
+  const [role, setRole] = useState<UserRole>(editUser?.role ?? "FABRICANT");
+  const [company, setCompany] = useState(editUser?.company ?? "");
+  const [contactName, setContactName] = useState(editUser?.contactName ?? "");
+  const [email, setEmail] = useState(editUser?.email ?? "");
+  const [phone, setPhone] = useState(editUser ? (editUser.phone === "—" ? "" : editUser.phone) : "+221 ");
+  const [address, setAddress] = useState(editUser?.address === "—" ? "" : (editUser?.address ?? "Dakar, Sénégal"));
+  const [saving, setSaving] = useState(false);
   const [plan, setPlan] = useState<Plan>("Starter");
   const [status, setStatus] = useState<UserStatus>("Actif");
   const [logoColor, setLogoColor] = useState(LOGO_COLORS[0]);
@@ -598,9 +683,41 @@ function AddMakerModal({
   const companyPlaceholder = isSuperAdmin ? "Ex : Opérations" : "Ex : Sarine Bio";
   const contactLabel = isSuperAdmin ? "Nom complet" : "Nom du contact";
 
-  const canSubmit = Boolean(company.trim() && contactName.trim() && email.trim());
+  const canSubmit = Boolean(company.trim() && contactName.trim() && (isEdit || email.trim())) && !saving;
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!canSubmit || !editUser) return;
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/admin/users/${editUser.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          companyName: company.trim(),
+          name: contactName.trim(),
+          phone: phone.trim(),
+          address: address.trim(),
+        }),
+      });
+      if (!res.ok) {
+        const err = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(err.error || "Échec de la modification");
+      }
+      onUpdated?.({
+        id: editUser.id,
+        company: company.trim(),
+        contactName: contactName.trim(),
+        phone: phone.trim() || "—",
+        address: address.trim() || "—",
+      });
+    } catch (e2) {
+      toast.error((e2 as Error).message);
+      setSaving(false);
+    }
+  }
+
+  function handleCreate(e: React.FormEvent) {
     e.preventDefault();
     if (!canSubmit) return;
     onSubmit({
@@ -651,7 +768,7 @@ function AddMakerModal({
       onClick={onClose}
     >
       <form
-        onSubmit={handleSubmit}
+        onSubmit={isEdit ? handleSubmit : handleCreate}
         onClick={(e) => e.stopPropagation()}
         className="max-h-[92vh] w-full max-w-[560px] overflow-hidden rounded-2xl bg-white shadow-2xl"
       >
@@ -661,21 +778,29 @@ function AddMakerModal({
             <div
               className={cn(
                 "flex h-9 w-9 items-center justify-center rounded-lg text-white",
-                isSuperAdmin
-                  ? "bg-gradient-to-br from-[#7C3AED] to-[#A855F7]"
-                  : "bg-gradient-to-br from-[#022150] to-[#10B981]"
+                isEdit
+                  ? "bg-gradient-to-br from-[#022150] to-[#10B981]"
+                  : isSuperAdmin
+                    ? "bg-gradient-to-br from-[#7C3AED] to-[#A855F7]"
+                    : "bg-gradient-to-br from-[#022150] to-[#10B981]",
               )}
             >
-              {isSuperAdmin ? <Shield className="h-5 w-5" /> : <UserPlus className="h-5 w-5" />}
+              {isEdit ? <Pencil className="h-5 w-5" /> : isSuperAdmin ? <Shield className="h-5 w-5" /> : <UserPlus className="h-5 w-5" />}
             </div>
             <div>
               <h2 className="font-display text-[18px] font-bold text-[#111827]">
-                {isSuperAdmin ? "Ajouter un super administrateur" : "Ajouter un fabricant"}
+                {isEdit
+                  ? `Modifier « ${editUser?.company} »`
+                  : isSuperAdmin
+                    ? "Ajouter un super administrateur"
+                    : "Ajouter un fabricant"}
               </h2>
               <p className="text-[13px] text-[#6B7280]">
-                {isSuperAdmin
-                  ? "Créez un nouveau compte super admin."
-                  : "Créez un nouveau compte fabricant."}
+                {isEdit
+                  ? "Mettez à jour les informations du compte."
+                  : isSuperAdmin
+                    ? "Créez un nouveau compte super admin."
+                    : "Créez un nouveau compte fabricant."}
               </p>
             </div>
           </div>
@@ -691,7 +816,8 @@ function AddMakerModal({
 
         {/* Body */}
         <div className="max-h-[calc(92vh-140px)] space-y-4 overflow-y-auto px-6 py-5">
-          {/* Role segmented control */}
+          {/* Role segmented control — création uniquement */}
+          {!isEdit && (
           <div>
             <label className={labelCls}>Type de compte</label>
             <div className="grid grid-cols-2 gap-3">
@@ -735,6 +861,7 @@ function AddMakerModal({
               })}
             </div>
           </div>
+          )}
 
           <div>
             <label className={labelCls}>
@@ -765,15 +892,22 @@ function AddMakerModal({
             </div>
             <div>
               <label className={labelCls}>
-                Email <span className="text-[#EF4444]">*</span>
+                Email {!isEdit && <span className="text-[#EF4444]">*</span>}
               </label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="contact@entreprise.sn"
-                className={inputCls}
+                className={cn(inputCls, isEdit && "cursor-not-allowed bg-[#F9FAFB] text-[#6B7280]")}
+                disabled={isEdit}
+                title={isEdit ? "L'email est l'identifiant du compte — non modifiable" : undefined}
               />
+              {isEdit && (
+                <p className="mt-1 text-[11px] text-[#9CA3AF]">
+                  L&apos;email est l&apos;identifiant de connexion : non modifiable.
+                </p>
+              )}
             </div>
           </div>
 
@@ -800,9 +934,9 @@ function AddMakerModal({
             </div>
           </div>
 
-          {/* Plan + Status — only relevant for fabricants. Super admins are
-              forced to Actif and have no plan. */}
-          {!isSuperAdmin && (
+          {/* Plan + Status — only relevant for fabricants at CREATION. Super
+              admins are forced to Actif and have no plan. */}
+          {!isSuperAdmin && !isEdit && (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
                 <label className={labelCls}>Plan</label>
@@ -832,7 +966,7 @@ function AddMakerModal({
             </div>
           )}
 
-          {isSuperAdmin && (
+          {isSuperAdmin && !isEdit && (
             <div className="flex items-center gap-2 rounded-lg border border-[#EDE9FE] bg-[#F5F3FF] px-3 py-2 text-[12px] text-[#5B21B6]">
               <Shield className="h-4 w-4 shrink-0" />
               <span>
@@ -842,8 +976,8 @@ function AddMakerModal({
             </div>
           )}
 
-          {/* Logo color picker — only for fabricants */}
-          {!isSuperAdmin && (
+          {/* Logo color picker — only for fabricants at creation */}
+          {!isSuperAdmin && !isEdit && (
             <div>
               <label className={labelCls}>Couleur du logo</label>
               <div className="flex flex-wrap gap-2">
@@ -879,8 +1013,14 @@ function AddMakerModal({
             disabled={!canSubmit}
             className={isSuperAdmin ? "bg-[#7C3AED] hover:bg-[#6D28D9]" : undefined}
           >
-            {isSuperAdmin ? <Shield className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}
-            {isSuperAdmin ? "Créer le super admin" : "Créer le fabricant"}
+            {isEdit ? (
+              saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Pencil className="h-4 w-4" />
+            ) : isSuperAdmin ? (
+              <Shield className="h-4 w-4" />
+            ) : (
+              <UserPlus className="h-4 w-4" />
+            )}
+            {isEdit ? (saving ? "Enregistrement…" : "Enregistrer les modifications") : isSuperAdmin ? "Créer le super admin" : "Créer le fabricant"}
           </Button>
         </div>
       </form>

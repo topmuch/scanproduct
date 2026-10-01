@@ -126,7 +126,23 @@ export function AdminDataProvider({
       if (patch.status === "Actif") body.status = "ACTIVE";
       else if (patch.status === "Suspendu") body.status = "SUSPENDED";
       else if (patch.status === "Inactif") body.status = "PENDING";
-      if (patch.plan) body.plan = patch.plan;
+      if (patch.plan) {
+        // L'API attend les ids de plan en minuscules (z.enum) — les valeurs
+        // affichées dans l'UI sont capitalisées. "Essai" n'existe pas côté
+        // API : c'est une annulation d'abonnement (clôture de l'abonnement
+        // actif). AVANT ce mapping, "Starter" était envoyé tel quel → 400
+        // Validation failed (cause du « changer de plan ne marche pas »).
+        const planApi: Record<string, string> = {
+          Starter: "starter",
+          Pro: "pro",
+          Enterprise: "business",
+        };
+        if (patch.plan === "Essai") {
+          body.cancelSubscription = true;
+        } else if (planApi[patch.plan]) {
+          body.plan = planApi[patch.plan];
+        }
+      }
       await fetch(`/api/admin/users/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },

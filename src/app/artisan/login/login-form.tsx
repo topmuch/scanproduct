@@ -161,6 +161,17 @@ export function ArtisanLoginForm() {
             </div>
           </div>
 
+          {/* Mot de passe oublié — le reset se fait par email si le compte
+              artisan en possède un ; sinon contact WhatsApp du support. */}
+          <div className="flex justify-end">
+            <Link
+              href="/mot-de-passe-oublie"
+              className="text-[13px] font-medium text-[#022150] transition-colors hover:underline"
+            >
+              Mot de passe oublié ?
+            </Link>
+          </div>
+
           <button
             type="submit"
             data-testid="login-submit"

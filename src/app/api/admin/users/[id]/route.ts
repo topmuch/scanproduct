@@ -43,9 +43,13 @@ const PatchSchema = z.object({
   // (period ends at planExpiresAt, default +30 days).
   plan: z.enum(["starter", "pro", "business"]).optional(),
   planExpiresAt: z.string().datetime().optional(),
+  // Subscription cancellation → closes the ACTIVE subscription row WITHOUT
+  // creating a new one (the user falls back to the default/free plan).
+  cancelSubscription: z.boolean().optional(),
   name: z.string().min(2).max(80).optional(),
   companyName: z.string().min(2).max(120).optional(),
   phone: z.string().max(40).optional(),
+  whatsapp: z.string().max(40).optional(),
   address: z.string().max(255).optional(),
 });
 
@@ -75,6 +79,29 @@ export async function PATCH(
     );
   }
   const data = parsed.data;
+
+  // Subscription CANCELLATION → close the ACTIVE subscription row without
+  // creating a new one (the fabricant falls back to the default plan).
+  let cancelled = false;
+  if (data.cancelSubscription) {
+    const res = await db.subscription.updateMany({
+      where: { userId: id, status: "ACTIVE" },
+      data: { status: "CANCELLED" },
+    });
+    cancelled = res.count > 0;
+    await db.auditLog.create({
+      data: {
+        userId: session.user?.id ?? null,
+        action: "SUBSCRIPTION_CANCELLED",
+        entity: "User",
+        entityId: id,
+        metadata: JSON.stringify({
+          by: session.user?.email ?? "superadmin",
+          closedSubscriptions: res.count,
+        }),
+      },
+    });
+  }
 
   // Plan change → real Subscription lifecycle (plan + expiry). Handled
   // separately from the User patch because plans live on Subscription.
@@ -111,12 +138,16 @@ export async function PATCH(
   if (data.name) patch.name = data.name;
   if (data.companyName) patch.companyName = data.companyName;
   if (data.phone !== undefined) patch.phone = data.phone || null;
+  if (data.whatsapp !== undefined) patch.whatsapp = data.whatsapp || null;
   if (data.address !== undefined) patch.address = data.address || null;
 
   if (Object.keys(patch).length === 0) {
     // Plan-only change is a valid request — return the subscription state.
     if (subscriptionResult) {
       return NextResponse.json({ plan: subscriptionResult });
+    }
+    if (data.cancelSubscription) {
+      return NextResponse.json({ ok: true, cancelled });
     }
     return NextResponse.json({ error: "No fields to update" }, { status: 400 });
   }
@@ -167,7 +198,11 @@ export async function PATCH(
       })();
     }
 
-    return NextResponse.json(updated);
+    return NextResponse.json({
+      ...updated,
+      ...(subscriptionResult ? { plan: subscriptionResult } : {}),
+      ...(data.cancelSubscription ? { cancelled } : {}),
+    });
   } catch (error) {
     console.error("[PATCH /api/admin/users/[id]] Error:", error);
     return NextResponse.json({ error: "Failed to update user" }, { status: 500 });

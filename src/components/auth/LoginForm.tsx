@@ -265,6 +265,15 @@ export function LoginForm({ space }: { space: LoginSpace }) {
             </div>
           </div>
 
+          <div className="flex justify-end">
+            <Link
+              href="/mot-de-passe-oublie"
+              className="text-[13px] font-medium text-[#022150] transition-colors hover:underline"
+            >
+              Mot de passe oublié ?
+            </Link>
+          </div>
+
           <button
             type="submit"
             disabled={loading}

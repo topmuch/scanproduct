@@ -57,6 +57,8 @@ export type Maker = {
   productsList: MakerProduct[];
   notes: MakerNote[];
   activity: MakerActivity[];
+  /** Historique complet (audit logs, 30 derniers) — servi par la vue détail. */
+  history?: MakerActivity[];
 };
 
 export type AdminCategory = {
@@ -617,6 +619,43 @@ export async function getAdminUserDetail(userId: string): Promise<Maker | null> 
     activity.push({ date: relativeTime(user.createdAt), label: "Compte créé" });
   }
 
+  // Notes internes SuperAdmin — stockées en AuditLog (action NOTE_ADDED,
+  // metadata JSON { content, author }) : zéro migration, marche sur les
+  // vieilles DB de prod. Écrites par POST /api/admin/users/[id]/notes.
+  const noteLogs = await db.auditLog.findMany({
+    where: { userId: user.id, action: "NOTE_ADDED" },
+    orderBy: { createdAt: "desc" },
+    take: 50,
+  });
+  const notes: MakerNote[] = noteLogs
+    .map((l) => {
+      try {
+        const meta = JSON.parse(l.metadata ?? "{}") as {
+          content?: string;
+          author?: string;
+        };
+        return {
+          date: l.createdAt.toISOString(),
+          author: meta.author ?? "SuperAdmin",
+          content: meta.content ?? "",
+        };
+      } catch {
+        return null;
+      }
+    })
+    .filter((n): n is MakerNote => n !== null && n.content.length > 0);
+
+  // Historique complet (30 derniers événements) pour « Voir l'historique ».
+  const historyLogs = await db.auditLog.findMany({
+    where: { userId: user.id },
+    orderBy: { createdAt: "desc" },
+    take: 30,
+  });
+  const history: MakerActivity[] = historyLogs.map((l) => ({
+    date: relativeTime(l.createdAt),
+    label: humanizeAuditAction(l.action),
+  }));
+
   return {
     id: user.id,
     company: user.companyName || user.name || "Fabricant sans nom",
@@ -641,8 +680,9 @@ export async function getAdminUserDetail(userId: string): Promise<Maker | null> 
     quotaQrUsed: user._count.qrCodes,
     quotaQrTotal: PLAN_QR_TOTAL[plan],
     productsList,
-    notes: [],
+    notes,
     activity,
+    history,
   };
 }
 
@@ -660,6 +700,14 @@ function humanizeAuditAction(action: string): string {
     ACTIVATE_USER: "Compte activé",
     VERIFY_USER: "Compte vérifié",
     UPDATE_ROLE: "Rôle modifié",
+    UPDATE_USER: "Compte mis à jour",
+    DELETE_USER: "Compte supprimé définitivement",
+    NOTE_ADDED: "Note interne ajoutée",
+    PASSWORD_RESET: "Mot de passe réinitialisé",
+    PASSWORD_RESET_BY_ADMIN: "Mot de passe réinitialisé par l'administration",
+    PASSWORD_RESET_REQUESTED: "Demande de réinitialisation du mot de passe",
+    SUBSCRIPTION_CANCELLED: "Abonnement annulé",
+    PLAN_CHANGED: "Plan d'abonnement modifié",
     CREATE_TICKET: "Ticket de support créé",
     UPDATE_TICKET: "Ticket mis à jour",
     CREATE_CATEGORY: "Catégorie créée",
