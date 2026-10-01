@@ -27,9 +27,9 @@ export default function AdminLoginPage() {
       {/* Logo */}
       <Link href="/" className="relative z-10 mb-8 flex items-center">
         <img
-          src="/verifscan-logo.webp?v=5"
+          src="/verifscan-logo-white.webp?v=1"
           alt="VerifScan"
-          className="h-12 w-auto shrink-0 brightness-0 invert"
+          className="h-12 w-auto shrink-0"
           width={720}
           height={247}
         />

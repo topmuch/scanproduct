@@ -82,9 +82,9 @@ export default function ArtisanLoginPage() {
               {/* Logo officiel (contient déjà le wordmark) */}
               <Link href="/" className="flex items-center" aria-label="VerifScan accueil">
                 <img
-                  src="/verifscan-logo.webp?v=5"
+                  src="/verifscan-logo-white.webp?v=1"
                   alt="VerifScan"
-                  className="h-14 w-auto shrink-0 brightness-0 invert"
+                  className="h-14 w-auto shrink-0"
                   width={720}
                   height={247}
                 />
