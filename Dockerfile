@@ -7,12 +7,20 @@ FROM node:20-bookworm-slim
 
 # Install required packages + native build tools (python3, make, g++)
 # as a fallback for any package that needs to compile from source.
+#
+# fontconfig + fonts-dejavu-core : INDISPENSABLES au rendu des SVG par
+# sharp/libvips (librsvg → fontconfig). Sans police installée, tous les
+# <text> des SVG (design « LABEL VERIFSCAN », libellés lot/produit des
+# QR) sortent INVISIBLES en production. DejaVu Sans est la police de
+# référence du module qr-badge.ts.
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
       git curl file ca-certificates \
       libc6 sqlite3 \
+      fontconfig fonts-dejavu-core \
       python3 make g++ \
       && \
+    fc-cache -f && \
     rm -rf /var/lib/apt/lists/*
 
 # Install a PINNED bun version (matches the version used to generate

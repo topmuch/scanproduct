@@ -265,6 +265,8 @@ export async function getFabricantQRCodes(userId: string): Promise<QRCode[]> {
     dateGeneration: toISODate(q.createdAt),
     scans: q.scans,
     status: mapQRStatus(q.status),
+    imageUrl: q.imageUrl,
+    design: q.design === "classic" ? "classic" : "badge",
   }));
 }
 

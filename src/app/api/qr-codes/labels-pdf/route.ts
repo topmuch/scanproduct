@@ -25,13 +25,14 @@ import { ErreurGs1 } from "@/lib/gs1";
  *   perLot         — number    (QR codes per lot, default 1, max 100)
  *   options        — {
  *     size?,           // QR pixel size (rendering resolution)
- *     color?,          // brand color
- *     includeLogo?,
+ *     color?,          // brand color (classic design only)
+ *     design?,         // "badge" (défaut) | "classic" — badge = LABEL VERIFSCAN
+ *     includeLogo?,    // classic design only
  *     includeLotNumber?,
  *     includeProductName?,
  *     labelsPerRow?,  // default 3
- *     labelWidth?,    // mm, default 60
- *     labelHeight?,   // mm, default 70
+ *     labelWidth?,    // mm, default 60 (ex: 30 pour autocollants 30×30 mm)
+ *     labelHeight?,   // mm, default 70 (ex: 30 pour autocollants 30×30 mm)
  *     pageMargin?,    // mm, default 10
  *     cutLines?       // boolean, default true
  *   }
@@ -95,6 +96,10 @@ export async function POST(request: NextRequest) {
     const logoPath =
       options.includeLogo !== false ? resolveLogoPath(fabricant?.logoUrl) : null;
     const qrColor = options.color || fabricant?.brandColor || "#000000";
+
+    // ── Design du rendu (badge « LABEL VERIFSCAN » par défaut) ─────
+    const design: "badge" | "classic" =
+      options.design === "classic" ? "classic" : "badge";
 
     // ── PDF layout config ───────────────────────────────────────
     const PAGE_W = 210; // A4 width mm
@@ -169,13 +174,24 @@ export async function POST(request: NextRequest) {
         }
       }
       const rendered = await renderQRBuffer(scanUrl, {
-        size: 400,
+        size: 600,
         color: qrColor,
-        logoPath: logoPath || undefined,
-        lotNumber: options.includeLotNumber !== false ? label.lotNumber : null,
+        logoPath: design === "badge" ? null : logoPath || undefined,
+        lotNumber:
+          design === "badge"
+            ? null
+            : options.includeLotNumber !== false
+              ? label.lotNumber
+              : null,
         productName:
-          options.includeProductName !== false ? label.productName : null,
-        errorCorrectionLevel: logoPath ? "H" : "M",
+          design === "badge"
+            ? null
+            : options.includeProductName !== false
+              ? label.productName
+              : null,
+        errorCorrectionLevel:
+          design === "badge" ? "Q" : logoPath ? "H" : "M",
+        design,
       });
       qrBuffers.push(rendered.buffer);
     }
@@ -192,22 +208,51 @@ export async function POST(request: NextRequest) {
       const pageBuffers = qrBuffers.slice(labelIdx, labelIdx + labelsPerPage);
 
       for (let i = 0; i < pageLabels.length; i++) {
+        const label = pageLabels[i];
         const col = i % labelsPerRowSafe;
         const row = Math.floor(i / labelsPerRowSafe);
         const x = margin + col * (labelW + gapX);
         const y = margin + row * (labelH + gapY);
 
-        // QR code image (centered horizontally, top portion of label).
-        const qrSize = labelW - 10; // 10mm horizontal padding
-        const qrY = y + 3;
-        const qrX = x + (labelW - qrSize) / 2;
-
         const pngDataUrl = `data:image/png;base64,${pageBuffers[i].toString("base64")}`;
-        doc.addImage(pngDataUrl, "PNG", qrX, qrY, qrSize, qrSize);
 
-        // If the QR buffer already includes text labels (lot number +
-        // product name), we don't need to add PDF text. But if text
-        // labels are disabled in options, render just the QR.
+        if (design === "badge") {
+          // ── Badge « LABEL VERIFSCAN » : carré quasi pleine étiquette,
+          //    libellés produit/lot en TEXTE VECTORIEL jsPDF dessous
+          //    (nets à toutes les tailles, indépendants des polices du
+          //    conteneur). Les autocollants 30×30 mm n'ont pas la place
+          //    pour le texte → il est automatiquement omis.
+          const badgeSize = labelW - 4;
+          const badgeX = x + (labelW - badgeSize) / 2;
+          const badgeY = y + 2;
+          doc.addImage(pngDataUrl, "PNG", badgeX, badgeY, badgeSize, badgeSize);
+
+          const room = labelH - badgeSize - 4;
+          if (room >= 8) {
+            let ty = badgeY + badgeSize + 4.5;
+            const cx = x + labelW / 2;
+            if (options.includeProductName !== false) {
+              doc.setFont("helvetica", "bold");
+              doc.setFontSize(9);
+              const nom = label.productName.length > 30
+                ? label.productName.slice(0, 29) + "…"
+                : label.productName;
+              doc.text(nom, cx, ty, { align: "center" });
+              ty += 4.2;
+            }
+            if (options.includeLotNumber !== false && label.lotNumber) {
+              doc.setFont("helvetica", "normal");
+              doc.setFontSize(8);
+              doc.text(`LOT ${label.lotNumber}`, cx, ty, { align: "center" });
+            }
+          }
+        } else {
+          // ── Design classique : QR (avec libellés incrustés dans le PNG)
+          const qrSize = labelW - 10; // 10mm horizontal padding
+          const qrY = y + 3;
+          const qrX = x + (labelW - qrSize) / 2;
+          doc.addImage(pngDataUrl, "PNG", qrX, qrY, qrSize, qrSize);
+        }
 
         // Cut lines (dotted) around the label.
         if (options.cutLines !== false) {

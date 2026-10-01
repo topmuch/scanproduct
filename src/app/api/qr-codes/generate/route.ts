@@ -154,6 +154,9 @@ export async function POST(request: NextRequest) {
           includeLotNumber: options.includeLotNumber ?? true,
           includeProductName: options.includeProductName ?? true,
           includeLogo: options.includeLogo ?? false,
+          // Design du PNG (rendu à la demande au téléchargement) :
+          // badge « LABEL VERIFSCAN » par défaut, classic si désactivé.
+          design: options.includeDesign === false ? "classic" : "badge",
           status: "ACTIVE",
         },
       });

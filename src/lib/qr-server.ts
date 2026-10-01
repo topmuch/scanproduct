@@ -6,6 +6,7 @@ import { existsSync } from "fs";
 import { randomUUID } from "crypto";
 import { UPLOAD_DIR, buildUploadUrl } from "@/lib/upload-config";
 import { getScanUrl } from "@/lib/qr-url";
+import { renderBadgeQR } from "@/lib/qr-badge";
 
 /**
  * VerifScan — Server-side QR code rendering utilities.
@@ -51,6 +52,16 @@ export interface QRRenderOptions {
    * GS1 on passe ici l'URI GS1 Digital Link complète.
    */
   scanUrl?: string;
+  /**
+   * Design du rendu :
+   *   - "badge"   → design officiel « LABEL VERIFSCAN » : cercle jaune,
+   *                 textes en arc, QR noir au centre (défaut).
+   *                 logoPath / labels / color sont ignorés (le badge a
+   *                 son propre design, ECC Q imposé pour des modules
+   *                 plus grands à l'impression 3 cm).
+   *   - "classic" → QR brut historique (couleur marque + logo + labels).
+   */
+  design?: "classic" | "badge";
 }
 
 export interface QRRenderResult {
@@ -104,6 +115,23 @@ export async function renderQRBuffer(
   options: QRRenderOptions = {}
 ): Promise<QRRenderResult> {
   const size = Math.max(128, Math.min(2048, options.size || 512));
+
+  // ── Design « LABEL VERIFSCAN » (par défaut) ─────────────────────
+  // Le badge remplace le QR brut : cercle jaune + textes en arc + QR
+  // noir au centre. Les options logo/labels/couleur ne s'appliquent pas.
+  if ((options.design ?? "badge") === "badge") {
+    const badge = await renderBadgeQR(text, {
+      size,
+      errorCorrectionLevel: options.errorCorrectionLevel ?? "Q",
+    });
+    return {
+      filePath: "",
+      publicUrl: "",
+      buffer: badge.buffer,
+      width: badge.width,
+    };
+  }
+
   const fgColor = safeHex(options.color);
   const bgColor = safeHex(options.background) === "#000000" ? "#FFFFFF" : safeHex(options.background);
   const ecc = options.errorCorrectionLevel || (options.logoPath ? "H" : "M");

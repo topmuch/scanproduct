@@ -21,6 +21,7 @@ import {
 } from "@/components/fabricant/ui";
 import { formatNombre } from "@/lib/fabricant-types";
 import { useFabricantData } from "../FabricantDataProvider";
+import { BadgeQRPreview } from "../BadgeQRPreview";
 import { construireUrlQrClient } from "@/lib/qr-url";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -62,6 +63,7 @@ export function BulkQRPage() {
   // ── Options state ─────────────────────────────────────────────────
   const [perLot, setPerLot] = useState(1);
   const [color, setColor] = useState("#000000");
+  const [includeDesign, setIncludeDesign] = useState(true);
   const [includeLogo, setIncludeLogo] = useState(true);
   const [includeLotNumber, setIncludeLotNumber] = useState(true);
   const [includeProductName, setIncludeProductName] = useState(true);
@@ -69,6 +71,8 @@ export function BulkQRPage() {
   // PDF layout options
   const [labelsPerRow, setLabelsPerRow] = useState(3);
   const [cutLines, setCutLines] = useState(true);
+  /** Preset d'étiquettes : "etiquettes" 60×70 mm ou "stickers30" 30×30 mm. */
+  const [pdfPreset, setPdfPreset] = useState<"etiquettes" | "stickers30">("etiquettes");
 
   // ── Generation state ──────────────────────────────────────────────
   const [generating, setGenerating] = useState(false);
@@ -125,7 +129,8 @@ export function BulkQRPage() {
           options: {
             size: 512,
             color,
-            includeLogo,
+            includeDesign,
+            includeLogo: includeDesign ? false : includeLogo,
             includeLotNumber,
             includeProductName,
           },
@@ -157,12 +162,15 @@ export function BulkQRPage() {
           lotIds: Array.from(selectedIds),
           perLot,
           options: {
-            size: 400,
+            size: 600,
             color,
+            design: includeDesign ? "badge" : "classic",
             includeLogo,
             includeLotNumber,
             includeProductName,
-            labelsPerRow,
+            labelsPerRow: pdfPreset === "stickers30" ? 5 : labelsPerRow,
+            labelWidth: pdfPreset === "stickers30" ? 30 : undefined,
+            labelHeight: pdfPreset === "stickers30" ? 30 : undefined,
             cutLines,
           },
         }),
@@ -176,7 +184,10 @@ export function BulkQRPage() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `etiquettes-qr-${new Date().toISOString().slice(0, 10)}.pdf`;
+      a.download =
+        pdfPreset === "stickers30"
+          ? `autocollants-qr-30mm-${new Date().toISOString().slice(0, 10)}.pdf`
+          : `etiquettes-qr-${new Date().toISOString().slice(0, 10)}.pdf`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -375,20 +386,30 @@ export function BulkQRPage() {
             {/* Toggles */}
             <div className="space-y-2">
               <ToggleRow
-                label="Logo de marque"
-                desc="Votre logo au centre du QR"
-                checked={includeLogo}
-                onChange={setIncludeLogo}
+                label="Design VerifScan (jaune)"
+                desc="Badge officiel LABEL VERIFSCAN, QR noir au centre"
+                checked={includeDesign}
+                onChange={setIncludeDesign}
               />
+              {!includeDesign && (
+                <>
+                  <ToggleRow
+                    label="Logo de marque"
+                    desc="Votre logo au centre du QR"
+                    checked={includeLogo}
+                    onChange={setIncludeLogo}
+                  />
+                </>
+              )}
               <ToggleRow
                 label="Numéro de lot"
-                desc="Texte sous le QR"
+                desc={includeDesign ? "Texte sous le badge (PDF)" : "Texte sous le QR"}
                 checked={includeLotNumber}
                 onChange={setIncludeLotNumber}
               />
               <ToggleRow
                 label="Nom du produit"
-                desc="Texte sous le QR"
+                desc={includeDesign ? "Texte sous le badge (PDF)" : "Texte sous le QR"}
                 checked={includeProductName}
                 onChange={setIncludeProductName}
               />
@@ -403,19 +424,34 @@ export function BulkQRPage() {
             </div>
             <div className="mb-3">
               <label className="mb-1 block text-xs font-medium text-gray-600">
-                Étiquettes par ligne
+                Format d'étiquettes
               </label>
               <select
-                value={labelsPerRow}
-                onChange={(e) => setLabelsPerRow(parseInt(e.target.value))}
+                value={pdfPreset}
+                onChange={(e) => setPdfPreset(e.target.value as typeof pdfPreset)}
                 className="h-9 w-full rounded-lg border border-gray-200 px-2 text-sm outline-none focus:border-[#022150]"
               >
-                <option value={2}>2 (grand format)</option>
-                <option value={3}>3 (standard)</option>
-                <option value={4}>4 (compact)</option>
-                <option value={5}>5 (dense)</option>
+                <option value="etiquettes">Étiquettes 60×70 mm</option>
+                <option value="stickers30">Autocollants 30×30 mm (imprimable 3 cm)</option>
               </select>
             </div>
+            {pdfPreset === "etiquettes" && (
+              <div className="mb-3">
+                <label className="mb-1 block text-xs font-medium text-gray-600">
+                  Étiquettes par ligne
+                </label>
+                <select
+                  value={labelsPerRow}
+                  onChange={(e) => setLabelsPerRow(parseInt(e.target.value))}
+                  className="h-9 w-full rounded-lg border border-gray-200 px-2 text-sm outline-none focus:border-[#022150]"
+                >
+                  <option value={2}>2 (grand format)</option>
+                  <option value={3}>3 (standard)</option>
+                  <option value={4}>4 (compact)</option>
+                  <option value={5}>5 (dense)</option>
+                </select>
+              </div>
+            )}
             <ToggleRow
               label="Lignes de découpe"
               desc="Pointillés autour des étiquettes"
@@ -429,16 +465,20 @@ export function BulkQRPage() {
             <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
               <h3 className="mb-3 text-sm font-bold text-gray-900">Aperçu</h3>
               <div className="flex flex-col items-center gap-2">
-                <div className="rounded-lg border border-gray-100 bg-white p-3">
-                  <QRCodeCanvas
-                    value={apercuQr.url}
-                    size={160}
-                    fgColor={color}
-                    bgColor="#FFFFFF"
-                    level={includeLogo ? "H" : "M"}
-                    marginSize={1}
-                  />
-                </div>
+                {includeDesign ? (
+                  <BadgeQRPreview value={apercuQr.url} size={170} />
+                ) : (
+                  <div className="rounded-lg border border-gray-100 bg-white p-3">
+                    <QRCodeCanvas
+                      value={apercuQr.url}
+                      size={160}
+                      fgColor={color}
+                      bgColor="#FFFFFF"
+                      level={includeLogo ? "H" : "M"}
+                      marginSize={1}
+                    />
+                  </div>
+                )}
                 <p className="text-xs font-medium text-gray-600">
                   {previewLot.produitNom}
                 </p>

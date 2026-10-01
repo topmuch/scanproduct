@@ -130,6 +130,12 @@ export async function POST(request: NextRequest) {
 
     const qrColor = options.color || fabricant?.brandColor || "#000000";
 
+    // ── Design du rendu (par défaut : badge « LABEL VERIFSCAN ») ────
+    // includeDesign === false → QR classique historique (couleur marque
+    // + logo + libellés). Sinon badge jaune avec QR noir au centre.
+    const design: "badge" | "classic" =
+      options.includeDesign === false ? "classic" : "badge";
+
     // ── Generate + render + persist ────────────────────────────
     const results: Array<{
       lotId: string;
@@ -199,12 +205,19 @@ export async function POST(request: NextRequest) {
         const rendered = await renderAndSaveQR(lot.id, uniqueCode, {
           size: options.size || 512,
           color: qrColor,
-          logoPath: logoPath || undefined,
-          lotNumber: options.includeLotNumber !== false ? lot.lotNumber : null,
+          logoPath: design === "badge" ? null : logoPath || undefined,
+          lotNumber:
+            design === "badge" || options.includeLotNumber === false
+              ? null
+              : lot.lotNumber,
           productName:
-            options.includeProductName !== false ? lot.product?.name : null,
-          errorCorrectionLevel: logoPath ? "H" : "M",
+            design === "badge" || options.includeProductName === false
+              ? null
+              : lot.product?.name,
+          errorCorrectionLevel:
+            design === "badge" ? "Q" : logoPath ? "H" : "M",
           scanUrl,
+          design,
         });
 
         // Persist the QR code row WITH the image URL.
@@ -218,7 +231,8 @@ export async function POST(request: NextRequest) {
             color: qrColor,
             includeLotNumber: options.includeLotNumber ?? true,
             includeProductName: options.includeProductName ?? true,
-            includeLogo: !!logoPath,
+            includeLogo: design === "badge" ? false : !!logoPath,
+            design,
             status: "ACTIVE",
           },
         });

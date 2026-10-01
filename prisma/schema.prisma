@@ -300,6 +300,10 @@ model QRCode {
   includeProductName  Boolean @default(true)
   includeLogo         Boolean @default(false)
 
+  /// Design du rendu PNG : "badge" = cercle jaune LABEL VERIFSCAN avec QR
+  /// noir au centre (modèle client), "classic" = QR brut (couleur marque).
+  design        String   @default("badge")
+
   status        String   @default("ACTIVE") // "ACTIVE" | "USED" | "INVALID"
   isDownloaded  Boolean  @default(false)
   downloadedAt  DateTime?

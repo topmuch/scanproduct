@@ -25,7 +25,8 @@ import {
 } from "@/components/fabricant/ui";
 import { formatNombre } from "@/lib/fabricant-types";
 import { useFabricantData } from "../FabricantDataProvider";
-import { downloadQRCode } from "@/lib/qr-utils";
+import { downloadQrPng } from "@/lib/qr-utils";
+import { BadgeQRPreview } from "../BadgeQRPreview";
 import { construireUrlQrClient } from "@/lib/qr-url";
 import { toast } from "sonner";
 
@@ -111,6 +112,7 @@ function GenerationModal({
     produit: true,
     logo: false,
     marges: false,
+    design: true,
   });
   const [couleur, setCouleur] = useState("#000000");
   const [submitting, setSubmitting] = useState(false);
@@ -171,6 +173,7 @@ function GenerationModal({
             includeLotNumber: options.lot,
             includeProductName: options.produit,
             includeLogo: options.logo,
+            includeDesign: options.design,
           },
         }),
       });
@@ -310,6 +313,7 @@ function GenerationModal({
                 { key: "produit", label: "Inclure nom produit" },
                 { key: "logo", label: "Inclure logo" },
                 { key: "marges", label: "Marges découpe" },
+                { key: "design", label: "Design VerifScan (jaune)" },
               ].map((o) => (
                 <label key={o.key} className={labelRow + " cursor-pointer"}>
                   <input
@@ -353,7 +357,11 @@ function GenerationModal({
             <div>
               <label className="mb-1.5 block text-[13px] font-semibold text-[#374151]">Aperçu</label>
               <div className="flex flex-col items-center rounded-lg border border-[#E5E7EB] bg-white p-3">
-                <QRCodeDisplay value={apercuQr.url} size={120} color={couleur} />
+                {options.design ? (
+                  <BadgeQRPreview value={apercuQr.url} size={150} />
+                ) : (
+                  <QRCodeDisplay value={apercuQr.url} size={120} color={couleur} />
+                )}
                 {options.lot && (
                   <p className="mt-2 font-mono text-[10px] text-[#6B7280]">{lots.find((l) => l.id === lotId)?.numero ?? "—"}</p>
                 )}
@@ -649,10 +657,7 @@ export function QRCodesPage() {
                 toast.info(`Téléchargement de ${count} QR codes…`);
                 const selected = qrCodes.filter((q) => selectedIds.has(q.id));
                 for (let i = 0; i < selected.length; i++) {
-                  await downloadQRCode(
-                    urlQrDe(selected[i]).url,
-                    `qr-${selected[i].code}.png`
-                  );
+                  await downloadQrPng(selected[i], urlQrDe(selected[i]).url);
                   if (i < selected.length - 1) {
                     await new Promise((r) => setTimeout(r, 200));
                   }
@@ -803,14 +808,18 @@ export function QRCodesPage() {
                   <button
                     type="button"
                     title="Télécharger"
-                    onClick={() => {
+                    onClick={async () => {
                       const qr = urlQrDe(q);
-                      downloadQRCode(qr.url, `qr-${q.code}.png`);
-                      toast.success(
-                        qr.format === "GS1"
-                          ? `QR code GS1 ${q.code} téléchargé`
-                          : `QR code ${q.code} téléchargé`
-                      );
+                      try {
+                        await downloadQrPng(q, qr.url);
+                        toast.success(
+                          qr.format === "GS1"
+                            ? `QR code GS1 ${q.code} téléchargé`
+                            : `QR code ${q.code} téléchargé`
+                        );
+                      } catch {
+                        toast.error(`Échec du téléchargement de ${q.code}`);
+                      }
                     }}
                     className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[#E5E7EB] bg-white text-[#374151] transition-colors hover:bg-[#F9FAFB]"
                   >

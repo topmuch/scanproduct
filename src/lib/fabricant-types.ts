@@ -74,6 +74,10 @@ export type QRCode = {
   dateGeneration: string;
   scans: number;
   status: "actif" | "desactive";
+  /** PNG persisté côté serveur (bulk-generate) — null pour les QR unitaires. */
+  imageUrl?: string | null;
+  /** Design du rendu : "badge" (LABEL VERIFSCAN jaune) ou "classic". */
+  design?: "badge" | "classic";
 };
 
 export type Badge = {

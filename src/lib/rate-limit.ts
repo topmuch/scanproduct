@@ -51,6 +51,10 @@ export const RATE_LIMITS = {
   AUTH: { windowMs: 60_000, max: 10 },
   /** QR generation — moderate (auth required, but expensive). */
   QR_GENERATE: { windowMs: 60_000, max: 20 },
+
+  // Rendu PNG badge (téléchargements unitaires + lot) — cap plus haut que
+  // QR_GENERATE car un téléchargement par lot peut enchaîner ~100 rendus.
+  QR_RENDER: { windowMs: 60_000, max: 120 },
   /** Default API. */
   DEFAULT: { windowMs: 60_000, max: 100 },
 } as const;
