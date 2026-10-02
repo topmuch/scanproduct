@@ -27,6 +27,7 @@ import { formatNombre, type QRCode as QrCodeItem } from "@/lib/fabricant-types";
 import { useFabricantData } from "../FabricantDataProvider";
 import { downloadQrPng } from "@/lib/qr-utils";
 import { BadgeQRPreview } from "../BadgeQRPreview";
+import { DesignDownloadButton } from "../DesignDownloadButton";
 import { construireUrlQrClient } from "@/lib/qr-url";
 import { toast } from "sonner";
 
@@ -581,6 +582,7 @@ export function QRCodesPage() {
 
       {/* Header */}
       <PageHeader title="Mes QR Codes" subtitle={`${formatNombre(usedQuota)} QR codes générés`}>
+        <DesignDownloadButton />
         <OutlineButton
           onClick={() => exporterZip(filtered.map((q) => q.id), "Archive ZIP")}
           disabled={exportingZip || filtered.length === 0}

@@ -22,6 +22,7 @@ import {
 import { formatNombre } from "@/lib/fabricant-types";
 import { useFabricantData } from "../FabricantDataProvider";
 import { BadgeQRPreview } from "../BadgeQRPreview";
+import { DesignDownloadButton } from "../DesignDownloadButton";
 import { construireUrlQrClient } from "@/lib/qr-url";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -220,7 +221,9 @@ export function BulkQRPage() {
       <PageHeader
         title="Génération en masse"
         subtitle="Générez des QR codes pour plusieurs lots à la fois, avec logo de marque et couleurs personnalisées. Exportez en PDF pour l'impression d'étiquettes."
-      />
+      >
+        <DesignDownloadButton />
+      </PageHeader>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
         {/* ════════════════════════════════════════════════════════════

@@ -5333,3 +5333,20 @@ Work Log:
 
 Stage Summary:
 - Le GTIN est désormais saisi avec vérification du chiffre de contrôle GS1 en temps réel côté client ET serveur ; un GTIN valide active automatiquement les QR GS1 Digital Link (choix automatique déjà branché dans les routes QR)
+
+---
+Task ID: design-download-button
+Agent: main
+Task: Bouton « Télécharger le nouveau design » — téléchargement du design officiel LABEL VERIFSCAN à la demande depuis le dashboard
+
+Work Log:
+- Sync GitHub ↔ local : clone topmuch/scanproduct, main à jour (7090fa3), .env local créé depuis .env.example (gitinvoyé), db:push + db:seed (sarine@biocosmetique.sn / Demo1234!).
+- Nouveau composant src/components/fabricant/DesignDownloadButton.tsx : bouton permanent OutlineButton + état busy (« Préparation du design… »), appelle downloadBadgeQR(getScanOrigin()/produits, label-verifscan-design.png, 1200) → POST /api/qr-codes/render-badge, toasts succès/erreur sonner avec description (PNG 1200 px imprimable 3 cm, QR du modèle → catalogue public).
+- Intégration QRCodesPage (header Mes QR Codes, avant « Exporter tout (ZIP) ») + BulkQRPage (header Génération en masse via children PageHeader).
+- Nouveau test e2e scripts/test-design-download.ts (paramétrable TEST_BASE_URL) : login fabricant, 401 anonyme, POST render-badge 200 image/png 99 Ko, pyzbar décode http://localhost:3100/produits, 4875/10000 px jaunes (~48,7 %, conforme ~47 % attendu), 403 domaine tiers → 8 OK / 0 ÉCHEC.
+- Vérifications : bunx eslint 3 fichiers OK ; tsc --noEmit src/ OK (erreurs préexistantes hors build : scripts/, examples/) ; bun run build OK (routes compilées, fix-standalone-sharp OK, fix-standalone-deps smoke OK 59 paquets) ; label « Télécharger le nouveau design » présent dans le bundle client (.next/static/chunks).
+- Vérification navigateur (agent-browser sur standalone PORT=3100) : login → Mes QR Codes → bouton visible → clic → toast succès ; même vérif Génération en masse. Preuves : download/proof-bouton-design-qr-codes.png, proof-bouton-design-bulk.png.
+
+Stage Summary:
+- Le fabricant peut télécharger le design officiel LABEL VERIFSCAN (PNG 1200 px, imprimable dès 3 cm) à tout moment via un bouton dédié sur les 2 pages QR du dashboard ; badge rendu par le même pipeline serveur que les exports (design toujours à jour) ; QR du modèle pointe vers /produits (catalogue public) ; gardes 401/403 inchangées (anti brand-abuse).
+- Commit + push sur main → déploiement Coolify possible immédiatement (Dockerfile v3 inchangé).
