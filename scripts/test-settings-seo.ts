@@ -152,7 +152,7 @@ async function main() {
       siteName: "VerifScan HQ",
       siteUrl: "https://verifscan.com",
       contactEmail: "contact@verifscan.com",
-      contactPhone: "+221 78 485 88 22",
+      contactPhone: "+221 78 382 18 22",
       timezone: "Africa/Dakar",
       defaultLanguage: "fr",
       siteAddress: "Lot n°13, Ouest Foire, Dakar, Sénégal",

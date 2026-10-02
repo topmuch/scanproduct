@@ -353,10 +353,10 @@ export default function CGUPage() {
           <li>
             Par téléphone :{" "}
             <a
-              href="tel:+221784858822"
+              href="tel:+221783821822"
               className="font-medium text-[#022150] underline-offset-2 hover:underline"
             >
-              +221 78 485 88 22
+              +221 78 382 18 22
             </a>
           </li>
           <li>Par courrier : Dakar, Sénégal</li>

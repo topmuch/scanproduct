@@ -71,8 +71,8 @@ export function PublicFooter() {
               </li>
               <li className="flex items-center gap-2">
                 <Phone className="h-4 w-4 text-white/50" />
-                <a href="tel:+221784858822" className="hover:text-white">
-                  +221 78 485 88 22
+                <a href="tel:+221783821822" className="hover:text-white">
+                  +221 78 382 18 22
                 </a>
               </li>
               <li className="flex items-center gap-2">

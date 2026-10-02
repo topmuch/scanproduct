@@ -9,8 +9,8 @@
  * (le « Lot n°13 » exact n'est pas un lieu Google Maps).
  */
 export const VERIFSCAN_EMAIL = "contact@verifscan.com";
-export const VERIFSCAN_PHONE_DISPLAY = "+221 78 485 88 22";
-export const VERIFSCAN_PHONE_TEL = "tel:+221784858822";
+export const VERIFSCAN_PHONE_DISPLAY = "+221 78 382 18 22";
+export const VERIFSCAN_PHONE_TEL = "tel:+221783821822";
 export const VERIFSCAN_ADDRESS = "Lot n°13, Ouest Foire, Dakar, Sénégal";
 export const VERIFSCAN_MAPS_QUERY = "Ouest+Foire,+Dakar,+S%C3%A9n%C3%A9gal";
 export const VERIFSCAN_DIRECTIONS_URL = `https://www.google.com/maps/dir/?api=1&destination=${VERIFSCAN_MAPS_QUERY}`;

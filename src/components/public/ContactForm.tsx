@@ -17,8 +17,8 @@ const CONTACT_INFO = [
   {
     icon: Phone,
     label: "Téléphone",
-    value: "+221 78 485 88 22",
-    href: "tel:+221784858822",
+    value: "+221 78 382 18 22",
+    href: "tel:+221783821822",
     color: "#10B981",
     bg: "#ECFDF5",
   },

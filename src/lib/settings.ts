@@ -112,7 +112,7 @@ export const SETTING_KEYS = {
   siteUrl: "siteUrl",
   /** Public contact email (defaults to "contact@verifscan.com"). */
   contactEmail: "contactEmail",
-  /** Public contact phone (defaults to "+221784858822"). */
+  /** Public contact phone (defaults to "+221783821822"). */
   contactPhone: "contactPhone",
   /** IANA timezone of the platform (defaults to "Africa/Dakar"). */
   timezone: "timezone",
