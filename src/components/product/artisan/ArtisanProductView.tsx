@@ -31,22 +31,26 @@ import { Logo } from "@/components/landing/Logo";
 /**
  * ArtisanProductView — page produit artisanale PREMIUM (scan client final).
  *
- * Design 2026 v2 — « boutique d'artisan » chaleureuse et éditoriale :
- *   1.  Hero photo PLEIN ÉCRAN — nom + designation + chips authentique
- *       posés sur l'image (style fiche produit premium)
- *   2.  Carte flottante artisan — avatar, vérification VerifScan,
- *       fraîcheur (badge jours restants + dates + progression),
- *       contenance / prix, partage
- *   3.  Bandeau bénéfices (4 pastilles)
- *   4.  Composition naturelle (+ encadré sans allergènes)
- *   5.  Précautions d'emploi (assistant intelligent)
- *   6.  Conditions de conservation (assistant intelligent)
- *   7.  Histoire de l'artisan (+ galerie atelier, lightbox)
- *   8.  Conseils d'utilisation numérotés
- *   9.  CTA WhatsApp géant + coordonnées cliquables
- *   10. Avis clients réels + formulaire
- *   11. Autres produits du même artisan (produits DIFFÉRENTS seulement)
- *   12. Footer vérification VerifScan
+ * Design 2026 v3 — « boutique d'artisan » chaleureuse et éditoriale :
+ *   1.  Hero photo PLEIN ÉCRAN — nom + designation + chips posés sur l'image
+ *   2.  BANNIÈRE AUTHENTICITÉ — « Produit authentique & fait main » en
+ *       gradient émeraude avec sceau Vérifié (demande utilisateur : mettre
+ *       en valeur l'authenticité et le fait main)
+ *   3.  FRAÎCHEUR en vedette — badge géant jours restants + date de
+ *       péremption EN GRAND + statut coloré + progression
+ *       (demande utilisateur : mettre en valeur les dates)
+ *   4.  Carte artisan — LOGO de la marque (uploadé à l'activation) ou
+ *       initiale, vérification, contenance / prix, partage
+ *   5.  Composition naturelle (+ encadré sans allergènes)
+ *   6.  Précautions d'emploi (assistant intelligent)
+ *   7.  Conditions de conservation (assistant intelligent)
+ *   8.  Histoire de l'artisan (+ galerie atelier, lightbox)
+ *   9.  Conseils d'utilisation — 3 premiers puis « Voir les autres »
+ *       (demande utilisateur : les conseils sont trop longs)
+ *   10. CTA WhatsApp géant + coordonnées cliquables
+ *   11. Avis clients réels + formulaire
+ *   12. Autres produits du même artisan (produits DIFFÉRENTS seulement)
+ *   13. Footer vérification VerifScan
  */
 
 type SimilarProduct = {
@@ -105,6 +109,9 @@ type Props = {
     facebookUrl?: string | null;
     tiktokUrl?: string | null;
   };
+  /** Logo de la marque (uploadé à l'activation) — avatar de la carte artisan
+   *  + section histoire. Fallback : initiale de l'artisan. */
+  logoUrl?: string | null;
   /** Galerie « L'atelier en images » (max 3 photos). */
   artisanPhotos?: string[];
   /** Avis clients réels chargés côté serveur. */
@@ -254,11 +261,15 @@ export function ArtisanProductView({
   scanCount = 0,
   counterfeitAlert = null,
   socials,
+  logoUrl = null,
   artisanPhotos = [],
   initialReviews = [],
   similarProducts = [],
 }: Props) {
   const [showAllIngredients, setShowAllIngredients] = useState(false);
+  // Conseils d'utilisation : on n'affiche que les 3 premiers par défaut
+  // (retour utilisateur : la liste complète est trop longue).
+  const [showAllTips, setShowAllTips] = useState(false);
   const [reviewThanks, setReviewThanks] = useState(false);
   const [reviews, setReviews] = useState<ReviewItem[]>(initialReviews);
 
@@ -449,15 +460,37 @@ export function ArtisanProductView({
     return Math.min(100, Math.max(2, Math.round(pct)));
   })();
 
-  // ── Avantages (bandeau 3) ────────────────────────────────────────────────
-  const benefits = [
-    { icon: "🌱", text: "100% Naturel" },
-    { icon: "✋", text: "Fait main" },
-    { icon: "🚫", text: "Sans produits chimiques" },
-    { icon: "🇸🇳", text: "Soutien local" },
-  ];
+  // ── Statut de fraîcheur (chip colorée) ────────────────────────────────────────────────
+  const freshnessStatus = (() => {
+    if (daysLeft === null) return null;
+    if (isExpired)
+      return { label: "Périmé", chip: "bg-red-50 text-red-700 ring-red-200", dot: "bg-red-500" };
+    if (daysLeft <= 7)
+      return {
+        label: "Très bientôt périmé",
+        chip: "bg-red-50 text-red-700 ring-red-200",
+        dot: "bg-red-500",
+      };
+    if (daysLeft <= 30)
+      return {
+        label: "À utiliser bientôt",
+        chip: "bg-amber-50 text-amber-700 ring-amber-200",
+        dot: "bg-amber-500",
+      };
+    if (daysLeft <= 90)
+      return {
+        label: "Bonne fraîcheur",
+        chip: "bg-lime-50 text-lime-700 ring-lime-200",
+        dot: "bg-lime-500",
+      };
+    return {
+      label: "Très frais",
+      chip: "bg-emerald-50 text-emerald-700 ring-emerald-200",
+      dot: "bg-emerald-500",
+    };
+  })();
 
-  // ── Conseils (8) : remplis par l'artisan, sinon défauts ──────────────────
+  // ── Conseils : remplis par l'artisan, sinon défauts ──────────────────
   const usageTips =
     (lot.usageTips ?? "")
       .split("\n")
@@ -593,98 +626,153 @@ export function ArtisanProductView({
         </div>
       </header>
 
-      {/* ── 2. CARTE FLOTTANTE ARTISAN + FRAÎCHEUR ─────────────────────── */}
+      {/* ── 2. BANNIÈRE AUTHENTICITÉ · FRAÎCHEUR · CARTE ARTISAN ─────────────────────── */}
       <div className="relative z-10 mx-auto -mt-12 max-w-lg px-5">
-        <section className="rounded-[2rem] border border-stone-200/80 bg-white shadow-xl shadow-stone-900/5">
-          {/* Ligne artisan */}
-          <div className="flex items-center gap-4 border-b border-stone-100 p-6">
-            <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-400 via-orange-500 to-rose-500 text-2xl font-black text-white shadow-md shadow-orange-500/25">
-              {(lot.artisanName || "A").charAt(0).toUpperCase()}
+        {/* ── BANNIÈRE AUTHENTICITÉ — mise en valeur « authentique & fait main » ── */}
+        <section className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-emerald-600 via-emerald-500 to-teal-600 px-5 py-6 text-white shadow-xl shadow-emerald-900/20">
+          <div className="pointer-events-none absolute -right-12 -top-16 h-44 w-44 rounded-full bg-white/10 blur-2xl" />
+          <div className="pointer-events-none absolute -bottom-16 -left-10 h-36 w-36 rounded-full bg-teal-300/20 blur-2xl" />
+          <div className="relative flex items-center gap-4">
+            <div className="flex h-16 w-16 flex-shrink-0 flex-col items-center justify-center rounded-full bg-white text-emerald-700 shadow-lg">
+              <ShieldCheck className="h-7 w-7" />
+              <span className="mt-0.5 text-[8px] font-black uppercase tracking-wider">
+                Vérifié
+              </span>
             </div>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-lg font-bold leading-tight">{lot.artisanName}</p>
-              <p className="mt-0.5 flex items-center gap-1 text-xs font-semibold text-emerald-600">
-                <BadgeCheck className="h-4 w-4" /> Artisan vérifié par VerifScan
+            <div className="min-w-0">
+              <h2 className="text-xl font-black leading-[1.15]">
+                Produit authentique
+                <br />
+                &amp; fait main
+              </h2>
+              <p className="mt-1 text-xs font-medium text-emerald-50/90">
+                Authentifié à chaque scan par VerifScan
               </p>
             </div>
-            {scanCount > 0 && (
-              <div className="flex-shrink-0 rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-center">
-                <p className="text-lg font-black leading-none text-amber-600">{scanCount}</p>
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-amber-700/80">
-                  scan{scanCount > 1 ? "s" : ""}
-                </p>
-              </div>
-            )}
           </div>
+          <div className="relative mt-4 grid grid-cols-3 gap-2 text-center">
+            <div className="rounded-2xl bg-white/15 py-2.5 backdrop-blur-sm">
+              <p className="text-lg leading-none">✋</p>
+              <p className="mt-1 text-[10px] font-bold">Fait main</p>
+            </div>
+            <div className="rounded-2xl bg-white/15 py-2.5 backdrop-blur-sm">
+              <p className="text-lg leading-none">🌱</p>
+              <p className="mt-1 text-[10px] font-bold">100 % naturel</p>
+            </div>
+            <div className="rounded-2xl bg-white/15 py-2.5 backdrop-blur-sm">
+              <p className="text-lg leading-none">🇸🇳</p>
+              <p className="mt-1 text-[10px] font-bold">Soutien local</p>
+            </div>
+          </div>
+        </section>
 
-          {/* Fraîcheur : badge circulaire + dates + progression */}
-          <div className="p-6">
-            <div className="flex items-center gap-4">
-              {/* Badge circulaire jours restants */}
-              <div
-                className={`relative flex h-20 w-20 flex-shrink-0 flex-col items-center justify-center rounded-full border-4 ${
+        {/* ── FRAÎCHEUR — LES DATES DE PÉREMPTION EN VEDETTE ──────────────── */}
+        <section className="mt-4 rounded-[2rem] border border-emerald-100 bg-white p-6 shadow-xl shadow-stone-900/5">
+          <Eyebrow>Du frais, prouvé</Eyebrow>
+          <div className="flex items-center gap-5">
+            {/* Badge circulaire géant jours restants */}
+            <div
+              className={`relative flex h-24 w-24 flex-shrink-0 flex-col items-center justify-center rounded-full border-4 ${
+                isExpired
+                  ? "border-red-100 bg-red-50"
+                  : daysLeft !== null && daysLeft <= 30
+                    ? "border-amber-100 bg-amber-50"
+                    : "border-emerald-100 bg-emerald-50"
+              }`}
+            >
+              <span
+                className={`text-2xl font-black leading-none ${
                   isExpired
-                    ? "border-red-100 bg-red-50"
+                    ? "text-red-600"
                     : daysLeft !== null && daysLeft <= 30
-                      ? "border-amber-100 bg-amber-50"
-                      : "border-emerald-100 bg-emerald-50"
+                      ? "text-amber-600"
+                      : "text-emerald-600"
                 }`}
               >
-                <span
-                  className={`text-xl font-black leading-none ${
-                    isExpired ? "text-red-600" : daysLeft !== null && daysLeft <= 30 ? "text-amber-600" : "text-emerald-600"
-                  }`}
-                >
-                  {isExpired ? Math.abs(daysLeft ?? 0) : daysLeft ?? 0}
-                </span>
-                <span className="mt-0.5 text-[9px] font-bold uppercase tracking-wider text-stone-500">
-                  {isExpired ? "jours dépassé" : "jours restants"}
-                </span>
-              </div>
-
-              {/* Dates */}
-              <div className="min-w-0 flex-1 space-y-2">
-                <div className="flex items-center gap-2 rounded-xl bg-stone-50 px-3 py-2">
-                  <CalendarDays className="h-4 w-4 flex-shrink-0 text-stone-400" />
-                  <div className="min-w-0">
-                    <p className="text-[10px] font-semibold uppercase tracking-wide text-stone-400">
-                      Fabriqué le
-                    </p>
-                    <p className="truncate text-xs font-bold text-stone-700">
-                      {formatDate(lot.manufacturingDate)}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 rounded-xl bg-amber-50/70 px-3 py-2">
-                  <Clock className="h-4 w-4 flex-shrink-0 text-amber-500" />
-                  <div className="min-w-0">
-                    <p className="text-[10px] font-semibold uppercase tracking-wide text-amber-600/80">
-                      À utiliser avant
-                    </p>
-                    <p className="truncate text-xs font-bold text-amber-800">
-                      {formatDate(lot.expirationDate)}
-                    </p>
-                  </div>
-                </div>
-              </div>
+                {isExpired ? Math.abs(daysLeft ?? 0) : daysLeft ?? 0}
+              </span>
+              <span className="mt-1 text-[9px] font-bold uppercase tracking-wider text-stone-500">
+                {isExpired ? "jours dépassé" : "jours restants"}
+              </span>
             </div>
 
-            {/* Barre de progression durée de vie */}
-            <div className="mt-4">
-              <div className="h-2 overflow-hidden rounded-full bg-stone-100">
-                <div
-                  className={`h-full rounded-full transition-all duration-1000 ${
-                    isExpired
-                      ? "bg-gradient-to-r from-red-400 to-rose-500"
-                      : "bg-gradient-to-r from-emerald-400 to-green-500"
-                  }`}
-                  style={{ width: `${shelfLifePct}%` }}
+            {/* LA date de péremption, en gros */}
+            <div className="min-w-0 flex-1">
+              <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-stone-400">
+                À utiliser avant le
+              </p>
+              <p className="mt-0.5 text-[1.55rem] font-black leading-tight text-emerald-700">
+                {formatDate(lot.expirationDate)}
+              </p>
+              {freshnessStatus && (
+                <span
+                  className={`mt-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ring-1 ${freshnessStatus.chip}`}
+                >
+                  <span className={`h-2 w-2 rounded-full ${freshnessStatus.dot}`} />
+                  {freshnessStatus.label}
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Barre de progression durée de vie */}
+          <div className="mt-5">
+            <div className="h-2.5 overflow-hidden rounded-full bg-stone-100">
+              <div
+                className={`h-full rounded-full transition-all duration-1000 ${
+                  isExpired
+                    ? "bg-gradient-to-r from-red-400 to-rose-500"
+                    : "bg-gradient-to-r from-emerald-400 to-green-500"
+                }`}
+                style={{ width: `${shelfLifePct}%` }}
+              />
+            </div>
+            <div className="mt-1.5 flex justify-between text-[11px] font-semibold text-stone-400">
+              <span>
+                Fabriqué le{" "}
+                <span className="font-bold text-stone-600">
+                  {formatDate(lot.manufacturingDate)}
+                </span>
+              </span>
+              <span>Péremption</span>
+            </div>
+          </div>
+        </section>
+
+        {/* ── CARTE ARTISAN (identité + prix + partage) ───────────────────── */}
+        <section className="mt-4 rounded-[2rem] border border-stone-200/80 bg-white shadow-xl shadow-stone-900/5">
+          <div className="p-6">
+            <div className="flex items-center gap-4">
+              {logoUrl ? (
+                <SafeImage
+                  src={logoUrl}
+                  alt={`Logo de ${lot.artisanName}`}
+                  className="h-14 w-14 flex-shrink-0 rounded-2xl bg-gradient-to-br from-amber-400 via-orange-500 to-rose-500 object-cover shadow-md shadow-orange-500/25"
+                  icon={
+                    <span className="text-2xl font-black text-white">
+                      {(lot.artisanName || "A").charAt(0).toUpperCase()}
+                    </span>
+                  }
                 />
+              ) : (
+                <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-400 via-orange-500 to-rose-500 text-2xl font-black text-white shadow-md shadow-orange-500/25">
+                  {(lot.artisanName || "A").charAt(0).toUpperCase()}
+                </div>
+              )}
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-lg font-bold leading-tight">{lot.artisanName}</p>
+                <p className="mt-0.5 flex items-center gap-1 text-xs font-semibold text-emerald-600">
+                  <BadgeCheck className="h-4 w-4" /> Artisan vérifié par VerifScan
+                </p>
               </div>
-              <div className="mt-1 flex justify-between text-[10px] font-medium text-stone-400">
-                <span>Fabrication</span>
-                <span>Péremption</span>
-              </div>
+              {scanCount > 0 && (
+                <div className="flex-shrink-0 rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-center">
+                  <p className="text-lg font-black leading-none text-amber-600">{scanCount}</p>
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-amber-700/80">
+                    scan{scanCount > 1 ? "s" : ""}
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Contenance / prix + partage */}
@@ -719,23 +807,7 @@ export function ArtisanProductView({
           </div>
         </section>
 
-        {/* ── 3. BANDEAU BÉNÉFICES ─────────────────────────────────────────── */}
-        <section className="mt-8">
-          <div className="grid grid-cols-4 gap-2">
-            {benefits.map((benefit, index) => (
-              <div key={index} className="flex flex-col items-center gap-2 text-center">
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-amber-100 bg-white text-2xl shadow-sm">
-                  {benefit.icon}
-                </div>
-                <span className="text-[11px] font-semibold leading-tight text-stone-600">
-                  {benefit.text}
-                </span>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* ── 4. COMPOSITION NATURELLE ────────────────────────────────────── */}
+        {/* ── 5. COMPOSITION NATURELLE ────────────────────────────────────── */}
         {ingredients && (
           <section className="mt-8 rounded-[2rem] border border-stone-200/80 bg-white p-6 shadow-sm">
             <Eyebrow>Ce qu&rsquo;il y a dedans</Eyebrow>
@@ -826,9 +898,22 @@ export function ArtisanProductView({
             </blockquote>
 
             <div className="mt-5 flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-orange-500 text-xl font-bold text-white shadow-lg shadow-orange-500/25">
-                {(lot.artisanName || "A").charAt(0).toUpperCase()}
-              </div>
+              {logoUrl ? (
+                <SafeImage
+                  src={logoUrl}
+                  alt={`Logo de ${lot.artisanName}`}
+                  className="h-12 w-12 flex-shrink-0 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 object-cover shadow-lg shadow-orange-500/25"
+                  icon={
+                    <span className="text-xl font-bold text-white">
+                      {(lot.artisanName || "A").charAt(0).toUpperCase()}
+                    </span>
+                  }
+                />
+              ) : (
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-orange-500 text-xl font-bold text-white shadow-lg shadow-orange-500/25">
+                  {(lot.artisanName || "A").charAt(0).toUpperCase()}
+                </div>
+              )}
               <div>
                 <p className="font-bold">{lot.artisanName}</p>
                 <p className="flex items-center gap-1 text-sm font-medium text-emerald-600">
@@ -873,7 +958,7 @@ export function ArtisanProductView({
             <Sparkles className="h-5 w-5 text-amber-500" /> Conseils d&rsquo;utilisation
           </h2>
           <div className="space-y-3">
-            {tips.map((tip, index) => (
+            {(showAllTips ? tips : tips.slice(0, 3)).map((tip, index) => (
               <div
                 key={index}
                 className="flex items-start gap-3 rounded-2xl border border-stone-100 bg-stone-50/70 p-3.5"
@@ -885,6 +970,23 @@ export function ArtisanProductView({
               </div>
             ))}
           </div>
+          {tips.length > 3 && (
+            <button
+              type="button"
+              onClick={() => setShowAllTips((v) => !v)}
+              className="mt-4 flex w-full items-center justify-center gap-1.5 rounded-2xl border border-amber-200 bg-amber-50 py-2.5 text-sm font-bold text-amber-800 transition-colors hover:bg-amber-100"
+            >
+              {showAllTips ? (
+                <>
+                  Résumer <ChevronUp className="h-4 w-4" />
+                </>
+              ) : (
+                <>
+                  Voir les {tips.length - 3} autres conseils <ChevronDown className="h-4 w-4" />
+                </>
+              )}
+            </button>
+          )}
         </section>
 
         {/* ── 9. CONTACT & CTA WHATSAPP ───────────────────────────────────── */}

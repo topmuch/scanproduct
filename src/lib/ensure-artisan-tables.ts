@@ -212,6 +212,8 @@ export const REQUIRED_COLUMNS: Record<string, Array<{ name: string; ddl: string 
       name: "productDesignation",
       ddl: `ALTER TABLE "Pack" ADD COLUMN "productDesignation" TEXT`,
     },
+    // Logo de marque (onboarding d'activation) — affiché sur la page publique.
+    { name: "logoUrl", ddl: `ALTER TABLE "Pack" ADD COLUMN "logoUrl" TEXT` },
   ],
   PreActivatedLot: [
     { name: "artisanBio", ddl: `ALTER TABLE "PreActivatedLot" ADD COLUMN "artisanBio" TEXT` },

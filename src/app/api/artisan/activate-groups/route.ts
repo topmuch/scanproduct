@@ -64,6 +64,9 @@ const SharedSchema = z.object({
   tiktokUrl: z.string().trim().max(200).optional().or(z.literal("")),
   // Galerie « L'atelier en images » — partagée par tout le pack (max 3)
   artisanPhotos: z.array(z.string().max(500)).max(3).optional(),
+  // Logo de la marque (onboarding) — partagé par tout le pack, affiché sur
+  // la page publique (avatar de la carte artisan + section histoire).
+  logoUrl: z.string().trim().max(500).optional().or(z.literal("")),
 });
 
 const BodySchema = z.object({
@@ -278,6 +281,9 @@ export async function POST(request: NextRequest) {
             ...(shared.artisanPhotos && shared.artisanPhotos.length > 0
               ? { artisanPhotos: JSON.stringify(shared.artisanPhotos) }
               : {}),
+            // Logo : une passe suivante SANS logo ne doit pas effacer
+            // l'ancien (même logique que les réseaux sociaux).
+            ...(shared.logoUrl ? { logoUrl: shared.logoUrl } : {}),
             // Compat mono-produit : 1 seul groupe couvrant tout le pack
             // remplit aussi les champs pack lus par l'existant.
             ...(fullyActivated && groups.length === 1 && sum === total

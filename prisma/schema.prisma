@@ -892,6 +892,10 @@ model Pack {
   // Galerie « L'atelier en images » — tableau JSON d'URLs (max 3)
   artisanPhotos String?
 
+  // Logo de la marque / de l'artisan — uploadé à l'activation (onboarding),
+  // affiché sur la page publique (avatar de la carte artisan + histoire).
+  logoUrl String?
+
   // Prix consommateur affiché sur la page produit (texte libre, ex. « 5 000 FCFA »)
   // ⚠️ Distinct de `price` = prix B2B du pack de QR.
   productPrice String?

@@ -11,6 +11,14 @@ import {
   Sparkles,
   ArrowLeft,
   Package,
+  Check,
+  Camera,
+  CalendarDays,
+  FlaskConical,
+  User,
+  ClipboardCheck,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import PhotoPicker from "@/components/product/artisan/PhotoPicker";
 import {
@@ -65,7 +73,7 @@ type GroupForm = {
   storageConditions: string;
 };
 
-/** Identité + réseaux + galerie — communs à tous les produits du pack. */
+/** Identité + réseaux + galerie + logo — communs à tous les produits du pack. */
 type SharedForm = {
   artisanName: string;
   contactPhone: string;
@@ -74,6 +82,7 @@ type SharedForm = {
   facebookUrl: string;
   tiktokUrl: string;
   galleryPhotos: File[];
+  logo: File | null;
 };
 
 type SuccessState = {
@@ -116,6 +125,15 @@ async function uploadPhoto(file: File, masterCode: string): Promise<string> {
   return data.url as string;
 }
 
+/** Date ISO (yyyy-mm-dd) → format long français (« 12 avril 2026 »). */
+function formatFrDate(iso: string): string {
+  if (!iso) return "—";
+  const d = new Date(`${iso}T00:00:00`);
+  return Number.isNaN(d.getTime())
+    ? iso
+    : d.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
+}
+
 /** Groupe produit envoyé à l'API activate-groups. */
 type ApiGroup = {
   count: number;
@@ -149,6 +167,44 @@ function calcExp(mfg: string, template: ProductTemplate | null): string {
   );
   return d.toISOString().split("T")[0];
 }
+
+/**
+ * ONBOARDING (mode simple) — les étapes guidées de l'activation.
+ * Un petit bloc par écran, une barre de progression, validation à l'avance :
+ * l'artisan ne voit jamais un formulaire interminable.
+ */
+const SIMPLE_STEPS = [
+  {
+    label: "Produit",
+    title: "Votre produit",
+    icon: Package,
+    hint: "Photo, logo et nom — les bases de votre page produit.",
+  },
+  {
+    label: "Recette",
+    title: "Recette & fraîcheur",
+    icon: FlaskConical,
+    hint: "Tapez vos ingrédients réels (champ volontairement vide). La péremption se calcule automatiquement.",
+  },
+  {
+    label: "Vous",
+    title: "Vous & contact",
+    icon: User,
+    hint: "Votre nom d'artisan et comment vos clients vous joignent.",
+  },
+  {
+    label: "Vendre",
+    title: "Pour mieux vendre",
+    icon: Sparkles,
+    hint: "Réseaux sociaux, histoire, conseils… Tout est optionnel ici.",
+  },
+  {
+    label: "Confirmer",
+    title: "Tout est prêt ?",
+    icon: ClipboardCheck,
+    hint: "Vérifiez vos infos, puis lancez l'activation.",
+  },
+];
 
 export default function ActivatePackClient({
   masterCode,
@@ -185,6 +241,8 @@ export default function ActivatePackClient({
     productPrice: "",
     artisanBio: "",
     usageTips: "",
+    // Identité visuelle de la marque (logo affiché sur la page produit)
+    logo: null as File | null,
     // Auto-complétion intelligente
     template: null as ProductTemplate | null,
     precautions: "",
@@ -202,6 +260,7 @@ export default function ActivatePackClient({
     facebookUrl: "",
     tiktokUrl: "",
     galleryPhotos: [],
+    logo: null,
   });
   const setG = (i: number, patch: Partial<GroupForm>) =>
     setGroups((gs) => gs.map((g, idx) => (idx === i ? { ...g, ...patch } : g)));
@@ -213,6 +272,71 @@ export default function ActivatePackClient({
   const isPartial = packInfo.activatedCount > 0;
   const targetCount = packInfo.remaining; // Mode 1 : tout le restant d'un coup
 
+  // ── ONBOARDING (mode simple) : étape courante + validation par étape ──
+  const [step, setStep] = useState(0);
+  const [stepError, setStepError] = useState("");
+
+  const validateStep = (s: number): string => {
+    switch (s) {
+      case 0:
+        if (simple.productName.trim().length < 2)
+          return "Indiquez le nom de votre produit (2 caractères minimum).";
+        if (!simple.contenance.trim())
+          return "Indiquez la contenance (ex : 250g, 100ml).";
+        return "";
+      case 1:
+        if (simple.ingredients.trim().length < 2)
+          return "Tapez vos ingrédients réels — c'est votre recette, elle n'est jamais inventée pour vous.";
+        if (!simple.manufacturingDate) return "Indiquez la date de fabrication.";
+        if (!simple.expirationDate) return "Indiquez la date de péremption.";
+        return "";
+      case 2:
+        if (simple.artisanName.trim().length < 2)
+          return "Indiquez votre nom / votre marque.";
+        if (simple.contactPhone.trim().length < 7)
+          return "Indiquez un numéro WhatsApp / téléphone valide.";
+        return "";
+      default:
+        return "";
+    }
+  };
+
+  const goNext = () => {
+    const err = validateStep(step);
+    if (err) {
+      setStepError(err);
+      return;
+    }
+    setStepError("");
+    setStep((v) => Math.min(v + 1, SIMPLE_STEPS.length - 1));
+    if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const goBack = () => {
+    setStepError("");
+    setStep((v) => Math.max(v - 1, 0));
+    if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  /** Ligne du récapitulatif — libellé, valeur, bouton Modifier → étape. */
+  const recapRow = (label: string, value: string, onEdit: () => void) => (
+    <div className="flex items-start justify-between gap-3 rounded-xl bg-stone-50 px-3 py-2">
+      <div className="min-w-0">
+        <p className="text-[10px] font-semibold uppercase tracking-wide text-stone-400">
+          {label}
+        </p>
+        <p className="break-words text-xs font-bold text-stone-700">{value || "—"}</p>
+      </div>
+      <button
+        type="button"
+        onClick={onEdit}
+        className="flex-shrink-0 rounded-lg px-2 py-1 text-[11px] font-bold text-amber-600 transition-colors hover:bg-amber-50"
+      >
+        Modifier
+      </button>
+    </div>
+  );
+
   // ── Soumission (les 2 modes passent par activate-groups) ────────────────
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -222,8 +346,16 @@ export default function ActivatePackClient({
       let payloadGroups: ApiGroup[] = [];
 
       if (mode === "simple") {
-        // Photo produit + galerie atelier
+        // Photo produit + logo + galerie atelier (logo non bloquant)
         const photoUrl = simple.photo ? await uploadPhoto(simple.photo, masterCode) : "";
+        let logoUrl = "";
+        if (simple.logo) {
+          try {
+            logoUrl = await uploadPhoto(simple.logo, masterCode);
+          } catch {
+            /* logo raté → non bloquant, la page produit reste valide */
+          }
+        }
         const galleryUrls: string[] = [];
         for (const gp of simple.galleryPhotos.slice(0, 3)) {
           try {
@@ -253,7 +385,7 @@ export default function ActivatePackClient({
             },
           },
         ];
-        // Identité + réseaux + galerie communs (envoyés tels quels à l'API)
+        // Identité + réseaux + galerie + logo communs (envoyés tels quels à l'API)
         const sharedPayload = {
           artisanName: simple.artisanName,
           contactPhone: simple.contactPhone,
@@ -262,6 +394,7 @@ export default function ActivatePackClient({
           facebookUrl: simple.facebookUrl,
           tiktokUrl: simple.tiktokUrl,
           artisanPhotos: galleryUrls,
+          logoUrl,
         };
         const res = await fetch("/api/artisan/activate-groups", {
           method: "POST",
@@ -308,6 +441,14 @@ export default function ActivatePackClient({
           /* non bloquant */
         }
       }
+      let sharedLogoUrl = "";
+      if (shared.logo) {
+        try {
+          sharedLogoUrl = await uploadPhoto(shared.logo, masterCode);
+        } catch {
+          /* logo raté → non bloquant */
+        }
+      }
       const res = await fetch("/api/artisan/activate-groups", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -322,6 +463,7 @@ export default function ActivatePackClient({
             facebookUrl: shared.facebookUrl,
             tiktokUrl: shared.tiktokUrl,
             artisanPhotos: galleryUrls,
+            logoUrl: sharedLogoUrl,
           },
         }),
       });
@@ -548,7 +690,7 @@ export default function ActivatePackClient({
           </button>
 
           <p className="mt-4 text-center text-xs text-gray-500">
-            ⏱ 2 minutes · aucun compte nécessaire
+            ⏱ 2 minutes · guidé étape par étape · aucun compte nécessaire
           </p>
         </div>
       </div>
@@ -599,8 +741,80 @@ export default function ActivatePackClient({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {mode === "simple" ? (
-            /* ═══════════ MODE 1 — formulaire unique ═══════════ */
+            /* ═══════════ MODE 1 — ONBOARDING GUIDÉ (5 étapes) ═══════════ */
             <>
+              {/* ── Barre de progression de l'onboarding ── */}
+              <div className="sticky top-2 z-10 rounded-2xl border border-amber-200 bg-white/95 p-4 shadow-md backdrop-blur">
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <p className="flex items-center gap-2 text-sm font-extrabold text-gray-900">
+                    {(() => {
+                      const StepIcon = SIMPLE_STEPS[step].icon;
+                      return <StepIcon className="h-4 w-4 text-amber-500" />;
+                    })()}
+                    {SIMPLE_STEPS[step].title}
+                  </p>
+                  <p className="flex-shrink-0 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-bold text-amber-700">
+                    {step + 1}/{SIMPLE_STEPS.length}
+                  </p>
+                </div>
+                <div className="h-2 overflow-hidden rounded-full bg-amber-100">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-amber-400 to-orange-500 transition-all duration-300"
+                    style={{ width: `${((step + 1) / SIMPLE_STEPS.length) * 100}%` }}
+                  />
+                </div>
+                <p className="mt-2 text-xs leading-snug text-gray-500">
+                  {SIMPLE_STEPS[step].hint}
+                </p>
+                <div className="mt-3 flex items-stretch justify-between gap-1">
+                  {SIMPLE_STEPS.map((s, i) => {
+                    const StepPillIcon = s.icon;
+                    return (
+                      <button
+                        key={s.label}
+                        type="button"
+                        onClick={() => {
+                          if (i < step) {
+                            setStep(i);
+                            setStepError("");
+                          }
+                        }}
+                        aria-label={`Étape ${i + 1} : ${s.label}`}
+                        className={`flex flex-1 flex-col items-center gap-1 rounded-lg py-1 transition-colors ${
+                          i === step
+                            ? "text-amber-600"
+                            : i < step
+                              ? "text-emerald-600 hover:bg-emerald-50"
+                              : "text-gray-300"
+                        }`}
+                      >
+                        <span
+                          className={`flex h-7 w-7 items-center justify-center rounded-full border-2 text-[10px] font-bold ${
+                            i === step
+                              ? "border-amber-500 bg-amber-500 text-white shadow-sm"
+                              : i < step
+                                ? "border-emerald-400 bg-emerald-50"
+                                : "border-gray-200 bg-white"
+                          }`}
+                        >
+                          {i < step ? <Check className="h-3.5 w-3.5" /> : <StepPillIcon className="h-3.5 w-3.5" />}
+                        </span>
+                        <span className="text-[9px] font-bold leading-none">{s.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {stepError && (
+                <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-700">
+                  {stepError}
+                </div>
+              )}
+
+              {/* ═══ ÉTAPE 1/5 — LE PRODUIT ═══ */}
+              {step === 0 && (
+                <>
               <div className="rounded-xl border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800">
                 Ces informations s&apos;appliqueront aux{" "}
                 <strong>{targetCount} QR codes</strong> encore inactifs de
@@ -617,6 +831,23 @@ export default function ActivatePackClient({
                 />
               </div>
 
+              {/* ── Logo de la marque (demande utilisateur) ── */}
+              <div className="rounded-2xl border border-violet-200 bg-violet-50/60 p-4">
+                <p className="mb-1 flex items-center gap-2 text-sm font-bold text-violet-800">
+                  🏷️ Votre logo (optionnel)
+                </p>
+                <p className="mb-3 text-xs text-violet-600/80">
+                  Il s&apos;affichera sur la page produit, à côté de votre nom d&apos;artisan — vos clients reconnaîtront votre marque instantanément.
+                </p>
+                <PhotoPicker
+                  label="Logo de votre marque"
+                  helpText="De préférence carré, sur fond uni."
+                  maxCount={1}
+                  files={simple.logo ? [simple.logo] : []}
+                  onChange={(files) => setS({ logo: files[0] ?? null })}
+                />
+              </div>
+
               {/* ── Assistant intelligent : remplit tout automatiquement ── */}
               <div className="rounded-2xl border border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50 p-4">
                 <p className="mb-3 flex items-center gap-2 text-sm font-bold text-amber-800">
@@ -630,7 +861,7 @@ export default function ActivatePackClient({
                     setS({
                       template,
                       productName: simple.productName || template.name,
-                      usageTips: template.usageTips.join("\n"),
+                      usageTips: template.usageTips.slice(0, 3).join("\n"),
                       precautions: template.precautions.join("\n"),
                       storageConditions: template.storageConditions,
                       expirationDate:
@@ -694,7 +925,12 @@ export default function ActivatePackClient({
                   className={inputCls}
                 />
               </div>
+                </>
+              )}
 
+              {/* ═══ ÉTAPE 2/5 — RECETTE & FRAÎCHEUR ═══ */}
+              {step === 1 && (
+                <>
               <div>
                 <label className={labelCls} htmlFor="ingredients">
                   Ingrédients * <span className="font-normal text-gray-500">— votre recette réelle</span>
@@ -758,6 +994,28 @@ export default function ActivatePackClient({
                 </div>
               </div>
 
+              {/* Aperçu de la fraîcheur (mise en valeur de la péremption) */}
+              {simple.expirationDate && (
+                <div className="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-gradient-to-r from-emerald-50 to-teal-50 p-4">
+                  <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-emerald-500 text-white shadow-sm">
+                    <CalendarDays className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-emerald-600">
+                      Vos clients verront
+                    </p>
+                    <p className="text-sm font-bold text-emerald-800">
+                      À utiliser avant le {formatFrDate(simple.expirationDate)}
+                    </p>
+                  </div>
+                </div>
+              )}
+                </>
+              )}
+
+              {/* ═══ ÉTAPE 3/5 — VOUS & CONTACT ═══ */}
+              {step === 2 && (
+                <>
               <div>
                 <label className={labelCls} htmlFor="artisanName">
                   Votre nom / Marque *
@@ -821,7 +1079,12 @@ export default function ActivatePackClient({
                   className={inputCls}
                 />
               </div>
+                </>
+              )}
 
+              {/* ═══ ÉTAPE 4/5 — POUR MIEUX VENDRE ═══ */}
+              {step === 3 && (
+                <>
               <div className="rounded-xl border border-pink-200 bg-pink-50 p-4">
                 <p className="mb-3 text-sm font-bold text-pink-800">
                   📱 Vos réseaux sociaux (optionnel)
@@ -908,17 +1171,97 @@ export default function ActivatePackClient({
                   />
                 </div>
               </div>
+                </>
+              )}
 
-              <button
-                type="submit"
-                disabled={loading}
-                data-testid="activation-submit"
-                className="mt-4 w-full rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 py-4 text-lg font-bold text-white shadow-lg transition-all hover:shadow-xl disabled:opacity-50"
-              >
-                {loading
-                  ? "Activation en cours…"
-                  : `Activer mes ${targetCount} produits`}
-              </button>
+              {/* ═══ ÉTAPE 5/5 — RÉCAPITULATIF & ACTIVATION ═══ */}
+              {step === 4 && (
+                <>
+                  <div className="rounded-2xl border border-emerald-200 bg-white p-5 shadow-sm">
+                    <p className="mb-1 flex items-center gap-2 text-sm font-extrabold text-gray-900">
+                      <ClipboardCheck className="h-4 w-4 text-emerald-600" /> Récapitulatif
+                    </p>
+                    <p className="mb-4 text-xs text-gray-500">
+                      Une erreur ? Touchez « Modifier » sur la ligne concernée.
+                    </p>
+                    <div className="space-y-2">
+                      {recapRow(
+                        "Produit",
+                        `${simple.productName}${simple.contenance ? ` · ${simple.contenance}` : ""}`,
+                        () => setStep(0),
+                      )}
+                      {simple.productPrice &&
+                        recapRow("Prix", simple.productPrice, () => setStep(2))}
+                      {recapRow(
+                        "Photo du produit",
+                        simple.photo ? simple.photo.name : "Non fournie",
+                        () => setStep(0),
+                      )}
+                      {recapRow("Logo", simple.logo ? simple.logo.name : "Aucun", () => setStep(0))}
+                      {recapRow("Fabrication", formatFrDate(simple.manufacturingDate), () => setStep(1))}
+                      {recapRow("À utiliser avant", formatFrDate(simple.expirationDate), () => setStep(1))}
+                      {recapRow(
+                        "Ingrédients",
+                        simple.ingredients.length > 70
+                          ? `${simple.ingredients.slice(0, 70)}…`
+                          : simple.ingredients,
+                        () => setStep(1),
+                      )}
+                      {recapRow(
+                        "Conseils",
+                        `${simple.usageTips.split("\n").filter((t) => t.trim()).length} conseil(s)`,
+                        () => setStep(3),
+                      )}
+                      {recapRow("Artisan", `${simple.artisanName} · ${simple.contactPhone}`, () => setStep(2))}
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    data-testid="activation-submit"
+                    className="mt-2 w-full rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 py-4 text-lg font-bold text-white shadow-lg transition-all hover:shadow-xl disabled:opacity-50"
+                  >
+                    {loading
+                      ? "Activation en cours…"
+                      : `✨ Activer mes ${targetCount} produits`}
+                  </button>
+                </>
+              )}
+
+              {/* ── Navigation de l'onboarding ── */}
+              <div className="flex gap-2">
+                {step === 0 ? (
+                  <button
+                    type="button"
+                    onClick={() => setMode(null)}
+                    className="flex items-center justify-center gap-1.5 rounded-xl border-2 border-gray-200 bg-white px-4 py-3.5 text-sm font-bold text-gray-600 hover:border-gray-300"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    Modes
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={goBack}
+                    className="flex items-center justify-center gap-1.5 rounded-xl border-2 border-gray-200 bg-white px-5 py-3.5 text-sm font-bold text-gray-700 hover:border-gray-300"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    Retour
+                  </button>
+                )}
+                {step < SIMPLE_STEPS.length - 1 && (
+                  <button
+                    type="button"
+                    onClick={goNext}
+                    data-testid="wizard-next"
+                    className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 py-3.5 text-base font-bold text-white shadow-md transition-all hover:shadow-lg active:scale-[0.99]"
+                  >
+                    Continuer
+                    <ChevronRight className="h-5 w-5" />
+                  </button>
+                )}
+              </div>
             </>
           ) : (
             /* ═══════════ MODE 2 — groupes produits ═══════════ */
@@ -1028,6 +1371,14 @@ export default function ActivatePackClient({
                     value={shared.tiktokUrl}
                     onChange={(e) => setSh({ tiktokUrl: e.target.value })}
                     className={inputCls}
+                  />
+                  {/* ── Logo de la marque (commun à tous les produits du pack) ── */}
+                  <PhotoPicker
+                    label="Logo de votre marque (optionnel)"
+                    helpText="Affiché à côté de votre nom sur toutes les pages produits du pack."
+                    maxCount={1}
+                    files={shared.logo ? [shared.logo] : []}
+                    onChange={(files) => setSh({ logo: files[0] ?? null })}
                   />
                   <PhotoPicker
                     label="Photos de votre atelier (jusqu'à 3)"
@@ -1229,7 +1580,7 @@ export default function ActivatePackClient({
                             productName: g.productName || template.name,
                             // Ingrédients JAMAIS pré-remplis — la recette
                             // appartient à l'artisan (retour utilisateur).
-                            usageTips: template.usageTips.join("\n"),
+                            usageTips: template.usageTips.slice(0, 3).join("\n"),
                             precautions: template.precautions.join("\n"),
                             storageConditions: template.storageConditions,
                             expirationDate: g.manufacturingDate

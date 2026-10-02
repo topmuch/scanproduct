@@ -310,6 +310,8 @@ export default async function ArtisanCodePage({
         facebookUrl: lot.pack.facebookUrl,
         tiktokUrl: lot.pack.tiktokUrl,
       }}
+      // Logo de marque uploadé à l'activation (onboarding) — partagé par le pack
+      logoUrl={lot.pack.logoUrl ?? null}
       artisanPhotos={artisanPhotos}
       initialReviews={reviews}
       similarProducts={similarProducts}
