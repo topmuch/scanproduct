@@ -60,6 +60,11 @@ const ProductDataSchema = z.object({
   productPrice: z.string().trim().max(40).optional().or(z.literal("")),
   // Désignation du produit : description courte sous le nom sur la page publique
   productDesignation: z.string().trim().max(300).optional().or(z.literal("")),
+  // Auto-complétion intelligente (produits types) — mêmes conventions que
+  // activate-groups : templateId, précautions une par ligne, conservation libre.
+  templateId: z.string().trim().max(80).optional().or(z.literal("")),
+  precautions: z.string().trim().max(800).optional().or(z.literal("")),
+  storageConditions: z.string().trim().max(500).optional().or(z.literal("")),
 });
 
 const BodySchema = z.object({
@@ -172,6 +177,18 @@ export async function POST(request: NextRequest) {
           productDesignation: productData.productDesignation || null,
           artisanBio: productData.artisanBio || null,
           usageTips: productData.usageTips || null,
+          // Auto-complétion intelligente — précautions en JSON array
+          templateId: productData.templateId || null,
+          precautions:
+            productData.precautions
+              ? JSON.stringify(
+                  productData.precautions
+                    .split("\n")
+                    .map((t) => t.trim())
+                    .filter(Boolean),
+                )
+              : null,
+          storageConditions: productData.storageConditions || null,
         };
 
         // 2. Activer les étiquettes produit ENCORE INACTIVES du pack

@@ -42,6 +42,11 @@ import { useFabricantData } from "../FabricantDataProvider";
 import { ProductImage } from "@/components/fabricant/ProductImage";
 import { toast } from "sonner";
 import { GradientButton, OutlineButton, EmptyState } from "../ui";
+import {
+  getProductTemplateById,
+  templateShelfLifeLabel,
+} from "@/lib/product-templates";
+import { calculateExpirationDate } from "@/lib/expiration-calculator";
 
 const TODAY = new Date("2026-07-26");
 
@@ -156,8 +161,25 @@ export function LotCreatePage() {
       }
     }
     setPrefilledKeys(keys);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedProductId]);
+
+  // ── Auto-calcul de la date de péremption depuis le template produit ──
+  // Si le produit a été créé via l'assistant intelligent (templateId), la
+  // durée de conservation est connue : entrer la date de fabrication
+  // calcule automatiquement la péremption. La saisie manuelle reste
+  // possible — l'auto-calcul ne réécrit que sur un changement de dateFab.
+  const productTemplate = getProductTemplateById(selectedProduct?.templateId);
+  useEffect(() => {
+    if (!productTemplate || !dateFab) return;
+    const exp = calculateExpirationDate(
+      new Date(`${dateFab}T00:00:00`),
+      productTemplate.shelfLifeMonths,
+      productTemplate.shelfLifeDays,
+    );
+    setDatePerm(exp.toISOString().split("T")[0]);
+    // Recalcule uniquement quand la date de fabrication ou le produit change
+    // (pas quand l'utilisateur ajuste datePerm à la main).
+  }, [productTemplate?.id, dateFab]);
 
   // ── Auto-avance à l'étape 2 après sélection d'un produit (400ms) ────
   useEffect(() => {
@@ -512,13 +534,21 @@ export function LotCreatePage() {
                   <Field
                     label="Date de péremption"
                     required
-                    hint={`Dans ${Math.ceil((new Date(datePerm).getTime() - new Date(dateFab).getTime()) / 86400000)} jours`}
+                    hint={
+                      productTemplate
+                        ? `Auto-calculée (${templateShelfLifeLabel(productTemplate)})`
+                        : `Dans ${Math.ceil((new Date(datePerm).getTime() - new Date(dateFab).getTime()) / 86400000)} jours`
+                    }
                   >
                     <input
                       type="date"
                       value={datePerm}
                       onChange={(e) => setDatePerm(e.target.value)}
-                      className="h-10 w-full rounded-lg border border-[#E5E7EB] bg-white px-3 text-[14px] focus:border-[#022150] focus:outline-none"
+                      className={
+                        productTemplate
+                          ? "h-10 w-full rounded-lg border border-emerald-300 bg-emerald-50 px-3 text-[14px] focus:border-emerald-500 focus:outline-none"
+                          : "h-10 w-full rounded-lg border border-[#E5E7EB] bg-white px-3 text-[14px] focus:border-[#022150] focus:outline-none"
+                      }
                     />
                   </Field>
                 </div>

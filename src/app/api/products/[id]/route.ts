@@ -127,6 +127,45 @@ export async function PATCH(
           : null;
     }
 
+    // ── Auto-complétion intelligente (produits types) ────────────────
+    // Passing undefined leaves the stored value untouched; passing null
+    // or an empty array/string clears it (same semantics as certifications).
+    if (body.templateId !== undefined) {
+      patch.templateId =
+        typeof body.templateId === "string" && body.templateId.trim()
+          ? body.templateId.trim()
+          : null;
+    }
+    if (body.shelfLifeMonths !== undefined) {
+      const months = Number(body.shelfLifeMonths);
+      patch.shelfLifeMonths =
+        Number.isFinite(months) && months > 0 ? Math.round(months) : null;
+    }
+    if (body.usageTips !== undefined) {
+      patch.usageTips =
+        Array.isArray(body.usageTips) &&
+        body.usageTips.some((t: unknown) => typeof t === "string" && t.trim())
+          ? JSON.stringify(
+              body.usageTips.filter((t: unknown) => typeof t === "string" && t.trim()),
+            )
+          : null;
+    }
+    if (body.precautions !== undefined) {
+      patch.precautions =
+        Array.isArray(body.precautions) &&
+        body.precautions.some((t: unknown) => typeof t === "string" && t.trim())
+          ? JSON.stringify(
+              body.precautions.filter((t: unknown) => typeof t === "string" && t.trim()),
+            )
+          : null;
+    }
+    if (body.storageConditions !== undefined) {
+      patch.storageConditions =
+        typeof body.storageConditions === "string" && body.storageConditions.trim()
+          ? body.storageConditions.trim()
+          : null;
+    }
+
     // ── Open Food Facts: barcode + raw payload ──────────────────────
     // `barcode` is normalized to digits only. Passing null clears it. The
     // `offLastSync` is refreshed whenever `offData` is written.

@@ -43,6 +43,12 @@ export type Product = {
   barcode?: string | null;
   offData?: Record<string, unknown> | null;
   offLastSync?: string | null;
+  // Auto-complétion intelligente (produits types)
+  templateId?: string | null;
+  shelfLifeMonths?: number | null;
+  usageTips?: string[] | null;
+  precautions?: string[] | null;
+  storageConditions?: string | null;
 };
 
 export type LotStatus = "actif" | "rappelle" | "expire";

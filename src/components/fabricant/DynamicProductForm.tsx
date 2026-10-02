@@ -42,6 +42,7 @@ import {
   Loader2,
   Pencil,
   ScanLine,
+  Sparkles,
   Sticker,
   Tag,
   X,
@@ -62,6 +63,8 @@ import {
 } from "@/lib/product-schemas";
 import type { ProductStatus } from "@/lib/fabricant-types";
 import type { ExtractedOffData } from "@/lib/openfoodfacts";
+import { SmartProductSelector } from "@/components/SmartProductSelector";
+import { getProductTemplateById, type ProductTemplate } from "@/lib/product-templates";
 import { useFabricantData } from "./FabricantDataProvider";
 import { BarcodeScanner } from "./BarcodeScanner";
 import { ImageUploadWithPreview } from "./ImageUploadWithPreview";
@@ -96,6 +99,12 @@ export type DynamicProductInitialData = {
   /** Open Food Facts — EAN-13 barcode + extracted payload (auto-fill). */
   barcode?: string | null;
   offData?: ExtractedOffData | null;
+  /** Auto-complétion intelligente — template + conseils/précautions. */
+  templateId?: string | null;
+  shelfLifeMonths?: number | null;
+  usageTips?: string[] | null;
+  precautions?: string[] | null;
+  storageConditions?: string | null;
 };
 
 type DynamicProductFormProps = {
@@ -822,6 +831,22 @@ export function DynamicProductForm({
   );
   const [showScanner, setShowScanner] = useState(false);
 
+  // ── Auto-complétion intelligente (produits types) ─────────────────
+  // Template choisi dans le SmartProductSelector + champs éditables
+  // (textareas « un par ligne » — simple à comprendre, simple à modifier).
+  const [selectedTemplate, setSelectedTemplate] = useState<ProductTemplate | null>(
+    getProductTemplateById(initialData?.templateId),
+  );
+  const [usageTipsText, setUsageTipsText] = useState(
+    (initialData?.usageTips ?? []).join("\n"),
+  );
+  const [precautionsText, setPrecautionsText] = useState(
+    (initialData?.precautions ?? []).join("\n"),
+  );
+  const [storageConditions, setStorageConditions] = useState(
+    initialData?.storageConditions ?? "",
+  );
+
   // ── Dynamic category fields (Step 4) ──────────────────────────────
   const [categoryId, setCategoryId] = useState<string>(initialData?.categoryId ?? "");
   const [isExport, setIsExport] = useState<boolean>(initialData?.isExport ?? false);
@@ -1128,6 +1153,30 @@ export function DynamicProductForm({
     }
   }
 
+  // ── Auto-complétion depuis un produit type ────────────────────────
+  // Remplit : nom (si vide), ingrédients catégorie (si vide + champ
+  // présent), conseils, précautions, conservation. Les valeurs déjà
+  // saisies par l'utilisateur ne sont jamais écrasées.
+  function handleTemplateSelect(template: ProductTemplate) {
+    setSelectedTemplate(template);
+    setUsageTipsText(template.usageTips.join("\n"));
+    setPrecautionsText(template.precautions.join("\n"));
+    setStorageConditions(template.storageConditions);
+    if (!name.trim()) setName(template.name);
+    if (
+      categoryFields.some((f) => f.name === "ingredients") &&
+      !String(categoryData.ingredients ?? "").trim()
+    ) {
+      setCategoryData((prev) => ({
+        ...prev,
+        ingredients: template.typicalIngredients.join(", "),
+      }));
+    }
+    toast.success(
+      `Produit type « ${template.name} » sélectionné — champs auto-remplis.`,
+    );
+  }
+
   // ── Submit ───────────────────────────────────────────────────────
   async function handleSubmit() {
     // Final validation across all visible steps.
@@ -1194,6 +1243,21 @@ export function DynamicProductForm({
       // Task ID 5 — businessType replaces vendorType. Sent but ignored by
       // the API (kept for future analytics / personalization).
       businessType: businessType ?? undefined,
+      // Auto-complétion intelligente — template + conseils/précautions
+      // (textareas convertis en tableaux, une entrée par ligne non vide).
+      templateId: selectedTemplate?.id,
+      shelfLifeMonths: selectedTemplate?.shelfLifeMonths,
+      usageTips:
+        usageTipsText
+          .split("\n")
+          .map((t) => t.trim())
+          .filter(Boolean),
+      precautions:
+        precautionsText
+          .split("\n")
+          .map((t) => t.trim())
+          .filter(Boolean),
+      storageConditions: storageConditions.trim(),
       // Open Food Facts — barcode + extracted payload
       barcode: barcode.trim() || undefined,
       offData: offData ?? undefined,
@@ -1407,6 +1471,42 @@ export function DynamicProductForm({
       case "general":
         return (
           <div className="space-y-5">
+            {/* ── Assistant intelligent (produits types) — auto-remplissage */}
+            <div className="rounded-xl border border-[#FDE68A] bg-gradient-to-br from-[#FFFBEB] to-[#FEF3C7]/60 p-4">
+              <div className="mb-3 flex items-start gap-2.5">
+                <span
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#F59E0B] text-white"
+                >
+                  <Sparkles size={18} />
+                </span>
+                <div>
+                  <h4 className="text-[13px] font-semibold text-[#111827]">
+                    Assistant intelligent
+                  </h4>
+                  <p className="text-[12px] text-[#6B7280]">
+                    Sélectionnez un type de produit pour auto-remplir les
+                    conseils, précautions et la durée de conservation.
+                  </p>
+                </div>
+              </div>
+              <SmartProductSelector
+                onTemplateSelect={handleTemplateSelect}
+                selectedTemplate={selectedTemplate}
+                onClear={() => {
+                  setSelectedTemplate(null);
+                  setUsageTipsText("");
+                  setPrecautionsText("");
+                  setStorageConditions("");
+                }}
+                initialCategory={
+                  businessType === "cosmetiques" || businessType === "artisanat"
+                    ? "cosmetique"
+                    : "agroalimentaire"
+                }
+                compact
+              />
+            </div>
+
             {/* Open Food Facts — barcode lookup (auto-fill) */}
             <div className="rounded-xl border border-[#E5E7EB] bg-gradient-to-br from-[#F0FDF4] to-[#ECFDF5] p-4">
               <div className="flex items-start justify-between gap-3">
@@ -1574,6 +1674,54 @@ export function DynamicProductForm({
                 rows={3}
                 className={`${inputClass} resize-none`}
               />
+            </div>
+
+            {/* ── Conseils & Précautions (auto-complétion intelligente) —
+                affichés sur la page publique du produit. Une ligne = une
+                entrée ; tout reste modifiable librement. */}
+            <div className="rounded-xl border border-[#E5E7EB] bg-[#FAFAFA] p-4">
+              <h4 className="mb-1 text-[13px] font-semibold text-[#111827]">
+                Conseils &amp; Précautions
+              </h4>
+              <p className="mb-3 text-[12px] text-[#6B7280]">
+                Affichés aux consommateurs sur la page de votre produit — une
+                ligne par entrée.
+              </p>
+              <div className="space-y-3">
+                <div>
+                  <FieldLabel htmlFor="dpf-usage-tips">Conseils d&apos;utilisation</FieldLabel>
+                  <textarea
+                    id="dpf-usage-tips"
+                    value={usageTipsText}
+                    onChange={(e) => setUsageTipsText(e.target.value)}
+                    rows={3}
+                    placeholder={"Un conseil par ligne\nEx : Appliquer sur peau propre et sèche"}
+                    className={`${inputClass} resize-none`}
+                  />
+                </div>
+                <div>
+                  <FieldLabel htmlFor="dpf-precautions">Précautions d&apos;emploi</FieldLabel>
+                  <textarea
+                    id="dpf-precautions"
+                    value={precautionsText}
+                    onChange={(e) => setPrecautionsText(e.target.value)}
+                    rows={3}
+                    placeholder={"Une précaution par ligne\nEx : Usage externe uniquement"}
+                    className={`${inputClass} resize-none`}
+                  />
+                </div>
+                <div>
+                  <FieldLabel htmlFor="dpf-storage">Conditions de conservation</FieldLabel>
+                  <textarea
+                    id="dpf-storage"
+                    value={storageConditions}
+                    onChange={(e) => setStorageConditions(e.target.value)}
+                    rows={2}
+                    placeholder="Ex : Conserver à l'abri de la chaleur et de la lumière"
+                    className={`${inputClass} resize-none`}
+                  />
+                </div>
+              </div>
             </div>
 
             {/* Image upload */}

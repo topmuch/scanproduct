@@ -34,6 +34,7 @@ import { TransparencyLite } from "@/components/product/compact/TransparencyLite"
 import { CompactCertifications } from "@/components/product/compact/CompactCertifications";
 import { CompactReviews } from "@/components/product/compact/CompactReviews";
 import { CertificationsSection } from "@/components/product/CertificationsSection";
+import { ProductDetailsSection } from "@/components/product/ProductDetailsSection";
 
 // Consumer engagement: review prompt (floating notification after 10s) +
 // expired-product report modal (consumer safety feature)
@@ -352,6 +353,27 @@ export default async function ProductPage({
           >
             <CompactIngredients lot={lot} />
           </WowAccordion>
+
+          {/* Conseils d'utilisation / Précautions / Conservation — remplis
+              via l'assistant intelligent (produits types), modifiables par
+              le fabricant. Section absente si rien n'a été renseigné. */}
+          {(lot.product.usageTips ||
+            lot.product.precautions ||
+            lot.product.storageConditions) && (
+            <WowAccordion
+              title="Conseils & Précautions"
+              icon="💡"
+              defaultOpen={true}
+              color="amber"
+            >
+              <ProductDetailsSection
+                usageTips={lot.product.usageTips}
+                precautions={lot.product.precautions}
+                storageConditions={lot.product.storageConditions}
+                showFreshness={false}
+              />
+            </WowAccordion>
+          )}
 
           {/* Traçabilité complète */}
           <WowAccordion

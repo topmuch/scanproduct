@@ -270,6 +270,9 @@ export default async function ArtisanCodePage({
         photoUrl: lot.photoUrl,
         artisanBio: lot.artisanBio,
         usageTips: lot.usageTips,
+        // Auto-complétion intelligente (assistant produit à l'activation)
+        precautions: lot.precautions,
+        storageConditions: lot.storageConditions,
       }}
       scanCount={scanCount}
       counterfeitAlert={(() => {

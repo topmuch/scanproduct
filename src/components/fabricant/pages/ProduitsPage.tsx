@@ -246,6 +246,13 @@ function ProductModal({
         // ignores unknown ones, so a stale/generic payload won't crash it.
         barcode: product.barcode ?? undefined,
         offData: (product.offData as ExtractedOffData | null) ?? undefined,
+        // Auto-complétion intelligente — round-trip du template + conseils
+        // pour pré-remplir le sélecteur et les textareas en édition.
+        templateId: product.templateId ?? undefined,
+        shelfLifeMonths: product.shelfLifeMonths ?? undefined,
+        usageTips: product.usageTips ?? undefined,
+        precautions: product.precautions ?? undefined,
+        storageConditions: product.storageConditions ?? undefined,
       }
     : undefined;
 

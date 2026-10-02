@@ -47,6 +47,12 @@ const GroupProductSchema = z.object({
   artisanBio: z.string().trim().max(1200).optional().or(z.literal("")),
   usageTips: z.string().trim().max(800).optional().or(z.literal("")),
   productPrice: z.string().trim().max(40).optional().or(z.literal("")),
+  // Auto-complétion intelligente (produits types) :
+  // templateId = id du template choisi ; precautions = une par ligne
+  // (stockées en JSON array) ; storageConditions = texte libre.
+  templateId: z.string().trim().max(80).optional().or(z.literal("")),
+  precautions: z.string().trim().max(800).optional().or(z.literal("")),
+  storageConditions: z.string().trim().max(500).optional().or(z.literal("")),
 });
 
 const SharedSchema = z.object({
@@ -199,6 +205,19 @@ export async function POST(request: NextRequest) {
             productDesignation: g.productData.productDesignation || null,
             artisanBio: g.productData.artisanBio || null,
             usageTips: g.productData.usageTips || null,
+            // Auto-complétion intelligente — précautions stockées en JSON
+            // array (une entrée par ligne non vide), null si absent.
+            templateId: g.productData.templateId || null,
+            precautions:
+              g.productData.precautions
+                ? JSON.stringify(
+                    g.productData.precautions
+                      .split("\n")
+                      .map((t) => t.trim())
+                      .filter(Boolean),
+                  )
+                : null,
+            storageConditions: g.productData.storageConditions || null,
           };
           await Promise.all(
             slice.map((lot) =>
@@ -290,6 +309,18 @@ export async function POST(request: NextRequest) {
               productDesignation: first.productDesignation || null,
               artisanBio: first.artisanBio || null,
               usageTips: first.usageTips || null,
+              // Auto-complétion intelligente (maître = 1er groupe)
+              templateId: first.templateId || null,
+              precautions:
+                first.precautions
+                  ? JSON.stringify(
+                      first.precautions
+                        .split("\n")
+                        .map((t) => t.trim())
+                        .filter(Boolean),
+                    )
+                  : null,
+              storageConditions: first.storageConditions || null,
             },
           });
         }

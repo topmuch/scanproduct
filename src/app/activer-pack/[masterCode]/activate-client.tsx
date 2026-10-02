@@ -13,6 +13,16 @@ import {
   Package,
 } from "lucide-react";
 import PhotoPicker from "@/components/product/artisan/PhotoPicker";
+import {
+  SmartProductSelector,
+} from "@/components/SmartProductSelector";
+import {
+  templateShelfLifeLabel,
+  type ProductTemplate,
+} from "@/lib/product-templates";
+import {
+  calculateExpirationDate,
+} from "@/lib/expiration-calculator";
 
 /**
  * Client d'activation — DEUX MODES coexistants (choix de l'artisan) :
@@ -49,6 +59,10 @@ type GroupForm = {
   productPrice: string;
   artisanBio: string;
   usageTips: string;
+  // Auto-complétion intelligente
+  template: ProductTemplate | null;
+  precautions: string;
+  storageConditions: string;
 };
 
 /** Identité + réseaux + galerie — communs à tous les produits du pack. */
@@ -87,6 +101,9 @@ const emptyGroup = (): GroupForm => ({
   productPrice: "",
   artisanBio: "",
   usageTips: "",
+  template: null,
+  precautions: "",
+  storageConditions: "",
 });
 
 async function uploadPhoto(file: File, masterCode: string): Promise<string> {
@@ -113,8 +130,25 @@ type ApiGroup = {
     productPrice: string;
     artisanBio: string;
     usageTips: string;
+    templateId: string;
+    precautions: string;
+    storageConditions: string;
   };
 };
+
+/**
+ * Calcule la péremption depuis la fabrication + un template (si présent).
+ * Retourne "" si une des données manque — l'utilisateur saisit alors à la main.
+ */
+function calcExp(mfg: string, template: ProductTemplate | null): string {
+  if (!mfg || !template) return "";
+  const d = calculateExpirationDate(
+    new Date(`${mfg}T00:00:00`),
+    template.shelfLifeMonths,
+    template.shelfLifeDays,
+  );
+  return d.toISOString().split("T")[0];
+}
 
 export default function ActivatePackClient({
   masterCode,
@@ -151,6 +185,10 @@ export default function ActivatePackClient({
     productPrice: "",
     artisanBio: "",
     usageTips: "",
+    // Auto-complétion intelligente
+    template: null as ProductTemplate | null,
+    precautions: "",
+    storageConditions: "",
   });
   const setS = (patch: Partial<typeof simple>) => setSimple((f) => ({ ...f, ...patch }));
 
@@ -208,6 +246,10 @@ export default function ActivatePackClient({
               productPrice: simple.productPrice,
               artisanBio: simple.artisanBio,
               usageTips: simple.usageTips,
+              // Auto-complétion intelligente
+              templateId: simple.template?.id ?? "",
+              precautions: simple.precautions,
+              storageConditions: simple.storageConditions,
             },
           },
         ];
@@ -251,6 +293,10 @@ export default function ActivatePackClient({
             productPrice: g.productPrice,
             artisanBio: g.artisanBio,
             usageTips: g.usageTips,
+            // Auto-complétion intelligente
+            templateId: g.template?.id ?? "",
+            precautions: g.precautions,
+            storageConditions: g.storageConditions,
           },
         });
       }
@@ -571,6 +617,34 @@ export default function ActivatePackClient({
                 />
               </div>
 
+              {/* ── Assistant intelligent : remplit tout automatiquement ── */}
+              <div className="rounded-2xl border border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50 p-4">
+                <p className="mb-3 flex items-center gap-2 text-sm font-bold text-amber-800">
+                  <Sparkles className="h-4 w-4" /> Assistant intelligent
+                </p>
+                <SmartProductSelector
+                  onTemplateSelect={(template) => {
+                    setS({
+                      template,
+                      productName: simple.productName || template.name,
+                      ingredients: simple.ingredients || template.typicalIngredients.join(", "),
+                      usageTips: template.usageTips.join("\n"),
+                      precautions: template.precautions.join("\n"),
+                      storageConditions: template.storageConditions,
+                      expirationDate:
+                        simple.manufacturingDate
+                          ? calcExp(simple.manufacturingDate, template)
+                          : simple.expirationDate,
+                    });
+                  }}
+                  onClear={() => {
+                    setS({ template: null, precautions: "", storageConditions: "" });
+                  }}
+                  selectedTemplate={simple.template}
+                  compact
+                />
+              </div>
+
               <div>
                 <label className={labelCls} htmlFor="productName">
                   Nom du produit *
@@ -645,7 +719,16 @@ export default function ActivatePackClient({
                     type="date"
                     required
                     value={simple.manufacturingDate}
-                    onChange={(e) => setS({ manufacturingDate: e.target.value })}
+                    onChange={(e) => {
+                      // Auto-calcul de la péremption si un produit type est
+                      // sélectionné (durée de conservation connue).
+                      setS({
+                        manufacturingDate: e.target.value,
+                        ...(simple.template
+                          ? { expirationDate: calcExp(e.target.value, simple.template) }
+                          : {}),
+                      });
+                    }}
                     className={`${inputCls} px-3`}
                   />
                 </div>
@@ -659,8 +742,17 @@ export default function ActivatePackClient({
                     required
                     value={simple.expirationDate}
                     onChange={(e) => setS({ expirationDate: e.target.value })}
-                    className={`${inputCls} px-3`}
+                    className={`${inputCls} px-3 ${
+                      simple.template && simple.expirationDate
+                        ? "border-emerald-300 bg-emerald-50"
+                        : ""
+                    }`}
                   />
+                  {simple.template && simple.expirationDate && (
+                    <p className="mt-1 text-xs text-emerald-700">
+                      Auto-calculée ({templateShelfLifeLabel(simple.template)})
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -784,6 +876,24 @@ export default function ActivatePackClient({
                     placeholder={"Conseils d'utilisation (un par ligne)"}
                     value={simple.usageTips}
                     onChange={(e) => setS({ usageTips: e.target.value })}
+                    className={`${inputCls} resize-none`}
+                  />
+                  <textarea
+                    id="simplePrecautions"
+                    rows={3}
+                    maxLength={800}
+                    placeholder={"Précautions d'emploi (une par ligne)"}
+                    value={simple.precautions}
+                    onChange={(e) => setS({ precautions: e.target.value })}
+                    className={`${inputCls} resize-none`}
+                  />
+                  <textarea
+                    id="simpleStorage"
+                    rows={2}
+                    maxLength={500}
+                    placeholder={"Conditions de conservation (ex : à l'abri de la chaleur)"}
+                    value={simple.storageConditions}
+                    onChange={(e) => setS({ storageConditions: e.target.value })}
                     className={`${inputCls} resize-none`}
                   />
                   <PhotoPicker
@@ -1069,7 +1179,15 @@ export default function ActivatePackClient({
                           type="date"
                           required
                           value={g.manufacturingDate}
-                          onChange={(e) => setG(i, { manufacturingDate: e.target.value })}
+                          onChange={(e) =>
+                            setG(i, {
+                              manufacturingDate: e.target.value,
+                              // Auto-calcul si produit type sélectionné
+                              ...(g.template
+                                ? { expirationDate: calcExp(e.target.value, g.template) }
+                                : {}),
+                            })
+                          }
                           className={`${inputCls} px-3`}
                         />
                       </div>
@@ -1084,9 +1202,44 @@ export default function ActivatePackClient({
                           required
                           value={g.expirationDate}
                           onChange={(e) => setG(i, { expirationDate: e.target.value })}
-                          className={`${inputCls} px-3`}
+                          className={`${inputCls} px-3 ${
+                            g.template && g.expirationDate
+                              ? "border-emerald-300 bg-emerald-50"
+                              : ""
+                          }`}
                         />
+                        {g.template && g.expirationDate && (
+                          <p className="mt-1 text-xs text-emerald-700">
+                            Auto-calculée ({templateShelfLifeLabel(g.template)})
+                          </p>
+                        )}
                       </div>
+                    </div>
+                    {/* ── Assistant intelligent par produit ── */}
+                    <div className="rounded-xl border border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50 p-3">
+                      <p className="mb-2 flex items-center gap-1.5 text-xs font-bold text-amber-800">
+                        <Sparkles className="h-3.5 w-3.5" /> Assistant intelligent
+                      </p>
+                      <SmartProductSelector
+                        onTemplateSelect={(template) =>
+                          setG(i, {
+                            template,
+                            productName: g.productName || template.name,
+                            ingredients: g.ingredients || template.typicalIngredients.join(", "),
+                            usageTips: template.usageTips.join("\n"),
+                            precautions: template.precautions.join("\n"),
+                            storageConditions: template.storageConditions,
+                            expirationDate: g.manufacturingDate
+                              ? calcExp(g.manufacturingDate, template)
+                              : g.expirationDate,
+                          })
+                        }
+                        onClear={() =>
+                          setG(i, { template: null, precautions: "", storageConditions: "" })
+                        }
+                        selectedTemplate={g.template}
+                        compact
+                      />
                     </div>
                     <div>
                       <PhotoPicker
@@ -1120,6 +1273,33 @@ export default function ActivatePackClient({
                         maxLength={800}
                         value={g.usageTips}
                         onChange={(e) => setG(i, { usageTips: e.target.value })}
+                        className={`${inputCls} resize-none`}
+                      />
+                    </div>
+                    <div>
+                      <label className={labelCls} htmlFor={`g${i}-precautions`}>
+                        Précautions d&apos;emploi (optionnel, une par ligne)
+                      </label>
+                      <textarea
+                        id={`g${i}-precautions`}
+                        rows={2}
+                        maxLength={800}
+                        value={g.precautions}
+                        onChange={(e) => setG(i, { precautions: e.target.value })}
+                        className={`${inputCls} resize-none`}
+                      />
+                    </div>
+                    <div>
+                      <label className={labelCls} htmlFor={`g${i}-storage`}>
+                        Conservation (optionnel)
+                      </label>
+                      <textarea
+                        id={`g${i}-storage`}
+                        rows={2}
+                        maxLength={500}
+                        placeholder="Ex : à l'abri de la chaleur et de l'humidité"
+                        value={g.storageConditions}
+                        onChange={(e) => setG(i, { storageConditions: e.target.value })}
                         className={`${inputCls} resize-none`}
                       />
                     </div>

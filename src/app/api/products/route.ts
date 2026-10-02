@@ -59,6 +59,13 @@ export async function GET(request: NextRequest) {
  *   exportData      object|null?  (JSON-stringified; null when isExport=false)
  *   certifications  array<{name, issuer, validUntil, fileUrl}>|null?
  *                                  (JSON-stringified)
+ *
+ * Auto-complétion intelligente (produits types) :
+ *   templateId        string?   — id du template choisi (product-templates.ts)
+ *   shelfLifeMonths   number?   — durée de conservation en mois
+ *   usageTips         string[]? — conseils d'utilisation (JSON-stringified)
+ *   precautions       string[]? — précautions d'emploi (JSON-stringified)
+ *   storageConditions string?   — conditions de conservation
  */
 export async function POST(request: NextRequest) {
   const token = await getToken({
@@ -135,6 +142,31 @@ export async function POST(request: NextRequest) {
     const certifications =
       Array.isArray(body.certifications) && body.certifications.length > 0
         ? JSON.stringify(body.certifications)
+        : null;
+
+    // ── Auto-complétion intelligente (produits types) ────────────────
+    // Structured fields are stored as JSON-encoded strings (SQLite has no
+    // Json type). Empty arrays/strings are stored as null to keep columns
+    // sparse — same convention as categoryData/exportData above.
+    const templateId =
+      typeof body.templateId === "string" && body.templateId.trim()
+        ? body.templateId.trim()
+        : null;
+    const shelfLifeMonths =
+      Number.isFinite(Number(body.shelfLifeMonths)) && Number(body.shelfLifeMonths) > 0
+        ? Math.round(Number(body.shelfLifeMonths))
+        : null;
+    const usageTips =
+      Array.isArray(body.usageTips) && body.usageTips.length > 0
+        ? JSON.stringify(body.usageTips.filter((t: unknown) => typeof t === "string" && t.trim()))
+        : null;
+    const precautions =
+      Array.isArray(body.precautions) && body.precautions.length > 0
+        ? JSON.stringify(body.precautions.filter((t: unknown) => typeof t === "string" && t.trim()))
+        : null;
+    const storageConditions =
+      typeof body.storageConditions === "string" && body.storageConditions.trim()
+        ? body.storageConditions.trim()
         : null;
 
     // ── Open Food Facts: barcode + raw payload ──────────────────────
@@ -240,6 +272,12 @@ export async function POST(request: NextRequest) {
           categoryData,
           exportData,
           certifications,
+          // Auto-complétion intelligente
+          templateId,
+          shelfLifeMonths,
+          usageTips,
+          precautions,
+          storageConditions,
           // Open Food Facts
           barcode,
           offData,

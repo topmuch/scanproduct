@@ -85,6 +85,10 @@ type Props = {
     photoUrl?: string | null;
     artisanBio?: string | null;
     usageTips?: string | null;
+    // Auto-complétion intelligente — précautions (JSON array encodé) +
+    // conservation (texte libre), remplis via l'assistant à l'activation.
+    precautions?: string | null;
+    storageConditions?: string | null;
   };
   /** Preuve sociale : nombre de scans enregistrés pour ce produit. */
   scanCount?: number;
@@ -455,6 +459,23 @@ export function ArtisanProductView({
     "Conserver à l'abri de la chaleur",
   ];
 
+  // ── Précautions + conservation (assistant intelligent) ─────────────────
+  // Precautions est stocké en JSON array ; tolérant au format une/ligne.
+  const precautions: string[] = (() => {
+    const raw = lot.precautions;
+    if (!raw) return [];
+    try {
+      const parsed = JSON.parse(raw) as unknown;
+      if (Array.isArray(parsed)) {
+        return parsed.filter((v): v is string => typeof v === "string" && v.trim());
+      }
+    } catch {
+      /* pas un JSON — fallback ligne par ligne */
+    }
+    return raw.split("\n").map((t) => t.trim()).filter(Boolean);
+  })();
+  const storageConditions = lot.storageConditions?.trim() || "";
+
   // ── Composition : « voir plus » si longue liste ──────────────────────────
   const ingredients = lot.ingredients ?? "";
   const isLongIngredients = ingredients.length > 280;
@@ -795,6 +816,38 @@ export function ArtisanProductView({
             ))}
           </div>
         </div>
+
+        {/* ── 7b. PRÉCAUTIONS D'EMPLOI (assistant intelligent — section
+              affichée uniquement si remplie à l'activation) ─────────────── */}
+        {precautions.length > 0 && (
+          <div className="mb-6 mt-8">
+            <div className="rounded-3xl border border-red-100 bg-red-50 p-6">
+              <h2 className="mb-4 flex items-center gap-2 text-xl font-bold text-gray-900">
+                <span className="text-2xl">⚠️</span> Précautions
+              </h2>
+              <ul className="space-y-2">
+                {precautions.map((prec, i) => (
+                  <li key={i} className="flex items-start gap-3">
+                    <span className="font-bold text-red-500">•</span>
+                    <span className="text-sm text-gray-700">{prec}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        )}
+
+        {/* ── 7c. CONDITIONS DE CONSERVATION (assistant intelligent) ───── */}
+        {storageConditions && (
+          <div className="mb-6 mt-8">
+            <div className="rounded-3xl border border-blue-100 bg-blue-50 p-6">
+              <h2 className="mb-3 flex items-center gap-2 text-xl font-bold text-gray-900">
+                <span className="text-2xl">📍</span> Conservation
+              </h2>
+              <p className="text-sm leading-relaxed text-gray-700">{storageConditions}</p>
+            </div>
+          </div>
+        )}
 
         {/* ── 8. CONTACT DE L'ARTISAN ───────────────────────────────────── */}
         {lot.contactPhone && (

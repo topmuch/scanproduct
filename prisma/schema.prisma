@@ -149,8 +149,7 @@ model Product {
   weight          String?
   fabricantId     String
   fabricant       User     @relation(fields: [fabricantId], references: [id])
-  // ── Open Food Facts integration ──────────────────────────────────
-  // EAN-13 / UPC code-barres. Unique so two fabricants can't claim the
+  // Open Food Facts integration — EAN-13 / UPC code-barres. Unique so two fabricants can't claim the
   // same barcode. Nullable because many artisanal products have none.
   barcode         String?  @unique
   // Raw Open Food Facts payload (JSON-encoded string — SQLite has no Json
@@ -158,6 +157,19 @@ model Product {
   // sync via offLastSync so we can refresh periodically.
   offData         String?
   offLastSync     DateTime?
+  // ── Auto-complétion intelligente (produits types) ────────────────
+  // Identifiant du template choisi dans lib/product-templates.ts.
+  templateId        String?
+  // Durée de conservation du template (mois) — permet l'auto-calcul de la
+  // date de péremption des lots sans recharger la librairie côté client.
+  shelfLifeMonths   Int?
+  // Conseils d'utilisation (JSON-encoded array de strings — SQLite n'a pas
+  // de type Json). Rempli depuis le template, modifiable par le fabricant.
+  usageTips         String?
+  // Précautions d'emploi (JSON-encoded array de strings)
+  precautions       String?
+  // Conditions de conservation (texte libre, adapté au climat)
+  storageConditions String?
   // Category-specific dynamic data (JSON-encoded object keyed by field name)
   categoryData    String?
   // Export-specific data (JSON-encoded object — only populated when isExport=true)
@@ -933,6 +945,14 @@ model PreActivatedLot {
   // Page publique engageante : histoire de l'artisan + conseils d'utilisation
   artisanBio        String? // texte libre (section "L'histoire de l'artisan")
   usageTips         String? // un conseil par ligne (section "Conseils d'utilisation")
+
+  // ── Auto-complétion intelligente (produits types) ────────────────
+  // Identifiant du template choisi à l'activation (lib/product-templates.ts)
+  templateId        String?
+  // Précautions d'emploi (JSON-encoded array de strings — SQLite sans Json)
+  precautions       String?
+  // Conditions de conservation (texte libre, adapté au climat)
+  storageConditions String?
 
   // Alerte contrefaon : JSON {detectedAt, regionA, tzA, regionB, tzB} -
   // rempli quand le meme QR est scanne depuis 2 regions distinctes en < 48 h

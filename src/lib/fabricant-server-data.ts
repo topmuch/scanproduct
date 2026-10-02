@@ -202,6 +202,16 @@ export async function getFabricantProducts(userId: string): Promise<Product[]> {
         ? safeParseJSON<Record<string, unknown>>(p.offData)
         : null,
       offLastSync: p.offLastSync ? toISODate(p.offLastSync) : null,
+      // Auto-complétion intelligente (produits types)
+      templateId: p.templateId,
+      shelfLifeMonths: p.shelfLifeMonths,
+      usageTips: p.usageTips
+        ? safeParseJSON<string[]>(p.usageTips)
+        : null,
+      precautions: p.precautions
+        ? safeParseJSON<string[]>(p.precautions)
+        : null,
+      storageConditions: p.storageConditions,
     };
   });
 }

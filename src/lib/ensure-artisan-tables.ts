@@ -214,6 +214,14 @@ export const REQUIRED_COLUMNS: Record<string, Array<{ name: string; ddl: string 
       name: "productDesignation",
       ddl: `ALTER TABLE "PreActivatedLot" ADD COLUMN "productDesignation" TEXT`,
     },
+    // Auto-complétion intelligente (produits types) : template + précautions
+    // + conservation remplis à l'activation par le SmartProductSelector.
+    { name: "templateId", ddl: `ALTER TABLE "PreActivatedLot" ADD COLUMN "templateId" TEXT` },
+    { name: "precautions", ddl: `ALTER TABLE "PreActivatedLot" ADD COLUMN "precautions" TEXT` },
+    {
+      name: "storageConditions",
+      ddl: `ALTER TABLE "PreActivatedLot" ADD COLUMN "storageConditions" TEXT`,
+    },
   ],
   ArtisanScan: [
     { name: "timezone", ddl: `ALTER TABLE "ArtisanScan" ADD COLUMN "timezone" TEXT` },
