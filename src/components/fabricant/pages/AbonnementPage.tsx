@@ -11,6 +11,7 @@ import {
   Smartphone,
   Wallet,
   Building2,
+  X,
 } from "lucide-react";
 import {
   PageHeader,
@@ -28,6 +29,7 @@ import {
   formatNombre,
 } from "@/lib/fabricant-types";
 import { useFabricantData } from "../FabricantDataProvider";
+import { toast } from "sonner";
 
 // ----------------------------------------------------------------------------
 // Types
@@ -42,6 +44,27 @@ type CancelReason =
   | "plus-utilise"
   | "concurrent"
   | "autre";
+
+// Demande d'achat / changement affichée dans le modal de confirmation.
+// Le MONTANT est recalculé côté serveur (catalogues officiels) — les montants
+// ici ne servent qu'à l'aperçu.
+type CmdPayload =
+  | { type: "plan"; planId: string; cycle: BillingCycle }
+  | { type: "pack"; packId?: string; quantite?: number }
+  | { type: "offre" };
+
+type CmdDemande = {
+  titre: string;
+  lignes: string[];
+  montant: number; // affiché tel quel (pack / offre)
+  prixMensuel?: number; // type=plan → prix selon le cycle choisi
+  prixAnnuel?: number;
+  cycle: BillingCycle;
+  payload: CmdPayload;
+};
+
+// Rang hiérarchique des plans — compare le plan courant au plan cliqué.
+const RANG_PLAN: Record<string, number> = { starter: 0, pro: 1, business: 2 };
 
 // Payment methods shown as icons in the "Méthode de paiement" subsection
 const PAYMENT_METHODS = [
@@ -69,7 +92,7 @@ function FeatureRow({ label, value }: { label: string; value: string }) {
 // Main page
 // ----------------------------------------------------------------------------
 export function AbonnementPage() {
-  const { data } = useFabricantData();
+  const { data, refresh } = useFabricantData();
   const ABONNEMENT = data.abonnement;
 
   // No Payment model in the schema yet — show an empty state instead of
@@ -81,6 +104,9 @@ export function AbonnementPage() {
   const [period, setPeriod] = useState<PeriodFilter>("30j");
   const [cancelReason, setCancelReason] = useState<CancelReason>("");
   const [customQrQty, setCustomQrQty] = useState<number>(100);
+  const [cmdBusy, setCmdBusy] = useState(false);
+  const [resiliationBusy, setResiliationBusy] = useState(false);
+  const [cmd, setCmd] = useState<CmdDemande | null>(null);
 
   // Filter payments by status
   const filteredPayments = useMemo(() => {
@@ -103,6 +129,146 @@ export function AbonnementPage() {
   );
 
   const customQrPrice = Math.max(0, customQrQty) * 10;
+
+  // ── Plan actuel dérivé des VRAIES données serveur ──────────────────
+  // ABONNEMENT.plan est un nom affichable (« Pro ») → retrouve l'id du plan
+  // et remplace le flag `actuel` codé en dur dans PLANS.
+  const currentPlanId = useMemo(() => {
+    const p = PLANS.find(
+      (pl) => pl.nom.toLowerCase() === (ABONNEMENT?.plan ?? "").toLowerCase(),
+    );
+    return p?.id ?? "pro";
+  }, [ABONNEMENT]);
+
+  // ── Envoi d'une demande (POST /api/abonnement/commande) ────────────
+  // Le serveur crée un ticket Facturation (Support SuperAdmin) + une
+  // notification de confirmation + une entrée d'audit.
+  const envoyerDemande = async (payload: CmdPayload) => {
+    if (cmdBusy) return;
+    setCmdBusy(true);
+    try {
+      const res = await fetch("/api/abonnement/commande", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(json.error || "Échec de l'envoi de la demande");
+      }
+      toast.success(`Demande envoyée — réf. ${json.reference}`, {
+        description:
+          "L'équipe VerifScan vous contactera sous 24 h pour finaliser le paiement.",
+      });
+      setCmd(null);
+      refresh();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Échec de l'envoi");
+    } finally {
+      setCmdBusy(false);
+    }
+  };
+
+  const ouvrirCmdPlan = (planId: string) => {
+    const plan = PLANS.find((p) => p.id === planId);
+    if (!plan || !ABONNEMENT) return;
+    setCmd({
+      titre: RANG_PLAN[planId] > RANG_PLAN[currentPlanId]
+        ? `Upgrade vers ${plan.nom}`
+        : `Changer de plan — ${plan.nom}`,
+      lignes: [
+        `Plan actuel : ${ABONNEMENT.plan}`,
+        `Nouveau plan : ${plan.nom}`,
+        "Paiement : Orange Money · Wave · Carte bancaire · Virement",
+      ],
+      montant: plan.prixMensuel,
+      prixMensuel: plan.prixMensuel,
+      prixAnnuel: plan.prixAnnuel,
+      cycle: billing,
+      payload: { type: "plan", planId: plan.id, cycle: billing },
+    });
+  };
+
+  const ouvrirCmdPack = (pack: (typeof QR_PACKS)[number]) => {
+    setCmd({
+      titre: "Acheter des QR codes",
+      lignes: [
+        `Pack : ${formatNombre(pack.quantite)} QR codes`,
+        `Prix unitaire : ${pack.prixUnitaire} FCFA/QR`,
+        ...(pack.economie > 0
+          ? [`Économie : ${formatFCFA(pack.quantite * 10 - pack.prix)}`]
+          : []),
+        "Paiement : Orange Money · Wave · Carte bancaire · Virement",
+      ],
+      montant: pack.prix,
+      cycle: "mensuel",
+      payload: { type: "pack", packId: pack.id },
+    });
+  };
+
+  const ouvrirCmdPerso = () => {
+    if (customQrQty <= 0) return;
+    setCmd({
+      titre: "Quantité personnalisée",
+      lignes: [
+        `Quantité : ${formatNombre(customQrQty)} QR codes`,
+        "Tarif : 10 FCFA/QR",
+        "Paiement : Orange Money · Wave · Carte bancaire · Virement",
+      ],
+      montant: customQrPrice,
+      cycle: "mensuel",
+      payload: { type: "pack", quantite: customQrQty },
+    });
+  };
+
+  const ouvrirCmdOffre = () => {
+    const planActuel = PLANS.find((p) => p.id === currentPlanId);
+    const prixReduit = Math.round((planActuel?.prixMensuel ?? 0) * 0.8);
+    setCmd({
+      titre: "Accepter l'offre fidélité",
+      lignes: [
+        `Plan : ${ABONNEMENT?.plan ?? "—"}`,
+        `Prix réduit : ${formatFCFA(prixReduit)}/mois pendant 3 mois`,
+        "Paiement : Orange Money · Wave · Carte bancaire · Virement",
+      ],
+      montant: prixReduit * 3,
+      cycle: "mensuel",
+      payload: { type: "offre" },
+    });
+  };
+
+  const confirmerResiliation = async () => {
+    if (resiliationBusy) return;
+    if (!cancelReason) {
+      toast.error("Sélectionnez d'abord une raison d'annulation");
+      return;
+    }
+    setResiliationBusy(true);
+    try {
+      const res = await fetch("/api/abonnement/commande", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "resiliation", motif: cancelReason }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(json.error || "Échec de l'envoi de la demande");
+      }
+      toast.success(`Demande enregistrée — réf. ${json.reference}`, {
+        description:
+          "Votre abonnement reste actif jusqu'à la fin de la période payée. L'équipe vous contactera pour confirmer.",
+      });
+      setCancelReason("");
+      refresh();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Échec de l'envoi");
+    } finally {
+      setResiliationBusy(false);
+    }
+  };
+
+  const scrollTo = (id: string) =>
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
 
   // Abonnement data may be null if its server-side fetch failed.
   // (placed AFTER all hooks to respect rules-of-hooks)
@@ -239,12 +405,19 @@ export function AbonnementPage() {
           </div>
         </div>
 
-        {/* Buttons */}
+        {/* Buttons — toutes fonctionnelles (demande envoyée au SuperAdmin) */}
         <div className="mt-6 flex flex-wrap items-center gap-3">
-          <GradientButton>Upgrade vers Business</GradientButton>
-          <OutlineButton>Voir les autres plans</OutlineButton>
+          {currentPlanId !== "business" && (
+            <GradientButton onClick={() => ouvrirCmdPlan("business")}>
+              Upgrade vers Business
+            </GradientButton>
+          )}
+          <OutlineButton onClick={() => scrollTo("plans")}>
+            Voir les autres plans
+          </OutlineButton>
           <button
             type="button"
+            onClick={() => scrollTo("paiements")}
             className="text-[14px] font-medium text-[#022150] underline-offset-4 hover:underline"
           >
             Gérer la facturation
@@ -273,6 +446,7 @@ export function AbonnementPage() {
       {/* =================================================================
           SECTION 2 — Historique des paiements
           ================================================================= */}
+      <div id="paiements">
       <SectionCard
         title="Historique des paiements"
         bodyClassName="p-0"
@@ -386,7 +560,14 @@ export function AbonnementPage() {
               {ABONNEMENT.prochaineFacturation}
             </p>
           </div>
-          <OutlineButton>
+          <OutlineButton
+            onClick={() =>
+              toast.info("Aucune facture disponible pour le moment", {
+                description:
+                  "Votre historique de paiements et vos factures apparaîtront ici après votre premier paiement.",
+              })
+            }
+          >
             <Download className="h-4 w-4" />
             Télécharger toutes les factures (ZIP)
           </OutlineButton>
@@ -406,7 +587,15 @@ export function AbonnementPage() {
                 {ABONNEMENT.numeroPaiement}
               </p>
             </div>
-            <OutlineButton className="px-3 py-1.5 text-[13px]">
+            <OutlineButton
+              className="px-3 py-1.5 text-[13px]"
+              onClick={() =>
+                toast.info("Méthode de paiement", {
+                  description:
+                    "Le paiement se finalise avec l'équipe VerifScan : Orange Money, Wave, carte bancaire ou virement — à votre convenance.",
+                })
+              }
+            >
               Modifier
             </OutlineButton>
           </div>
@@ -440,11 +629,12 @@ export function AbonnementPage() {
           </div>
         </div>
       </SectionCard>
+      </div>
 
       {/* =================================================================
           SECTION 3 — Changer de plan (comparison)
           ================================================================= */}
-      <section className="space-y-4">
+      <section className="space-y-4" id="plans">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="font-display text-[18px] font-semibold text-[#111827]">
@@ -466,7 +656,7 @@ export function AbonnementPage() {
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           {PLANS.map((plan) => {
-            const isCurrent = plan.actuel;
+            const isCurrent = plan.id === currentPlanId;
             return (
               <motion.div
                 key={plan.id}
@@ -534,12 +724,7 @@ export function AbonnementPage() {
                 </ul>
 
                 <div className="mt-6 pt-2">
-                  {plan.id === "starter" && (
-                    <OutlineButton disabled className="w-full">
-                      Downgrade
-                    </OutlineButton>
-                  )}
-                  {plan.id === "pro" && (
+                  {plan.id === currentPlanId ? (
                     <button
                       type="button"
                       disabled
@@ -547,11 +732,20 @@ export function AbonnementPage() {
                     >
                       Plan actuel
                     </button>
-                  )}
-                  {plan.id === "business" && (
-                    <GradientButton className="w-full">
-                      Upgrade vers Business
+                  ) : RANG_PLAN[plan.id] > RANG_PLAN[currentPlanId] ? (
+                    <GradientButton
+                      className="w-full"
+                      onClick={() => ouvrirCmdPlan(plan.id)}
+                    >
+                      Upgrade vers {plan.nom}
                     </GradientButton>
+                  ) : (
+                    <OutlineButton
+                      className="w-full"
+                      onClick={() => ouvrirCmdPlan(plan.id)}
+                    >
+                      Passer à {plan.nom}
+                    </OutlineButton>
                   )}
                 </div>
               </motion.div>
@@ -620,9 +814,19 @@ export function AbonnementPage() {
 
                 <div className="mt-6 flex-1" />
                 {isRecommended ? (
-                  <GradientButton className="w-full">Acheter</GradientButton>
+                  <GradientButton
+                    className="w-full"
+                    onClick={() => ouvrirCmdPack(pack)}
+                  >
+                    Acheter
+                  </GradientButton>
                 ) : (
-                  <OutlineButton className="w-full">Acheter</OutlineButton>
+                  <OutlineButton
+                    className="w-full"
+                    onClick={() => ouvrirCmdPack(pack)}
+                  >
+                    Acheter
+                  </OutlineButton>
                 )}
               </div>
             );
@@ -661,7 +865,10 @@ export function AbonnementPage() {
                 {formatFCFA(customQrPrice)}
               </p>
             </div>
-            <GradientButton disabled={customQrQty <= 0}>
+            <GradientButton
+              disabled={customQrQty <= 0 || cmdBusy}
+              onClick={ouvrirCmdPerso}
+            >
               <CreditCard className="h-4 w-4" />
               Acheter
             </GradientButton>
@@ -751,10 +958,20 @@ export function AbonnementPage() {
             💡 Offre spéciale : 20% de réduction pendant 3 mois
           </p>
           <p className="mt-1 text-[13px] text-[#6B7280]">
-            Votre nouveau prix : {formatFCFA(20000)}/mois
+            Votre nouveau prix :{" "}
+            {formatFCFA(
+              Math.round(
+                (PLANS.find((p) => p.id === currentPlanId)?.prixMensuel ?? 0) *
+                  0.8,
+              ),
+            )}
+            /mois
           </p>
           <div className="mt-3">
-            <GradientButton className="px-3 py-1.5 text-[13px]">
+            <GradientButton
+              className="px-3 py-1.5 text-[13px]"
+              onClick={ouvrirCmdOffre}
+            >
               Accepter l'offre
             </GradientButton>
           </div>
@@ -764,19 +981,135 @@ export function AbonnementPage() {
         <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
           <button
             type="button"
+            onClick={() => {
+              toast.success("Excellente décision ! Votre abonnement reste actif.");
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
             className="inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-[#10B981] to-[#10B981] px-5 py-2.5 text-[14px] font-semibold text-white shadow-sm transition-all hover:shadow-md"
           >
             Garder mon abonnement
           </button>
           <button
             type="button"
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#EF4444] px-5 py-2.5 text-[14px] font-semibold text-white shadow-sm transition-all hover:bg-[#DC2626] hover:shadow-md"
+            onClick={confirmerResiliation}
+            disabled={resiliationBusy}
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#EF4444] px-5 py-2.5 text-[14px] font-semibold text-white shadow-sm transition-all hover:bg-[#DC2626] hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60"
           >
             <AlertTriangle className="h-4 w-4" />
-            Confirmer l'annulation
+            {resiliationBusy ? "Envoi en cours…" : "Confirmer l'annulation"}
           </button>
         </div>
       </section>
+
+      {/* =================================================================
+          MODAL — Confirmation de demande (plan / pack QR / offre fidélité)
+          ================================================================= */}
+      {cmd && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+          onClick={() => !cmdBusy && setCmd(null)}
+        >
+          <div
+            className="w-full max-w-md overflow-hidden rounded-xl bg-white shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-[#F3F4F6] px-6 py-4">
+              <h3 className="text-[15px] font-bold text-[#022150]">
+                {cmd.titre}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setCmd(null)}
+                disabled={cmdBusy}
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-[#6B7280] transition-colors hover:bg-[#F3F4F6]"
+                aria-label="Fermer"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="px-6 py-5">
+              <ul className="space-y-1.5">
+                {cmd.lignes.map((l, i) => (
+                  <li
+                    key={i}
+                    className="flex items-start gap-2 text-[13px] text-[#374151]"
+                  >
+                    <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#10B981]" />
+                    <span>{l}</span>
+                  </li>
+                ))}
+              </ul>
+
+              {/* Cycle de facturation (demandes de plan uniquement) */}
+              {cmd.prixMensuel != null && (
+                <div className="mt-4">
+                  <PillFilter<BillingCycle>
+                    value={cmd.cycle}
+                    onChange={(v) =>
+                      setCmd((prev) =>
+                        prev
+                          ? {
+                              ...prev,
+                              cycle: v,
+                              payload:
+                                prev.payload.type === "plan"
+                                  ? { ...prev.payload, cycle: v }
+                                  : prev.payload,
+                            }
+                          : prev,
+                      )
+                    }
+                    options={[
+                      { value: "mensuel", label: "Mensuel" },
+                      { value: "annuel", label: "Annuel -30%" },
+                    ]}
+                  />
+                </div>
+              )}
+
+              <div className="mt-4 rounded-lg bg-[#F9FAFB] p-4 text-center">
+                <p className="text-[12px] font-medium text-[#6B7280]">Montant</p>
+                <p className="font-display text-[24px] font-bold text-[#111827]">
+                  {formatFCFA(
+                    cmd.prixMensuel != null
+                      ? cmd.cycle === "mensuel"
+                        ? cmd.prixMensuel
+                        : cmd.prixAnnuel ?? cmd.montant
+                      : cmd.montant,
+                  )}
+                  {cmd.prixMensuel != null && (
+                    <span className="text-[13px] font-medium text-[#6B7280]">
+                      {cmd.cycle === "mensuel" ? " /mois" : " /an"}
+                    </span>
+                  )}
+                </p>
+                <p className="mt-2 text-[11px] leading-relaxed text-[#9CA3AF]">
+                  Demande envoyée à l&apos;équipe VerifScan — le paiement
+                  (Orange Money, Wave, carte ou virement) se finalise avec
+                  notre équipe sous 24 h, activation immédiate après
+                  encaissement.
+                </p>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center justify-end gap-2 border-t border-[#F3F4F6] px-6 py-4">
+              <OutlineButton onClick={() => setCmd(null)} disabled={cmdBusy}>
+                Annuler
+              </OutlineButton>
+              <GradientButton
+                onClick={() => envoyerDemande(cmd.payload)}
+                disabled={cmdBusy}
+              >
+                {cmdBusy ? "Envoi en cours…" : "Envoyer la demande"}
+              </GradientButton>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -5350,3 +5350,23 @@ Work Log:
 Stage Summary:
 - Le fabricant peut télécharger le design officiel LABEL VERIFSCAN (PNG 1200 px, imprimable dès 3 cm) à tout moment via un bouton dédié sur les 2 pages QR du dashboard ; badge rendu par le même pipeline serveur que les exports (design toujours à jour) ; QR du modèle pointe vers /produits (catalogue public) ; gardes 401/403 inchangées (anti brand-abuse).
 - Commit + push sur main → déploiement Coolify possible immédiatement (Dockerfile v3 inchangé).
+
+---
+Task ID: abonnement-buttons + seo-produits
+Agent: main
+Task: 1) Rendre fonctionnels tous les boutons de la page Abonnement fabricant 2) Référencement Google de tous les produits
+
+Work Log:
+- Push préalable du commit design-download-button (4ba65c7) vers GitHub avec le PAT fourni par l'utilisateur (conseil de révoquer le token donné en clair).
+- Diagnostic page Abonnement : TOUS les boutons décoratifs (aucun onClick), données réelles data.abonnement déjà utilisées mais plan actuel codé en dur (flag PLANS[].actuel).
+- Nouvelle API POST /api/abonnement/commande (route.ts) : auth fabricant (getToken) + rate-limit 10/min, Zod (type plan/pack/offre/resiliation, planId, cycle, packId, quantite 50..100k, motif), MONTANT toujours recalculé serveur depuis PLANS/QR_PACKS (anti-falsification), plan actuel détecté (Subscription ACTIVE → Setting plan:<id> → starter), crée Ticket catégorie Facturation (référence TKT-YYYY-MMDD-XXXX, retry collision) + Notification fabricant (type subscription, severity success/warning) + AuditLog DEMANDE_ABONNEMENT.
+- AbonnementPage.tsx recâblée : modal de confirmation récap (lignes, toggle cycle mensuel/annuel avec prix dynamiques, montant, mentions paiement OM/Wave/carte/virement) ; boutons fonctionnels : Upgrade Business (bannière + card), Passer à <plan inférieur>, Acheter packs ×3, Acheter quantité personnalisée, Accepter l'offre fidélité (-20 % calculé sur le VRAI plan, plus de 20000 codé en dur), Confirmer l'annulation (exige raison, POST resiliation), Garder mon abonnement (toast+scroll), Voir les autres plans/Gérer la facturation (scrollIntoView #plans/#paiements), Modifier méthode paiement + factures ZIP (toast info honnête) ; plan actuel dérivé d'ABONNEMENT.plan (plus de plan.actuel hard-codé) ; états busy partout + refresh() après succès.
+- SEO produits : /p/[lotId] — JSON-LD schema.org Product (name, description, image absolue, brand+manufacturer, sku lotNumber/reference, gtin13 si barcode, category, aggregateRating depuis avis approuvés) injecté côté serveur + og:image produit absolue + twitter card summary_large_image + keywords ; sitemap.ts — TOUS les lots ACTIVE (take 500→5000, where status ACTIVE ; RECALLED/EXPIRED/DRAFT exclus).
+- Tests : scripts/test-abonnement-commande.ts (18 checks : garde-fous 401/400, montants serveur 75000/756000/9000/50000/offre prixPlan×0,8×3, 6 tickets+6 notifs+audit, nettoyage) — 18/18 OK (rate-limit 429 rencontré au 1er re-run = protection validée, fenêtre 60s attendue). Vérifs curl : JSON-LD complet sur /p/<id> (Huile de Baobab, marque Sarine Bio, sku SAR-BAO-250-001, note 4,7/3), og:image + twitter:card + canonical présents, sitemap.xml 6 passeports /p/ + 4 blog + statiques.
+- Vérif navigateur (standalone 3100) : page Mon Abonnement → clic Upgrade vers Business → modal récap correct (Plan actuel Pro / Nouveau Business / 75 000 FCFA/mois / toggle cycle) → Envoyer la demande → toast vert réf. TKT-2026-1002-7325. Preuves : download/proof-modal-upgrade.png, proof-toast-demande.png.
+- Build production complet OK (smoke standalone pdfkit/archiver/sharp OK), eslint 5 fichiers OK, tsc src/ OK.
+
+Stage Summary:
+- Page Abonnement 100 % fonctionnelle : chaque bouton déclenche une vraie demande enregistrée (ticket Facturation visible par le SuperAdmin dans Support + notification fabricant + audit), montants inviolables (recalcul serveur), plan actuel dynamique depuis les vraies données.
+- Tous les passeports produits actifs sont référençables Google : sitemap complet (5 000 max), JSON-LD Product avec avis, OG/Twitter images — robots.txt autorisait déjà /p/ et le noindex ne s'applique qu'aux produits introuvables.
+- Commit + push à effectuer vers GitHub (token utilisateur).

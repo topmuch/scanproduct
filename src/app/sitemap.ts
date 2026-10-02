@@ -60,12 +60,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.7,
     }));
 
-    // Passeports numériques publics — 500 lots les plus récents.
-    // On privilégie les lots avec QR actif si le champ existe.
+    // Passeports numériques publics — TOUS les lots ACTIFS (jusqu'à 5 000,
+    // limite confortablement sous les 50 000 URLs/sitemap de Google) :
+    // « tous les produits des fabricants doivent être référencés sur
+    // Google ». Les lots RECALLED / EXPIRED / DRAFT sont volontairement
+    // exclus (pages à contenu dégradé ou retiré de la vente).
     const lots = await db.lot.findMany({
+      where: { status: "ACTIVE" },
       select: { id: true, updatedAt: true },
       orderBy: { updatedAt: "desc" },
-      take: 500,
+      take: 5000,
     });
 
     const lotEntries: MetadataRoute.Sitemap = lots.map((lot) => ({

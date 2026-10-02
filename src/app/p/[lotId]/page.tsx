@@ -9,6 +9,7 @@ import {
   recordScan,
   isBotUserAgent,
 } from "@/lib/public-data";
+import { getSiteUrl } from "@/lib/seo";
 import { PublicHeader } from "@/components/public/PublicHeader";
 import { PublicFooter } from "@/components/public/PublicFooter";
 
@@ -50,6 +51,15 @@ export const dynamic = "force-dynamic";
 // Metadata (SEO)
 // ---------------------------------------------------------------------------
 
+/** Rend une URL d'image absolue (les uploads locaux sont relatifs à la racine). */
+function absolutiser(url: string, base: string): string {
+  try {
+    return new URL(url, base).toString();
+  } catch {
+    return url;
+  }
+}
+
 export async function generateMetadata({
   params,
 }: {
@@ -76,14 +86,42 @@ export async function generateMetadata({
       },
     };
   }
+  // Image produit absolue pour les partages sociaux (OG/Twitter) — une
+  // vignette produit augmente fortement le CTR dans les partages WhatsApp/
+  // Facebook, canal majeur en Afrique de l'Ouest.
+  const siteUrl = await getSiteUrl();
+  const imageProduit = lot.product.imageUrl
+    ? absolutiser(lot.product.imageUrl, siteUrl)
+    : undefined;
+
   return {
     title: `${lot.product.name} — Passeport numérique VerifScan`,
     description: lot.product.description?.slice(0, 160) ?? undefined,
     alternates: { canonical: `/p/${lotId}` },
+    keywords: [
+      lot.product.name,
+      lot.product.brand,
+      lot.product.category,
+      lot.fabricant.companyName,
+      "passeport numérique",
+      "traçabilité",
+      "authenticité",
+      "VerifScan",
+    ]
+      .filter((k): k is string => !!k)
+      .join(", "),
     openGraph: {
       title: `${lot.product.name} — Passeport numérique VerifScan`,
       description: lot.product.description?.slice(0, 160) ?? undefined,
+      url: `/p/${lotId}`,
       type: "website",
+      ...(imageProduit ? { images: [{ url: imageProduit }] } : {}),
+    },
+    twitter: {
+      card: imageProduit ? "summary_large_image" : "summary",
+      title: `${lot.product.name} — Passeport numérique VerifScan`,
+      description: lot.product.description?.slice(0, 160) ?? undefined,
+      ...(imageProduit ? { images: [imageProduit] } : {}),
     },
   };
 }
@@ -183,8 +221,59 @@ export default async function ProductPage({
     (lot.fabricantCerts?.length ?? 0) +
     (lot.productCertifications?.length ?? 0);
 
+  // ── JSON-LD « Product » — référencement Google des passeports produits ──
+  // Données structurées lues par Googlebot (rich results) : nom, marque,
+  // image, SKU/GTIN, note agrégée des avis approuvés. Sécurité : les
+  // valeurs optionnelles sont simplement omises du graphe.
+  const siteUrlPage = await getSiteUrl();
+  const imagePage = lot.product.imageUrl
+    ? absolutiser(lot.product.imageUrl, siteUrlPage)
+    : undefined;
+  const marqueNom =
+    lot.product.brand || lot.fabricant.companyName || "VerifScan";
+  const notesApprouvees = (lot.reviews ?? []).map((r) => r.rating);
+  const jsonLd: Record<string, unknown> = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: lot.product.name,
+    ...(lot.product.description
+      ? { description: lot.product.description }
+      : {}),
+    ...(imagePage ? { image: [imagePage] } : {}),
+    url: `${siteUrlPage}/p/${lotId}`,
+    brand: { "@type": "Brand", name: marqueNom },
+    manufacturer: {
+      "@type": "Organization",
+      name: lot.fabricant.companyName || lot.fabricant.name || marqueNom,
+    },
+    sku: lot.lotNumber || lot.reference,
+    ...(lot.product.barcode ? { gtin13: lot.product.barcode } : {}),
+    ...(lot.product.category ? { category: lot.product.category } : {}),
+    ...(notesApprouvees.length > 0
+      ? {
+          aggregateRating: {
+            "@type": "aggregateRating",
+            ratingValue:
+              Math.round(
+                (notesApprouvees.reduce((s, r) => s + r, 0) /
+                  notesApprouvees.length) *
+                  10,
+              ) / 10,
+            reviewCount: notesApprouvees.length,
+          },
+        }
+      : {}),
+  };
+
   return (
     <div className="relative flex min-h-screen flex-col bg-gradient-to-br from-slate-50 via-[#F0F4F9] to-purple-50">
+      {/* JSON-LD « Product » — données structurées pour Google (indexation
+          des passeports produits + rich results). Côté serveur uniquement. */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+
       {/* ── Background decorations: floating colored blobs ───────────────
           Three large blurred circles that slowly float around, creating
           a dynamic, premium atmosphere. `pointer-events-none` so they
