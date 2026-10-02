@@ -3,54 +3,57 @@
 import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import {
-  Leaf,
-  ShieldCheck,
-  Sparkles,
-  CalendarDays,
-  Heart,
-  ChevronDown,
-  ChevronUp,
-  Phone,
-  Mail,
-  Share2,
-  Star,
-  Instagram,
-  Facebook,
-  Check,
   AlertTriangle,
   BadgeCheck,
-  Clock,
-  Hand,
+  Check,
+  ChevronDown,
+  ChevronUp,
+  Facebook,
   FlaskConical,
+  Hand,
+  Heart,
+  Instagram,
+  Leaf,
+  Mail,
+  Phone,
+  Quote,
+  Refrigerator,
   Scale,
+  Share2,
+  ShieldCheck,
+  Sparkles,
+  Star,
   X,
 } from "lucide-react";
 import { ScanTracker } from "./ScanTracker";
 import { Logo } from "@/components/landing/Logo";
+import { Reveal } from "./Reveal";
 
 /**
- * ArtisanProductView — page produit artisanale PREMIUM (scan client final).
+ * ArtisanProductView — page produit artisanale PREMIUM « effet waouh » (v4).
  *
- * Design 2026 v3 — « boutique d'artisan » chaleureuse et éditoriale :
- *   1.  Hero photo PLEIN ÉCRAN — nom + designation + chips posés sur l'image
- *   2.  BANNIÈRE AUTHENTICITÉ — « Produit authentique & fait main » en
- *       gradient émeraude avec sceau Vérifié (demande utilisateur : mettre
- *       en valeur l'authenticité et le fait main)
- *   3.  FRAÎCHEUR en vedette — badge géant jours restants + date de
- *       péremption EN GRAND + statut coloré + progression
- *       (demande utilisateur : mettre en valeur les dates)
- *   4.  Carte artisan — LOGO de la marque (uploadé à l'activation) ou
- *       initiale, vérification, contenance / prix, partage
- *   5.  Composition naturelle (+ encadré sans allergènes)
- *   6.  Précautions d'emploi (assistant intelligent)
- *   7.  Conditions de conservation (assistant intelligent)
- *   8.  Histoire de l'artisan (+ galerie atelier, lightbox)
- *   9.  Conseils d'utilisation — 3 premiers puis « Voir les autres »
- *       (demande utilisateur : les conseils sont trop longs)
- *   10. CTA WhatsApp géant + coordonnées cliquables
- *   11. Avis clients réels + formulaire
- *   12. Autres produits du même artisan (produits DIFFÉRENTS seulement)
- *   13. Footer vérification VerifScan
+ * Architecture visuelle (spec redesign WOW) :
+ *   1.  HERO IMMERSIF plein écran — photo Ken Burns (ou placeholder stylisé
+ *       si pas encore uploadée), overlay gradient animé, badges flottants,
+ *       titre révélé, bouton « Découvrir » (scroll smooth)
+ *   2.  CARTE PRODUIT FLOTTANTE en glassmorphism (overlap hero) — nom +
+ *       marque + étoiles, badges dynamiques, PRIX mis en valeur
+ *   3.  BARRE DE FRAÎCHEUR ANIMÉE — compte à rebours, progression shimmer,
+ *       badge « Très frais » pulsant (dates de péremption en vedette)
+ *   4.  POURQUOI CHOISIR — 4 cards animées, apparition staggered au scroll
+ *   5.  COMPOSITION NATURELLE — liste d'ingrédients avec icônes + badge
+ *       « sans allergènes » à coche dessinée
+ *   6.  PRÉCAUTIONS — cards numérotées rouge/orange
+ *   7.  CONSERVATION — icône frigo flottante + conseils
+ *   8.  HISTOIRE ARTISAN — storytelling, citation, badge « Artisan certifié »
+ *   9.  CONSEILS D'UTILISATION — timeline numérotée connectée
+ *   10. CTA WHATSAPP GÉANT — anneaux pulsants, icône animée
+ *   11. COORDONNÉES — tuiles compactes cliquables
+ *   12. AVIS CLIENTS — étoiles interactives + formulaire
+ *   13. FOOTER VÉRIFICATION — dark mode, mention blockchain
+ *
+ * Les apparitions au scroll sont pilotées par <Reveal> (IntersectionObserver)
+ * et les classes CSS `.art-*` de globals.css (transform/opacity uniquement).
  */
 
 type SimilarProduct = {
@@ -219,7 +222,7 @@ function SafeImage({
       <div
         role="img"
         aria-label={alt}
-        className={`flex items-center justify-center bg-gradient-to-br from-amber-200 via-orange-300 to-rose-300 ${className} ${fallbackClassName}`}
+        className={`flex items-center justify-center bg-gradient-to-br from-amber-400 via-orange-500 to-rose-500 ${className} ${fallbackClassName}`}
       >
         {icon ?? <span className="text-6xl">{emoji}</span>}
       </div>
@@ -256,6 +259,58 @@ function toWhatsAppLink(
   return `https://wa.me/${international}?text=${encodeURIComponent(message)}`;
 }
 
+/**
+ * Découpe la liste d'ingrédients en items affichables : l'artisan peut
+ * saisir une ligne par ingrédient OU une liste séparée par virgules /
+ * points-virgules / puces — les deux rendent une liste à puces icônée.
+ */
+function splitIngredients(raw: string): string[] {
+  if (!raw || !raw.trim()) return [];
+  const parts = raw.includes("\n")
+    ? raw.split("\n")
+    : raw.split(/[,;]/);
+  return parts
+    .map((s) => s.trim().replace(/^[-•*]\s*/, ""))
+    .filter(Boolean);
+}
+
+/** Cards de la section « Pourquoi choisir ce produit » (apparition staggered). */
+const WHY_CARDS = [
+  {
+    icon: Leaf,
+    bg: "bg-emerald-100 text-emerald-600",
+    title: "100 % Naturel",
+    text: "Une formule naturelle, sans additifs de synthèse.",
+  },
+  {
+    icon: Hand,
+    bg: "bg-amber-100 text-amber-600",
+    title: "Fait main",
+    text: "Fabriqué avec soin, pièce par pièce, au Sénégal.",
+  },
+  {
+    icon: ShieldCheck,
+    bg: "bg-sky-100 text-sky-600",
+    title: "Authenticité prouvée",
+    text: "Chaque scan vérifie l'authenticité du produit.",
+  },
+  {
+    icon: Heart,
+    bg: "bg-rose-100 text-rose-600",
+    title: "Soutien direct",
+    text: "Votre confiance soutient directement l'artisan.",
+  },
+] as const;
+
+/** Libellés du sélecteur d'étoiles interactif (formulaire d'avis). */
+const RATING_LABELS = [
+  "Pas terrible",
+  "Peut mieux faire",
+  "Correct",
+  "Très satisfait",
+  "Coup de cœur !",
+];
+
 export function ArtisanProductView({
   lot,
   scanCount = 0,
@@ -266,6 +321,7 @@ export function ArtisanProductView({
   initialReviews = [],
   similarProducts = [],
 }: Props) {
+  // Composition : « voir plus » si longue liste d'ingrédients
   const [showAllIngredients, setShowAllIngredients] = useState(false);
   // Conseils d'utilisation : on n'affiche que les 3 premiers par défaut
   // (retour utilisateur : la liste complète est trop longue).
@@ -273,8 +329,9 @@ export function ArtisanProductView({
   const [reviewThanks, setReviewThanks] = useState(false);
   const [reviews, setReviews] = useState<ReviewItem[]>(initialReviews);
 
-  // ── Avis : formulaire (note 1-5, nom, commentaire) ──────────────────────
+  // ── Avis : formulaire (note 1-5, nom, commentaire) + étoiles interactives ─
   const [reviewRating, setReviewRating] = useState(0);
+  const [hoverRating, setHoverRating] = useState(0);
   const [reviewName, setReviewName] = useState("");
   const [reviewComment, setReviewComment] = useState("");
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
@@ -367,6 +424,14 @@ export function ArtisanProductView({
     `Bonjour ${lot.artisanName}, je viens de scanner un QR code VerifScan (produit : ${lot.productName}) et une alerte de possible contrefaçon s'affiche. Je vous signale ce produit suspect.`
   );
 
+  /** Bouton « Découvrir » du hero → scroll fluide vers la carte produit. */
+  function scrollToProduct() {
+    document.getElementById("produit")?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  }
+
   // ── Coordonnées COMPACTES — grille 2 colonnes de tuiles cliquables ──────
   type ContactTile = {
     key: string;
@@ -454,13 +519,14 @@ export function ArtisanProductView({
   const daysLeft =
     expTime !== null ? Math.ceil((expTime - now) / (1000 * 60 * 60 * 24)) : null;
   const isExpired = daysLeft !== null && daysLeft <= 0;
+  const isVeryFresh = daysLeft !== null && !isExpired && daysLeft > 90;
   const shelfLifePct = (() => {
     if (expTime === null || mfgTime === null || expTime <= mfgTime) return 50;
     const pct = ((now - mfgTime) / (expTime - mfgTime)) * 100;
     return Math.min(100, Math.max(2, Math.round(pct)));
   })();
 
-  // ── Statut de fraîcheur (chip colorée) ────────────────────────────────────────────────
+  // ── Statut de fraîcheur (chip colorée) ───────────────────────────────────
   const freshnessStatus = (() => {
     if (daysLeft === null) return null;
     if (isExpired)
@@ -519,18 +585,19 @@ export function ArtisanProductView({
   })();
   const storageConditions = lot.storageConditions?.trim() || "";
 
-  // ── Composition : « voir plus » si longue liste ──────────────────────────
-  const ingredients = lot.ingredients ?? "";
-  const isLongIngredients = ingredients.length > 280;
-  const displayedIngredients =
-    isLongIngredients && !showAllIngredients ? `${ingredients.slice(0, 280)}…` : ingredients;
+  // ── Composition : liste d'ingrédients icônée (voir plus si > 6 items) ────
+  const ingredientItems = splitIngredients(lot.ingredients ?? "");
+  const MAX_INGREDIENTS = 6;
+  const displayedIngredients = showAllIngredients
+    ? ingredientItems
+    : ingredientItems.slice(0, MAX_INGREDIENTS);
 
   const bio =
     lot.artisanBio?.trim() ||
     `${lot.artisanName} fabrique des produits naturels avec passion depuis plusieurs années. Chaque produit est fait main avec des ingrédients soigneusement sélectionnés pour vous offrir le meilleur de la nature sénégalaise.`;
 
   return (
-    <main className="min-h-screen bg-[#FAF6F0] text-stone-900">
+    <main className="relative min-h-screen overflow-x-clip bg-[#FAF6F0] text-stone-900">
       {/* Tracking du scan (timezone → détection contrefaçon, fire-and-forget) */}
       <ScanTracker qrCode={lot.qrCode} />
 
@@ -564,54 +631,83 @@ export function ArtisanProductView({
         </div>
       )}
 
-      {/* ── 0b. BARRE DE MARQUE ─────────────────────────────────────────── */}
-      <div className="flex items-center justify-center border-b border-stone-200/70 bg-white/90 py-3 backdrop-blur">
-        <Link href="/" aria-label="VerifScan accueil" className="inline-flex items-center">
-          <Logo size="md" />
-        </Link>
-      </div>
-
-      {/* ── 1. HERO PHOTO PLEIN ÉCRAN — nom posé sur l'image ───────────── */}
-      <header className="relative overflow-hidden">
+      {/* ════ 1. HERO IMMERSIF PLEIN ÉCRAN ═══════════════════════════════ */}
+      <header className="relative flex min-h-[92svh] flex-col overflow-hidden bg-stone-950">
+        {/* Photo produit plein écran (zoom Ken Burns) ou placeholder stylisé */}
         <div className="absolute inset-0">
           <SafeImage
             src={lot.photoUrl}
             alt={lot.productName}
-            className="h-full w-full object-cover"
-            icon={<Leaf className="h-28 w-28 text-white/90" strokeWidth={1.5} />}
+            className="art-kenburns h-full w-full object-cover"
+            icon={
+              <span className="art-float text-[6.5rem] drop-shadow-2xl" aria-hidden>
+                🧴
+              </span>
+            }
           />
-          {/* Voiles de lisibilité : bas sombre pour le texte, haut léger */}
-          <div className="absolute inset-0 bg-gradient-to-t from-stone-950/85 via-stone-950/25 to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-b from-stone-950/20 via-transparent to-transparent" />
         </div>
 
-        <div className="relative mx-auto flex min-h-[30rem] max-w-lg flex-col justify-end px-5 pb-10 pt-16 text-white">
-          {/* Chips de confiance en glassmorphism */}
-          <div className="mb-4 flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-300/40 bg-emerald-500/25 px-3 py-1.5 text-xs font-bold text-emerald-100 backdrop-blur-md">
-              <ShieldCheck className="h-3.5 w-3.5" /> Produit authentique
+        {/* Halos lumineux animés (profondeur, effet premium) */}
+        <div className="pointer-events-none absolute inset-0" aria-hidden>
+          <div className="art-gradient-pan absolute -left-24 top-1/4 h-72 w-72 rounded-full bg-amber-400/25 blur-3xl" />
+          <div className="art-gradient-pan absolute -right-24 top-1/2 h-80 w-80 rounded-full bg-emerald-400/20 blur-3xl" />
+          {/* Trame de points uniquement sur le placeholder (pas de photo) */}
+          {!lot.photoUrl && (
+            <div
+              className="absolute inset-0 opacity-20"
+              style={{
+                backgroundImage:
+                  "radial-gradient(circle at 25% 25%, white 1.5px, transparent 1.5px)",
+                backgroundSize: "26px 26px",
+              }}
+            />
+          )}
+        </div>
+
+        {/* Voiles de lisibilité : bas sombre pour le texte */}
+        <div className="absolute inset-0 bg-gradient-to-t from-stone-950/90 via-stone-950/25 to-stone-950/40" />
+
+        {/* Pilule marque VerifScan (verre dépoli) */}
+        <div className="art-fade-down relative z-10 flex justify-center pt-5">
+          <Link
+            href="/"
+            aria-label="VerifScan accueil"
+            className="inline-flex items-center rounded-full border border-white/25 bg-white/10 px-4 py-2 shadow-lg backdrop-blur-md transition-colors hover:bg-white/20"
+          >
+            <Logo variant="light" size="sm" />
+          </Link>
+        </div>
+
+        {/* Espace flexible → contenu collé en bas */}
+        <div className="flex-1" />
+
+        {/* Badges flottants + titre révélé + étoiles */}
+        <div className="relative z-10 mx-auto w-full max-w-lg px-5 pb-5 text-white">
+          <div className="mb-5 flex flex-wrap items-center gap-2">
+            <span className="art-float inline-flex items-center gap-1.5 rounded-full border border-emerald-300/40 bg-emerald-500/25 px-3.5 py-2 text-xs font-bold text-emerald-50 shadow-lg backdrop-blur-md">
+              <ShieldCheck className="h-4 w-4" /> Produit authentique
             </span>
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200/40 bg-amber-400/20 px-3 py-1.5 text-xs font-bold text-amber-100 backdrop-blur-md">
-              <Hand className="h-3.5 w-3.5" /> Fait main
+            <span className="art-float-delay inline-flex items-center gap-1.5 rounded-full border border-amber-200/40 bg-amber-400/25 px-3.5 py-2 text-xs font-bold text-amber-50 shadow-lg backdrop-blur-md">
+              <Hand className="h-4 w-4" /> Fait main
             </span>
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-white/10 px-3 py-1.5 text-xs font-bold text-white/90 backdrop-blur-md">
-              <Leaf className="h-3.5 w-3.5" /> Naturel
+            <span className="art-float-delay-2 inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-white/10 px-3.5 py-2 text-xs font-bold text-white/90 shadow-lg backdrop-blur-md">
+              <Leaf className="h-4 w-4" /> Naturel
             </span>
           </div>
 
-          <p className="mb-1 text-[11px] font-bold uppercase tracking-[0.22em] text-amber-200/90">
-            Création artisanale du Sénégal
+          <p className="art-fade-up art-delay-1 mb-2 text-[11px] font-bold uppercase tracking-[0.22em] text-amber-200/90">
+            Création artisanale · Sénégal
           </p>
-          <h1 className="text-4xl font-black leading-[1.08] tracking-tight drop-shadow-sm">
+          <h1 className="art-title-reveal text-[2.55rem] font-black leading-[1.06] tracking-tight drop-shadow-sm">
             {lot.productName}
           </h1>
           {lot.productDesignation && (
-            <p className="mt-3 max-w-md text-sm leading-relaxed text-white/85">
+            <p className="art-fade-up art-delay-2 mt-3 text-sm leading-relaxed text-white/85">
               {lot.productDesignation}
             </p>
           )}
 
-          <div className="mt-4 flex items-center gap-2">
+          <div className="art-fade-up art-delay-3 mt-4 flex items-center gap-2">
             <Stars
               value={avgRating > 0 ? Math.round(avgRating) : 5}
               className="h-5 w-5"
@@ -624,201 +720,270 @@ export function ArtisanProductView({
             </span>
           </div>
         </div>
+
+        {/* Bouton « Découvrir » — scroll fluide vers la carte produit.
+            pb-24 : la carte flottante (-mt-16 = 64 px d'overlap) recouvre le
+            bas du hero → le bouton doit rester AU-DESSUS de cette zone
+            (sinon il est recouvert et inclicable — bug détecté au test). */}
+        <div className="art-fade-up art-delay-4 relative z-30 flex justify-center pb-24">
+          <button
+            type="button"
+            onClick={scrollToProduct}
+            className="group flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-7 py-3.5 text-sm font-bold text-white shadow-xl backdrop-blur-md transition-all hover:scale-105 hover:bg-white/20 active:scale-95"
+          >
+            Découvrir
+            <ChevronDown className="h-4 w-4 animate-bounce" />
+          </button>
+        </div>
       </header>
 
-      {/* ── 2. BANNIÈRE AUTHENTICITÉ · FRAÎCHEUR · CARTE ARTISAN ─────────────────────── */}
-      <div className="relative z-10 mx-auto -mt-12 max-w-lg px-5">
-        {/* ── BANNIÈRE AUTHENTICITÉ — mise en valeur « authentique & fait main » ── */}
-        <section className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-emerald-600 via-emerald-500 to-teal-600 px-5 py-6 text-white shadow-xl shadow-emerald-900/20">
-          <div className="pointer-events-none absolute -right-12 -top-16 h-44 w-44 rounded-full bg-white/10 blur-2xl" />
-          <div className="pointer-events-none absolute -bottom-16 -left-10 h-36 w-36 rounded-full bg-teal-300/20 blur-2xl" />
-          <div className="relative flex items-center gap-4">
-            <div className="flex h-16 w-16 flex-shrink-0 flex-col items-center justify-center rounded-full bg-white text-emerald-700 shadow-lg">
-              <ShieldCheck className="h-7 w-7" />
-              <span className="mt-0.5 text-[8px] font-black uppercase tracking-wider">
-                Vérifié
-              </span>
-            </div>
-            <div className="min-w-0">
-              <h2 className="text-xl font-black leading-[1.15]">
-                Produit authentique
-                <br />
-                &amp; fait main
-              </h2>
-              <p className="mt-1 text-xs font-medium text-emerald-50/90">
-                Authentifié à chaque scan par VerifScan
-              </p>
-            </div>
-          </div>
-          <div className="relative mt-4 grid grid-cols-3 gap-2 text-center">
-            <div className="rounded-2xl bg-white/15 py-2.5 backdrop-blur-sm">
-              <p className="text-lg leading-none">✋</p>
-              <p className="mt-1 text-[10px] font-bold">Fait main</p>
-            </div>
-            <div className="rounded-2xl bg-white/15 py-2.5 backdrop-blur-sm">
-              <p className="text-lg leading-none">🌱</p>
-              <p className="mt-1 text-[10px] font-bold">100 % naturel</p>
-            </div>
-            <div className="rounded-2xl bg-white/15 py-2.5 backdrop-blur-sm">
-              <p className="text-lg leading-none">🇸🇳</p>
-              <p className="mt-1 text-[10px] font-bold">Soutien local</p>
-            </div>
-          </div>
-        </section>
+      {/* ════ CONTENU DÉROULANT (cartes flottantes au-dessus du hero) ════ */}
+      <div id="produit" className="relative z-20 mx-auto -mt-16 max-w-lg scroll-mt-4 px-4 pb-2">
+        {/* ════ 2. CARTE PRODUIT FLOTTANTE — GLASSMORPHISM ═══════════════ */}
+        <Reveal>
+          <section className="relative overflow-hidden rounded-[2rem] border border-white/70 bg-white/80 shadow-2xl shadow-stone-900/10 backdrop-blur-2xl">
+            <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-amber-300/30 blur-3xl" />
+            <div className="pointer-events-none absolute -bottom-20 -left-16 h-40 w-40 rounded-full bg-emerald-300/25 blur-3xl" />
 
-        {/* ── FRAÎCHEUR — LES DATES DE PÉREMPTION EN VEDETTE ──────────────── */}
-        <section className="mt-4 rounded-[2rem] border border-emerald-100 bg-white p-6 shadow-xl shadow-stone-900/5">
-          <Eyebrow>Du frais, prouvé</Eyebrow>
-          <div className="flex items-center gap-5">
-            {/* Badge circulaire géant jours restants */}
-            <div
-              className={`relative flex h-24 w-24 flex-shrink-0 flex-col items-center justify-center rounded-full border-4 ${
-                isExpired
-                  ? "border-red-100 bg-red-50"
-                  : daysLeft !== null && daysLeft <= 30
-                    ? "border-amber-100 bg-amber-50"
-                    : "border-emerald-100 bg-emerald-50"
-              }`}
-            >
-              <span
-                className={`text-2xl font-black leading-none ${
-                  isExpired
-                    ? "text-red-600"
-                    : daysLeft !== null && daysLeft <= 30
-                      ? "text-amber-600"
-                      : "text-emerald-600"
-                }`}
-              >
-                {isExpired ? Math.abs(daysLeft ?? 0) : daysLeft ?? 0}
-              </span>
-              <span className="mt-1 text-[9px] font-bold uppercase tracking-wider text-stone-500">
-                {isExpired ? "jours dépassé" : "jours restants"}
-              </span>
-            </div>
-
-            {/* LA date de péremption, en gros */}
-            <div className="min-w-0 flex-1">
-              <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-stone-400">
-                À utiliser avant le
-              </p>
-              <p className="mt-0.5 text-[1.55rem] font-black leading-tight text-emerald-700">
-                {formatDate(lot.expirationDate)}
-              </p>
-              {freshnessStatus && (
-                <span
-                  className={`mt-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ring-1 ${freshnessStatus.chip}`}
-                >
-                  <span className={`h-2 w-2 rounded-full ${freshnessStatus.dot}`} />
-                  {freshnessStatus.label}
-                </span>
-              )}
-            </div>
-          </div>
-
-          {/* Barre de progression durée de vie */}
-          <div className="mt-5">
-            <div className="h-2.5 overflow-hidden rounded-full bg-stone-100">
-              <div
-                className={`h-full rounded-full transition-all duration-1000 ${
-                  isExpired
-                    ? "bg-gradient-to-r from-red-400 to-rose-500"
-                    : "bg-gradient-to-r from-emerald-400 to-green-500"
-                }`}
-                style={{ width: `${shelfLifePct}%` }}
-              />
-            </div>
-            <div className="mt-1.5 flex justify-between text-[11px] font-semibold text-stone-400">
-              <span>
-                Fabriqué le{" "}
-                <span className="font-bold text-stone-600">
-                  {formatDate(lot.manufacturingDate)}
-                </span>
-              </span>
-              <span>Péremption</span>
-            </div>
-          </div>
-        </section>
-
-        {/* ── CARTE ARTISAN (identité + prix + partage) ───────────────────── */}
-        <section className="mt-4 rounded-[2rem] border border-stone-200/80 bg-white shadow-xl shadow-stone-900/5">
-          <div className="p-6">
-            <div className="flex items-center gap-4">
-              {logoUrl ? (
-                <SafeImage
-                  src={logoUrl}
-                  alt={`Logo de ${lot.artisanName}`}
-                  className="h-14 w-14 flex-shrink-0 rounded-2xl bg-gradient-to-br from-amber-400 via-orange-500 to-rose-500 object-cover shadow-md shadow-orange-500/25"
-                  icon={
-                    <span className="text-2xl font-black text-white">
-                      {(lot.artisanName || "A").charAt(0).toUpperCase()}
-                    </span>
-                  }
-                />
-              ) : (
-                <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-400 via-orange-500 to-rose-500 text-2xl font-black text-white shadow-md shadow-orange-500/25">
-                  {(lot.artisanName || "A").charAt(0).toUpperCase()}
-                </div>
-              )}
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-lg font-bold leading-tight">{lot.artisanName}</p>
-                <p className="mt-0.5 flex items-center gap-1 text-xs font-semibold text-emerald-600">
-                  <BadgeCheck className="h-4 w-4" /> Artisan vérifié par VerifScan
-                </p>
-              </div>
-              {scanCount > 0 && (
-                <div className="flex-shrink-0 rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-center">
-                  <p className="text-lg font-black leading-none text-amber-600">{scanCount}</p>
-                  <p className="text-[10px] font-semibold uppercase tracking-wide text-amber-700/80">
-                    scan{scanCount > 1 ? "s" : ""}
+            <div className="relative p-6">
+              {/* Artisan + logo + preuve sociale scans */}
+              <div className="flex items-center gap-3">
+                {logoUrl ? (
+                  <SafeImage
+                    src={logoUrl}
+                    alt={`Logo de ${lot.artisanName}`}
+                    className="h-12 w-12 flex-shrink-0 rounded-2xl bg-gradient-to-br from-amber-400 via-orange-500 to-rose-500 object-cover shadow-md shadow-orange-500/25"
+                    icon={
+                      <span className="text-xl font-black text-white">
+                        {(lot.artisanName || "A").charAt(0).toUpperCase()}
+                      </span>
+                    }
+                  />
+                ) : (
+                  <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-400 via-orange-500 to-rose-500 text-xl font-black text-white shadow-md shadow-orange-500/25">
+                    {(lot.artisanName || "A").charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-[15px] font-bold leading-tight">{lot.artisanName}</p>
+                  <p className="mt-0.5 flex items-center gap-1 text-xs font-semibold text-emerald-600">
+                    <BadgeCheck className="h-4 w-4" /> Artisan vérifié
                   </p>
                 </div>
-              )}
-            </div>
+                {scanCount > 0 && (
+                  <div className="flex-shrink-0 rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-center">
+                    <p className="text-lg font-black leading-none text-amber-600">{scanCount}</p>
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-amber-700/80">
+                      scan{scanCount > 1 ? "s" : ""}
+                    </p>
+                  </div>
+                )}
+              </div>
 
-            {/* Contenance / prix + partage */}
-            <div className="mt-4 flex flex-wrap items-center gap-2">
-              {lot.contenance && (
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-stone-100 px-3.5 py-1.5 text-sm font-semibold text-stone-700">
-                  <Scale className="h-3.5 w-3.5 text-stone-400" /> {lot.contenance}
-                </span>
+              {/* Nom + désignation + étoiles */}
+              <h2 className="mt-5 text-2xl font-black leading-tight">{lot.productName}</h2>
+              {lot.productDesignation && (
+                <p className="mt-1.5 line-clamp-2 text-sm leading-relaxed text-stone-500">
+                  {lot.productDesignation}
+                </p>
               )}
-              {lot.productPrice && (
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3.5 py-1.5 text-sm font-bold text-emerald-700 ring-1 ring-emerald-200/70">
-                  💰 {lot.productPrice}
+              <div className="mt-2 flex items-center gap-2">
+                <Stars value={avgRating > 0 ? Math.round(avgRating) : 5} />
+                <span className="text-xs font-semibold text-stone-500">
+                  {avgRating > 0
+                    ? `${avgRating.toFixed(1)}/5 · ${reviews.length} avis`
+                    : "Avis vérifiés par scan"}
                 </span>
-              )}
-            </div>
+              </div>
 
-            <button
-              type="button"
-              onClick={handleShare}
-              className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl border border-stone-200 bg-stone-50 py-3 text-sm font-bold text-stone-700 transition-colors hover:border-amber-300 hover:bg-amber-50 hover:text-amber-800 active:scale-[0.98]"
-            >
-              {shareCopied ? (
-                <>
-                  <Check className="h-4 w-4 text-emerald-600" /> Lien copié !
-                </>
-              ) : (
-                <>
-                  <Share2 className="h-4 w-4" /> Partager ce produit authentique
-                </>
+              {/* Badges dynamiques */}
+              <div className="mt-4 flex flex-wrap gap-2">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-700 ring-1 ring-amber-200/80">
+                  <Hand className="h-3.5 w-3.5" /> Fait main
+                </span>
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700 ring-1 ring-emerald-200/80">
+                  <Leaf className="h-3.5 w-3.5" /> Naturel
+                </span>
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-50 px-3 py-1.5 text-xs font-bold text-sky-700 ring-1 ring-sky-200/80">
+                  🇸🇳 Local
+                </span>
+              </div>
+
+              {/* PRIX mis en valeur + contenance */}
+              {(lot.productPrice || lot.contenance) && (
+                <div className="mt-5 flex items-end justify-between gap-3 rounded-2xl border border-amber-100 bg-gradient-to-r from-amber-50 to-orange-50 px-5 py-4">
+                  {lot.productPrice ? (
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-amber-700/70">
+                        Prix artisan
+                      </p>
+                      <p className="bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-3xl font-black leading-tight text-transparent">
+                        {lot.productPrice}
+                      </p>
+                    </div>
+                  ) : (
+                    <span />
+                  )}
+                  {lot.contenance && (
+                    <span className="inline-flex flex-shrink-0 items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-stone-600 ring-1 ring-stone-200">
+                      <Scale className="h-3.5 w-3.5 text-stone-400" /> {lot.contenance}
+                    </span>
+                  )}
+                </div>
               )}
-            </button>
+
+              {/* Partage (Web Share → repli copie du lien) */}
+              <button
+                type="button"
+                onClick={handleShare}
+                className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl border border-stone-200 bg-stone-50/80 py-3 text-sm font-bold text-stone-700 transition-all hover:-translate-y-0.5 hover:border-amber-300 hover:bg-amber-50 hover:text-amber-800 hover:shadow-md active:scale-[0.98]"
+              >
+                {shareCopied ? (
+                  <>
+                    <Check className="h-4 w-4 text-emerald-600" /> Lien copié !
+                  </>
+                ) : (
+                  <>
+                    <Share2 className="h-4 w-4" /> Partager ce produit authentique
+                  </>
+                )}
+              </button>
+            </div>
+          </section>
+        </Reveal>
+
+        {/* ════ 3. BARRE DE FRAÎCHEUR ANIMÉE — PÉREMPTION EN VEDETTE ══════ */}
+        <Reveal delay={90}>
+          <section className="mt-4 rounded-[2rem] bg-gradient-to-br from-emerald-400 via-teal-400 to-green-500 p-[1.5px] shadow-xl shadow-emerald-900/10">
+            <div className="rounded-[calc(2rem-1.5px)] bg-white p-6">
+              <Eyebrow>Du frais, prouvé</Eyebrow>
+              <div className="flex items-center gap-5">
+                {/* Compte à rebours circulaire + anneau pulsant si très frais */}
+                <div className="relative flex-shrink-0">
+                  {isVeryFresh && (
+                    <span
+                      className="art-ring absolute inset-0 rounded-full border-4 border-emerald-300"
+                      aria-hidden
+                    />
+                  )}
+                  <div
+                    className={`relative flex h-24 w-24 flex-col items-center justify-center rounded-full border-4 ${
+                      isExpired
+                        ? "border-red-100 bg-red-50"
+                        : daysLeft !== null && daysLeft <= 30
+                          ? "border-amber-100 bg-amber-50"
+                          : "border-emerald-100 bg-emerald-50"
+                    }`}
+                  >
+                    <span
+                      className={`text-2xl font-black leading-none ${
+                        isExpired
+                          ? "text-red-600"
+                          : daysLeft !== null && daysLeft <= 30
+                            ? "text-amber-600"
+                            : "text-emerald-600"
+                      }`}
+                    >
+                      {isExpired ? Math.abs(daysLeft ?? 0) : daysLeft ?? 0}
+                    </span>
+                    <span className="mt-1 text-[9px] font-bold uppercase tracking-wider text-stone-500">
+                      {isExpired ? "jours dépassé" : "jours restants"}
+                    </span>
+                  </div>
+                </div>
+
+                {/* LA date de péremption, en gros */}
+                <div className="min-w-0 flex-1">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-stone-400">
+                    À utiliser avant le
+                  </p>
+                  <p className="mt-0.5 text-[1.55rem] font-black leading-tight text-emerald-700">
+                    {formatDate(lot.expirationDate)}
+                  </p>
+                  {freshnessStatus && (
+                    <span
+                      className={`mt-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ring-1 ${freshnessStatus.chip}`}
+                    >
+                      <span
+                        className={`h-2 w-2 rounded-full ${freshnessStatus.dot} ${
+                          isVeryFresh ? "animate-pulse" : ""
+                        }`}
+                      />
+                      {freshnessStatus.label}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Barre de progression durée de vie + reflet shimmer */}
+              <div className="art-shimmer mt-5 h-2.5 rounded-full bg-stone-100">
+                <div
+                  className={`h-full rounded-full transition-all duration-1000 ${
+                    isExpired
+                      ? "bg-gradient-to-r from-red-400 to-rose-500"
+                      : "bg-gradient-to-r from-emerald-400 via-green-400 to-emerald-500"
+                  }`}
+                  style={{ width: `${shelfLifePct}%` }}
+                />
+              </div>
+              <div className="mt-1.5 flex justify-between text-[11px] font-semibold text-stone-400">
+                <span>
+                  Fabriqué le{" "}
+                  <span className="font-bold text-stone-600">
+                    {formatDate(lot.manufacturingDate)}
+                  </span>
+                </span>
+                <span>Péremption</span>
+              </div>
+            </div>
+          </section>
+        </Reveal>
+
+        {/* ════ 4. POURQUOI CHOISIR — 4 CARDS ANIMÉES (staggered) ═════════ */}
+        <section className="mt-8">
+          <Reveal>
+            <Eyebrow>Pourquoi l&rsquo;adorer</Eyebrow>
+            <h2 className="text-xl font-bold">Pourquoi choisir ce produit&nbsp;?</h2>
+          </Reveal>
+          <div className="mt-4 grid grid-cols-2 gap-3">
+            {WHY_CARDS.map((card, i) => (
+              <Reveal key={card.title} delay={i * 90} className="h-full">
+                <div className="group h-full rounded-3xl border border-stone-200/80 bg-white p-4 shadow-sm transition-all duration-300 hover:-translate-y-1.5 hover:border-amber-200 hover:shadow-xl hover:shadow-amber-900/5">
+                  <div
+                    className={`flex h-11 w-11 items-center justify-center rounded-2xl ${card.bg} transition-transform duration-300 group-hover:-rotate-6 group-hover:scale-110`}
+                  >
+                    <card.icon className="h-5 w-5" />
+                  </div>
+                  <p className="mt-3 text-sm font-bold">{card.title}</p>
+                  <p className="mt-1 text-xs leading-relaxed text-stone-500">{card.text}</p>
+                </div>
+              </Reveal>
+            ))}
           </div>
         </section>
 
-        {/* ── 5. COMPOSITION NATURELLE ────────────────────────────────────── */}
-        {ingredients && (
-          <section className="mt-8 rounded-[2rem] border border-stone-200/80 bg-white p-6 shadow-sm">
-            <Eyebrow>Ce qu&rsquo;il y a dedans</Eyebrow>
-            <h2 className="mb-4 flex items-center gap-2 text-xl font-bold">
-              <FlaskConical className="h-5 w-5 text-emerald-600" /> Composition naturelle
-            </h2>
-            <div className="rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50/70 to-teal-50/50 p-5">
-              <p className="whitespace-pre-line text-[15px] leading-relaxed text-stone-700">
-                {displayedIngredients}
-              </p>
-              {isLongIngredients && (
+        {/* ════ 5. COMPOSITION NATURELLE — liste icônée + check animé ═════ */}
+        {ingredientItems.length > 0 && (
+          <Reveal>
+            <section className="mt-8 rounded-[2rem] border border-stone-200/80 bg-white p-6 shadow-sm">
+              <Eyebrow>Ce qu&rsquo;il y a dedans</Eyebrow>
+              <h2 className="mb-4 flex items-center gap-2 text-xl font-bold">
+                <FlaskConical className="h-5 w-5 text-emerald-600" /> Composition naturelle
+              </h2>
+              <ul className="space-y-2">
+                {displayedIngredients.map((ing, i) => (
+                  <li
+                    key={`${i}-${ing.slice(0, 12)}`}
+                    className="flex items-start gap-3 rounded-2xl border border-emerald-100/80 bg-gradient-to-r from-emerald-50/80 to-teal-50/50 px-4 py-3 transition-colors hover:border-emerald-200"
+                  >
+                    <span className="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-600">
+                      <Leaf className="h-3.5 w-3.5" />
+                    </span>
+                    <span className="text-sm leading-relaxed text-stone-700">{ing}</span>
+                  </li>
+                ))}
+              </ul>
+              {ingredientItems.length > MAX_INGREDIENTS && (
                 <button
                   type="button"
                   onClick={() => setShowAllIngredients((v) => !v)}
@@ -830,389 +995,495 @@ export function ArtisanProductView({
                     </>
                   ) : (
                     <>
-                      Voir plus <ChevronDown className="h-4 w-4" />
+                      + {ingredientItems.length - MAX_INGREDIENTS} autres ingrédients{" "}
+                      <ChevronDown className="h-4 w-4" />
                     </>
                   )}
                 </button>
               )}
-            </div>
 
-            {/* Encadré sans allergènes */}
-            <div className="mt-4 flex items-center gap-3 rounded-2xl border border-emerald-100 bg-emerald-50/60 p-4">
-              <span className="text-2xl">✅</span>
-              <div>
-                <p className="text-sm font-bold text-emerald-900">Sans allergènes de synthèse</p>
-                <p className="text-xs text-emerald-700/80">
-                  Formule naturelle, adaptée aux peaux sensibles
-                </p>
+              {/* Badge « sans allergènes » — coche SVG qui se dessine */}
+              <div className="mt-4 flex items-center gap-3 rounded-2xl border border-emerald-100 bg-emerald-50/70 p-4">
+                <span className="relative flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 text-white shadow-lg shadow-emerald-500/30">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={3.2}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="h-5 w-5"
+                    aria-hidden
+                  >
+                    <path className="art-check-path" d="M5 13l4 4L19 7" />
+                  </svg>
+                </span>
+                <div>
+                  <p className="text-sm font-bold text-emerald-900">
+                    Sans allergènes de synthèse
+                  </p>
+                  <p className="text-xs text-emerald-700/80">
+                    Formule naturelle, adaptée aux peaux sensibles
+                  </p>
+                </div>
               </div>
-            </div>
-          </section>
+            </section>
+          </Reveal>
         )}
 
-        {/* ── 5. PRÉCAUTIONS D'EMPLOI (assistant intelligent) ─────────────── */}
+        {/* ════ 6. PRÉCAUTIONS — cards numérotées rouge/orange ════════════ */}
         {precautions.length > 0 && (
-          <section className="mt-6 rounded-[2rem] border border-rose-100 bg-rose-50/70 p-6">
-            <h2 className="mb-4 flex items-center gap-2 text-xl font-bold">
-              <span className="text-2xl">⚠️</span> Précautions d&rsquo;emploi
-            </h2>
-            <ul className="space-y-2.5">
-              {precautions.map((prec, i) => (
-                <li
-                  key={i}
-                  className="flex items-start gap-3 rounded-2xl border border-rose-100 bg-white/80 p-3.5"
-                >
-                  <span className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-rose-100 text-[11px] font-black text-rose-600">
-                    !
-                  </span>
-                  <span className="text-sm leading-relaxed text-stone-700">{prec}</span>
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
-
-        {/* ── 6. CONDITIONS DE CONSERVATION (assistant intelligent) ───────── */}
-        {storageConditions && (
-          <section className="mt-6 rounded-[2rem] border border-sky-100 bg-sky-50/70 p-6">
-            <h2 className="mb-3 flex items-center gap-2 text-xl font-bold">
-              <span className="text-2xl">📍</span> Conservation
-            </h2>
-            <p className="rounded-2xl border border-sky-100 bg-white/80 p-4 text-sm leading-relaxed text-stone-700">
-              {storageConditions}
-            </p>
-          </section>
-        )}
-
-        {/* ── 7. HISTOIRE DE L'ARTISAN + ATELIER ──────────────────────────── */}
-        <section className="mt-8 overflow-hidden rounded-[2rem] border border-amber-200/70 bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100/60 shadow-sm">
-          <div className="p-6">
-            <Eyebrow>Rencontrez l&rsquo;artisan</Eyebrow>
-            <h2 className="mb-4 text-xl font-bold">L&rsquo;histoire de {lot.artisanName}</h2>
-
-            <blockquote className="relative rounded-2xl border border-amber-100 bg-white/85 p-5 backdrop-blur">
-              <span className="absolute -top-3 left-5 text-4xl leading-none text-amber-300">
-                &ldquo;
-              </span>
-              <p className="pt-2 italic leading-relaxed text-stone-700">{bio}</p>
-            </blockquote>
-
-            <div className="mt-5 flex items-center gap-3">
-              {logoUrl ? (
-                <SafeImage
-                  src={logoUrl}
-                  alt={`Logo de ${lot.artisanName}`}
-                  className="h-12 w-12 flex-shrink-0 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 object-cover shadow-lg shadow-orange-500/25"
-                  icon={
-                    <span className="text-xl font-bold text-white">
-                      {(lot.artisanName || "A").charAt(0).toUpperCase()}
+          <Reveal>
+            <section className="mt-6 rounded-[2rem] border border-rose-100 bg-gradient-to-br from-rose-50 via-orange-50/60 to-amber-50/40 p-6">
+              <h2 className="mb-4 flex items-center gap-3 text-xl font-bold">
+                <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-gradient-to-br from-rose-400 to-orange-500 text-white shadow-md shadow-rose-500/25">
+                  <AlertTriangle className="h-5 w-5" />
+                </span>
+                Précautions d&rsquo;emploi
+              </h2>
+              <div className="space-y-2.5">
+                {precautions.map((prec, i) => (
+                  <div
+                    key={i}
+                    className="group flex items-start gap-3 rounded-2xl border border-rose-100 bg-white/90 p-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-rose-200 hover:shadow-md"
+                  >
+                    <span className="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-rose-100 to-orange-100 text-[11px] font-black text-rose-600 transition-transform duration-300 group-hover:scale-110">
+                      {i + 1}
                     </span>
-                  }
+                    <span className="text-sm leading-relaxed text-stone-700">{prec}</span>
+                  </div>
+                ))}
+              </div>
+            </section>
+          </Reveal>
+        )}
+
+        {/* ════ 7. CONSERVATION — icône frigo flottante + conseils ════════ */}
+        {storageConditions && (
+          <Reveal>
+            <section className="mt-6 rounded-[2rem] border border-sky-100 bg-gradient-to-br from-sky-50 via-cyan-50/50 to-blue-50/40 p-6">
+              <div className="flex items-start gap-4">
+                <div className="art-float flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-400 to-blue-600 text-white shadow-lg shadow-sky-500/30">
+                  <Refrigerator className="h-7 w-7" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <Eyebrow>Garder toute sa fraîcheur</Eyebrow>
+                  <h2 className="text-xl font-bold">Conservation</h2>
+                  <p className="mt-2.5 rounded-2xl border border-sky-100 bg-white/85 p-4 text-sm leading-relaxed text-stone-700">
+                    {storageConditions}
+                  </p>
+                </div>
+              </div>
+            </section>
+          </Reveal>
+        )}
+
+        {/* ════ 8. HISTOIRE ARTISAN — storytelling + badge certifié ═══════ */}
+        <Reveal>
+          <section className="relative mt-8 overflow-hidden rounded-[2rem] border border-amber-200/70 bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100/70 shadow-sm">
+            {/* Guillemet décoratif géant */}
+            <span
+              className="pointer-events-none absolute -top-7 right-3 select-none font-serif text-[7.5rem] leading-none text-amber-200/80"
+              aria-hidden
+            >
+              &rdquo;
+            </span>
+            <div className="relative p-6">
+              <Eyebrow>Rencontrez l&rsquo;artisan</Eyebrow>
+              <h2 className="text-xl font-bold">L&rsquo;histoire de {lot.artisanName}</h2>
+
+              <blockquote className="relative mt-4 rounded-2xl border border-amber-100 bg-white/85 p-5 backdrop-blur">
+                <Quote
+                  className="absolute -left-2.5 -top-2.5 h-6 w-6 rotate-180 rounded-full bg-amber-400 p-1 text-white shadow-md"
+                  aria-hidden
                 />
-              ) : (
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-orange-500 text-xl font-bold text-white shadow-lg shadow-orange-500/25">
-                  {(lot.artisanName || "A").charAt(0).toUpperCase()}
+                <p className="italic leading-relaxed text-stone-700">{bio}</p>
+              </blockquote>
+
+              {/* Avatar + badge « Artisan certifié » */}
+              <div className="mt-5 flex items-center gap-3">
+                {logoUrl ? (
+                  <SafeImage
+                    src={logoUrl}
+                    alt={`Logo de ${lot.artisanName}`}
+                    className="h-12 w-12 flex-shrink-0 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 object-cover shadow-lg shadow-orange-500/25"
+                    icon={
+                      <span className="text-xl font-bold text-white">
+                        {(lot.artisanName || "A").charAt(0).toUpperCase()}
+                      </span>
+                    }
+                  />
+                ) : (
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-orange-500 text-xl font-bold text-white shadow-lg shadow-orange-500/25">
+                    {(lot.artisanName || "A").charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <div className="min-w-0">
+                  <p className="font-bold">{lot.artisanName}</p>
+                  <span className="mt-1 inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-700">
+                    <ShieldCheck className="h-3 w-3" /> Artisan certifié VerifScan
+                  </span>
+                </div>
+              </div>
+
+              {/* Galerie — l'atelier en images */}
+              {artisanPhotos.length > 0 && (
+                <div className="mt-5">
+                  <p className="mb-3 text-sm font-bold text-stone-800">
+                    📷 L&rsquo;atelier en images
+                  </p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {artisanPhotos.map((url) => (
+                      <button
+                        key={url}
+                        type="button"
+                        onClick={() => setLightbox(url)}
+                        aria-label={`Agrandir la photo de l'atelier de ${lot.artisanName}`}
+                        className="group h-24 cursor-zoom-in overflow-hidden rounded-2xl border border-amber-100 shadow-sm"
+                      >
+                        <SafeImage
+                          src={url}
+                          alt={`Atelier de ${lot.artisanName}`}
+                          className="h-24 w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                          emoji="📷"
+                        />
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
-              <div>
-                <p className="font-bold">{lot.artisanName}</p>
-                <p className="flex items-center gap-1 text-sm font-medium text-emerald-600">
-                  <ShieldCheck className="h-3.5 w-3.5" /> Artisan certifié VerifScan
-                </p>
-              </div>
+            </div>
+          </section>
+        </Reveal>
+
+        {/* ════ 9. CONSEILS D'UTILISATION — TIMELINE VISUELLE ═════════════ */}
+        <Reveal>
+          <section className="mt-8 rounded-[2rem] border border-stone-200/80 bg-white p-6 shadow-sm">
+            <Eyebrow>Bien l&rsquo;utiliser</Eyebrow>
+            <h2 className="mb-5 flex items-center gap-2 text-xl font-bold">
+              <Sparkles className="h-5 w-5 text-amber-500" /> Conseils d&rsquo;utilisation
+            </h2>
+
+            {/* Ligne verticale connectant les étapes numérotées */}
+            <div className="relative space-y-4 before:absolute before:bottom-3 before:left-[15px] before:top-3 before:w-[2.5px] before:rounded-full before:bg-gradient-to-b before:from-amber-300 before:via-orange-200 before:to-transparent">
+              {(showAllTips ? tips : tips.slice(0, 3)).map((tip, index) => (
+                <Reveal key={index} delay={index * 90}>
+                  <div className="relative flex items-start gap-4">
+                    <span className="relative z-10 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-orange-500 text-sm font-black text-white shadow-md shadow-orange-500/30 ring-4 ring-white">
+                      {index + 1}
+                    </span>
+                    <p className="pt-1.5 text-sm leading-relaxed text-stone-700">{tip}</p>
+                  </div>
+                </Reveal>
+              ))}
             </div>
 
-            {/* Galerie — l'atelier en images */}
-            {artisanPhotos.length > 0 && (
-              <div className="mt-5">
-                <p className="mb-3 text-sm font-bold text-stone-800">
-                  📷 L&rsquo;atelier en images
-                </p>
-                <div className="grid grid-cols-3 gap-2">
-                  {artisanPhotos.map((url) => (
-                    <button
-                      key={url}
-                      type="button"
-                      onClick={() => setLightbox(url)}
-                      aria-label={`Agrandir la photo de l'atelier de ${lot.artisanName}`}
-                      className="group h-24 cursor-zoom-in overflow-hidden rounded-2xl border border-amber-100 shadow-sm"
+            {tips.length > 3 && (
+              <button
+                type="button"
+                onClick={() => setShowAllTips((v) => !v)}
+                className="mt-4 flex w-full items-center justify-center gap-1.5 rounded-2xl border border-amber-200 bg-amber-50 py-2.5 text-sm font-bold text-amber-800 transition-colors hover:bg-amber-100"
+              >
+                {showAllTips ? (
+                  <>
+                    Résumer <ChevronUp className="h-4 w-4" />
+                  </>
+                ) : (
+                  <>
+                    Voir les {tips.length - 3} autres conseils <ChevronDown className="h-4 w-4" />
+                  </>
+                )}
+              </button>
+            )}
+          </section>
+        </Reveal>
+
+        {/* ════ 10. CTA WHATSAPP GÉANT — anneaux pulsants ═════════════════ */}
+        {lot.contactPhone && (
+          <Reveal>
+            <section className="mt-8">
+              <div className="relative">
+                <a
+                  href={waLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group relative flex w-full items-center justify-center gap-3 rounded-[1.8rem] bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 py-5 text-lg font-bold text-white shadow-2xl shadow-emerald-600/40 transition-transform duration-300 hover:scale-[1.02] active:scale-95"
+                >
+                  {/* Double anneau pulsant continu (démarré à la révélation) */}
+                  <span
+                    className="art-ring pointer-events-none absolute inset-0 rounded-[1.8rem] bg-emerald-500/50"
+                    aria-hidden
+                  />
+                  <span
+                    className="art-ring pointer-events-none absolute inset-0 rounded-[1.8rem] bg-emerald-400/40"
+                    style={{ animationDelay: "0.75s" }}
+                    aria-hidden
+                  />
+                  <svg
+                    className="relative z-10 h-7 w-7 transition-transform duration-300 group-hover:rotate-12 group-hover:scale-125"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
+                    aria-hidden
+                  >
+                    <path d={WHATSAPP_SVG_PATH} />
+                  </svg>
+                  <span className="relative z-10">Commander sur WhatsApp</span>
+                </a>
+              </div>
+              <p className="mt-2.5 text-center text-xs font-medium text-stone-400">
+                💬 Réponse directe de {lot.artisanName} — sans intermédiaire
+              </p>
+
+              {/* ════ 11. COORDONNÉES — tuiles compactes cliquables ═══════ */}
+              <div className="mt-4 rounded-[2rem] border border-stone-200/80 bg-white p-4 shadow-sm">
+                <h3 className="mb-3 flex items-center gap-2 text-sm font-bold">
+                  <span className="text-lg">📇</span> Coordonnées de l&rsquo;artisan
+                </h3>
+
+                <div className="grid grid-cols-2 gap-2">
+                  {contactTiles.map((c) => (
+                    <a
+                      key={c.key}
+                      href={c.href}
+                      {...(c.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+                      className="group flex items-center gap-2.5 rounded-2xl border border-stone-200 bg-stone-50 p-2.5 transition-all duration-300 hover:-translate-y-0.5 hover:border-amber-300 hover:bg-amber-50 hover:shadow-md"
                     >
-                      <SafeImage
-                        src={url}
-                        alt={`Atelier de ${lot.artisanName}`}
-                        className="h-24 w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                        emoji="📷"
-                      />
-                    </button>
+                      <span
+                        className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl text-white shadow-sm transition-transform duration-300 group-hover:scale-110 ${c.bg}`}
+                      >
+                        {c.icon}
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-[10px] font-semibold uppercase tracking-wide text-stone-400">
+                          {c.label}
+                        </span>
+                        <span className="block truncate text-xs font-bold text-stone-800">
+                          {c.value}
+                        </span>
+                      </span>
+                    </a>
                   ))}
                 </div>
               </div>
-            )}
-          </div>
-        </section>
-
-        {/* ── 8. CONSEILS D'UTILISATION ───────────────────────────────────── */}
-        <section className="mt-8 rounded-[2rem] border border-stone-200/80 bg-white p-6 shadow-sm">
-          <Eyebrow>Bien l&rsquo;utiliser</Eyebrow>
-          <h2 className="mb-4 flex items-center gap-2 text-xl font-bold">
-            <Sparkles className="h-5 w-5 text-amber-500" /> Conseils d&rsquo;utilisation
-          </h2>
-          <div className="space-y-3">
-            {(showAllTips ? tips : tips.slice(0, 3)).map((tip, index) => (
-              <div
-                key={index}
-                className="flex items-start gap-3 rounded-2xl border border-stone-100 bg-stone-50/70 p-3.5"
-              >
-                <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 text-sm font-black text-white shadow-sm shadow-orange-500/25">
-                  {index + 1}
-                </div>
-                <p className="pt-1 text-sm leading-relaxed text-stone-700">{tip}</p>
-              </div>
-            ))}
-          </div>
-          {tips.length > 3 && (
-            <button
-              type="button"
-              onClick={() => setShowAllTips((v) => !v)}
-              className="mt-4 flex w-full items-center justify-center gap-1.5 rounded-2xl border border-amber-200 bg-amber-50 py-2.5 text-sm font-bold text-amber-800 transition-colors hover:bg-amber-100"
-            >
-              {showAllTips ? (
-                <>
-                  Résumer <ChevronUp className="h-4 w-4" />
-                </>
-              ) : (
-                <>
-                  Voir les {tips.length - 3} autres conseils <ChevronDown className="h-4 w-4" />
-                </>
-              )}
-            </button>
-          )}
-        </section>
-
-        {/* ── 9. CONTACT & CTA WHATSAPP ───────────────────────────────────── */}
-        {lot.contactPhone && (
-          <section className="mt-8">
-            {/* CTA WhatsApp géant (conversion) */}
-            <a
-              href={waLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group relative flex w-full transform items-center justify-center gap-3 overflow-hidden rounded-3xl bg-gradient-to-r from-green-500 to-emerald-600 py-5 text-lg font-bold text-white shadow-xl shadow-emerald-600/25 transition-all hover:scale-[1.02] hover:from-green-600 hover:to-emerald-700 active:scale-95"
-            >
-              <div className="artisan-pulse-slow absolute inset-0 bg-white/20" />
-              <svg
-                className="relative z-10 h-7 w-7"
-                fill="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden
-              >
-                <path d={WHATSAPP_SVG_PATH} />
-              </svg>
-              <span className="relative z-10">Contacter {lot.artisanName}</span>
-            </a>
-
-            {/* Coordonnées COMPACTES — grille 2 colonnes de tuiles cliquables */}
-            <div className="mt-4 rounded-[2rem] border border-stone-200/80 bg-white p-4 shadow-sm">
-              <h3 className="mb-3 flex items-center gap-2 text-sm font-bold">
-                <span className="text-lg">📇</span> Coordonnées de l&rsquo;artisan
-              </h3>
-
-              <div className="grid grid-cols-2 gap-2">
-                {contactTiles.map((c) => (
-                  <a
-                    key={c.key}
-                    href={c.href}
-                    {...(c.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-                    className="flex items-center gap-2.5 rounded-2xl border border-stone-200 bg-stone-50 p-2.5 transition-colors hover:border-amber-300 hover:bg-amber-50"
-                  >
-                    <span
-                      className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl text-white shadow-sm ${c.bg}`}
-                    >
-                      {c.icon}
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block text-[10px] font-semibold uppercase tracking-wide text-stone-400">
-                        {c.label}
-                      </span>
-                      <span className="block truncate text-xs font-bold text-stone-800">
-                        {c.value}
-                      </span>
-                    </span>
-                  </a>
-                ))}
-              </div>
-            </div>
-          </section>
+            </section>
+          </Reveal>
         )}
 
-        {/* ── 10. AVIS CLIENTS ────────────────────────────────────────────── */}
-        <section className="mt-8 rounded-[2rem] border border-stone-200/80 bg-white p-6 shadow-sm">
-          <Eyebrow>Votre expérience compte</Eyebrow>
-          <h2 className="mb-4 flex items-center gap-2 text-xl font-bold">
-            <span className="text-2xl">💬</span> Avis des clients
-          </h2>
-
-          {/* Résumé : moyenne + nombre d'avis */}
-          {reviews.length > 0 && (
-            <div className="mb-4 flex items-center gap-4 rounded-2xl border border-amber-100 bg-amber-50/70 p-4">
-              <div className="text-center">
-                <p className="text-3xl font-black leading-tight text-amber-600">
-                  {avgRating.toFixed(1)}
-                </p>
-                <Stars value={Math.round(avgRating)} />
-              </div>
-              <p className="text-sm text-stone-600">
-                {reviews.length === 1
-                  ? "Avis d'un client ayant scanné ce produit"
-                  : `${reviews.length} avis de clients ayant scanné ce produit`}
-              </p>
-            </div>
-          )}
-
-          {/* Liste des avis réels */}
-          {reviews.length > 0 && (
-            <div className="space-y-3">
-              {reviews.map((r) => (
-                <div key={r.id} className="rounded-2xl border border-stone-200 bg-stone-50/70 p-4">
-                  <div className="mb-2 flex items-center justify-between gap-3">
-                    <div className="flex min-w-0 items-center gap-2">
-                      <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-orange-500 text-sm font-bold text-white">
-                        {r.authorName.charAt(0).toUpperCase()}
-                      </div>
-                      <p className="truncate text-sm font-bold text-stone-800">{r.authorName}</p>
-                    </div>
-                    <div className="flex flex-shrink-0 items-center gap-2">
-                      <Stars value={r.rating} className="h-3.5 w-3.5" />
-                      <span className="text-xs text-stone-400">
-                        {new Date(r.createdAt).toLocaleDateString("fr-FR")}
-                      </span>
-                    </div>
-                  </div>
-                  <p className="text-sm leading-relaxed text-stone-700">{r.comment}</p>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {reviewThanks ? (
-            <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-5 text-center">
-              <p className="mb-2 text-4xl">🙏</p>
-              <p className="font-bold text-emerald-800">Merci pour votre avis !</p>
-              <p className="text-sm text-emerald-700">
-                Votre expérience aide d&rsquo;autres clients et soutient {lot.artisanName}.
-              </p>
-            </div>
-          ) : (
-            <form
-              onSubmit={submitReview}
-              className="mt-4 rounded-2xl border border-stone-200 bg-white p-4"
-            >
-              <p className="mb-3 text-sm font-bold text-stone-800">
-                {reviews.length === 0
-                  ? "Soyez le premier à partager votre expérience !"
-                  : "Donner mon avis"}
-              </p>
-
-              {/* Sélecteur d'étoiles */}
-              <div className="mb-3 flex items-center gap-1">
-                {[1, 2, 3, 4, 5].map((n) => (
-                  <button
-                    key={n}
-                    type="button"
-                    onClick={() => setReviewRating(n)}
-                    aria-label={`${n} étoile${n > 1 ? "s" : ""}`}
-                    className="p-1 transition-transform hover:scale-110"
-                  >
-                    <Star
-                      className={`h-7 w-7 ${n <= reviewRating ? "text-amber-400" : "text-stone-300"}`}
-                      fill="currentColor"
-                    />
-                  </button>
-                ))}
-              </div>
-
-              <input
-                type="text"
-                value={reviewName}
-                onChange={(e) => setReviewName(e.target.value)}
-                required
-                minLength={2}
-                maxLength={40}
-                placeholder="Votre nom"
-                className="mb-3 w-full rounded-xl border-2 border-stone-200 px-4 py-2.5 outline-none transition-colors focus:border-amber-500"
-              />
-              <textarea
-                value={reviewComment}
-                onChange={(e) => setReviewComment(e.target.value)}
-                required
-                minLength={2}
-                maxLength={500}
-                rows={3}
-                placeholder="Votre expérience avec ce produit…"
-                className="mb-3 w-full resize-none rounded-xl border-2 border-stone-200 px-4 py-2.5 outline-none transition-colors focus:border-amber-500"
-              />
-              {reviewError && (
-                <p className="mb-3 text-xs font-semibold text-red-600">{reviewError}</p>
-              )}
-              <button
-                type="submit"
-                disabled={reviewSubmitting}
-                className="w-full rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 py-3 font-bold text-white shadow-md shadow-orange-500/25 transition-all hover:from-amber-600 hover:to-orange-600 disabled:opacity-50"
-              >
-                {reviewSubmitting ? "Envoi…" : "Envoyer mon avis"}
-              </button>
-            </form>
-          )}
-        </section>
-
-        {/* ── 11. AUTRES PRODUITS DU MÊME ARTISAN (produits DIFFÉRENTS) ───── */}
-        {similarProducts.length > 0 && (
-          <section className="mb-8 mt-8">
-            <Eyebrow>Continuer à découvrir</Eyebrow>
+        {/* ════ 12. AVIS CLIENTS — étoiles interactives + formulaire ══════ */}
+        <Reveal>
+          <section className="mt-8 rounded-[2rem] border border-stone-200/80 bg-white p-6 shadow-sm">
+            <Eyebrow>Votre expérience compte</Eyebrow>
             <h2 className="mb-4 flex items-center gap-2 text-xl font-bold">
-              <span className="text-2xl">🛍️</span> Autres produits de {lot.artisanName}
+              <span className="text-2xl">💬</span> Avis des clients
             </h2>
-            <div className="grid grid-cols-2 gap-4">
-              {similarProducts.map((p) => (
-                <Link
-                  key={p.qrCode}
-                  href={`/a/${p.qrCode}`}
-                  className="overflow-hidden rounded-3xl border border-stone-200/80 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-lg"
+
+            {/* Résumé : moyenne + nombre d'avis */}
+            {reviews.length > 0 && (
+              <div className="mb-4 flex items-center gap-4 rounded-2xl border border-amber-100 bg-gradient-to-r from-amber-50/90 to-orange-50/60 p-4">
+                <div className="text-center">
+                  <p className="text-3xl font-black leading-tight text-amber-600">
+                    {avgRating.toFixed(1)}
+                  </p>
+                  <Stars value={Math.round(avgRating)} />
+                </div>
+                <p className="text-sm text-stone-600">
+                  {reviews.length === 1
+                    ? "Avis d'un client ayant scanné ce produit"
+                    : `${reviews.length} avis de clients ayant scanné ce produit`}
+                </p>
+              </div>
+            )}
+
+            {/* Liste des avis réels */}
+            {reviews.length > 0 && (
+              <div className="space-y-3">
+                {reviews.map((r) => (
+                  <div
+                    key={r.id}
+                    className="rounded-2xl border border-stone-200 bg-stone-50/70 p-4 transition-colors hover:border-amber-200"
+                  >
+                    <div className="mb-2 flex items-center justify-between gap-3">
+                      <div className="flex min-w-0 items-center gap-2">
+                        <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-orange-500 text-sm font-bold text-white">
+                          {r.authorName.charAt(0).toUpperCase()}
+                        </div>
+                        <p className="truncate text-sm font-bold text-stone-800">
+                          {r.authorName}
+                        </p>
+                      </div>
+                      <div className="flex flex-shrink-0 items-center gap-2">
+                        <Stars value={r.rating} className="h-3.5 w-3.5" />
+                        <span className="text-xs text-stone-400">
+                          {new Date(r.createdAt).toLocaleDateString("fr-FR")}
+                        </span>
+                      </div>
+                    </div>
+                    <p className="text-sm leading-relaxed text-stone-700">{r.comment}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {reviewThanks ? (
+              <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-5 text-center">
+                <p className="mb-2 text-4xl">🙏</p>
+                <p className="font-bold text-emerald-800">Merci pour votre avis !</p>
+                <p className="text-sm text-emerald-700">
+                  Votre expérience aide d&rsquo;autres clients et soutient {lot.artisanName}.
+                </p>
+              </div>
+            ) : (
+              <form
+                onSubmit={submitReview}
+                className="mt-4 rounded-2xl border border-stone-200 bg-gradient-to-b from-stone-50/80 to-white p-4"
+              >
+                <p className="mb-3 text-sm font-bold text-stone-800">
+                  {reviews.length === 0
+                    ? "Soyez le premier à partager votre expérience !"
+                    : "Donner mon avis"}
+                </p>
+
+                {/* Étoiles interactives avec aperçu au survol */}
+                <div className="mb-1.5 flex items-center gap-1">
+                  {[1, 2, 3, 4, 5].map((n) => {
+                    const active = n <= (hoverRating || reviewRating);
+                    return (
+                      <button
+                        key={n}
+                        type="button"
+                        onMouseEnter={() => setHoverRating(n)}
+                        onMouseLeave={() => setHoverRating(0)}
+                        onFocus={() => setHoverRating(n)}
+                        onBlur={() => setHoverRating(0)}
+                        onClick={() => setReviewRating(n)}
+                        aria-label={`${n} étoile${n > 1 ? "s" : ""}`}
+                        className="p-1 transition-transform duration-150 hover:scale-125 active:scale-95"
+                      >
+                        <Star
+                          className={`h-8 w-8 transition-colors duration-150 ${
+                            active ? "text-amber-400" : "text-stone-300"
+                          }`}
+                          fill="currentColor"
+                        />
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="mb-3 h-5 text-sm font-semibold text-amber-600">
+                  {reviewRating > 0 ? RATING_LABELS[reviewRating - 1] : ""}
+                </p>
+
+                <input
+                  type="text"
+                  value={reviewName}
+                  onChange={(e) => setReviewName(e.target.value)}
+                  required
+                  minLength={2}
+                  maxLength={40}
+                  placeholder="Votre nom"
+                  className="mb-3 w-full rounded-xl border-2 border-stone-200 bg-white px-4 py-2.5 outline-none transition-colors focus:border-amber-500 focus:shadow-md focus:shadow-amber-500/10"
+                />
+                <textarea
+                  value={reviewComment}
+                  onChange={(e) => setReviewComment(e.target.value)}
+                  required
+                  minLength={2}
+                  maxLength={500}
+                  rows={3}
+                  placeholder="Votre expérience avec ce produit…"
+                  className="mb-3 w-full resize-none rounded-xl border-2 border-stone-200 bg-white px-4 py-2.5 outline-none transition-colors focus:border-amber-500 focus:shadow-md focus:shadow-amber-500/10"
+                />
+                {reviewError && (
+                  <p className="mb-3 text-xs font-semibold text-red-600">{reviewError}</p>
+                )}
+                <button
+                  type="submit"
+                  disabled={reviewSubmitting}
+                  className="w-full rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 py-3 font-bold text-white shadow-md shadow-orange-500/25 transition-all hover:-translate-y-0.5 hover:from-amber-600 hover:to-orange-600 hover:shadow-lg active:translate-y-0 disabled:opacity-50"
                 >
-                  <div className="flex h-32 items-center justify-center overflow-hidden bg-gradient-to-br from-amber-100 to-orange-100">
-                    <SafeImage
-                      src={p.photoUrl}
-                      alt={p.productName}
-                      className="h-full w-full object-cover"
-                      emoji="🧴"
-                    />
-                  </div>
-                  <div className="p-3">
-                    <p className="truncate text-sm font-bold text-stone-800">{p.productName}</p>
-                    {p.contenance && <p className="text-xs text-stone-500">{p.contenance}</p>}
-                  </div>
-                </Link>
-              ))}
-            </div>
+                  {reviewSubmitting ? "Envoi…" : "Envoyer mon avis"}
+                </button>
+              </form>
+            )}
           </section>
+        </Reveal>
+
+        {/* ════ 12b. AUTRES PRODUITS DU MÊME ARTISAN (différents seulement) ═ */}
+        {similarProducts.length > 0 && (
+          <Reveal>
+            <section className="mb-8 mt-8">
+              <Eyebrow>Continuer à découvrir</Eyebrow>
+              <h2 className="mb-4 flex items-center gap-2 text-xl font-bold">
+                <span className="text-2xl">🛍️</span> Autres produits de {lot.artisanName}
+              </h2>
+              <div className="grid grid-cols-2 gap-4">
+                {similarProducts.map((p) => (
+                  <Link
+                    key={p.qrCode}
+                    href={`/a/${p.qrCode}`}
+                    className="group overflow-hidden rounded-3xl border border-stone-200/80 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+                  >
+                    <div className="h-32 overflow-hidden bg-gradient-to-br from-amber-100 to-orange-100">
+                      <SafeImage
+                        src={p.photoUrl}
+                        alt={p.productName}
+                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                        emoji="🧴"
+                      />
+                    </div>
+                    <div className="p-3">
+                      <p className="truncate text-sm font-bold text-stone-800">
+                        {p.productName}
+                      </p>
+                      {p.contenance && (
+                        <p className="text-xs text-stone-500">{p.contenance}</p>
+                      )}
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          </Reveal>
         )}
 
-        {/* ── 12. FOOTER VÉRIFICATION ─────────────────────────────────────── */}
-        <section className="mb-10 overflow-hidden rounded-[2rem] bg-gradient-to-br from-stone-900 via-stone-800 to-stone-900 p-8 text-center shadow-xl">
-          <div className="mb-4 flex justify-center">
-            <Logo variant="light" size="lg" />
-          </div>
-          <h3 className="mb-2 flex items-center justify-center gap-2 text-xl font-bold text-white">
-            <Heart className="h-4 w-4 text-rose-400" /> Vérifié par VerifScan
-          </h3>
-          <p className="mb-4 text-sm leading-relaxed text-stone-300">
-            Ce produit est authentique et traçable — chaque scan soutient{" "}
-            {lot.artisanName} et l&rsquo;artisanat sénégalais.
-          </p>
-          <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 backdrop-blur">
-            <span className="text-xs font-medium text-stone-200">🔒 Historique sécurisé</span>
-          </div>
-        </section>
+        {/* ════ 13. FOOTER VÉRIFICATION — dark mode + blockchain ══════════ */}
+        <Reveal>
+          <section className="relative mb-10 overflow-hidden rounded-[2rem] bg-gradient-to-br from-stone-950 via-blue-950 to-stone-900 p-8 text-center shadow-2xl">
+            {/* Halos colorés + ciel étoilé subtil */}
+            <div className="pointer-events-none absolute -left-16 -top-16 h-48 w-48 rounded-full bg-emerald-500/15 blur-3xl" aria-hidden />
+            <div className="pointer-events-none absolute -bottom-16 -right-16 h-48 w-48 rounded-full bg-amber-500/15 blur-3xl" aria-hidden />
+            <div
+              className="pointer-events-none absolute inset-0 opacity-40"
+              style={{
+                backgroundImage:
+                  "radial-gradient(circle at 20% 30%, rgba(255,255,255,.4) 1px, transparent 1.6px), radial-gradient(circle at 70% 65%, rgba(255,255,255,.3) 1px, transparent 1.6px)",
+                backgroundSize: "90px 90px, 130px 130px",
+              }}
+              aria-hidden
+            />
+
+            <div className="relative">
+              <div className="mb-4 flex justify-center">
+                <Logo variant="light" size="lg" />
+              </div>
+              <h3 className="flex items-center justify-center gap-2 text-xl font-bold text-white">
+                <Heart className="h-4 w-4 text-rose-400" /> Vérifié par VerifScan
+              </h3>
+              <p className="mx-auto mt-2 max-w-xs text-sm leading-relaxed text-stone-300">
+                Ce produit est authentique et traçable — chaque scan soutient{" "}
+                {lot.artisanName} et l&rsquo;artisanat sénégalais.
+              </p>
+              <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/10 px-3.5 py-1.5 text-xs font-semibold text-stone-200 backdrop-blur">
+                  ⛓️ Traçabilité blockchain
+                </span>
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/10 px-3.5 py-1.5 text-xs font-semibold text-stone-200 backdrop-blur">
+                  🔒 Historique immuable
+                </span>
+              </div>
+            </div>
+          </section>
+        </Reveal>
 
         {/* Lightbox plein écran (galerie atelier) */}
         {lightbox && (

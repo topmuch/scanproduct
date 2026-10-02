@@ -388,3 +388,216 @@ html.dark { color-scheme: dark; }
     animation: none;
   }
 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   WOW — PAGE PRODUIT ARTISAN v4 (redesign « effet waouh »)
+   Toutes les animations n'utilisent que transform/opacity (GPU-friendly).
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* Hero : zoom lent façon Ken Burns sur la photo produit */
+@keyframes art-kenburns {
+  from {
+    transform: scale(1.02) translateY(0);
+  }
+  to {
+    transform: scale(1.14) translateY(-1.5%);
+  }
+}
+.art-kenburns {
+  animation: art-kenburns 22s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+/* Dégradé animé (placeholder sans photo, halos, overlays) */
+@keyframes art-gradient-pan {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+.art-gradient-pan {
+  background-size: 220% 220%;
+  animation: art-gradient-pan 10s ease-in-out infinite;
+}
+
+/* Badges / icônes flottants */
+@keyframes art-float-y {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-9px);
+  }
+}
+.art-float {
+  animation: art-float-y 5s ease-in-out infinite;
+}
+.art-float-delay {
+  animation: art-float-y 5s ease-in-out 0.9s infinite;
+}
+.art-float-delay-2 {
+  animation: art-float-y 5s ease-in-out 1.8s infinite;
+}
+
+/* Anneaux pulsants (bouton WhatsApp géant, badge fraîcheur) */
+@keyframes art-ring-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+  75%,
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+.art-ring {
+  animation: art-ring-pulse 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  will-change: transform, opacity;
+}
+
+/* Reflet balayeur (barre de progression, prix) */
+@keyframes art-shimmer-x {
+  0% {
+    transform: translateX(-120%);
+  }
+  55%,
+  100% {
+    transform: translateX(260%);
+  }
+}
+.art-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.art-shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 32%,
+    rgba(255, 255, 255, 0.55) 50%,
+    transparent 68%
+  );
+  transform: translateX(-120%);
+  animation: art-shimmer-x 3s ease-in-out infinite;
+}
+
+/* Coche SVG qui se dessine (badge « sans allergènes ») */
+@keyframes art-draw-check {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+.art-check-path {
+  stroke-dasharray: 48;
+  stroke-dashoffset: 48;
+  animation: art-draw-check 0.7s ease forwards 0.35s;
+}
+
+/* Entrées d'écran (hero : titre, sous-titre, chips, CTA) */
+@keyframes art-fade-down {
+  from {
+    opacity: 0;
+    transform: translateY(-16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes art-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(26px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes art-title-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(42px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.art-fade-down {
+  animation: art-fade-down 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.art-fade-up {
+  animation: art-fade-up 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.art-title-reveal {
+  animation: art-title-reveal 1.05s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.art-delay-1 {
+  animation-delay: 0.12s;
+}
+.art-delay-2 {
+  animation-delay: 0.24s;
+}
+.art-delay-3 {
+  animation-delay: 0.38s;
+}
+.art-delay-4 {
+  animation-delay: 0.52s;
+}
+.art-delay-5 {
+  animation-delay: 0.68s;
+}
+
+/* Révélation au scroll (pilotée par <Reveal> + IntersectionObserver) */
+.art-reveal {
+  opacity: 0;
+  transform: translateY(30px);
+  transition:
+    opacity 0.8s ease,
+    transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity, transform;
+}
+.art-reveal.art-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Les animations filles ne démarrent que lorsque le bloc parent est
+   révélé au scroll (coche dessinée, reflet balayeur, anneaux) */
+.art-reveal:not(.art-visible) .art-check-path,
+.art-reveal:not(.art-visible) .art-shimmer::after,
+.art-reveal:not(.art-visible) .art-ring {
+  animation-play-state: paused;
+}
+
+/* Accessibilité : tout s'arrête si l'utilisateur refuse les animations */
+@media (prefers-reduced-motion: reduce) {
+  .art-kenburns,
+  .art-gradient-pan,
+  .art-float,
+  .art-float-delay,
+  .art-float-delay-2,
+  .art-ring,
+  .art-shimmer::after,
+  .art-check-path,
+  .art-fade-down,
+  .art-fade-up,
+  .art-title-reveal {
+    animation: none !important;
+  }
+  .art-reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
