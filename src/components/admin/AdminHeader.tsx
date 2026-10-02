@@ -265,17 +265,13 @@ export function AdminHeader() {
           <button
             type="button"
             onClick={() => setAvatarOpen((v) => !v)}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[#022150] to-[#10B981] font-display text-sm font-bold text-white ring-2 ring-white transition hover:ring-[#DCE7F2] dark:ring-[#0F172A] dark:hover:ring-white/30"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[#022150] to-[#10B981] text-white ring-2 ring-white transition hover:ring-[#DCE7F2] dark:ring-[#0F172A] dark:hover:ring-white/30"
             aria-label="Menu profil"
           >
-            AV
+            <User className="h-5 w-5" />
           </button>
           {avatarOpen && (
             <div className="absolute right-0 top-12 w-56 overflow-hidden rounded-xl border border-[#E5E7EB] bg-white shadow-xl">
-              <div className="border-b border-[#F3F4F6] px-4 py-3">
-                <p className="text-sm font-semibold text-[#111827]">Admin VerifScan</p>
-                <p className="truncate text-[12px] text-[#6B7280]">admin@verifscan.sn</p>
-              </div>
               <ul className="py-1">
                 <li>
                   <button className="flex w-full items-center gap-2.5 px-4 py-2.5 text-[13px] text-[#374151] hover:bg-[#F9FAFB]">

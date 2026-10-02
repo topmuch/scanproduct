@@ -28,7 +28,6 @@ import {
   AlertCircle,
   Loader2,
   Factory,
-  Sparkles,
 } from "lucide-react";
 
 const ERROR_MESSAGES: Record<string, string> = {
@@ -66,14 +65,10 @@ interface SpaceConfig {
   title: string;
   subtitle: string;
   icon: React.ComponentType<{ className?: string }>;
-  demo: { email: string; password: string; name: string };
   // Icon badge (header)
   badge: string;
   // Submit button
   button: string;
-  // Demo card accents
-  demoIcon: string;
-  demoHover: string;
 }
 
 const SPACE_CONFIG: Record<LoginSpace, SpaceConfig> = {
@@ -81,30 +76,16 @@ const SPACE_CONFIG: Record<LoginSpace, SpaceConfig> = {
     title: "Espace Fabricant",
     subtitle: "Connectez-vous pour gérer vos produits, lots et QR codes.",
     icon: Factory,
-    demo: {
-      email: "sarine@biocosmetique.sn",
-      password: "Demo1234!",
-      name: "Fabricant",
-    },
     badge: "bg-gradient-to-br from-[#10B981] to-[#047857]",
     button:
       "bg-gradient-to-r from-[#022150] to-[#10B981] shadow-[#022150]/25 hover:shadow-[#022150]/40",
-    demoIcon: "bg-[#10B981]/10 text-[#10B981]",
-    demoHover: "hover:border-[#10B981] hover:bg-[#ECFDF5]",
   },
   admin: {
     title: "Espace SuperAdmin",
     subtitle: "Console d'administration VerifScan — accès réservé.",
     icon: ShieldCheck,
-    demo: {
-      email: "admin@verifscan.sn",
-      password: "Admin123!2025",
-      name: "SuperAdmin",
-    },
     badge: "bg-gradient-to-br from-[#022150] to-[#0A2B5F]",
     button: "bg-[#022150] shadow-[#022150]/30 hover:bg-[#011D46]",
-    demoIcon: "bg-[#022150]/10 text-[#022150]",
-    demoHover: "hover:border-[#022150] hover:bg-[#F0F4F9]",
   },
 };
 
@@ -304,39 +285,6 @@ export function LoginForm({ space }: { space: LoginSpace }) {
             </Link>
           </div>
         )}
-
-        {/* Compte de démonstration */}
-        <div className="mt-6 border-t border-[#F3F4F6] pt-5">
-          <p className="mb-2 text-center text-xs font-medium uppercase tracking-wide text-[#9CA3AF]">
-            Compte de démonstration
-          </p>
-          <button
-            type="button"
-            onClick={() => {
-              setEmail(cfg.demo.email);
-              setPassword(cfg.demo.password);
-            }}
-            className={`flex w-full items-center gap-3 rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] px-3 py-2.5 text-left transition-colors ${cfg.demoHover}`}
-          >
-            <span
-              className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${cfg.demoIcon}`}
-            >
-              <Icon className="h-4 w-4" />
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="block text-sm font-semibold text-[#111827]">
-                {cfg.demo.name}
-              </span>
-              <span className="block truncate text-xs text-[#6B7280]">
-                {cfg.demo.email}
-              </span>
-            </span>
-            <span className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-[#022150]">
-              <Sparkles className="h-3.5 w-3.5" />
-              Remplir
-            </span>
-          </button>
-        </div>
 
         {/* Lien croisé discret vers l'autre espace */}
         <div className="mt-5 border-t border-[#F3F4F6] pt-4 text-center text-[13px]">

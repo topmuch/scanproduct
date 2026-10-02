@@ -434,7 +434,7 @@ export function FabricantHeader() {
             <div className="absolute right-0 top-12 z-50 w-[240px] overflow-hidden rounded-xl border border-[#E5E7EB] bg-white shadow-lg dark:border-white/10 dark:bg-[#0F172A]">
               <div className="border-b border-[#F3F4F6] px-4 py-3 dark:border-white/10">
                 <p className="font-display text-[14px] font-semibold text-[#111827] dark:text-white">{profile.companyName}</p>
-                <p className="text-[12px] text-[#6B7280] dark:text-white/60">Plan {profile.plan} · {profile.email}</p>
+                <p className="text-[12px] text-[#6B7280] dark:text-white/60">Plan {profile.plan}</p>
               </div>
               <div className="py-1">
                 <button className="flex w-full items-center gap-2.5 px-4 py-2 text-[13px] text-[#374151] hover:bg-[#F9FAFB] dark:text-white/80 dark:hover:bg-white/10">

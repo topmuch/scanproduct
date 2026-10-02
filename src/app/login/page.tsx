@@ -4,7 +4,7 @@
 // /login — Page de connexion FABRICANT (dédiée)
 // ============================================================================
 // Séparée de la page SuperAdmin (/login/admin) pour éviter toute confusion :
-// chaque espace a sa propre URL, son propre thème et son propre compte démo.
+// chaque espace a sa propre URL et son propre thème.
 // Compat : /login?space=admin redirige vers /login/admin (ancien deep-link).
 // ============================================================================
 

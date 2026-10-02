@@ -11,7 +11,6 @@ import {
   LifeBuoy,
   Settings,
   LogOut,
-  ShieldCheck,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { Logo } from "@/components/landing/Logo";
@@ -170,30 +169,16 @@ export function AdminSidebar() {
         ))}
       </nav>
 
-      {/* Admin profile */}
+      {/* Déconnexion (sans infos de compte affichées) */}
       <div className="border-t border-white/10 p-4">
-        <div className="flex items-center gap-3 rounded-lg p-2 hover:bg-white/10">
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-[#022150] to-[#10B981] font-display text-sm font-bold text-white">
-            AV
-          </span>
-          <div className="min-w-0 flex-1 leading-tight">
-            <p className="truncate text-[14px] font-semibold text-white">Admin VerifScan</p>
-            <p className="truncate text-[12px] text-white/60">admin@verifscan.sn</p>
-          </div>
-          <button
-            type="button"
-            onClick={() => signOut({ callbackUrl: "/login" })}
-            className="flex h-8 w-8 items-center justify-center rounded-md text-white/70 transition-colors hover:bg-white/10 hover:text-white"
-            aria-label="Déconnexion"
-            title="Déconnexion"
-          >
-            <LogOut className="h-4 w-4" />
-          </button>
-        </div>
-        <div className="mt-2 flex items-center gap-1.5 px-2 text-[11px] text-white/60">
-          <ShieldCheck className="h-3.5 w-3.5 text-[#10B981]" />
-          SuperAdmin · 2FA actif
-        </div>
+        <button
+          type="button"
+          onClick={() => signOut({ callbackUrl: "/login" })}
+          className="flex w-full items-center justify-center gap-2 rounded-md px-2 py-2 text-[13px] text-white/70 transition-colors hover:bg-white/10 hover:text-white"
+        >
+          <LogOut className="h-4 w-4" />
+          Déconnexion
+        </button>
       </div>
     </aside>
   );
