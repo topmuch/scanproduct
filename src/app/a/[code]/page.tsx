@@ -209,8 +209,12 @@ export default async function ArtisanCodePage({
   // Avis clients réels (section 9)
   const reviews = await loadReviews(lot.id);
 
-  // Produits similaires : autres produits ACTIFS du même artisan (max 4).
-  // La section ne s'affiche que s'il y en a — pas de cartes factices.
+  // Produits similaires : autres produits ACTIFS du même artisan (max 4),
+  // de NOM DIFFÉRENT (retour utilisateur : un pack multi-unités active
+  // plusieurs lots portant LE MÊME productName — ils ne doivent pas
+  // apparaître comme « autres produits »). distinct sur productName →
+  // une seule carte par produit différent ; si l'artisan n'a qu'UN seul
+  // produit, la section disparaît complètement.
   let similarProducts: Array<{
     qrCode: string;
     productName: string;
@@ -218,23 +222,39 @@ export default async function ArtisanCodePage({
     contenance: string | null;
   }> = [];
   try {
+    // ⚠️ PAS de `distinct` Prisma : sur SQLite il dédoublonne sur la
+    // COMBINAISON des colonnes sélectionnées (qrCode différent par lot →
+    // aucun dédoublonnage réel). On dédoublonne donc côté JS par
+    // productName — une seule carte par produit DIFFÉRENT.
     const rows = await db.preActivatedLot.findMany({
       where: {
         artisanName: lot.artisanName ?? undefined,
         status: "active",
         isMaster: false,
         id: { not: lot.id },
+        ...(lot.productName
+          ? { productName: { not: lot.productName } }
+          : {}),
       },
       select: { qrCode: true, productName: true, photoUrl: true, contenance: true },
       orderBy: { activatedAt: "desc" },
-      take: 4,
+      take: 20, // large : plusieurs unités du même produit possibles
     });
-    similarProducts = rows.map((p) => ({
-      qrCode: p.qrCode,
-      productName: p.productName ?? "Produit artisanal",
-      photoUrl: p.photoUrl,
-      contenance: p.contenance,
-    }));
+    const seen = new Set<string>();
+    similarProducts = rows
+      .filter((p) => {
+        const name = p.productName ?? "Produit artisanal";
+        if (seen.has(name)) return false;
+        seen.add(name);
+        return true;
+      })
+      .slice(0, 4)
+      .map((p) => ({
+        qrCode: p.qrCode,
+        productName: p.productName ?? "Produit artisanal",
+        photoUrl: p.photoUrl,
+        contenance: p.contenance,
+      }));
   } catch (e) {
     // Non bloquant : la page produit reste fonctionnelle sans suggestions
     console.error("[a/[code]] produits similaires:", e);

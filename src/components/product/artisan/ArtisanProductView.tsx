@@ -18,30 +18,35 @@ import {
   Facebook,
   Check,
   AlertTriangle,
+  BadgeCheck,
+  Clock,
+  Hand,
+  FlaskConical,
+  Scale,
   X,
 } from "lucide-react";
 import { ScanTracker } from "./ScanTracker";
 import { Logo } from "@/components/landing/Logo";
 
 /**
- * ArtisanProductView — page produit artisanale ENGAGEANTE (scan client final).
+ * ArtisanProductView — page produit artisanale PREMIUM (scan client final).
  *
- * 11 sections (design 2026) :
- *   1.  Hero image pleine largeur
- *   2.  Carte produit bleu foncé (nom, designation, fait main, 5 étoiles jaunes,
- *       avis vérifié, artisan, contenance, prix)
- *   3.  Pourquoi choisir ce produit ? (4 avantages)
+ * Design 2026 v2 — « boutique d'artisan » chaleureuse et éditoriale :
+ *   1.  Hero photo PLEIN ÉCRAN — nom + designation + chips authentique
+ *       posés sur l'image (style fiche produit premium)
+ *   2.  Carte flottante artisan — avatar, vérification VerifScan,
+ *       fraîcheur (badge jours restants + dates + progression),
+ *       contenance / prix, partage
+ *   3.  Bandeau bénéfices (4 pastilles)
  *   4.  Composition naturelle (+ encadré sans allergènes)
- *   5.  Infos fabrication (badge jours restants, dates, barre de progression)
- *   6.  Histoire de l'artisan (bio + avatar)
- *   7.  Conseils d'utilisation (numérotés)
- *   8.  Bouton WhatsApp géant (pulse) + téléphone
- *   9.  Avis clients (placeholder « soyez le premier »)
- *   10. Autres produits du même artisan (dynamiques, si disponibles)
- *   11. Footer vérification VerifScan
- *
- * Champs optionnels remplis par l'artisan à l'activation : artisanBio,
- * usageTips (un conseil par ligne) — le reste est généré automatiquement.
+ *   5.  Précautions d'emploi (assistant intelligent)
+ *   6.  Conditions de conservation (assistant intelligent)
+ *   7.  Histoire de l'artisan (+ galerie atelier, lightbox)
+ *   8.  Conseils d'utilisation numérotés
+ *   9.  CTA WhatsApp géant + coordonnées cliquables
+ *   10. Avis clients réels + formulaire
+ *   11. Autres produits du même artisan (produits DIFFÉRENTS seulement)
+ *   12. Footer vérification VerifScan
  */
 
 type SimilarProduct = {
@@ -125,6 +130,18 @@ function regionLabel(region: string): string {
 const TIKTOK_SVG_PATH =
   "M12.53.02C13.84 0 15.14.01 16.44 0c.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z";
 
+const WHATSAPP_SVG_PATH =
+  "M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z";
+
+/** Sur-titre éditorial : petites capitales espacées ambre. */
+function Eyebrow({ children }: { children: ReactNode }) {
+  return (
+    <p className="mb-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-amber-700">
+      {children}
+    </p>
+  );
+}
+
 /** Rangée d'étoiles (remplies jusqu'à `value`, jaunes ; vides personnalisables). */
 function Stars({
   value,
@@ -162,9 +179,9 @@ function formatDate(date: Date | null): string {
 }
 
 /**
- * Image avec filet de sécurité (fix revue #1) : si le fichier est ABSENT ou
- * CASSÉ (404, upload perdu, lien mort), affiche un placeholder dégradé au
- * lieu du texte alt brut — la page reste propre et professionnelle.
+ * Image avec filet de sécurité : si le fichier est ABSENT ou CASSÉ (404,
+ * upload perdu, lien mort), affiche un placeholder dégradé au lieu du
+ * texte alt brut — la page reste propre et professionnelle.
  */
 function SafeImage({
   src,
@@ -184,10 +201,8 @@ function SafeImage({
   const [failed, setFailed] = useState(false);
 
   // ⚠️ Course d'hydratation : une image peut renvoyer 404 AVANT que le JS
-  // n'ait hydraté la page (typique en dev / connexion lente). L'événement
-  // `error` est alors émis sans listener React → perdu définitivement. Au
-  // montage du ref, on interroge l'état RÉEL de l'élément : une image déjà
-  // terminée avec naturalWidth === 0 a échoué → placeholder immédiat.
+  // n'ait hydraté la page. L'événement `error` est alors émis sans listener
+  // React → perdu. Au montage, on interroge l'état RÉEL de l'élément.
   const imgRef = (el: HTMLImageElement | null) => {
     if (el && el.complete && el.naturalWidth === 0) setFailed(true);
   };
@@ -233,9 +248,6 @@ function toWhatsAppLink(
     `Bonjour ${artisanName}, je suis intéressé(e) par votre ${productName} vu sur VerifScan.`;
   return `https://wa.me/${international}?text=${encodeURIComponent(message)}`;
 }
-
-const WHATSAPP_SVG_PATH =
-  "M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z";
 
 export function ArtisanProductView({
   lot,
@@ -336,7 +348,7 @@ export function ArtisanProductView({
   }
 
   const waLink = toWhatsAppLink(lot.contactPhone, lot.artisanName, lot.productName);
-  // Lien de SIGNALEMENT (bannière contrefaçon, fix revue #3) — message dédié
+  // Lien de SIGNALEMENT (bannière contrefaçon) — message dédié
   const waReportLink = toWhatsAppLink(
     lot.contactPhone,
     lot.artisanName,
@@ -344,8 +356,7 @@ export function ArtisanProductView({
     `Bonjour ${lot.artisanName}, je viens de scanner un QR code VerifScan (produit : ${lot.productName}) et une alerte de possible contrefaçon s'affiche. Je vous signale ce produit suspect.`
   );
 
-  // ── Coordonnées COMPACTES (retour utilisateur : 6-7 lignes empilées = trop
-  // long) — grille 2 colonnes de tuiles cliquables, chacune optionnelle.
+  // ── Coordonnées COMPACTES — grille 2 colonnes de tuiles cliquables ──────
   type ContactTile = {
     key: string;
     href: string;
@@ -438,7 +449,7 @@ export function ArtisanProductView({
     return Math.min(100, Math.max(2, Math.round(pct)));
   })();
 
-  // ── Avantages (section 3) ────────────────────────────────────────────────
+  // ── Avantages (bandeau 3) ────────────────────────────────────────────────
   const benefits = [
     { icon: "🌱", text: "100% Naturel" },
     { icon: "✋", text: "Fait main" },
@@ -446,7 +457,7 @@ export function ArtisanProductView({
     { icon: "🇸🇳", text: "Soutien local" },
   ];
 
-  // ── Conseils (section 7) : remplis par l'artisan, sinon défauts ──────────
+  // ── Conseils (8) : remplis par l'artisan, sinon défauts ──────────────────
   const usageTips =
     (lot.usageTips ?? "")
       .split("\n")
@@ -460,14 +471,13 @@ export function ArtisanProductView({
   ];
 
   // ── Précautions + conservation (assistant intelligent) ─────────────────
-  // Precautions est stocké en JSON array ; tolérant au format une/ligne.
   const precautions: string[] = (() => {
     const raw = lot.precautions;
     if (!raw) return [];
     try {
       const parsed = JSON.parse(raw) as unknown;
       if (Array.isArray(parsed)) {
-        return parsed.filter((v): v is string => typeof v === "string" && v.trim());
+        return parsed.filter((v): v is string => typeof v === "string" && v.trim() !== "");
       }
     } catch {
       /* pas un JSON — fallback ligne par ligne */
@@ -487,7 +497,7 @@ export function ArtisanProductView({
     `${lot.artisanName} fabrique des produits naturels avec passion depuis plusieurs années. Chaque produit est fait main avec des ingrédients soigneusement sélectionnés pour vous offrir le meilleur de la nature sénégalaise.`;
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-amber-50 via-stone-50 to-white">
+    <main className="min-h-screen bg-[#FAF6F0] text-stone-900">
       {/* Tracking du scan (timezone → détection contrefaçon, fire-and-forget) */}
       <ScanTracker qrCode={lot.qrCode} />
 
@@ -521,154 +531,226 @@ export function ArtisanProductView({
         </div>
       )}
 
-      {/* ── 0b. BARRE DE MARQUE — logo officiel du site (demande utilisateur :
-            le logo qui apparaît au scan doit être LE logo VerifScan) ────── */}
-      <div className="flex items-center justify-center border-b border-stone-100 bg-white py-3">
+      {/* ── 0b. BARRE DE MARQUE ─────────────────────────────────────────── */}
+      <div className="flex items-center justify-center border-b border-stone-200/70 bg-white/90 py-3 backdrop-blur">
         <Link href="/" aria-label="VerifScan accueil" className="inline-flex items-center">
           <Logo size="md" />
         </Link>
       </div>
 
-      {/* ── 1. HERO IMAGE─────────────────────────────────────────────────── */}
+      {/* ── 1. HERO PHOTO PLEIN ÉCRAN — nom posé sur l'image ───────────── */}
+      <header className="relative overflow-hidden">
+        <div className="absolute inset-0">
+          <SafeImage
+            src={lot.photoUrl}
+            alt={lot.productName}
+            className="h-full w-full object-cover"
+            icon={<Leaf className="h-28 w-28 text-white/90" strokeWidth={1.5} />}
+          />
+          {/* Voiles de lisibilité : bas sombre pour le texte, haut léger */}
+          <div className="absolute inset-0 bg-gradient-to-t from-stone-950/85 via-stone-950/25 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-b from-stone-950/20 via-transparent to-transparent" />
+        </div>
 
-      <div className="relative h-96 overflow-hidden bg-stone-200">
-        <SafeImage
-          src={lot.photoUrl}
-          alt={lot.productName}
-          className="h-full w-full object-cover"
-          icon={<Leaf className="h-28 w-28 text-white/90" strokeWidth={1.5} />}
-        />
-
-        {/* Overlay gradient */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
-      </div>
-
-      <div className="relative z-10 mx-auto -mt-12 max-w-lg px-5 pb-4">
-        {/* ── 2. CARTE PRODUIT PRINCIPALE (bleu foncé : titre → 5 étoiles → avis vérifié) ── */}
-        <div className="rounded-3xl border border-blue-800/60 bg-gradient-to-br from-blue-950 via-blue-900 to-blue-950 p-7 shadow-xl transition-shadow duration-300 hover:shadow-2xl">
-          <h1 className="mb-3 text-3xl font-bold text-white">{lot.productName}</h1>
-
-          {/* Chip « Fait main » sous le titre (demande utilisateur) */}
-          <div className="mb-3">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-300/30 bg-amber-400/15 px-3 py-1 text-xs font-bold text-amber-200">
-              <span className="text-sm">✋</span> Fait main
+        <div className="relative mx-auto flex min-h-[30rem] max-w-lg flex-col justify-end px-5 pb-10 pt-16 text-white">
+          {/* Chips de confiance en glassmorphism */}
+          <div className="mb-4 flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-300/40 bg-emerald-500/25 px-3 py-1.5 text-xs font-bold text-emerald-100 backdrop-blur-md">
+              <ShieldCheck className="h-3.5 w-3.5" /> Produit authentique
+            </span>
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200/40 bg-amber-400/20 px-3 py-1.5 text-xs font-bold text-amber-100 backdrop-blur-md">
+              <Hand className="h-3.5 w-3.5" /> Fait main
+            </span>
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-white/10 px-3 py-1.5 text-xs font-bold text-white/90 backdrop-blur-md">
+              <Leaf className="h-3.5 w-3.5" /> Naturel
             </span>
           </div>
 
-          {/* Désignation du produit (champ artisan, optionnel) — sous le chip */}
+          <p className="mb-1 text-[11px] font-bold uppercase tracking-[0.22em] text-amber-200/90">
+            Création artisanale du Sénégal
+          </p>
+          <h1 className="text-4xl font-black leading-[1.08] tracking-tight drop-shadow-sm">
+            {lot.productName}
+          </h1>
           {lot.productDesignation && (
-            <p className="mb-4 text-sm leading-relaxed text-blue-100/90">
+            <p className="mt-3 max-w-md text-sm leading-relaxed text-white/85">
               {lot.productDesignation}
             </p>
           )}
 
-          {/* 5 étoiles jaunes + badge « Avis vérifié » (toujours visibles) */}
-          <div className="mb-3 flex flex-wrap items-center gap-2">
+          <div className="mt-4 flex items-center gap-2">
             <Stars
               value={avgRating > 0 ? Math.round(avgRating) : 5}
-              className="h-6 w-6"
-              emptyClassName="text-blue-800"
+              className="h-5 w-5"
+              emptyClassName="text-white/30"
             />
-            {avgRating > 0 && (
-              <span className="text-sm font-bold text-amber-300">{avgRating.toFixed(1)}/5</span>
-            )}
-            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-400/15 px-2.5 py-0.5 text-xs font-bold text-emerald-300">
-              <Check className="h-3 w-3" strokeWidth={3} />
-              {reviews.length > 0
-                ? `${reviews.length} avis vérifié${reviews.length > 1 ? "s" : ""}`
-                : "Avis vérifié"}
+            <span className="text-xs font-semibold text-white/80">
+              {avgRating > 0
+                ? `${avgRating.toFixed(1)}/5 · ${reviews.length} avis vérifié${reviews.length > 1 ? "s" : ""}`
+                : "Avis vérifiés par scan"}
             </span>
           </div>
+        </div>
+      </header>
 
-          <p className="mb-4 text-lg font-semibold text-blue-200">Par {lot.artisanName}</p>
-
-          {/* Bandeau authenticité — vérification anti-contrefaçon + compteur de scans */}
-          <div className="mb-4 flex items-center gap-3 rounded-2xl border border-emerald-400/30 bg-emerald-400/10 p-3">
-            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-green-600 shadow-md">
-              <ShieldCheck className="h-6 w-6 text-white" />
+      {/* ── 2. CARTE FLOTTANTE ARTISAN + FRAÎCHEUR ─────────────────────── */}
+      <div className="relative z-10 mx-auto -mt-12 max-w-lg px-5">
+        <section className="rounded-[2rem] border border-stone-200/80 bg-white shadow-xl shadow-stone-900/5">
+          {/* Ligne artisan */}
+          <div className="flex items-center gap-4 border-b border-stone-100 p-6">
+            <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-400 via-orange-500 to-rose-500 text-2xl font-black text-white shadow-md shadow-orange-500/25">
+              {(lot.artisanName || "A").charAt(0).toUpperCase()}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-bold text-emerald-200">Produit Authentique</p>
-              <p className="text-xs text-emerald-300/80">Vérifié par VerifScan à chaque scan</p>
+              <p className="truncate text-lg font-bold leading-tight">{lot.artisanName}</p>
+              <p className="mt-0.5 flex items-center gap-1 text-xs font-semibold text-emerald-600">
+                <BadgeCheck className="h-4 w-4" /> Artisan vérifié par VerifScan
+              </p>
             </div>
-            {/* Compteur de scans — preuve sociale anti-contrefaçon */}
             {scanCount > 0 && (
-              <div className="flex-shrink-0 rounded-xl border border-emerald-400/30 bg-white/10 px-3 py-1.5 text-center">
-                <p className="text-lg font-extrabold leading-none text-emerald-200">{scanCount}</p>
-                <p className="text-[10px] font-medium text-emerald-300/80">
+              <div className="flex-shrink-0 rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-center">
+                <p className="text-lg font-black leading-none text-amber-600">{scanCount}</p>
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-amber-700/80">
                   scan{scanCount > 1 ? "s" : ""}
                 </p>
               </div>
             )}
           </div>
 
-          {/* Bouton partager — viralité (Web Share API, repli copie du lien) */}
-          <button
-            type="button"
-            onClick={handleShare}
-            className="mb-2 flex w-full items-center justify-center gap-2 rounded-2xl border border-amber-300/30 bg-amber-400/10 py-3 text-sm font-bold text-amber-200 transition-colors hover:bg-amber-400/20 active:scale-[0.98]"
-          >
-            {shareCopied ? (
-              <>
-                <Check className="h-4 w-4 text-emerald-300" /> Lien copié !
-              </>
-            ) : (
-              <>
-                <Share2 className="h-4 w-4" /> Partager ce produit authentique
-              </>
-            )}
-          </button>
+          {/* Fraîcheur : badge circulaire + dates + progression */}
+          <div className="p-6">
+            <div className="flex items-center gap-4">
+              {/* Badge circulaire jours restants */}
+              <div
+                className={`relative flex h-20 w-20 flex-shrink-0 flex-col items-center justify-center rounded-full border-4 ${
+                  isExpired
+                    ? "border-red-100 bg-red-50"
+                    : daysLeft !== null && daysLeft <= 30
+                      ? "border-amber-100 bg-amber-50"
+                      : "border-emerald-100 bg-emerald-50"
+                }`}
+              >
+                <span
+                  className={`text-xl font-black leading-none ${
+                    isExpired ? "text-red-600" : daysLeft !== null && daysLeft <= 30 ? "text-amber-600" : "text-emerald-600"
+                  }`}
+                >
+                  {isExpired ? Math.abs(daysLeft ?? 0) : daysLeft ?? 0}
+                </span>
+                <span className="mt-0.5 text-[9px] font-bold uppercase tracking-wider text-stone-500">
+                  {isExpired ? "jours dépassé" : "jours restants"}
+                </span>
+              </div>
 
-          {(lot.contenance || lot.productPrice) && (
-            <div className="flex flex-wrap items-center gap-2">
+              {/* Dates */}
+              <div className="min-w-0 flex-1 space-y-2">
+                <div className="flex items-center gap-2 rounded-xl bg-stone-50 px-3 py-2">
+                  <CalendarDays className="h-4 w-4 flex-shrink-0 text-stone-400" />
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-stone-400">
+                      Fabriqué le
+                    </p>
+                    <p className="truncate text-xs font-bold text-stone-700">
+                      {formatDate(lot.manufacturingDate)}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 rounded-xl bg-amber-50/70 px-3 py-2">
+                  <Clock className="h-4 w-4 flex-shrink-0 text-amber-500" />
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-amber-600/80">
+                      À utiliser avant
+                    </p>
+                    <p className="truncate text-xs font-bold text-amber-800">
+                      {formatDate(lot.expirationDate)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Barre de progression durée de vie */}
+            <div className="mt-4">
+              <div className="h-2 overflow-hidden rounded-full bg-stone-100">
+                <div
+                  className={`h-full rounded-full transition-all duration-1000 ${
+                    isExpired
+                      ? "bg-gradient-to-r from-red-400 to-rose-500"
+                      : "bg-gradient-to-r from-emerald-400 to-green-500"
+                  }`}
+                  style={{ width: `${shelfLifePct}%` }}
+                />
+              </div>
+              <div className="mt-1 flex justify-between text-[10px] font-medium text-stone-400">
+                <span>Fabrication</span>
+                <span>Péremption</span>
+              </div>
+            </div>
+
+            {/* Contenance / prix + partage */}
+            <div className="mt-4 flex flex-wrap items-center gap-2">
               {lot.contenance && (
-                <span className="rounded-full border border-amber-300/30 bg-amber-400/10 px-4 py-2 font-medium text-amber-200 shadow-sm">
-                  ⚖️ {lot.contenance}
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-stone-100 px-3.5 py-1.5 text-sm font-semibold text-stone-700">
+                  <Scale className="h-3.5 w-3.5 text-stone-400" /> {lot.contenance}
                 </span>
               )}
               {lot.productPrice && (
-                <span className="rounded-full border border-emerald-300/40 bg-emerald-400/15 px-4 py-2 font-bold text-emerald-200 shadow-sm">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3.5 py-1.5 text-sm font-bold text-emerald-700 ring-1 ring-emerald-200/70">
                   💰 {lot.productPrice}
                 </span>
               )}
             </div>
-          )}
 
-        </div>
+            <button
+              type="button"
+              onClick={handleShare}
+              className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl border border-stone-200 bg-stone-50 py-3 text-sm font-bold text-stone-700 transition-colors hover:border-amber-300 hover:bg-amber-50 hover:text-amber-800 active:scale-[0.98]"
+            >
+              {shareCopied ? (
+                <>
+                  <Check className="h-4 w-4 text-emerald-600" /> Lien copié !
+                </>
+              ) : (
+                <>
+                  <Share2 className="h-4 w-4" /> Partager ce produit authentique
+                </>
+              )}
+            </button>
+          </div>
+        </section>
 
-        {/* ── 3. POURQUOI CHOISIR CE PRODUIT ──────────────────────────────── */}
-        <div className="mt-8">
-          <h2 className="mb-4 flex items-center gap-2 text-xl font-bold text-gray-900">
-            <Sparkles className="h-5 w-5 text-amber-500" /> Pourquoi choisir ce produit ?
-          </h2>
-          <div className="grid grid-cols-2 gap-3">
+        {/* ── 3. BANDEAU BÉNÉFICES ─────────────────────────────────────────── */}
+        <section className="mt-8">
+          <div className="grid grid-cols-4 gap-2">
             {benefits.map((benefit, index) => (
-              <div
-                key={index}
-                className="flex items-center gap-3 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md"
-              >
-                <span className="text-3xl">{benefit.icon}</span>
-                <span className="text-sm font-semibold text-gray-700">{benefit.text}</span>
+              <div key={index} className="flex flex-col items-center gap-2 text-center">
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-amber-100 bg-white text-2xl shadow-sm">
+                  {benefit.icon}
+                </div>
+                <span className="text-[11px] font-semibold leading-tight text-stone-600">
+                  {benefit.text}
+                </span>
               </div>
             ))}
           </div>
-        </div>
+        </section>
 
         {/* ── 4. COMPOSITION NATURELLE ────────────────────────────────────── */}
         {ingredients && (
-          <div className="mt-6 rounded-3xl border border-stone-100 bg-white p-6 shadow-sm">
-            <h2 className="mb-4 flex items-center gap-2 text-lg font-bold text-gray-900">
-              <Leaf className="h-5 w-5 text-green-600" /> Composition naturelle
+          <section className="mt-8 rounded-[2rem] border border-stone-200/80 bg-white p-6 shadow-sm">
+            <Eyebrow>Ce qu&rsquo;il y a dedans</Eyebrow>
+            <h2 className="mb-4 flex items-center gap-2 text-xl font-bold">
+              <FlaskConical className="h-5 w-5 text-emerald-600" /> Composition naturelle
             </h2>
-            <div className="rounded-2xl border border-green-100 bg-gradient-to-br from-green-50 to-emerald-50 p-5">
-              <p className="whitespace-pre-line leading-relaxed text-gray-700">
+            <div className="rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50/70 to-teal-50/50 p-5">
+              <p className="whitespace-pre-line text-[15px] leading-relaxed text-stone-700">
                 {displayedIngredients}
               </p>
               {isLongIngredients && (
                 <button
                   type="button"
                   onClick={() => setShowAllIngredients((v) => !v)}
-                  className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-green-700 hover:text-green-800"
+                  className="mt-3 inline-flex items-center gap-1 text-sm font-bold text-emerald-700 hover:text-emerald-800"
                 >
                   {showAllIngredients ? (
                     <>
@@ -684,192 +766,152 @@ export function ArtisanProductView({
             </div>
 
             {/* Encadré sans allergènes */}
-            <div className="mt-4 flex items-center gap-3 rounded-xl border border-blue-200 bg-blue-50 p-4">
+            <div className="mt-4 flex items-center gap-3 rounded-2xl border border-emerald-100 bg-emerald-50/60 p-4">
               <span className="text-2xl">✅</span>
               <div>
-                <p className="text-sm font-semibold text-blue-900">Sans allergènes de synthèse</p>
-                <p className="text-xs text-blue-700">Formule naturelle, adaptée aux peaux sensibles</p>
+                <p className="text-sm font-bold text-emerald-900">Sans allergènes de synthèse</p>
+                <p className="text-xs text-emerald-700/80">
+                  Formule naturelle, adaptée aux peaux sensibles
+                </p>
               </div>
             </div>
-          </div>
+          </section>
         )}
 
-        {/* ── 5. INFOS FABRICATION ─────────────────────────────────────── */}
-        <div className="mt-6 rounded-3xl border border-stone-100 bg-white p-6 shadow-sm">
-          <h2 className="mb-4 flex items-center gap-2 text-lg font-bold text-gray-900">
-            <CalendarDays className="h-5 w-5 text-amber-600" /> Infos fabrication
-          </h2>
+        {/* ── 5. PRÉCAUTIONS D'EMPLOI (assistant intelligent) ─────────────── */}
+        {precautions.length > 0 && (
+          <section className="mt-6 rounded-[2rem] border border-rose-100 bg-rose-50/70 p-6">
+            <h2 className="mb-4 flex items-center gap-2 text-xl font-bold">
+              <span className="text-2xl">⚠️</span> Précautions d&rsquo;emploi
+            </h2>
+            <ul className="space-y-2.5">
+              {precautions.map((prec, i) => (
+                <li
+                  key={i}
+                  className="flex items-start gap-3 rounded-2xl border border-rose-100 bg-white/80 p-3.5"
+                >
+                  <span className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-rose-100 text-[11px] font-black text-rose-600">
+                    !
+                  </span>
+                  <span className="text-sm leading-relaxed text-stone-700">{prec}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
-          {isExpired ? (
-            /* Produit périmé → badge rouge honnête */
-            <div className="mb-4 flex items-center justify-between rounded-2xl bg-gradient-to-r from-red-500 to-rose-600 p-4 text-white shadow-lg">
+        {/* ── 6. CONDITIONS DE CONSERVATION (assistant intelligent) ───────── */}
+        {storageConditions && (
+          <section className="mt-6 rounded-[2rem] border border-sky-100 bg-sky-50/70 p-6">
+            <h2 className="mb-3 flex items-center gap-2 text-xl font-bold">
+              <span className="text-2xl">📍</span> Conservation
+            </h2>
+            <p className="rounded-2xl border border-sky-100 bg-white/80 p-4 text-sm leading-relaxed text-stone-700">
+              {storageConditions}
+            </p>
+          </section>
+        )}
+
+        {/* ── 7. HISTOIRE DE L'ARTISAN + ATELIER ──────────────────────────── */}
+        <section className="mt-8 overflow-hidden rounded-[2rem] border border-amber-200/70 bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100/60 shadow-sm">
+          <div className="p-6">
+            <Eyebrow>Rencontrez l&rsquo;artisan</Eyebrow>
+            <h2 className="mb-4 text-xl font-bold">L&rsquo;histoire de {lot.artisanName}</h2>
+
+            <blockquote className="relative rounded-2xl border border-amber-100 bg-white/85 p-5 backdrop-blur">
+              <span className="absolute -top-3 left-5 text-4xl leading-none text-amber-300">
+                &ldquo;
+              </span>
+              <p className="pt-2 italic leading-relaxed text-stone-700">{bio}</p>
+            </blockquote>
+
+            <div className="mt-5 flex items-center gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-orange-500 text-xl font-bold text-white shadow-lg shadow-orange-500/25">
+                {(lot.artisanName || "A").charAt(0).toUpperCase()}
+              </div>
               <div>
-                <p className="text-sm opacity-90">Date de fraîcheur dépassée depuis</p>
-                <p className="text-3xl font-bold">{daysLeft !== null ? Math.abs(daysLeft) : 0} jours</p>
-              </div>
-              <span className="text-5xl">⚠️</span>
-            </div>
-          ) : (
-            <div className="mb-4 flex items-center justify-between rounded-2xl bg-gradient-to-r from-green-500 to-emerald-600 p-4 text-white shadow-lg">
-              <div>
-                <p className="text-sm opacity-90">Encore frais pendant</p>
-                <p className="text-3xl font-bold">{daysLeft ?? 0} jours</p>
-              </div>
-              <span className="artisan-pulse-slow text-5xl">✨</span>
-            </div>
-          )}
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="rounded-2xl border border-green-100 bg-green-50 p-4">
-              <p className="mb-1 text-xs font-medium text-green-700">Fabriqué le</p>
-              <p className="text-sm font-bold text-green-900">{formatDate(lot.manufacturingDate)}</p>
-            </div>
-            <div className="rounded-2xl border border-amber-100 bg-amber-50 p-4">
-              <p className="mb-1 text-xs font-medium text-amber-700">À utiliser avant</p>
-              <p className="text-sm font-bold text-amber-900">{formatDate(lot.expirationDate)}</p>
-            </div>
-          </div>
-
-          {/* Barre de progression : portion de durée de vie consommée */}
-          <div className="mt-4">
-            <div className="mb-2 flex justify-between text-xs text-gray-600">
-              <span>Fabrication</span>
-              <span>Péremption</span>
-            </div>
-            <div className="h-3 overflow-hidden rounded-full bg-gray-200">
-              <div
-                className={`h-full rounded-full transition-all duration-1000 ${
-                  isExpired
-                    ? "bg-gradient-to-r from-red-400 to-rose-500"
-                    : "bg-gradient-to-r from-green-400 to-emerald-500"
-                }`}
-                style={{ width: `${shelfLifePct}%` }}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* ── 6. HISTOIRE DE L'ARTISAN ────────────────────────────────────── */}
-        <div className="mt-6 rounded-3xl border border-amber-200 bg-gradient-to-br from-amber-100 to-orange-100 p-6 shadow-sm">
-          <h2 className="mb-4 flex items-center gap-2 text-lg font-bold text-gray-900">
-            <span className="text-2xl">👤</span> L&rsquo;histoire de {lot.artisanName}
-          </h2>
-
-          <div className="rounded-2xl border border-amber-100 bg-white/80 p-5 backdrop-blur">
-            <p className="italic leading-relaxed text-gray-700">« {bio} »</p>
-          </div>
-
-          <div className="mt-4 flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-orange-500 text-xl font-bold text-white shadow-lg">
-              {(lot.artisanName || "A").charAt(0).toUpperCase()}
-            </div>
-            <div>
-              <p className="font-semibold text-gray-900">{lot.artisanName}</p>
-              <p className="flex items-center gap-1 text-sm text-gray-600">
-                <ShieldCheck className="h-3.5 w-3.5 text-green-600" /> Artisan certifié VerifScan
-              </p>
-            </div>
-          </div>
-
-          {/* Galerie — l'atelier en images (photos ajoutées à l'activation) */}
-          {artisanPhotos.length > 0 && (
-            <div className="mt-5">
-              <p className="mb-3 text-sm font-bold text-gray-800">📷 L&rsquo;atelier en images</p>
-              <div className="grid grid-cols-3 gap-2">
-                {artisanPhotos.map((url) => (
-                  <button
-                    key={url}
-                    type="button"
-                    onClick={() => setLightbox(url)}
-                    aria-label={`Agrandir la photo de l'atelier de ${lot.artisanName}`}
-                    className="group h-24 cursor-zoom-in overflow-hidden rounded-2xl border border-amber-100 shadow-sm"
-                  >
-                    <SafeImage
-                      src={url}
-                      alt={`Atelier de ${lot.artisanName}`}
-                      className="h-24 w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                      emoji="📷"
-                    />
-                  </button>
-                ))}
+                <p className="font-bold">{lot.artisanName}</p>
+                <p className="flex items-center gap-1 text-sm font-medium text-emerald-600">
+                  <ShieldCheck className="h-3.5 w-3.5" /> Artisan certifié VerifScan
+                </p>
               </div>
             </div>
-          )}
-        </div>
 
-        {/* ── 7. CONSEILS D'UTILISATION ───────────────────────────────────── */}
-        <div className="mt-6 rounded-3xl border border-stone-100 bg-white p-6 shadow-sm">
-          <h2 className="mb-4 flex items-center gap-2 text-lg font-bold text-gray-900">
-            <span className="text-2xl">💡</span> Conseils d&rsquo;utilisation
+            {/* Galerie — l'atelier en images */}
+            {artisanPhotos.length > 0 && (
+              <div className="mt-5">
+                <p className="mb-3 text-sm font-bold text-stone-800">
+                  📷 L&rsquo;atelier en images
+                </p>
+                <div className="grid grid-cols-3 gap-2">
+                  {artisanPhotos.map((url) => (
+                    <button
+                      key={url}
+                      type="button"
+                      onClick={() => setLightbox(url)}
+                      aria-label={`Agrandir la photo de l'atelier de ${lot.artisanName}`}
+                      className="group h-24 cursor-zoom-in overflow-hidden rounded-2xl border border-amber-100 shadow-sm"
+                    >
+                      <SafeImage
+                        src={url}
+                        alt={`Atelier de ${lot.artisanName}`}
+                        className="h-24 w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        emoji="📷"
+                      />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* ── 8. CONSEILS D'UTILISATION ───────────────────────────────────── */}
+        <section className="mt-8 rounded-[2rem] border border-stone-200/80 bg-white p-6 shadow-sm">
+          <Eyebrow>Bien l&rsquo;utiliser</Eyebrow>
+          <h2 className="mb-4 flex items-center gap-2 text-xl font-bold">
+            <Sparkles className="h-5 w-5 text-amber-500" /> Conseils d&rsquo;utilisation
           </h2>
           <div className="space-y-3">
             {tips.map((tip, index) => (
               <div
                 key={index}
-                className="flex items-start gap-3 rounded-xl border border-stone-200 bg-stone-50 p-3"
+                className="flex items-start gap-3 rounded-2xl border border-stone-100 bg-stone-50/70 p-3.5"
               >
-                <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-orange-500 text-sm font-bold text-white">
+                <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 text-sm font-black text-white shadow-sm shadow-orange-500/25">
                   {index + 1}
                 </div>
-                <p className="pt-1 text-sm text-gray-700">{tip}</p>
+                <p className="pt-1 text-sm leading-relaxed text-stone-700">{tip}</p>
               </div>
             ))}
           </div>
-        </div>
+        </section>
 
-        {/* ── 7b. PRÉCAUTIONS D'EMPLOI (assistant intelligent — section
-              affichée uniquement si remplie à l'activation) ─────────────── */}
-        {precautions.length > 0 && (
-          <div className="mb-6 mt-8">
-            <div className="rounded-3xl border border-red-100 bg-red-50 p-6">
-              <h2 className="mb-4 flex items-center gap-2 text-xl font-bold text-gray-900">
-                <span className="text-2xl">⚠️</span> Précautions
-              </h2>
-              <ul className="space-y-2">
-                {precautions.map((prec, i) => (
-                  <li key={i} className="flex items-start gap-3">
-                    <span className="font-bold text-red-500">•</span>
-                    <span className="text-sm text-gray-700">{prec}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        )}
-
-        {/* ── 7c. CONDITIONS DE CONSERVATION (assistant intelligent) ───── */}
-        {storageConditions && (
-          <div className="mb-6 mt-8">
-            <div className="rounded-3xl border border-blue-100 bg-blue-50 p-6">
-              <h2 className="mb-3 flex items-center gap-2 text-xl font-bold text-gray-900">
-                <span className="text-2xl">📍</span> Conservation
-              </h2>
-              <p className="text-sm leading-relaxed text-gray-700">{storageConditions}</p>
-            </div>
-          </div>
-        )}
-
-        {/* ── 8. CONTACT DE L'ARTISAN ───────────────────────────────────── */}
+        {/* ── 9. CONTACT & CTA WHATSAPP ───────────────────────────────────── */}
         {lot.contactPhone && (
-          <div className="mb-6 mt-8">
+          <section className="mt-8">
             {/* CTA WhatsApp géant (conversion) */}
             <a
               href={waLink}
               target="_blank"
               rel="noopener noreferrer"
-              className="group relative flex w-full transform items-center justify-center gap-3 overflow-hidden rounded-2xl bg-gradient-to-r from-green-500 to-emerald-600 py-5 text-lg font-bold text-white shadow-xl transition-all hover:scale-[1.02] hover:from-green-600 hover:to-emerald-700 active:scale-95"
+              className="group relative flex w-full transform items-center justify-center gap-3 overflow-hidden rounded-3xl bg-gradient-to-r from-green-500 to-emerald-600 py-5 text-lg font-bold text-white shadow-xl shadow-emerald-600/25 transition-all hover:scale-[1.02] hover:from-green-600 hover:to-emerald-700 active:scale-95"
             >
               <div className="artisan-pulse-slow absolute inset-0 bg-white/20" />
-              <svg className="relative z-10 h-7 w-7" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
+              <svg
+                className="relative z-10 h-7 w-7"
+                fill="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden
+              >
                 <path d={WHATSAPP_SVG_PATH} />
               </svg>
               <span className="relative z-10">Contacter {lot.artisanName}</span>
             </a>
 
-            {/* Coordonnées COMPACTES — grille 2 colonnes (retour utilisateur :
-                6-7 lignes empilées = trop long). Chaque tuile reste cliquable. */}
-            <div className="mt-4 rounded-3xl border border-stone-100 bg-white p-4 shadow-sm">
-              <h3 className="mb-3 flex items-center gap-2 text-sm font-bold text-gray-900">
+            {/* Coordonnées COMPACTES — grille 2 colonnes de tuiles cliquables */}
+            <div className="mt-4 rounded-[2rem] border border-stone-200/80 bg-white p-4 shadow-sm">
+              <h3 className="mb-3 flex items-center gap-2 text-sm font-bold">
                 <span className="text-lg">📇</span> Coordonnées de l&rsquo;artisan
               </h3>
 
@@ -879,18 +921,18 @@ export function ArtisanProductView({
                     key={c.key}
                     href={c.href}
                     {...(c.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-                    className="flex items-center gap-2.5 rounded-xl border border-stone-200 bg-stone-50 p-2.5 transition-colors hover:border-amber-300 hover:bg-amber-50"
+                    className="flex items-center gap-2.5 rounded-2xl border border-stone-200 bg-stone-50 p-2.5 transition-colors hover:border-amber-300 hover:bg-amber-50"
                   >
                     <span
-                      className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-white shadow-sm ${c.bg}`}
+                      className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl text-white shadow-sm ${c.bg}`}
                     >
                       {c.icon}
                     </span>
                     <span className="min-w-0 flex-1">
-                      <span className="block text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                      <span className="block text-[10px] font-semibold uppercase tracking-wide text-stone-400">
                         {c.label}
                       </span>
-                      <span className="block truncate text-xs font-bold text-gray-900">
+                      <span className="block truncate text-xs font-bold text-stone-800">
                         {c.value}
                       </span>
                     </span>
@@ -898,25 +940,26 @@ export function ArtisanProductView({
                 ))}
               </div>
             </div>
-          </div>
+          </section>
         )}
 
-        {/* ── 9. TÉMOIGNAGES (placeholder) ────────────────────────────────── */}
-        <div className="mt-6 rounded-3xl border border-stone-100 bg-white p-6 shadow-sm">
-          <h2 className="mb-4 flex items-center gap-2 text-lg font-bold text-gray-900">
+        {/* ── 10. AVIS CLIENTS ────────────────────────────────────────────── */}
+        <section className="mt-8 rounded-[2rem] border border-stone-200/80 bg-white p-6 shadow-sm">
+          <Eyebrow>Votre expérience compte</Eyebrow>
+          <h2 className="mb-4 flex items-center gap-2 text-xl font-bold">
             <span className="text-2xl">💬</span> Avis des clients
           </h2>
 
           {/* Résumé : moyenne + nombre d'avis */}
           {reviews.length > 0 && (
-            <div className="mb-4 flex items-center gap-4 rounded-2xl border border-amber-100 bg-amber-50 p-4">
+            <div className="mb-4 flex items-center gap-4 rounded-2xl border border-amber-100 bg-amber-50/70 p-4">
               <div className="text-center">
-                <p className="text-3xl font-extrabold leading-tight text-amber-600">
+                <p className="text-3xl font-black leading-tight text-amber-600">
                   {avgRating.toFixed(1)}
                 </p>
                 <Stars value={Math.round(avgRating)} />
               </div>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-stone-600">
                 {reviews.length === 1
                   ? "Avis d'un client ayant scanné ce produit"
                   : `${reviews.length} avis de clients ayant scanné ce produit`}
@@ -928,32 +971,32 @@ export function ArtisanProductView({
           {reviews.length > 0 && (
             <div className="space-y-3">
               {reviews.map((r) => (
-                <div key={r.id} className="rounded-2xl border border-stone-200 bg-stone-50 p-4">
+                <div key={r.id} className="rounded-2xl border border-stone-200 bg-stone-50/70 p-4">
                   <div className="mb-2 flex items-center justify-between gap-3">
                     <div className="flex min-w-0 items-center gap-2">
                       <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-orange-500 text-sm font-bold text-white">
                         {r.authorName.charAt(0).toUpperCase()}
                       </div>
-                      <p className="truncate text-sm font-bold text-gray-900">{r.authorName}</p>
+                      <p className="truncate text-sm font-bold text-stone-800">{r.authorName}</p>
                     </div>
                     <div className="flex flex-shrink-0 items-center gap-2">
                       <Stars value={r.rating} className="h-3.5 w-3.5" />
-                      <span className="text-xs text-gray-400">
+                      <span className="text-xs text-stone-400">
                         {new Date(r.createdAt).toLocaleDateString("fr-FR")}
                       </span>
                     </div>
                   </div>
-                  <p className="text-sm leading-relaxed text-gray-700">{r.comment}</p>
+                  <p className="text-sm leading-relaxed text-stone-700">{r.comment}</p>
                 </div>
               ))}
             </div>
           )}
 
           {reviewThanks ? (
-            <div className="mt-4 rounded-2xl border border-green-200 bg-green-50 p-5 text-center">
-              <p className="text-4xl mb-2">🙏</p>
-              <p className="font-semibold text-green-800">Merci pour votre avis !</p>
-              <p className="text-sm text-green-700">
+            <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-5 text-center">
+              <p className="mb-2 text-4xl">🙏</p>
+              <p className="font-bold text-emerald-800">Merci pour votre avis !</p>
+              <p className="text-sm text-emerald-700">
                 Votre expérience aide d&rsquo;autres clients et soutient {lot.artisanName}.
               </p>
             </div>
@@ -962,7 +1005,7 @@ export function ArtisanProductView({
               onSubmit={submitReview}
               className="mt-4 rounded-2xl border border-stone-200 bg-white p-4"
             >
-              <p className="mb-3 text-sm font-bold text-gray-800">
+              <p className="mb-3 text-sm font-bold text-stone-800">
                 {reviews.length === 0
                   ? "Soyez le premier à partager votre expérience !"
                   : "Donner mon avis"}
@@ -979,7 +1022,7 @@ export function ArtisanProductView({
                     className="p-1 transition-transform hover:scale-110"
                   >
                     <Star
-                      className={`h-7 w-7 ${n <= reviewRating ? "text-amber-400" : "text-gray-300"}`}
+                      className={`h-7 w-7 ${n <= reviewRating ? "text-amber-400" : "text-stone-300"}`}
                       fill="currentColor"
                     />
                   </button>
@@ -994,7 +1037,7 @@ export function ArtisanProductView({
                 minLength={2}
                 maxLength={40}
                 placeholder="Votre nom"
-                className="mb-3 w-full rounded-xl border-2 border-gray-200 px-4 py-2.5 outline-none transition-colors focus:border-amber-500"
+                className="mb-3 w-full rounded-xl border-2 border-stone-200 px-4 py-2.5 outline-none transition-colors focus:border-amber-500"
               />
               <textarea
                 value={reviewComment}
@@ -1004,7 +1047,7 @@ export function ArtisanProductView({
                 maxLength={500}
                 rows={3}
                 placeholder="Votre expérience avec ce produit…"
-                className="mb-3 w-full resize-none rounded-xl border-2 border-gray-200 px-4 py-2.5 outline-none transition-colors focus:border-amber-500"
+                className="mb-3 w-full resize-none rounded-xl border-2 border-stone-200 px-4 py-2.5 outline-none transition-colors focus:border-amber-500"
               />
               {reviewError && (
                 <p className="mb-3 text-xs font-semibold text-red-600">{reviewError}</p>
@@ -1012,18 +1055,19 @@ export function ArtisanProductView({
               <button
                 type="submit"
                 disabled={reviewSubmitting}
-                className="w-full rounded-xl bg-amber-500 py-3 font-semibold text-white transition-colors hover:bg-amber-600 disabled:opacity-50"
+                className="w-full rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 py-3 font-bold text-white shadow-md shadow-orange-500/25 transition-all hover:from-amber-600 hover:to-orange-600 disabled:opacity-50"
               >
                 {reviewSubmitting ? "Envoi…" : "Envoyer mon avis"}
               </button>
             </form>
           )}
-        </div>
+        </section>
 
-        {/* ── 10. AUTRES PRODUITS DU MÊME ARTISAN (dynamiques) ────────────── */}
+        {/* ── 11. AUTRES PRODUITS DU MÊME ARTISAN (produits DIFFÉRENTS) ───── */}
         {similarProducts.length > 0 && (
-          <div className="mb-8 mt-8">
-            <h2 className="mb-4 flex items-center gap-2 text-xl font-bold text-gray-900">
+          <section className="mb-8 mt-8">
+            <Eyebrow>Continuer à découvrir</Eyebrow>
+            <h2 className="mb-4 flex items-center gap-2 text-xl font-bold">
               <span className="text-2xl">🛍️</span> Autres produits de {lot.artisanName}
             </h2>
             <div className="grid grid-cols-2 gap-4">
@@ -1031,7 +1075,7 @@ export function ArtisanProductView({
                 <Link
                   key={p.qrCode}
                   href={`/a/${p.qrCode}`}
-                  className="overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm transition-shadow hover:shadow-lg"
+                  className="overflow-hidden rounded-3xl border border-stone-200/80 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-lg"
                 >
                   <div className="flex h-32 items-center justify-center overflow-hidden bg-gradient-to-br from-amber-100 to-orange-100">
                     <SafeImage
@@ -1042,32 +1086,33 @@ export function ArtisanProductView({
                     />
                   </div>
                   <div className="p-3">
-                    <p className="truncate text-sm font-semibold text-gray-900">{p.productName}</p>
-                    {p.contenance && <p className="text-xs text-gray-600">{p.contenance}</p>}
+                    <p className="truncate text-sm font-bold text-stone-800">{p.productName}</p>
+                    {p.contenance && <p className="text-xs text-stone-500">{p.contenance}</p>}
                   </div>
                 </Link>
               ))}
             </div>
-          </div>
+          </section>
         )}
 
-        {/* ── 11. FOOTER VÉRIFICATION ─────────────────────────────────────── */}
-        <div className="mb-8 rounded-3xl bg-gradient-to-br from-slate-900 to-slate-800 p-8 text-center shadow-xl">
-          {/* Logo officiel du site (remplace l'emblème générique — demande utilisateur) */}
+        {/* ── 12. FOOTER VÉRIFICATION ─────────────────────────────────────── */}
+        <section className="mb-10 overflow-hidden rounded-[2rem] bg-gradient-to-br from-stone-900 via-stone-800 to-stone-900 p-8 text-center shadow-xl">
           <div className="mb-4 flex justify-center">
             <Logo variant="light" size="lg" />
           </div>
           <h3 className="mb-2 flex items-center justify-center gap-2 text-xl font-bold text-white">
             <Heart className="h-4 w-4 text-rose-400" /> Vérifié par VerifScan
           </h3>
-          <p className="mb-4 text-sm text-slate-300">
-            Ce produit est authentique et traçable — chaque scan soutient {lot.artisanName}.
+          <p className="mb-4 text-sm leading-relaxed text-stone-300">
+            Ce produit est authentique et traçable — chaque scan soutient{" "}
+            {lot.artisanName} et l&rsquo;artisanat sénégalais.
           </p>
           <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 backdrop-blur">
-            <span className="text-xs font-medium">🔒 Historique sécurisé</span>
+            <span className="text-xs font-medium text-stone-200">🔒 Historique sécurisé</span>
           </div>
-        </div>
-        {/* Lightbox plein écran (galerie atelier — fix revue #5) */}
+        </section>
+
+        {/* Lightbox plein écran (galerie atelier) */}
         {lightbox && (
           <div
             role="dialog"

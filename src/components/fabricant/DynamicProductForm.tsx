@@ -1154,24 +1154,17 @@ export function DynamicProductForm({
   }
 
   // ── Auto-complétion depuis un produit type ────────────────────────
-  // Remplit : nom (si vide), ingrédients catégorie (si vide + champ
-  // présent), conseils, précautions, conservation. Les valeurs déjà
-  // saisies par l'utilisateur ne sont jamais écrasées.
+  // Remplit : nom (si vide), conseils, précautions, conservation. Les
+  // valeurs déjà saisies par l'utilisateur ne sont jamais écrasées.
+  // ⚠️ Les INGRÉDIENTS ne sont JAMAIS pré-remplis (retour utilisateur :
+  // les suggestions génériques ne correspondent pas à la recette réelle —
+  // le fabricant/artisan liste lui-même ses vrais ingrédients).
   function handleTemplateSelect(template: ProductTemplate) {
     setSelectedTemplate(template);
     setUsageTipsText(template.usageTips.join("\n"));
     setPrecautionsText(template.precautions.join("\n"));
     setStorageConditions(template.storageConditions);
     if (!name.trim()) setName(template.name);
-    if (
-      categoryFields.some((f) => f.name === "ingredients") &&
-      !String(categoryData.ingredients ?? "").trim()
-    ) {
-      setCategoryData((prev) => ({
-        ...prev,
-        ingredients: template.typicalIngredients.join(", "),
-      }));
-    }
     toast.success(
       `Produit type « ${template.name} » sélectionné — champs auto-remplis.`,
     );

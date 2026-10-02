@@ -1008,6 +1008,24 @@ model ArtisanReview {
 }
 
 // ============================================================================
+// Photos du parcours ARTISANAL stockées EN BASE (BLOB) — fix « photo ne
+// s'affiche plus après activation ». Avant : fichiers écrits sur le disque
+// (UPLOAD_DIR) → PERDUS à chaque redéploiement Coolify si le volume n'est
+// pas (ou mal) monté. La DB SQLite vit sur le volume /app/data (monté
+// obligatoirement — sinon la DB entière disparaît) → les photos survivent
+// aux redéploiements. Compressées WebP à l'upload (sharp, ≤ 1200px) pour
+// garder la base légère. Servies par GET /api/artisan/photo/<filename>.
+// ============================================================================
+model ArtisanPhoto {
+  id        String   @id @default(cuid())
+  filename  String   @unique // ex. artisan-<uuid>.webp
+  mimeType  String // image/webp, image/jpeg… (fallback si sharp échoue)
+  size      Int // octets
+  data      Bytes // contenu binaire de l'image
+  createdAt DateTime @default(now())
+}
+
+// ============================================================================
 // VerifScan API publique — clés d'accès (Paramètres SuperAdmin → API & Intégrations)
 // La clé complète n'est affichée qu'UNE seule fois à la création (pattern
 // Stripe) ; la base ne stocke que son SHA-256 (une fuite de la DB ne compromet

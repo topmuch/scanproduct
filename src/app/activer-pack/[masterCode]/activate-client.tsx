@@ -624,10 +624,12 @@ export default function ActivatePackClient({
                 </p>
                 <SmartProductSelector
                   onTemplateSelect={(template) => {
+                    // ⚠️ Les INGRÉDIENTS ne sont JAMAIS pré-remplis (retour
+                    // utilisateur : les suggestions génériques ne correspondent
+                    // pas à la recette réelle de l'artisan) — il les tape lui-même.
                     setS({
                       template,
                       productName: simple.productName || template.name,
-                      ingredients: simple.ingredients || template.typicalIngredients.join(", "),
                       usageTips: template.usageTips.join("\n"),
                       precautions: template.precautions.join("\n"),
                       storageConditions: template.storageConditions,
@@ -695,14 +697,14 @@ export default function ActivatePackClient({
 
               <div>
                 <label className={labelCls} htmlFor="ingredients">
-                  Ingrédients *
+                  Ingrédients * <span className="font-normal text-gray-500">— votre recette réelle</span>
                 </label>
                 <textarea
                   id="ingredients"
                   required
                   rows={3}
                   maxLength={2000}
-                  placeholder="Ex : Beurre de karité, huile de coco, soude…"
+                  placeholder="Tapez vos ingrédients réels, ex : Beurre de karité 500g, huile de coco, soude…"
                   value={simple.ingredients}
                   onChange={(e) => setS({ ingredients: e.target.value })}
                   className={`${inputCls} resize-none`}
@@ -1225,7 +1227,8 @@ export default function ActivatePackClient({
                           setG(i, {
                             template,
                             productName: g.productName || template.name,
-                            ingredients: g.ingredients || template.typicalIngredients.join(", "),
+                            // Ingrédients JAMAIS pré-remplis — la recette
+                            // appartient à l'artisan (retour utilisateur).
                             usageTips: template.usageTips.join("\n"),
                             precautions: template.precautions.join("\n"),
                             storageConditions: template.storageConditions,

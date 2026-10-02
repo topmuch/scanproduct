@@ -1,22 +1,31 @@
 import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
-import { mkdir, writeFile } from "fs/promises";
-import {
-  UPLOAD_DIR,
-  buildUploadUrl,
-} from "@/lib/upload-config";
+import sharp from "sharp";
 import { db } from "@/lib/db";
 import { getArtisanFromToken, normalizePhone } from "@/lib/artisan-auth";
+import { isTableMissingError, ensureArtisanTables } from "@/lib/ensure-artisan-tables";
 
 /**
  * POST /api/artisan/upload
  *
  * Upload de photos du parcours ARTISANAL (photo produit / galerie atelier).
  *
+ * ── STOCKAGE EN BASE (fix « photo ne s'affiche plus après activation ») ──
+ * Avant : fichier écrit sur le disque (UPLOAD_DIR) + URL /api/uploads/<f>.
+ *   → en production Coolify, tout fichier hors volume persistant est PERDU
+ *     à chaque redéploiement (recréation du conteneur) → images cassées sur
+ *     toutes les pages publiques.
+ * Maintenant : l'image est COMPRESSÉE (sharp → WebP ≤ 1200px, ~60-150 Ko)
+ *   puis stockée dans la table SQLite `ArtisanPhoto` (BLOB). La DB vit sur
+ *   le volume /app/data — monté obligatoirement (sinon la base entière
+ *   disparaît) → les photos survivent aux redéploiements, comme les comptes.
+ *   URL renvoyée : /api/artisan/photo/<filename> (route de service dédiée,
+ *   lecture DB). Les anciennes URLs /api/uploads/… restent servies (compat).
+ *
  * Deux modes d'autorisation :
  *   1. ACTIVATION (sans compte) : champ `masterCode` multipart — le code
  *      maître doit exister, être isMaster et appartenir à un pack encore
- *      `inactive` → exploitable uniquement pendant l'activation légitime.
+ *      activable → exploitable uniquement pendant l'activation légitime.
  *   2. ÉDITION (portail artisan connecté) : JWT artisan en en-tête
  *      `Authorization: Bearer` + champ `packId` — le pack doit appartenir à
  *      l'artisan (artisanId, ou correspondance téléphone pour les packs
@@ -24,12 +33,16 @@ import { getArtisanFromToken, normalizePhone } from "@/lib/artisan-auth";
  *      d'un produit DÉJÀ activé depuis /artisan/products/<id>/edit.
  *
  * Contraintes fichier : image ≤ 5 Mo, format détecté par magic bytes
- * (jpg/png/webp/gif). Stockage dans UPLOAD_DIR (volume persistant), servi
- * via /api/uploads/<fichier>.
+ * (jpg/png/webp/gif).
  */
 export const runtime = "nodejs";
 
 const MAX_SIZE = 5 * 1024 * 1024;
+/** Dimension maximale (côté long) après compression — largement suffisant
+ *  pour l'affichage mobile/desktop, garde la base légère. */
+const MAX_DIMENSION = 1200;
+/** Qualité WebP — compromis poids/qualité éprouvé pour photos produits. */
+const WEBP_QUALITY = 82;
 
 function detectFormatFromBytes(buf: Buffer): string | null {
   if (buf.length >= 3 && buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) return "jpg";
@@ -45,6 +58,20 @@ function detectFormatFromBytes(buf: Buffer): string | null {
     buf[8] === 0x57 && buf[9] === 0x45 && buf[10] === 0x42 && buf[11] === 0x50
   ) return "webp";
   return null;
+}
+
+/** Compression WebP (sharp) — retourne null si sharp échoue (fallback brut). */
+async function compressToWebp(buf: Buffer): Promise<Buffer | null> {
+  try {
+    return await sharp(buf)
+      .rotate() // respecte l'orientation EXIF (photos prises au téléphone)
+      .resize({ width: MAX_DIMENSION, height: MAX_DIMENSION, fit: "inside", withoutEnlargement: true })
+      .webp({ quality: WEBP_QUALITY })
+      .toBuffer();
+  } catch (e) {
+    console.error("[artisan/upload] compression sharp échouée (fallback original):", e);
+    return null;
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -112,14 +139,52 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const filename = `artisan-${randomUUID()}.${ext}`;
+  // ── Compression + stockage EN BASE (ArtisanPhoto BLOB) ─────────────────
+  const webp = await compressToWebp(buffer);
+  const stored = webp ?? buffer; // fallback : original si sharp indisponible
+  const mimeType = webp ? "image/webp" : `image/${ext === "jpg" ? "jpeg" : ext}`;
+  const filename = `artisan-${randomUUID()}.${webp ? "webp" : ext}`;
+
   try {
-    await mkdir(UPLOAD_DIR, { recursive: true });
-    await writeFile(`${UPLOAD_DIR}/${filename}`, buffer);
+    await db.artisanPhoto.create({
+      data: { filename, mimeType, size: stored.length, data: new Uint8Array(stored) },
+    });
   } catch (e) {
-    console.error("[artisan/upload] écriture impossible:", e);
-    return NextResponse.json({ error: "Erreur serveur pendant l'écriture" }, { status: 500 });
+    // Auto-réparation : table absente en prod (DB créée avant ce module)
+    if (isTableMissingError(e)) {
+      const heal = await ensureArtisanTables();
+      if (heal.ok) {
+        try {
+          await db.artisanPhoto.create({
+            data: { filename, mimeType, size: stored.length, data: new Uint8Array(stored) },
+          });
+          // enregistré après réparation → continuer
+        } catch (retry) {
+          console.error("[artisan/upload] écriture DB après réparation impossible:", retry);
+          return NextResponse.json(
+            { error: "Erreur serveur pendant l'enregistrement de la photo" },
+            { status: 500 },
+          );
+        }
+      } else {
+        console.error("[artisan/upload] auto-réparation impossible:", heal.errors);
+        return NextResponse.json(
+          { error: "Erreur serveur pendant l'enregistrement de la photo" },
+          { status: 500 },
+        );
+      }
+    } else {
+      console.error("[artisan/upload] écriture DB impossible:", e);
+      return NextResponse.json(
+        { error: "Erreur serveur pendant l'enregistrement de la photo" },
+        { status: 500 },
+      );
+    }
   }
 
-  return NextResponse.json({ url: buildUploadUrl(filename), filename, size: file.size });
+  return NextResponse.json({
+    url: `/api/artisan/photo/${filename}`,
+    filename,
+    size: stored.length,
+  });
 }

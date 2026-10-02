@@ -38,6 +38,7 @@ export const ARTISAN_TABLES = [
   "PreActivatedLot",
   "ArtisanScan",
   "ArtisanReview",
+  "ArtisanPhoto",
 ] as const;
 
 /** DDL artisana — une instruction par élément (Prisma = 1 statement par appel). */
@@ -145,6 +146,16 @@ export const ARTISAN_DDL: string[] = [
 )`,
   `CREATE INDEX IF NOT EXISTS "ArtisanReview_lotId_idx" ON "ArtisanReview"("lotId")`,
   `CREATE INDEX IF NOT EXISTS "ArtisanReview_createdAt_idx" ON "ArtisanReview"("createdAt")`,
+  // Photos artisan stockées EN BASE (fix « photo perdue au redéploiement »)
+  `CREATE TABLE IF NOT EXISTS "ArtisanPhoto" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "filename" TEXT NOT NULL,
+    "mimeType" TEXT NOT NULL,
+    "size" INTEGER NOT NULL,
+    "data" BLOB NOT NULL,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+)`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS "ArtisanPhoto_filename_key" ON "ArtisanPhoto"("filename")`,
   // ── Tables de l'API publique (clés + webhooks, Paramètres → API) ──
   `CREATE TABLE IF NOT EXISTS "ApiKey" (
     "id" TEXT NOT NULL PRIMARY KEY,

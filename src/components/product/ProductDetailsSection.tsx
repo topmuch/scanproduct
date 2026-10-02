@@ -21,9 +21,9 @@ import {
 } from "@/lib/expiration-calculator";
 
 interface Props {
-  usageTips?: string[];
-  precautions?: string[];
-  storageConditions?: string;
+  usageTips?: string[] | string | null;
+  precautions?: string[] | string | null;
+  storageConditions?: string | null;
   manufacturingDate?: Date | string | null;
   expirationDate?: Date | string | null;
   /** Masquer le bandeau de fraîcheur (si la page a déjà son propre bandeau). */
