@@ -543,6 +543,254 @@ function EntrepriseSection() {
 // Section: Logo et marque
 // ============================================================================
 
+// ============================================================================
+// Badge QR — design personnel importé par le fabricant
+// ============================================================================
+
+/**
+ * BadgeDesignSection — permet au fabricant d'IMPORTER son propre design de
+ * badge QR (PNG/JPG/WebP). Le design devient le fond de tous ses QR codes :
+ * le QR est composé au centre sur un fond blanc arrondi (quiet zone) pour
+ * garantir la scannabilité. Sans design personnel, le design officiel de la
+ * plateforme s'applique (importé par le SuperAdmin), sinon le badge jaune
+ * « LABEL VERIFSCAN ».
+ */
+function BadgeDesignSection() {
+  const [templateUrl, setTemplateUrl] = useState<string | null>(null);
+  const [preview, setPreview] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [dragActive, setDragActive] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Charge le design personnel actuel au montage.
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch("/api/qr-codes/badge-template", { cache: "no-store" });
+        if (res.ok) {
+          const json = await res.json();
+          setTemplateUrl(json.url ?? null);
+        }
+      } catch {
+        // silencieux — le design officiel reste affiché en preview
+      }
+      setLoading(false);
+    })();
+  }, []);
+
+  // Aperçu RÉEL : le serveur rend le badge exact (template + QR au centre).
+  const refreshPreview = useCallback(async () => {
+    try {
+      const res = await fetch("/api/qr-codes/render-badge", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: getScanUrl("preview"), size: 600 }),
+      });
+      if (!res.ok) return;
+      const blob = await res.blob();
+      setPreview((old) => {
+        if (old) URL.revokeObjectURL(old);
+        return URL.createObjectURL(blob);
+      });
+    } catch {
+      // silencieux
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!loading) refreshPreview();
+  }, [loading, templateUrl, refreshPreview]);
+
+  const handleFile = useCallback(async (file: File) => {
+    setError(null);
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      setError("Format non supporté. Utilisez PNG, JPG ou WebP.");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setError("Le fichier dépasse 5 MB.");
+      return;
+    }
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/qr-codes/badge-template", {
+        method: "POST",
+        body: formData,
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        setError(json.error || "Échec de l'import.");
+        return;
+      }
+      setTemplateUrl(json.url);
+      toast.success("Design importé", {
+        description:
+          "Vos QR codes (téléchargements, génération en masse, PDF) utilisent désormais ce design.",
+      });
+    } catch {
+      setError("Erreur réseau lors de l'import.");
+    } finally {
+      setUploading(false);
+    }
+  }, []);
+
+  const retirer = useCallback(async () => {
+    try {
+      const res = await fetch("/api/qr-codes/badge-template", { method: "DELETE" });
+      if (!res.ok) {
+        const json = await res.json().catch(() => null);
+        toast.error(json?.error || "Échec de la suppression.");
+        return;
+      }
+      setTemplateUrl(null);
+      toast.success("Design personnel retiré", {
+        description: "Retour au design officiel de la plateforme.",
+      });
+    } catch {
+      toast.error("Erreur réseau.");
+    }
+  }, []);
+
+  const onDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      setDragActive(false);
+      const file = e.dataTransfer.files?.[0];
+      if (file) handleFile(file);
+    },
+    [handleFile]
+  );
+
+  return (
+    <SectionCard title="Mon design de QR code">
+      <div className="grid items-start gap-6 sm:grid-cols-2">
+        <div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) handleFile(file);
+            }}
+            className="hidden"
+          />
+          {templateUrl ? (
+            <div className="relative overflow-hidden rounded-xl border border-[#E5E7EB] bg-white">
+              <img
+                src={templateUrl}
+                alt="Design QR importé"
+                className="mx-auto h-[200px] w-full max-w-[280px] object-contain bg-[#F9FAFB]"
+              />
+              <div className="absolute right-2 top-2 flex gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                  className="inline-flex items-center gap-1 rounded-md bg-white/95 px-2.5 py-1.5 text-[12px] font-medium text-[#374151] shadow-sm hover:bg-white disabled:opacity-60"
+                >
+                  <Camera className="h-3.5 w-3.5" /> Changer
+                </button>
+                <button
+                  type="button"
+                  onClick={retirer}
+                  disabled={uploading}
+                  className="inline-flex items-center gap-1 rounded-md bg-white/95 px-2.5 py-1.5 text-[12px] font-medium text-[#EF4444] shadow-sm hover:bg-white disabled:opacity-60"
+                >
+                  <X className="h-3.5 w-3.5" /> Retirer
+                </button>
+              </div>
+              {uploading && (
+                <div className="absolute inset-0 flex items-center justify-center bg-white/70">
+                  <Loader2 className="h-6 w-6 animate-spin text-[#022150]" />
+                </div>
+              )}
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setDragActive(true);
+              }}
+              onDragLeave={() => setDragActive(false)}
+              onDrop={onDrop}
+              disabled={uploading}
+              className={`flex w-full flex-col items-center justify-center rounded-xl border-2 border-dashed p-8 text-center transition-colors disabled:cursor-not-allowed ${
+                dragActive
+                  ? "border-[#022150] bg-[#F0F4F9]"
+                  : "border-[#D1D5DB] bg-[#F9FAFB] hover:border-[#022150] hover:bg-[#F0F4F9]/50"
+              }`}
+            >
+              {uploading ? (
+                <Loader2 className="h-6 w-6 animate-spin text-[#022150]" />
+              ) : (
+                <Upload className="h-6 w-6 text-[#9CA3AF]" />
+              )}
+              <p className="mt-2 text-[13px] font-medium text-[#374151]">
+                Importer mon design de QR code
+              </p>
+              <p className="mt-1 text-[12px] text-[#6B7280]">
+                Glissez une image ici ou cliquez — PNG, JPG, WebP (5 MB max)
+              </p>
+            </button>
+          )}
+          {error && (
+            <p className="mt-2 flex items-center gap-1.5 text-[12px] text-[#B91C1C]">
+              <AlertCircle className="h-3.5 w-3.5" /> {error}
+            </p>
+          )}
+          <ul className="mt-4 space-y-1.5 border-t border-[#F3F4F6] pt-4 text-[12px] text-[#6B7280]">
+            <li className="flex items-start gap-2">
+              <span className="text-[#9CA3AF]">•</span>
+              Image carrée recommandée (ex. 1000×1000 px) — redimensionnée automatiquement.
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-[#9CA3AF]">•</span>
+              Le QR est posé au centre sur un fond blanc arrondi pour rester scannable.
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-[#9CA3AF]">•</span>
+              S&apos;applique à tous vos QR : téléchargements, génération en masse, PDF
+              d&apos;étiquettes.
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-[#9CA3AF]">•</span>
+              Sans design personnel : design officiel de la plateforme (ou badge jaune
+              par défaut).
+            </li>
+          </ul>
+        </div>
+
+        {/* Aperçu réel rendu par le serveur */}
+        <div className="flex flex-col items-center gap-2">
+          <div className="rounded-xl border border-[#E5E7EB] bg-white p-3 shadow-sm">
+            {preview ? (
+              <img
+                src={preview}
+                alt="Aperçu du badge QR"
+                className="h-[200px] w-[200px] object-contain"
+              />
+            ) : (
+              <div className="flex h-[200px] w-[200px] items-center justify-center">
+                <Loader2 className="h-6 w-6 animate-spin text-[#9CA3AF]" />
+              </div>
+            )}
+          </div>
+          <p className="text-[12px] text-[#6B7280]">
+            Aperçu réel — votre design avec le QR au centre
+          </p>
+        </div>
+      </div>
+    </SectionCard>
+  );
+}
+
 function LogoSection() {
   const { data } = useFabricantData();
   const profile = data.profile;
@@ -628,6 +876,8 @@ function LogoSection() {
           </div>
         </div>
       </SectionCard>
+
+      <BadgeDesignSection />
 
       <SectionCard title="Couleurs de marque">
         <div className="space-y-4">

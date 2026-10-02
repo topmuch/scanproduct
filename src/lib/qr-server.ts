@@ -59,9 +59,17 @@ export interface QRRenderOptions {
    *                 logoPath / labels / color sont ignorés (le badge a
    *                 son propre design, ECC Q imposé pour des modules
    *                 plus grands à l'impression 3 cm).
+   *                 Si `templatePath` est fourni, l'image importée est
+   *                 utilisée à la place du design jaune.
    *   - "classic" → QR brut historique (couleur marque + logo + labels).
    */
   design?: "classic" | "badge";
+  /**
+   * Template de design importé (chemin absolu sur disque). Utilisé quand
+   * design = "badge" : remplace le badge jaune par l'image importée
+   * (fabricant → son design ; plateforme → design officiel importé).
+   */
+  templatePath?: string | null;
 }
 
 export interface QRRenderResult {
@@ -123,6 +131,7 @@ export async function renderQRBuffer(
     const badge = await renderBadgeQR(text, {
       size,
       errorCorrectionLevel: options.errorCorrectionLevel ?? "Q",
+      ...(options.templatePath ? { templatePath: options.templatePath } : {}),
     });
     return {
       filePath: "",

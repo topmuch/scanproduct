@@ -47,6 +47,10 @@ model User {
   linkedin     String?
   // Branding
   brandColor   String    @default("#2563EB")
+  // Custom QR badge template (design importé par le fabricant — sert de
+  // fond aux badges QR : le QR est composé au centre). NULL = design
+  // officiel (template plateforme si défini, sinon badge jaune par défaut).
+  badgeTemplateUrl String?
   // Account lifecycle
   status       String    @default("ACTIVE") // "ACTIVE" | "SUSPENDED" | "PENDING"
   emailVerified DateTime?

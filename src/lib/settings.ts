@@ -157,6 +157,14 @@ export const SETTING_KEYS = {
   notifQuota: "notifQuota",
   /** Recipient of admin notification emails (falls back to first superadmin). */
   notifEmailRecipient: "notifEmailRecipient",
+  /**
+   * Official QR badge template imported by the SuperAdmin (public URL of the
+   * uploaded image, e.g. "/api/uploads/site/qr-badge.png"). Used as the
+   * platform-wide badge background for fabricants WITHOUT a personal design.
+   * Managed through the dedicated multipart endpoint
+   * /api/admin/settings/qr-badge-template — returned read-only here.
+   */
+  qrBadgeTemplateUrl: "qrBadgeTemplateUrl",
 } as const;
 
 /**

@@ -1,5 +1,6 @@
 import QR from "qrcode";
 import sharp from "sharp";
+import { existsSync } from "fs";
 
 /**
  * VerifScan — Rendu du QR code avec le design officiel « LABEL VERIFSCAN ».
@@ -86,6 +87,15 @@ export interface BadgeDesignOptions {
   /** Niveau de correction d'erreur du QR (défaut "Q" — 25 %, modules plus
    *  grands que "H" à taille d'impression égale). */
   errorCorrectionLevel?: "L" | "M" | "Q" | "H";
+  /**
+   * Template de design IMPORTÉ (chemin absolu vers un fichier image carré
+   * PNG/JPG/WebP). Quand il est fourni, le badge jaune SVG est remplacé par
+   * cette image (redimensionnée au carré demandé) et le QR est composé au
+   * centre (50 % du canvas) sur un fond blanc arrondi (quiet zone) pour
+   * garantir la scannabilité quel que soit le design. Si le fichier est
+   * absent/illisible, on retombe silencieusement sur le design officiel.
+   */
+  templatePath?: string;
 }
 
 function escXml(s: string): string {
@@ -269,6 +279,13 @@ export async function renderBadgeQR(
   text: string,
   options: BadgeDesignOptions = {}
 ): Promise<{ buffer: Buffer; width: number }> {
+  // ── Template importé (design personnalisé) ───────────────────────
+  if (options.templatePath) {
+    const custom = await renderCustomTemplateQR(text, options);
+    if (custom) return custom;
+    // Template absent/illisible → retombe sur le design officiel.
+  }
+
   const { svg, size, qrPx, qrLeft, qrTop } = badgeSvgString(text, options);
   const ecc = options.errorCorrectionLevel || "Q";
 
@@ -288,4 +305,75 @@ export async function renderBadgeQR(
     .toBuffer();
 
   return { buffer, width: size };
+}
+
+// ── Géométrie du rendu sur template importé ─────────────────────────
+// QR = 50 % du canvas (identique au badge officiel) posé sur un fond
+// blanc arrondi de 62 % (quiet zone ≈ 6 % de chaque côté ≈ 4+ modules
+// QR — recommandation ISO/IEC 18004 respectée même sur design sombre).
+const CUSTOM_QR_RATIO = 0.5;
+const CUSTOM_PAD_RATIO = 0.62;
+const CUSTOM_PAD_RADIUS_RATIO = 0.05;
+
+/**
+ * Rend le QR sur un template IMPORTÉ (design personnalisé fabricant /
+ * plateforme). Retourne null si le template est introuvable ou illisible
+ * (caller retombe alors sur le design officiel SVG).
+ *
+ * Pipeline :
+ *   1. Template redimensionné au carré `size` (cover) + aplati sur blanc
+ *      (les PNG transparents ne laissent pas voir « à travers »)
+ *   2. Fond blanc arrondi (quiet zone) composé au centre
+ *   3. QR noir (fonds clairs transparents) composé par-dessus
+ */
+async function renderCustomTemplateQR(
+  text: string,
+  options: BadgeDesignOptions
+): Promise<{ buffer: Buffer; width: number } | null> {
+  const templatePath = options.templatePath!;
+  if (!existsSync(templatePath)) return null;
+
+  const size = Math.max(256, Math.min(4096, Math.round(options.size || 1200)));
+
+  try {
+    const template = await sharp(templatePath)
+      .resize(size, size, { fit: "cover", position: "centre" })
+      .flatten({ background: "#FFFFFF" })
+      .png()
+      .toBuffer();
+
+    const qrPx = Math.round(size * CUSTOM_QR_RATIO);
+    const padPx = Math.round(size * CUSTOM_PAD_RATIO);
+    const radius = Math.round(size * CUSTOM_PAD_RADIUS_RATIO);
+    const padLeft = Math.round((size - padPx) / 2);
+    const padTop = padLeft; // canvas carré
+    const qrLeft = Math.round((size - qrPx) / 2);
+    const qrTop = qrLeft;
+
+    // Fond blanc arrondi (quiet zone) en PNG via SVG.
+    const padSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="${padPx}" height="${padPx}"><rect x="0" y="0" width="${padPx}" height="${padPx}" rx="${radius}" ry="${radius}" fill="#FFFFFF"/></svg>`;
+    const padPng = await sharp(Buffer.from(padSvg)).png().toBuffer();
+
+    // QR noir sur transparent, posé sur le fond blanc.
+    const qrPng = await QR.toBuffer(text, {
+      type: "png",
+      errorCorrectionLevel: options.errorCorrectionLevel || "Q",
+      margin: 0,
+      width: qrPx,
+      color: { dark: "#000000FF", light: "#00000000" },
+    });
+
+    const buffer = await sharp(template)
+      .composite([
+        { input: padPng, top: padTop, left: padLeft },
+        { input: qrPng, top: qrTop, left: qrLeft },
+      ])
+      .png()
+      .toBuffer();
+
+    return { buffer, width: size };
+  } catch (error) {
+    console.error("[qr-badge] Template importé illisible, fallback design officiel:", error);
+    return null;
+  }
 }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { applyRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { renderBadgeQR } from "@/lib/qr-badge";
+import { resolveBadgeTemplatePath } from "@/lib/qr-badge-template";
 
 /**
  * POST /api/qr-codes/render-badge
@@ -98,10 +99,21 @@ export async function POST(request: NextRequest) {
         ? body.bottomText
         : undefined;
 
+    // ── Résolution du design (template importé) ────────────────────
+    // Priorité : design personnel du fabricant → design officiel de la
+    // plateforme (Setting qrBadgeTemplateUrl) → badge jaune par défaut.
+    let templatePath: string | undefined;
+    try {
+      templatePath = (await resolveBadgeTemplatePath(token.sub)) ?? undefined;
+    } catch (e) {
+      console.error("[POST /api/qr-codes/render-badge] Résolution template:", e);
+    }
+
     const { buffer, width } = await renderBadgeQR(parsed.toString(), {
       size,
       ...(topText ? { topText } : {}),
       ...(bottomText ? { bottomText } : {}),
+      ...(templatePath ? { templatePath } : {}),
     });
 
     return new NextResponse(new Uint8Array(buffer), {

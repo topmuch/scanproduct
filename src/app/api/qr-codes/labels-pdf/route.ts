@@ -3,6 +3,7 @@ import { getToken } from "next-auth/jwt";
 import { db } from "@/lib/db";
 import { jsPDF } from "jspdf";
 import { renderQRBuffer, resolveLogoPath } from "@/lib/qr-server";
+import { resolveBadgeTemplatePath } from "@/lib/qr-badge-template";
 import { construireUrlQrPourLot } from "@/lib/gs1-resolver";
 import { ErreurGs1 } from "@/lib/gs1";
 
@@ -98,8 +99,14 @@ export async function POST(request: NextRequest) {
     const qrColor = options.color || fabricant?.brandColor || "#000000";
 
     // ── Design du rendu (badge « LABEL VERIFSCAN » par défaut) ─────
+    // Design importé prioritaire : personnel fabricant → officiel
+    // plateforme → badge jaune par défaut.
     const design: "badge" | "classic" =
       options.design === "classic" ? "classic" : "badge";
+    const badgeTemplatePath =
+      design === "badge"
+        ? await resolveBadgeTemplatePath(token.sub)
+        : null;
 
     // ── PDF layout config ───────────────────────────────────────
     const PAGE_W = 210; // A4 width mm
@@ -192,6 +199,7 @@ export async function POST(request: NextRequest) {
         errorCorrectionLevel:
           design === "badge" ? "Q" : logoPath ? "H" : "M",
         design,
+        templatePath: badgeTemplatePath ?? undefined,
       });
       qrBuffers.push(rendered.buffer);
     }

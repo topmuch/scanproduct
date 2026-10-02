@@ -305,6 +305,15 @@ function GeneralSection() {
   const [favError, setFavError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // ── Design QR officiel (badge plateforme) ──────────────────────
+  // Image importée par le superadmin : devient le fond des badges QR de
+  // tous les fabricants SANS design personnel (voir /api/admin/settings/
+  // qr-badge-template). null → badge jaune « LABEL VERIFSCAN » par défaut.
+  const [qrBadgeUrl, setQrBadgeUrl] = useState<string | null>(null);
+  const [qrBadgeUploading, setQrBadgeUploading] = useState(false);
+  const [qrBadgeError, setQrBadgeError] = useState<string | null>(null);
+  const qrBadgeInputRef = useRef<HTMLInputElement>(null);
+
   // ── Persisted general settings (GET/PUT /api/admin/settings) ──────
   // Fields are CONTROLLED and backed by the Setting table — the save
   // button performs a real PUT (this used to be a mock toast-only button).
@@ -322,6 +331,14 @@ function GeneralSection() {
       })
       .catch(() => {
         /* non-fatal — default placeholder is shown */
+      });
+    fetch("/api/admin/settings/qr-badge-template")
+      .then((r) => (r.ok ? r.json() : { url: null }))
+      .then((data) => {
+        if (!cancelled) setQrBadgeUrl(data?.url ?? null);
+      })
+      .catch(() => {
+        /* non-fatal */
       });
     fetch("/api/admin/settings")
       .then((r) => (r.ok ? r.json() : { settings: {} }))
@@ -407,6 +424,64 @@ function GeneralSection() {
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
+
+  async function handleQrBadgeChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setQrBadgeError(null);
+    setQrBadgeUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/admin/settings/qr-badge-template", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.url) {
+        throw new Error(data.error || "Échec de l'import du design officiel.");
+      }
+      setQrBadgeUrl(data.url);
+      toast.success("Design QR officiel importé", {
+        description:
+          "Appliqué à tous les fabricants qui n'ont pas importé leur propre design.",
+      });
+    } catch (err) {
+      const msg =
+        err instanceof Error ? err.message : "Erreur lors de l'upload.";
+      setQrBadgeError(msg);
+      toast.error(msg);
+    } finally {
+      setQrBadgeUploading(false);
+      if (qrBadgeInputRef.current) qrBadgeInputRef.current.value = "";
+    }
+  }
+
+  async function handleQrBadgeReset() {
+    setQrBadgeError(null);
+    setQrBadgeUploading(true);
+    try {
+      const res = await fetch("/api/admin/settings/qr-badge-template", {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Échec de la suppression.");
+      }
+      setQrBadgeUrl(null);
+      toast.success("Design officiel retiré", {
+        description: "Retour au badge jaune « LABEL VERIFSCAN ».",
+      });
+    } catch (err) {
+      const msg =
+        err instanceof Error ? err.message : "Erreur lors de la suppression.";
+      setQrBadgeError(msg);
+      toast.error(msg);
+    } finally {
+      setQrBadgeUploading(false);
     }
   }
 
@@ -521,6 +596,80 @@ function GeneralSection() {
                 </>
               )}
             </Button>
+          </div>
+        </Field>
+
+        <Field
+          label="Design QR officiel"
+          hint="Image carrée recommandée — PNG, JPG, WebP (5 MB max). Le QR est composé au centre sur fond blanc."
+        >
+          <input
+            ref={qrBadgeInputRef}
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            onChange={handleQrBadgeChange}
+            className="hidden"
+          />
+          <div className="flex flex-col gap-3 rounded-lg border-2 border-dashed border-[#E5E7EB] bg-[#F9FAFB] p-4 sm:flex-row sm:items-center">
+            <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-[#E5E7EB] bg-white">
+              {qrBadgeUrl ? (
+                <img
+                  src={qrBadgeUrl}
+                  alt="Design QR officiel"
+                  className="h-full w-full object-contain"
+                />
+              ) : (
+                <span className="font-display text-[11px] font-bold text-[#022150]">
+                  QR
+                </span>
+              )}
+            </div>
+            <div className="flex-1">
+              <p className="text-[13px] font-medium text-[#111827]">
+                {qrBadgeUrl
+                  ? "Design QR officiel actif"
+                  : "Badge jaune « LABEL VERIFSCAN » par défaut"}
+              </p>
+              <p className="mt-0.5 text-[12px] text-[#6B7280]">
+                {qrBadgeUploading
+                  ? "Upload en cours…"
+                  : "S'applique aux fabricants sans design personnel — ils peuvent importer le leur dans leurs Paramètres."}
+              </p>
+              {qrBadgeError && (
+                <p className="mt-1 text-[12px] font-medium text-[#EF4444]">
+                  {qrBadgeError}
+                </p>
+              )}
+            </div>
+            <div className="flex shrink-0 gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={qrBadgeUploading}
+                onClick={() => qrBadgeInputRef.current?.click()}
+              >
+                {qrBadgeUploading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" /> Upload…
+                  </>
+                ) : (
+                  <>
+                    <Upload className="h-4 w-4" /> Importer
+                  </>
+                )}
+              </Button>
+              {qrBadgeUrl && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={qrBadgeUploading}
+                  onClick={handleQrBadgeReset}
+                  className="text-[#EF4444] hover:bg-[#FEF2F2]"
+                >
+                  <Trash2 className="h-4 w-4" /> Retirer
+                </Button>
+              )}
+            </div>
           </div>
         </Field>
 

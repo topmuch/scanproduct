@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { db } from "@/lib/db";
 import { renderAndSaveQR, resolveLogoPath } from "@/lib/qr-server";
+import { resolveBadgeTemplatePath } from "@/lib/qr-badge-template";
 import { applyRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { canGenerateQr, getFabricantQrUsage } from "@/lib/plan-limits";
 import { createNotification } from "@/lib/notifications";
@@ -132,9 +133,14 @@ export async function POST(request: NextRequest) {
 
     // ── Design du rendu (par défaut : badge « LABEL VERIFSCAN ») ────
     // includeDesign === false → QR classique historique (couleur marque
-    // + logo + libellés). Sinon badge jaune avec QR noir au centre.
+    // + logo + libellés). Sinon badge (jaune par défaut, ou design
+    // importé : personnel fabricant → officiel plateforme).
     const design: "badge" | "classic" =
       options.includeDesign === false ? "classic" : "badge";
+    const badgeTemplatePath =
+      design === "badge"
+        ? await resolveBadgeTemplatePath(token.sub)
+        : null;
 
     // ── Generate + render + persist ────────────────────────────
     const results: Array<{
@@ -218,6 +224,7 @@ export async function POST(request: NextRequest) {
             design === "badge" ? "Q" : logoPath ? "H" : "M",
           scanUrl,
           design,
+          templatePath: badgeTemplatePath ?? undefined,
         });
 
         // Persist the QR code row WITH the image URL.
