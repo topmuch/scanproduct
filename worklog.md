@@ -5370,3 +5370,22 @@ Stage Summary:
 - Page Abonnement 100 % fonctionnelle : chaque bouton déclenche une vraie demande enregistrée (ticket Facturation visible par le SuperAdmin dans Support + notification fabricant + audit), montants inviolables (recalcul serveur), plan actuel dynamique depuis les vraies données.
 - Tous les passeports produits actifs sont référençables Google : sitemap complet (5 000 max), JSON-LD Product avec avis, OG/Twitter images — robots.txt autorisait déjà /p/ et le noindex ne s'applique qu'aux produits introuvables.
 - Commit + push à effectuer vers GitHub (token utilisateur).
+
+---
+Task ID: 8
+Agent: Super Z (main)
+Task: Remplacer l'icône (bouclier seul) affichée avant le site lors d'un scan QR par le LOGO complet VerifScan (bouclier + texte).
+
+Work Log:
+- Diagnostic : « l'icône qui apparaît avant le site » = favicon/icônes PWA ; aucune page loading.tsx intermédiaire.
+- Nouveau script scripts/process-logo-v4-icons.py : split du logo verifscan-logo.webp (bouclier 204x247 + texte 503x83), composition carrée EMPILÉE (bouclier 52% en haut, texte 80% largeur en bas) sur fond blanc, testée A/B aux tailles 256/64/48/32/16 (variante empilée retenue : texte lisible jusqu'à 48px, blanche visible en onglet sombre).
+- Régénéré : icon.png 256, apple-icon 180, icon-16/32/48/192/512, icon-192/512-maskable (safe zone 66%), favicon.ico multi-size 16/32/48.
+- Cache-buster ?v=6 → ?v=7 : src/app/layout.tsx (ICON_V) + public/manifest.json (7 refs) + sw.js CACHE_VERSION verifscan-v3-20261003.
+- Environnement de test reconstruit après reset : re-clone, bun install, build, DB push absolu + seed, serveur standalone :3100 avec NEXTAUTH_SECRET/NEXTAUTH_URL/DATABASE_URL inline (le standalone ne lit pas .env ; processus = next-server, pas node server.js).
+- Test e2e test-artisan-fixes-v5.ts : login OK après env complet, 35/35 assertions OK (non-régression redesign).
+- Vérifié : accueil + /a/ART-CMUSHKAK-P01-0001 référencent icon?v=7 ; fichiers servis = nouveaux (contrôle visuel sur fond sombre OK).
+
+Stage Summary:
+- Toutes les icônes du site (favicon onglet, PWA splash, apple-touch, masquables Android) = logo complet VerifScan empilé sur fond blanc.
+- Nouveau lot de test : ART-CMUSHKAK-P01-0001.
+- Secret local régénéré : NEXTAUTH_SECRET inline au lancement du standalone (penser à le passer à chaque redémarrage).

@@ -93,7 +93,7 @@ export const SITE_URL = DEFAULT_SITE_URL;
 
 // Cache-buster des icônes : incrémenter à chaque changement de logo/favicon
 // pour contourner le cache navigateur/PWA.
-const ICON_V = "?v=6";
+const ICON_V = "?v=7";
 
 /**
  * Mots-clés SEO — ciblage francophone : Sénégal / Afrique de l'Ouest,
