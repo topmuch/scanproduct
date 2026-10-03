@@ -5408,3 +5408,37 @@ Stage Summary:
 - Le badge « Produit authentique » est en vedette sous le bouton Découvrir (pilule emerald pleine, visible sur photo).
 - L'onboarding suit EXACTEMENT la demande : Activez votre pack → choix de la méthode → nom de marque + WhatsApp → nom du produit → ingrédients → fraîcheur → photos → vendre → récap. Une question par écran, validation bloquante par étape.
 - Nouveau pack de démo activé via wizard : MASTER-CMUSKC60-P01 → ART-CMUSKC60-P01-0001..0005 (Aïssata Cosmétiques / Savon au karité pur).
+
+---
+Task ID: 10
+Agent: Super Z (principal)
+Task: « j'ai déployé le commit mais le système utilise l'ancienne méthode, pas le onboarding ; le badge authentique est déployé » — diagnostic + correctif
+
+Work Log:
+- Diagnostic : commit 9589ca0 bien poussé sur origin/main ; le badge « Produit authentique » (même commit) visible en prod ⇒ build/deploy OK côté code. Le wizard 7 étapes existait dans activate-client (mode simple), MAIS l'écran d'ARRIVÉE après le scan du QR Maître (/a/MASTER-xxx → InactiveMasterView) n'avait PAS été redessiné : l'artisan voyait l'ancien écran 2 cartes ⇒ confusion « l'ancienne méthode tourne encore ». De plus les cartes pré-sélectionnaient ?mode=simple|flexible, sautant l'écran « Choisissez la façon d'activer vos étiquettes » du wizard.
+- Constéré en walkthrough navigateur : /a/MASTER → ancien design 2 cartes confirmé par capture.
+- Redesign InactiveMasterView : pill « ONBOARDING GUIDÉ », aperçu étapes (Marque → Produit → Ingrédients → Photos → Vente), CTA unique « Commencer l'activation » → /activer-pack/<code> SANS mode = écran « Activez votre pack / Choisissez la façon d'activer vos étiquettes » du wizard → 7 questions. Accès direct 2 modes conservés en liens secondaires (compat test-flexible-activation : 51/51 OK).
+- Incidents env réparés au passage : rebuild standalone efface .next/standalone/db → base déplacée hors .next vers /home/z/my-project/scanproduct/db/custom.db (gitignoré, analogue volume /app/db en prod Docker) ; .env mis à jour ; images de test régénérées (gen-test-photos-atelier.ts prend un DOSSIER en argument) ; scripts de test exigent DATABASE_URL explicite (bun ne charge pas .env pour ces scripts) et test-flexible-activation passe désormais BASE + ADMIN_PASSWORD par env.
+- Server standalone :3100 relancé (inline NEXTAUTH_SECRET/NEXTAUTH_URL/DATABASE_URL), walkthrough complet scan → choix → 7 étapes → activation 5/5 → page produit avec badge « PRODUIT AUTHENTIQUE » sous Découvrir vérifié par captures.
+- Tests : onboarding 12/12, fixes-v5 ✓ (46 assertions), flexible 51/51. Commit 3756cdf poussé.
+
+Stage Summary:
+- Cause du retour utilisateur : écran post-scan inchangé (ancien visuel) + saut de l'écran de choix du wizard ; le wizard existait bien en prod.
+- Correctif : 3756cdf (InactiveMasterView redesign + fix test). Le flux est désormais : Scan → « Activez votre pack » (aperçu 7 étapes) → « Choisissez la façon » → wizard 1 question/écran → récap → activation.
+- Pour vérifier le déploiement en prod : GET /api/health → champ commit (doit afficher 3756cdf après redeploy).
+
+---
+Task ID: 11
+Agent: Super Z (principal)
+Task: « l'onboarding n'est valable que pour l'activation des 200 QR d'un coup ; par produits c'est l'ancienne méthode (pas de changement de design) »
+
+Work Log:
+- Vérif prod : GET https://verifscan.com/api/health → commit 3756cdf (dernier, bien déployé) ; capture de /activer-pack/MASTER-CMUSNJ33-P01 : l'écran de choix EST le nouveau design ; l'ANCIEN formulaire n'apparaissait qu'après « Activer par produits différents » (mode flexible jamais wizardisé).
+- Wizard 6 étapes pour le mode flexible (activate-client.tsx) : Marque (commun) → Produits (répartition X/Y live + ajout/retrait) → Ingrédients (carte par produit) → Fraîcheur & détails (contenance/prix/dates/assistant par produit) → Photos & logo (optionnel) → Récap (lignes Modifier) + activation. Répartition visible en permanence (chip dans la barre + flex-summary). Même payload POST /api/artisan/activate-groups — zéro changement backend.
+- FLEX_STEPS + flexStep + validateFlexStep/flexGoNext/flexGoBack ajoutés à côté des SIMPLE_STEPS existants ; greffe JSX par scripts/splice-flex-wizard.py (425 lignes → 690), puis fichiers temporaires supprimés.
+- test-flexible-activation.ts adapté au parcours (wizard-next entre étapes) : 51/51 OK ; onboarding 12/12 ; fixes-v5 ✓. Walkthrough navigateur complet 2 produits (karité ×3 + savon noir ×2) → succès 5/5, captures /tmp/flex-*.png.
+- Commit 187d3c4 poussé (origin/main à jour).
+
+Stage Summary:
+- Les DEUX modes d'activation utilisent désormais l'onboarding guidé (simple 7 étapes, flexible 6 étapes) ; l'ancien formulaire monolithique a disparu.
+- Prod à vérifier après redeploy : /api/health → commit 187d3c4…, puis /activer-pack/<maître> → « Activer par produits différents » = wizard.
