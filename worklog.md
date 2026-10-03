@@ -5458,3 +5458,21 @@ Work Log:
 Stage Summary:
 - Les deux modes d'activation (simple 7 étapes, flexible 6 étapes) sont en PRODUCTION sur verifscan.com (commit 3564abf).
 - Si l'artisan voit encore l'ancien design : cache navigateur/PWA → forcer le rechargement (Ctrl+Shift+R) ou fermer/rouvrir la PWA installée.
+
+---
+Task ID: 13
+Agent: Super Z (principal)
+Task: « faire la même chose pour les produits agroalimentaires — préremplissage ingrédients/désignation/date de péremption + reprise auto des infos quand on revient activer la suite d'un pack »
+
+Work Log:
+- Environnement local réinitialisé (dossier projet disparu) → re-clone GitHub (69a9a85), bun install, .env recréé, DB recréée (db push + seed) sur db/custom.db hors .next.
+- product-templates.ts : champ `designation` ajouté à l'interface + rempli pour les 24 templates existants (script scripts/add-designations.py) ; 21 NOUVEAUX templates agro 🇸🇳 (bissap, gnamakoudji, bouye, dakhar, thiakry/dèguè, gari, attiéké frais, fonio, noix de cajou, plantain chips, nététou/soumbala + tables durées utilisateur : œufs, lait caillé, beurre, poisson frais, guedj, biscuits secs, pâtisserie, farine/couscous/riz de mil) → catalogue agro 10 → 31 ; jus-fruits-frais corrigé 3 mois → 3 jours (table fournie).
+- Préremplissage éditable (activate-client.tsx, simple + flexible) : désignation préremplie si vide (toutes catégories) ; ingrédients préremplis depuis typicalIngredients pour l'AGRO uniquement (règle cosmétique inchangée) + note verte « Suggestion préremplie à partir du produit type — adaptez à votre recette réelle ».
+- MÉMOIRE D'ACTIVATION : page.tsx reconstruit PreviousInfo depuis la DB quand pack partiel (identité depuis lots activés + email/réseaux du Pack, produits distincts avec tous les champs, précautions JSON→lignes, dates ISO) ; le wizard préremplit simple/shared au premier render ; bannière verte « On a repris vos informations déjà saisies » ; chips « ↩ Reprendre <produit> · déjà activé ×N » sur chaque carte Produit (remplit nom/désignation/ingrédients/dates/prix/details/template) ; mode simple prérempli depuis le 1er produit.
+- Test scripts/test-memory-prefill.ts (29 assertions) : templates (designation x45, 21 nouveaux ids, jus=3j), UI préremplissage bissap (désignation + ingrédients + note), péremption auto-calculée via template (2026-09-20 + 6 mois = 2027-03-20), pass 1 flexible 2 QR, retour → bannière/marque/WhatsApp/chips + reprise intégrale, pass 2 → 5/50, mode simple prérempli (marque/produit/contenance/désignation/template réaffiché). 29/29 OK.
+- Régressions : flexible 51/51, onboarding ✓, fixes-v5 ✓. tsc src/ : 0 erreur.
+
+Stage Summary:
+- L'assistant intelligent couvre désormais l'agroalimentaire sénégalais (31 produits) avec désignation + ingrédients éditables (« adaptez à votre recette réelle ») + péremption auto-calculée depuis la table de durées fournie.
+- Le wizard se SOUVIENT : revenir activer 20/30 QR après en avoir activé 10 reprend automatiquement marque, WhatsApp, réseaux et les produits déjà activés (chips de reprise en 1 clic — il ne reste que le nombre d'étiquettes à saisir).
+- À vérifier en prod après redeploy : /api/health → commit ; wizard → « Jus de bissap » préremplit tout ; activer 2 QR puis re-scanner → bannière + chips.

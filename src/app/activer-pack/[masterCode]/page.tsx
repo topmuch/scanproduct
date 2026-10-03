@@ -4,7 +4,11 @@ import {
   ensureArtisanTables,
   isTableMissingError,
 } from "@/lib/ensure-artisan-tables";
-import ActivatePackClient, { type PackInfo } from "./activate-client";
+import ActivatePackClient, {
+  type PackInfo,
+  type PreviousInfo,
+  type PreviousProduct,
+} from "./activate-client";
 
 /**
  * /activer-pack/[masterCode] — activation du pack artisanal.
@@ -19,8 +23,13 @@ import ActivatePackClient, { type PackInfo } from "./activate-client";
  */
 export const dynamic = "force-dynamic";
 
-async function loadPackInfo(masterCode: string): Promise<PackInfo | null> {
-  const fetchInfo = async (): Promise<PackInfo | null> => {
+async function loadPackInfo(
+  masterCode: string,
+): Promise<{ packInfo: PackInfo; previousInfo: PreviousInfo | null } | null> {
+  const fetchInfo = async (): Promise<{
+    packInfo: PackInfo;
+    previousInfo: PreviousInfo | null;
+  } | null> => {
     if (!masterCode.startsWith("MASTER-")) return null;
     const master = await db.preActivatedLot.findUnique({
       where: { qrCode: masterCode },
@@ -29,24 +38,92 @@ async function loadPackInfo(masterCode: string): Promise<PackInfo | null> {
     if (!master || !master.isMaster) return null;
 
     const productLots = master.pack.lots.filter((l) => !l.isMaster);
-    const activatedCount = productLots.filter((l) => l.status === "active").length;
+    const activatedLots = productLots.filter((l) => l.status === "active");
+    const activatedCount = activatedLots.length;
     const groupMap = new Map<string, { productName: string; count: number }>();
-    for (const l of productLots
-      .filter((l) => l.status === "active")
-      .sort((a, b) => a.qrCode.localeCompare(b.qrCode))) {
+    for (const l of activatedLots.sort((a, b) =>
+      a.qrCode.localeCompare(b.qrCode),
+    )) {
       const name = l.productName ?? "Produit sans nom";
       const g = groupMap.get(name);
       if (g) g.count += 1;
       else groupMap.set(name, { productName: name, count: 1 });
     }
 
-    return {
+    const packInfo: PackInfo = {
       status: master.pack.status,
       quantity: master.pack.quantity,
       activatedCount,
       remaining: Math.max(master.pack.quantity - activatedCount, 0),
       groups: [...groupMap.values()],
     };
+
+    // ── MÉMOIRE D'ACTIVATION ──
+    // Pack partiellement activé : on reconstruit ce que l'artisan avait
+    // déjà rempli (identité partagée sur le Pack + détails produits sur
+    // les lots activés) pour le lui reproposer automatiquement.
+    let previousInfo: PreviousInfo | null = null;
+    if (activatedCount > 0) {
+      const byName = new Map<string, typeof activatedLots>();
+      for (const l of activatedLots.sort((a, b) =>
+        a.qrCode.localeCompare(b.qrCode),
+      )) {
+        const name = l.productName ?? "Produit sans nom";
+        const arr = byName.get(name);
+        if (arr) arr.push(l);
+        else byName.set(name, [l]);
+      }
+      const products: PreviousProduct[] = [...byName.entries()].map(
+        ([name, lots]) => {
+          const l = lots[0];
+          let precautions = "";
+          if (l.precautions) {
+            try {
+              const parsed = JSON.parse(l.precautions);
+              if (Array.isArray(parsed)) {
+                precautions = parsed
+                  .filter((x) => typeof x === "string")
+                  .join("\n");
+              } else {
+                precautions = l.precautions;
+              }
+            } catch {
+              precautions = l.precautions;
+            }
+          }
+          return {
+            productName: l.productName ?? name,
+            productDesignation: l.productDesignation ?? "",
+            contenance: l.contenance ?? "",
+            ingredients: l.ingredients ?? "",
+            manufacturingDate: l.manufacturingDate
+              ? l.manufacturingDate.toISOString().slice(0, 10)
+              : "",
+            expirationDate: l.expirationDate
+              ? l.expirationDate.toISOString().slice(0, 10)
+              : "",
+            productPrice: l.productPrice ?? "",
+            artisanBio: l.artisanBio ?? "",
+            usageTips: l.usageTips ?? "",
+            precautions,
+            storageConditions: l.storageConditions ?? "",
+            templateId: l.templateId ?? "",
+            count: lots.length,
+          };
+        },
+      );
+      previousInfo = {
+        artisanName: activatedLots[0]?.artisanName ?? "",
+        contactPhone: activatedLots[0]?.contactPhone ?? "",
+        contactEmail: master.pack.artisanEmail ?? "",
+        instagramUrl: master.pack.instagramUrl ?? "",
+        facebookUrl: master.pack.facebookUrl ?? "",
+        tiktokUrl: master.pack.tiktokUrl ?? "",
+        products,
+      };
+    }
+
+    return { packInfo, previousInfo };
   };
 
   try {
@@ -80,9 +157,9 @@ export default async function ActivatePackPage({
   const initialMode =
     modeParam === "flexible" ? "flexible" : modeParam === "simple" ? "simple" : null;
 
-  const packInfo = await loadPackInfo(masterCode);
+  const loaded = await loadPackInfo(masterCode);
 
-  if (!packInfo) {
+  if (!loaded) {
     // Code maître inconnu / invalide ou erreur DB — écran propre.
     return (
       <div className="flex min-h-screen items-center justify-center bg-amber-50 p-4">
@@ -106,8 +183,9 @@ export default async function ActivatePackPage({
   return (
     <ActivatePackClient
       masterCode={masterCode}
-      initialPackInfo={packInfo}
+      initialPackInfo={loaded.packInfo}
       initialMode={initialMode}
+      previousInfo={loaded.previousInfo}
     />
   );
 }

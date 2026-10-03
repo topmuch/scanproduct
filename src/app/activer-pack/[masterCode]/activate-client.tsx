@@ -25,6 +25,7 @@ import {
   SmartProductSelector,
 } from "@/components/SmartProductSelector";
 import {
+  getProductTemplateById,
   templateShelfLifeLabel,
   type ProductTemplate,
 } from "@/lib/product-templates";
@@ -50,6 +51,38 @@ export type PackInfo = {
   activatedCount: number;
   remaining: number;
   groups: Array<{ productName: string; count: number }>;
+};
+
+/** Produit déjà activé sur ce pack — sert de modèle de préremplissage. */
+export type PreviousProduct = {
+  productName: string;
+  productDesignation: string;
+  contenance: string;
+  ingredients: string;
+  manufacturingDate: string; // yyyy-mm-dd
+  expirationDate: string; // yyyy-mm-dd
+  productPrice: string;
+  artisanBio: string;
+  usageTips: string;
+  precautions: string; // lignes séparées par \n
+  storageConditions: string;
+  templateId: string;
+  count: number; // nb d'étiquettes déjà activées pour ce produit
+};
+
+/**
+ * MÉMOIRE D'ACTIVATION — quand l'artisan revient activer la suite d'un pack
+ * partiellement activé, on lui repropose automatiquement ce qu'il avait
+ * déjà rempli (marque, WhatsApp, réseaux, et les produits déjà activés).
+ */
+export type PreviousInfo = {
+  artisanName: string;
+  contactPhone: string;
+  contactEmail: string;
+  instagramUrl: string;
+  facebookUrl: string;
+  tiktokUrl: string;
+  products: PreviousProduct[];
 };
 
 type Mode = "simple" | "flexible";
@@ -269,10 +302,13 @@ export default function ActivatePackClient({
   masterCode,
   initialPackInfo,
   initialMode,
+  previousInfo = null,
 }: {
   masterCode: string;
   initialPackInfo: PackInfo;
   initialMode: Mode | null;
+  /** Infos déjà saisies lors d'une activation précédente du même pack. */
+  previousInfo?: PreviousInfo | null;
 }) {
   const router = useRouter();
   const [packInfo, setPackInfo] = useState<PackInfo>(initialPackInfo);
@@ -281,46 +317,50 @@ export default function ActivatePackClient({
   const [error, setError] = useState("");
   const [success, setSuccess] = useState<SuccessState | null>(null);
 
+  // ── MÉMOIRE D'ACTIVATION : données de la première activation ──
+  const prevProduct = previousInfo?.products?.[0] ?? null;
+
   // ── MODE 1 : formulaire unique (toutes étiquettes encore inactives) ──
-  const [simple, setSimple] = useState({
+  // Prérempli avec les infos déjà saisies lors d'une activation précédente.
+  const [simple, setSimple] = useState(() => ({
     photo: null as File | null,
     galleryPhotos: [] as File[],
-    productName: "",
-    productDesignation: "",
-    contenance: "",
-    ingredients: "",
-    manufacturingDate: "",
-    expirationDate: "",
-    artisanName: "",
-    contactPhone: "",
-    contactEmail: "",
-    instagramUrl: "",
-    facebookUrl: "",
-    tiktokUrl: "",
-    productPrice: "",
-    artisanBio: "",
-    usageTips: "",
+    productName: prevProduct?.productName ?? "",
+    productDesignation: prevProduct?.productDesignation ?? "",
+    contenance: prevProduct?.contenance ?? "",
+    ingredients: prevProduct?.ingredients ?? "",
+    manufacturingDate: prevProduct?.manufacturingDate ?? "",
+    expirationDate: prevProduct?.expirationDate ?? "",
+    artisanName: previousInfo?.artisanName ?? "",
+    contactPhone: previousInfo?.contactPhone ?? "",
+    contactEmail: previousInfo?.contactEmail ?? "",
+    instagramUrl: previousInfo?.instagramUrl ?? "",
+    facebookUrl: previousInfo?.facebookUrl ?? "",
+    tiktokUrl: previousInfo?.tiktokUrl ?? "",
+    productPrice: prevProduct?.productPrice ?? "",
+    artisanBio: prevProduct?.artisanBio ?? "",
+    usageTips: prevProduct?.usageTips ?? "",
     // Identité visuelle de la marque (logo affiché sur la page produit)
     logo: null as File | null,
     // Auto-complétion intelligente
-    template: null as ProductTemplate | null,
-    precautions: "",
-    storageConditions: "",
-  });
+    template: getProductTemplateById(prevProduct?.templateId),
+    precautions: prevProduct?.precautions ?? "",
+    storageConditions: prevProduct?.storageConditions ?? "",
+  }));
   const setS = (patch: Partial<typeof simple>) => setSimple((f) => ({ ...f, ...patch }));
 
-  // ── MODE 2 : groupes produits + infos communes ──
+  // ── MODE 2 : groupes produits + infos communes (préremplies si 1re passe) ──
   const [groups, setGroups] = useState<GroupForm[]>([emptyGroup()]);
-  const [shared, setShared] = useState<SharedForm>({
-    artisanName: "",
-    contactPhone: "",
-    contactEmail: "",
-    instagramUrl: "",
-    facebookUrl: "",
-    tiktokUrl: "",
+  const [shared, setShared] = useState<SharedForm>(() => ({
+    artisanName: previousInfo?.artisanName ?? "",
+    contactPhone: previousInfo?.contactPhone ?? "",
+    contactEmail: previousInfo?.contactEmail ?? "",
+    instagramUrl: previousInfo?.instagramUrl ?? "",
+    facebookUrl: previousInfo?.facebookUrl ?? "",
+    tiktokUrl: previousInfo?.tiktokUrl ?? "",
     galleryPhotos: [],
     logo: null,
-  });
+  }));
   const setG = (i: number, patch: Partial<GroupForm>) =>
     setGroups((gs) => gs.map((g, idx) => (idx === i ? { ...g, ...patch } : g)));
   const setSh = (patch: Partial<SharedForm>) => setShared((f) => ({ ...f, ...patch }));
@@ -932,6 +972,15 @@ export default function ActivatePackClient({
               {/* ═══ ÉTAPE 1/7 — VOTRE MARQUE ═══ */}
               {step === 0 && (
                 <>
+              {previousInfo && (
+                <div
+                  data-testid="memory-banner"
+                  className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm font-medium text-emerald-800"
+                >
+                  ↩ On a repris vos informations déjà saisies pour ce pack —
+                  modifiez si besoin.
+                </div>
+              )}
               <div className="rounded-xl border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800">
                 Ces informations s&apos;appliqueront aux{" "}
                 <strong>{targetCount} QR codes</strong> encore inactifs de
@@ -1009,12 +1058,18 @@ export default function ActivatePackClient({
                 </p>
                 <SmartProductSelector
                   onTemplateSelect={(template) => {
-                    // ⚠️ Les INGRÉDIENTS ne sont JAMAIS pré-remplis (retour
-                    // utilisateur : les suggestions génériques ne correspondent
-                    // pas à la recette réelle de l'artisan) — il les tape lui-même.
+                    // Désignation : préremplie (modifiable) si le champ est vide.
+                    // Ingrédients : préremplissage ÉDITABLE pour l'agroalimentaire
+                    // uniquement (retour utilisateur — pour le cosmétique, la
+                    // recette appartient à l'artisan qui la tape lui-même).
                     setS({
                       template,
                       productName: simple.productName || template.name,
+                      productDesignation: simple.productDesignation || template.designation,
+                      ...(template.category === "agroalimentaire" &&
+                      !simple.ingredients.trim()
+                        ? { ingredients: template.typicalIngredients.join("\n") }
+                        : {}),
                       usageTips: template.usageTips.slice(0, 3).join("\n"),
                       precautions: template.precautions.join("\n"),
                       storageConditions: template.storageConditions,
@@ -1103,6 +1158,17 @@ export default function ActivatePackClient({
                   Un ingrédient par ligne si vous préférez — vos clients
                   verront exactement ce que vous tapez ici.
                 </p>
+                {simple.template?.category === "agroalimentaire" &&
+                  simple.ingredients.trim() && (
+                    <p
+                      data-testid="ingredients-prefill-note"
+                      className="mt-1.5 flex items-start gap-1.5 text-xs font-medium text-emerald-700"
+                    >
+                      <Sparkles className="mt-0.5 h-3 w-3 flex-shrink-0" />
+                      Suggestion préremplie à partir du produit type — adaptez à
+                      votre recette réelle.
+                    </p>
+                  )}
               </div>
                 </>
               )}
@@ -1499,6 +1565,15 @@ export default function ActivatePackClient({
               {/* ═══ ÉTAPE 1/6 — VOTRE MARQUE (commun à tous les produits) ═══ */}
               {flexStep === 0 && (
                 <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+                  {previousInfo && (
+                    <div
+                      data-testid="memory-banner"
+                      className="mb-3 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm font-medium text-emerald-800"
+                    >
+                      ↩ On a repris vos informations déjà saisies pour ce pack —
+                      modifiez si besoin.
+                    </div>
+                  )}
                   <p className="mb-1 text-sm font-extrabold text-gray-900">
                     🧑‍🌾 Vos infos d&apos;artisan
                   </p>
@@ -1613,6 +1688,50 @@ export default function ActivatePackClient({
                           </button>
                         )}
                       </div>
+                      {previousInfo && previousInfo.products.length > 0 && (
+                        <div
+                          className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50/60 p-3"
+                          data-testid={`memory-chips-${i}`}
+                        >
+                          <p className="mb-2 text-[11px] font-bold text-emerald-800">
+                            ↩ Reprendre un produit déjà activé sur ce pack :
+                          </p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {previousInfo.products.map((p, pi) => (
+                              <button
+                                key={pi}
+                                type="button"
+                                data-testid={`reprendre-${i}-${pi}`}
+                                onClick={() =>
+                                  setG(i, {
+                                    productName: p.productName,
+                                    productDesignation: p.productDesignation,
+                                    contenance: p.contenance,
+                                    ingredients: p.ingredients,
+                                    manufacturingDate: p.manufacturingDate,
+                                    expirationDate: p.expirationDate,
+                                    productPrice: p.productPrice,
+                                    artisanBio: p.artisanBio,
+                                    usageTips: p.usageTips,
+                                    precautions: p.precautions,
+                                    storageConditions: p.storageConditions,
+                                    template: getProductTemplateById(
+                                      p.templateId || null,
+                                    ),
+                                  })
+                                }
+                                className="rounded-full bg-white px-3 py-1.5 text-[11px] font-bold text-emerald-700 ring-1 ring-emerald-300 transition-colors hover:bg-emerald-100"
+                              >
+                                {p.productName} · déjà activé ×{p.count}
+                              </button>
+                            ))}
+                          </div>
+                          <p className="mt-2 text-[10px] text-emerald-700/80">
+                            Nom, ingrédients, dates et détails repris — vous
+                            choisissez juste le nombre d&apos;étiquettes.
+                          </p>
+                        </div>
+                      )}
                       <div className="space-y-3">
                         <div className="rounded-xl bg-amber-50 p-3">
                           <label className={labelCls} htmlFor={`g${i}-count`}>
@@ -1704,6 +1823,17 @@ export default function ActivatePackClient({
                         Un ingrédient par ligne si vous préférez — vos clients
                         verront exactement ce que vous tapez ici.
                       </p>
+                      {g.template?.category === "agroalimentaire" &&
+                        g.ingredients.trim() && (
+                          <p
+                            data-testid={`ingredients-prefill-note-${i}`}
+                            className="mt-1.5 flex items-start gap-1.5 text-[11px] font-medium text-emerald-700"
+                          >
+                            <Sparkles className="mt-0.5 h-3 w-3 flex-shrink-0" />
+                            Suggestion préremplie à partir du produit type —
+                            adaptez à votre recette réelle.
+                          </p>
+                        )}
                     </div>
                   ))}
                 </>
@@ -1817,8 +1947,21 @@ export default function ActivatePackClient({
                               setG(i, {
                                 template,
                                 productName: g.productName || template.name,
-                                // Ingrédients JAMAIS pré-remplis — la recette
-                                // appartient à l'artisan (retour utilisateur).
+                                productDesignation:
+                                  g.productDesignation || template.designation,
+                                // Ingrédients : préremplissage ÉDITABLE pour
+                                // l'agroalimentaire uniquement — pour le
+                                // cosmétique, la recette appartient à
+                                // l'artisan (retour utilisateur).
+                                ...(template.category === "agroalimentaire" &&
+                                !g.ingredients.trim()
+                                  ? {
+                                      ingredients:
+                                        template.typicalIngredients.join(
+                                          "\n",
+                                        ),
+                                    }
+                                  : {}),
                                 usageTips: template.usageTips.slice(0, 3).join("\n"),
                                 precautions: template.precautions.join("\n"),
                                 storageConditions: template.storageConditions,
