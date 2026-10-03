@@ -632,7 +632,9 @@ export function ArtisanProductView({
       )}
 
       {/* ════ 1. HERO IMMERSIF PLEIN ÉCRAN ═══════════════════════════════ */}
-      <header className="relative flex min-h-[92svh] flex-col overflow-hidden bg-stone-950">
+      {/* Mobile : hero plus bas (75svh) — corrige le grand vide entre la photo
+          et la pilule VerifScan signalé sur téléphone. Desktop : 92svh. */}
+      <header className="relative flex min-h-[75svh] flex-col overflow-hidden bg-stone-950 sm:min-h-[92svh]">
         {/* Photo produit plein écran (zoom Ken Burns) ou placeholder stylisé */}
         <div className="absolute inset-0">
           <SafeImage
@@ -664,17 +666,21 @@ export function ArtisanProductView({
           )}
         </div>
 
-        {/* Voiles de lisibilité : bas sombre pour le texte */}
-        <div className="absolute inset-0 bg-gradient-to-t from-stone-950/90 via-stone-950/25 to-stone-950/40" />
+        {/* Voile de lisibilité : sombre UNIQUEMENT en bas (sous le texte),
+            quasi transparent en haut — la photo produit reste bien visible
+            (retour test : l'image était trop recouverte par l'overlay). */}
+        <div className="absolute inset-0 bg-gradient-to-t from-stone-950/95 via-stone-950/15 to-stone-950/5" />
 
         {/* Pilule marque VerifScan (verre dépoli) */}
         <div className="art-fade-down relative z-10 flex justify-center pt-5">
+          {/* Logo officiel EN COULEUR sur pastille blanche (retour test : la
+              variante blanche passait inaperçue / paraissait délavée). */}
           <Link
             href="/"
             aria-label="VerifScan accueil"
-            className="inline-flex items-center rounded-full border border-white/25 bg-white/10 px-4 py-2 shadow-lg backdrop-blur-md transition-colors hover:bg-white/20"
+            className="inline-flex items-center rounded-full bg-white px-5 py-2.5 shadow-xl ring-1 ring-black/10 transition-transform hover:scale-105 active:scale-95"
           >
-            <Logo variant="light" size="sm" />
+            <Logo variant="default" size="sm" />
           </Link>
         </div>
 
@@ -683,14 +689,16 @@ export function ArtisanProductView({
 
         {/* Badges flottants + titre révélé + étoiles */}
         <div className="relative z-10 mx-auto w-full max-w-lg px-5 pb-5 text-white">
+          {/* Badges OPACES (retour test : les versions translucides se
+              noyaient dans la photo) — lisibles sur n'importe quelle image. */}
           <div className="mb-5 flex flex-wrap items-center gap-2">
-            <span className="art-float inline-flex items-center gap-1.5 rounded-full border border-emerald-300/40 bg-emerald-500/25 px-3.5 py-2 text-xs font-bold text-emerald-50 shadow-lg backdrop-blur-md">
+            <span className="art-float inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-3.5 py-2 text-[13px] font-black text-white shadow-lg shadow-emerald-950/50 ring-1 ring-emerald-300/70">
               <ShieldCheck className="h-4 w-4" /> Produit authentique
             </span>
-            <span className="art-float-delay inline-flex items-center gap-1.5 rounded-full border border-amber-200/40 bg-amber-400/25 px-3.5 py-2 text-xs font-bold text-amber-50 shadow-lg backdrop-blur-md">
+            <span className="art-float-delay inline-flex items-center gap-1.5 rounded-full bg-amber-500 px-3.5 py-2 text-[13px] font-black text-white shadow-lg shadow-amber-950/50 ring-1 ring-amber-200/80">
               <Hand className="h-4 w-4" /> Fait main
             </span>
-            <span className="art-float-delay-2 inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-white/10 px-3.5 py-2 text-xs font-bold text-white/90 shadow-lg backdrop-blur-md">
+            <span className="art-float-delay-2 inline-flex items-center gap-1.5 rounded-full bg-white px-3.5 py-2 text-[13px] font-black text-emerald-700 shadow-lg ring-1 ring-white">
               <Leaf className="h-4 w-4" /> Naturel
             </span>
           </div>
@@ -701,12 +709,9 @@ export function ArtisanProductView({
           <h1 className="art-title-reveal text-[2.55rem] font-black leading-[1.06] tracking-tight drop-shadow-sm">
             {lot.productName}
           </h1>
-          {lot.productDesignation && (
-            <p className="art-fade-up art-delay-2 mt-3 text-sm leading-relaxed text-white/85">
-              {lot.productDesignation}
-            </p>
-          )}
-
+          {/* NB : la désignation (description) n'est PAS affichée ici —
+              elle recouvrait la photo produit (retour test). Elle reste
+              visible dans la carte flottante section 2. */}
           <div className="art-fade-up art-delay-3 mt-4 flex items-center gap-2">
             <Stars
               value={avgRating > 0 ? Math.round(avgRating) : 5}
@@ -747,12 +752,14 @@ export function ArtisanProductView({
 
             <div className="relative p-6">
               {/* Artisan + logo + preuve sociale scans */}
+              {/* object-contain + fond blanc : un logo horizontal (large)
+                  n'est plus rogné par le cadrage carré (retour test). */}
               <div className="flex items-center gap-3">
                 {logoUrl ? (
                   <SafeImage
                     src={logoUrl}
                     alt={`Logo de ${lot.artisanName}`}
-                    className="h-12 w-12 flex-shrink-0 rounded-2xl bg-gradient-to-br from-amber-400 via-orange-500 to-rose-500 object-cover shadow-md shadow-orange-500/25"
+                    className="h-12 w-12 flex-shrink-0 rounded-2xl bg-white object-contain p-0.5 shadow-md ring-1 ring-stone-200"
                     icon={
                       <span className="text-xl font-black text-white">
                         {(lot.artisanName || "A").charAt(0).toUpperCase()}
@@ -1101,12 +1108,13 @@ export function ArtisanProductView({
               </blockquote>
 
               {/* Avatar + badge « Artisan certifié » */}
+              {/* object-contain : logo horizontal entier, jamais coupé */}
               <div className="mt-5 flex items-center gap-3">
                 {logoUrl ? (
                   <SafeImage
                     src={logoUrl}
                     alt={`Logo de ${lot.artisanName}`}
-                    className="h-12 w-12 flex-shrink-0 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 object-cover shadow-lg shadow-orange-500/25"
+                    className="h-12 w-12 flex-shrink-0 rounded-full bg-white object-contain p-0.5 shadow-lg ring-1 ring-amber-200"
                     icon={
                       <span className="text-xl font-bold text-white">
                         {(lot.artisanName || "A").charAt(0).toUpperCase()}
@@ -1463,8 +1471,12 @@ export function ArtisanProductView({
             />
 
             <div className="relative">
-              <div className="mb-4 flex justify-center">
-                <Logo variant="light" size="lg" />
+              {/* Logo officiel EN COULEUR sur carte blanche (retour test :
+                  la variante blanche était délavée sur le fond sombre). */}
+              <div className="mb-5 flex justify-center">
+                <div className="rounded-3xl bg-white px-6 py-3.5 shadow-2xl ring-1 ring-black/10">
+                  <Logo variant="default" size="lg" />
+                </div>
               </div>
               <h3 className="flex items-center justify-center gap-2 text-xl font-bold text-white">
                 <Heart className="h-4 w-4 text-rose-400" /> Vérifié par VerifScan
