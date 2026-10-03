@@ -14,7 +14,7 @@
 import { chromium } from "playwright";
 import { PrismaClient } from "@prisma/client";
 
-const BASE = "http://localhost:3000";
+const BASE = process.env.BASE ?? "http://localhost:3100";
 const prisma = new PrismaClient();
 const SHOTS = "shots";
 
