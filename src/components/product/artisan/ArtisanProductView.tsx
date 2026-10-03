@@ -817,8 +817,11 @@ export function ArtisanProductView({
         {/* Bouton « Découvrir » — scroll fluide vers la carte produit.
             pb-24 : la carte flottante (-mt-16 = 64 px d'overlap) recouvre le
             bas du hero → le bouton doit rester AU-DESSUS de cette zone
-            (sinon il est recouvert et inclicable — bug détecté au test). */}
-        <div className="art-fade-up art-delay-2 relative z-30 flex justify-center pb-24">
+            (sinon il est recouvert et inclicable — bug détecté au test).
+            EN DESSOUS : badge « Produit authentique » mis en valeur (demande
+            utilisateur) — pilule pleine emerald, visible sans surcharger
+            la photo. */}
+        <div className="art-fade-up art-delay-2 relative z-30 flex flex-col items-center gap-3 pb-24">
           <button
             type="button"
             onClick={scrollToProduct}
@@ -827,6 +830,10 @@ export function ArtisanProductView({
             Découvrir
             <ChevronDown className="h-4 w-4 animate-bounce" />
           </button>
+          <span className="art-fade-up art-delay-4 inline-flex items-center gap-1.5 rounded-full bg-emerald-500 px-4 py-1.5 text-xs font-bold uppercase tracking-wide text-white shadow-lg ring-1 ring-white/40 backdrop-blur-md">
+            <BadgeCheck className="h-4 w-4" />
+            Produit authentique
+          </span>
         </div>
       </header>
 

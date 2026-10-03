@@ -153,7 +153,11 @@ async function main() {
   const after = visible.split("</header>")[1] ?? "";
 
   console.log("   a) HERO 100 % image (plus de superpositions) :");
-  expect(hero, "hero SANS badge Produit authentique", "Produit authentique", false);
+  // Retour test n°3 : le badge « Produit authentique » REVIENT mais en
+  // pilule pleine SOUS le bouton Découvrir (plus de badges flottants).
+  expect(hero, "hero AVEC badge Produit authentique (sous Découvrir)", "Produit authentique");
+  expect(hero, "hero badge en pilule emerald pleine", "bg-emerald-500 px-4 py-1.5");
+  expect(hero, "hero SANS badges flottants (art-float)", "art-float", false);
   expect(hero, "hero SANS badge Fait main", "Fait main", false);
   expect(hero, "hero SANS sur-titre Création artisanale", "Création artisanale", false);
   expect(hero, "hero SANS titre h1", "<h1", false);

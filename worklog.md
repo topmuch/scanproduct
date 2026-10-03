@@ -5389,3 +5389,22 @@ Stage Summary:
 - Toutes les icônes du site (favicon onglet, PWA splash, apple-touch, masquables Android) = logo complet VerifScan empilé sur fond blanc.
 - Nouveau lot de test : ART-CMUSHKAK-P01-0001.
 - Secret local régénéré : NEXTAUTH_SECRET inline au lancement du standalone (penser à le passer à chaque redémarrage).
+
+---
+Task ID: 9
+Agent: Super Z (main)
+Task: (1) Badge « Produit authentique » en vedette sous le bouton Découvrir du hero produit. (2) Onboarding d'activation pas-à-pas : accueil « Activez votre pack / Choisissez la façon d'activer vos étiquettes » puis questions une par une (marque+WhatsApp → nom produit → ingrédients → …).
+
+Work Log:
+- ArtisanProductView.tsx : conteneur du bouton Découvrir passé en colonne ; ajout pilule pleine emerald « PRODUIT AUTHENTIQUE » (BadgeCheck, ring-white/40, art-delay-4) sous le bouton.
+- activate-client.tsx : SIMPLE_STEPS 5 → 7 étapes (Marque, Produit, Ingrédients, Fraîcheur, Photos, Vendre, Confirmer) ; validateStep réordonné (0=marque+tel, 1=produit+contenance, 2=ingrédients, 3=dates) ; étape 1 = Marque (nom de marque + Numéro WhatsApp avec pastille verte + email) ; étape 2 = nom produit + assistant intelligent + désignation + contenance ; étape 3 = ingrédients seuls (rows=5 + aide) ; étape 4 = dates + aperçu fraîcheur ; étape 5 = photo produit + logo + atelier ; étape 6 = réseaux + bio + conseils + prix ; étape 7 = récap (cibles Modifier mises à jour) ; écran d'accueil re-titré « Activez votre pack » + « Choisissez la façon d'activer vos étiquettes ».
+- test-artisan-fixes-v5.ts : assertion « Produit authentique » inversée (maintenant ATTENDU dans le hero, sous Découvrir) + art-float toujours absent.
+- Nouveau scripts/test-onboarding-wizard.ts (12 assertions : accueil, choix mode, payload wizard activate-groups 10 QR, page produit activée + badge) + scripts/create-test-batch.ts.
+- Oups environnement : bun run build efface .next/standalone (DB + .env perdus) → refaire db push absolu + seed + relancer serveur avec env inline après CHAQUE build.
+- Tests : onboarding 12/12 OK ; fixes-v5 35/35 OK ; walkthrough agent-browser mobile 390x844 : accueil → simple → marque/whatsapp → produit → ingrédients → dates (setter natif React via eval) → photos → vendre+prix → récap → « 5 QR codes activés ! » → page produit : badge emerald sous Découvrir confirmé par capture (.shots/onb-*.png).
+- Popup PWA « Installer VerifScan » peut masquer l'écran en test → fermer via « Plus tard ».
+
+Stage Summary:
+- Le badge « Produit authentique » est en vedette sous le bouton Découvrir (pilule emerald pleine, visible sur photo).
+- L'onboarding suit EXACTEMENT la demande : Activez votre pack → choix de la méthode → nom de marque + WhatsApp → nom du produit → ingrédients → fraîcheur → photos → vendre → récap. Une question par écran, validation bloquante par étape.
+- Nouveau pack de démo activé via wizard : MASTER-CMUSKC60-P01 → ART-CMUSKC60-P01-0001..0005 (Aïssata Cosmétiques / Savon au karité pur).

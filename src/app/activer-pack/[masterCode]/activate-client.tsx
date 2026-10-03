@@ -170,27 +170,41 @@ function calcExp(mfg: string, template: ProductTemplate | null): string {
 
 /**
  * ONBOARDING (mode simple) — les étapes guidées de l'activation.
- * Un petit bloc par écran, une barre de progression, validation à l'avance :
- * l'artisan ne voit jamais un formulaire interminable.
+ * UNE question par écran, dans l'ordre demandé par les artisans :
+ * marque + WhatsApp → nom du produit → ingrédients → fraîcheur → photos →
+ * vendre → récapitulatif. Une barre de progression, validation à l'avance :
+ * l'artisan remplit tous les champs sans se tromper.
  */
 const SIMPLE_STEPS = [
   {
-    label: "Produit",
-    title: "Votre produit",
-    icon: Package,
-    hint: "Photo, logo et nom — les bases de votre page produit.",
-  },
-  {
-    label: "Recette",
-    title: "Recette & fraîcheur",
-    icon: FlaskConical,
-    hint: "Tapez vos ingrédients réels (champ volontairement vide). La péremption se calcule automatiquement.",
-  },
-  {
-    label: "Vous",
-    title: "Vous & contact",
+    label: "Marque",
+    title: "Votre marque",
     icon: User,
-    hint: "Votre nom d'artisan et comment vos clients vous joignent.",
+    hint: "Le nom que vos clients verront et votre numéro WhatsApp.",
+  },
+  {
+    label: "Produit",
+    title: "Le nom du produit",
+    icon: Package,
+    hint: "Comment s'appelle votre produit ? L'assistant peut vous aider.",
+  },
+  {
+    label: "Ingrédients",
+    title: "Vos ingrédients",
+    icon: FlaskConical,
+    hint: "Tapez votre recette réelle — jamais inventée pour vous.",
+  },
+  {
+    label: "Fraîcheur",
+    title: "Fraîcheur & dates",
+    icon: CalendarDays,
+    hint: "Date de fabrication → la péremption se calcule automatiquement.",
+  },
+  {
+    label: "Photos",
+    title: "Photos & logo",
+    icon: Camera,
+    hint: "Photo du produit, logo de votre marque et votre atelier.",
   },
   {
     label: "Vendre",
@@ -278,23 +292,25 @@ export default function ActivatePackClient({
 
   const validateStep = (s: number): string => {
     switch (s) {
-      case 0:
+      case 0: // Marque
+        if (simple.artisanName.trim().length < 2)
+          return "Indiquez le nom de votre marque (2 caractères minimum).";
+        if (simple.contactPhone.trim().length < 7)
+          return "Indiquez un numéro WhatsApp / téléphone valide.";
+        return "";
+      case 1: // Produit
         if (simple.productName.trim().length < 2)
           return "Indiquez le nom de votre produit (2 caractères minimum).";
         if (!simple.contenance.trim())
           return "Indiquez la contenance (ex : 250g, 100ml).";
         return "";
-      case 1:
+      case 2: // Ingrédients
         if (simple.ingredients.trim().length < 2)
           return "Tapez vos ingrédients réels — c'est votre recette, elle n'est jamais inventée pour vous.";
+        return "";
+      case 3: // Fraîcheur
         if (!simple.manufacturingDate) return "Indiquez la date de fabrication.";
         if (!simple.expirationDate) return "Indiquez la date de péremption.";
-        return "";
-      case 2:
-        if (simple.artisanName.trim().length < 2)
-          return "Indiquez votre nom / votre marque.";
-        if (simple.contactPhone.trim().length < 7)
-          return "Indiquez un numéro WhatsApp / téléphone valide.";
         return "";
       default:
         return "";
@@ -591,11 +607,12 @@ export default function ActivatePackClient({
         <div className="mx-auto max-w-md pt-8">
           <div className="mb-6 text-center">
             <div className="mb-3 inline-block rounded-full bg-amber-200 px-4 py-1 text-xs font-bold text-amber-800">
-              ACTIVATION DU PACK
+              ACTIVEZ VOTRE PACK
             </div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              Comment voulez-vous activer votre pack ?
-            </h1>
+            <h1 className="text-2xl font-bold text-gray-900">Activez votre pack</h1>
+            <p className="mt-2 text-sm font-semibold text-gray-600">
+              Choisissez la façon d&apos;activer vos étiquettes.
+            </p>
             {masterCode && (
               <div className="mt-3 inline-flex items-center gap-2 rounded-lg bg-white px-3 py-1.5 shadow-sm">
                 <QrCode className="h-4 w-4 text-amber-600" />
@@ -741,7 +758,7 @@ export default function ActivatePackClient({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {mode === "simple" ? (
-            /* ═══════════ MODE 1 — ONBOARDING GUIDÉ (5 étapes) ═══════════ */
+            /* ═══════════ MODE 1 — ONBOARDING GUIDÉ (7 étapes, 1 question par écran) ═══════════ */
             <>
               {/* ── Barre de progression de l'onboarding ── */}
               <div className="sticky top-2 z-10 rounded-2xl border border-amber-200 bg-white/95 p-4 shadow-md backdrop-blur">
@@ -812,7 +829,7 @@ export default function ActivatePackClient({
                 </div>
               )}
 
-              {/* ═══ ÉTAPE 1/5 — LE PRODUIT ═══ */}
+              {/* ═══ ÉTAPE 1/7 — VOTRE MARQUE ═══ */}
               {step === 0 && (
                 <>
               <div className="rounded-xl border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800">
@@ -822,32 +839,69 @@ export default function ActivatePackClient({
               </div>
 
               <div>
-                <PhotoPicker
-                  label="Photo du produit"
-                  helpText="Prenez-la sur fond clair et bien nette, ou choisissez-la dans votre galerie."
-                  maxCount={1}
-                  files={simple.photo ? [simple.photo] : []}
-                  onChange={(files) => setS({ photo: files[0] ?? null })}
+                <label className={labelCls} htmlFor="artisanName">
+                  Nom de votre marque *
+                </label>
+                <input
+                  id="artisanName"
+                  type="text"
+                  required
+                  minLength={2}
+                  maxLength={120}
+                  placeholder="Ex : Aïssata Cosmétiques"
+                  value={simple.artisanName}
+                  onChange={(e) => setS({ artisanName: e.target.value })}
+                  className={inputCls}
                 />
+                <p className="mt-1 text-xs text-gray-500">
+                  C&apos;est le nom affiché à vos clients sur la page produit.
+                </p>
               </div>
 
-              {/* ── Logo de la marque (demande utilisateur) ── */}
-              <div className="rounded-2xl border border-violet-200 bg-violet-50/60 p-4">
-                <p className="mb-1 flex items-center gap-2 text-sm font-bold text-violet-800">
-                  🏷️ Votre logo (optionnel)
-                </p>
-                <p className="mb-3 text-xs text-violet-600/80">
-                  Il s&apos;affichera sur la page produit, à côté de votre nom d&apos;artisan — vos clients reconnaîtront votre marque instantanément.
-                </p>
-                <PhotoPicker
-                  label="Logo de votre marque"
-                  helpText="De préférence carré, sur fond uni."
-                  maxCount={1}
-                  files={simple.logo ? [simple.logo] : []}
-                  onChange={(files) => setS({ logo: files[0] ?? null })}
+              <div>
+                <label className={labelCls} htmlFor="contactPhone">
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="inline-block h-2 w-2 rounded-full bg-green-500" />
+                    Numéro WhatsApp *
+                  </span>
+                </label>
+                <input
+                  id="contactPhone"
+                  type="tel"
+                  required
+                  minLength={7}
+                  maxLength={30}
+                  inputMode="tel"
+                  placeholder="Ex : 77 123 45 67"
+                  value={simple.contactPhone}
+                  onChange={(e) => setS({ contactPhone: e.target.value })}
+                  className={inputCls}
                 />
+                <p className="mt-1 text-xs text-gray-500">
+                  Vos clients pourront vous contacter directement sur WhatsApp.
+                </p>
               </div>
 
+              <div>
+                <label className={labelCls} htmlFor="contactEmail">
+                  Email (optionnel)
+                </label>
+                <input
+                  id="contactEmail"
+                  type="email"
+                  maxLength={120}
+                  placeholder="Ex : aissata@gmail.com"
+                  value={simple.contactEmail}
+                  onChange={(e) => setS({ contactEmail: e.target.value })}
+                  className={inputCls}
+                />
+              </div>
+                </>
+              )}
+
+              {/* ═══ ÉTAPE 2/7 — LE NOM DU PRODUIT ═══ */}
+              {step === 1 && (
+                <>
               {/* ── Assistant intelligent : remplit tout automatiquement ── */}
               <div className="rounded-2xl border border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50 p-4">
                 <p className="mb-3 flex items-center gap-2 text-sm font-bold text-amber-800">
@@ -928,8 +982,8 @@ export default function ActivatePackClient({
                 </>
               )}
 
-              {/* ═══ ÉTAPE 2/5 — RECETTE & FRAÎCHEUR ═══ */}
-              {step === 1 && (
+              {/* ═══ ÉTAPE 3/7 — VOS INGRÉDIENTS ═══ */}
+              {step === 2 && (
                 <>
               <div>
                 <label className={labelCls} htmlFor="ingredients">
@@ -938,15 +992,24 @@ export default function ActivatePackClient({
                 <textarea
                   id="ingredients"
                   required
-                  rows={3}
+                  rows={5}
                   maxLength={2000}
                   placeholder="Tapez vos ingrédients réels, ex : Beurre de karité 500g, huile de coco, soude…"
                   value={simple.ingredients}
                   onChange={(e) => setS({ ingredients: e.target.value })}
                   className={`${inputCls} resize-none`}
                 />
+                <p className="mt-1 text-xs text-gray-500">
+                  Un ingrédient par ligne si vous préférez — vos clients
+                  verront exactement ce que vous tapez ici.
+                </p>
               </div>
+                </>
+              )}
 
+              {/* ═══ ÉTAPE 4/7 — FRAÎCHEUR & DATES ═══ */}
+              {step === 3 && (
+                <>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className={labelCls} htmlFor="manufacturingDate">
@@ -1013,77 +1076,49 @@ export default function ActivatePackClient({
                 </>
               )}
 
-              {/* ═══ ÉTAPE 3/5 — VOUS & CONTACT ═══ */}
-              {step === 2 && (
+              {/* ═══ ÉTAPE 5/7 — PHOTOS & LOGO ═══ */}
+              {step === 4 && (
                 <>
               <div>
-                <label className={labelCls} htmlFor="artisanName">
-                  Votre nom / Marque *
-                </label>
-                <input
-                  id="artisanName"
-                  type="text"
-                  required
-                  minLength={2}
-                  maxLength={120}
-                  placeholder="Ex : Aïssata Cosmétiques"
-                  value={simple.artisanName}
-                  onChange={(e) => setS({ artisanName: e.target.value })}
-                  className={inputCls}
+                <PhotoPicker
+                  label="Photo du produit"
+                  helpText="Prenez-la sur fond clair et bien nette, ou choisissez-la dans votre galerie."
+                  maxCount={1}
+                  files={simple.photo ? [simple.photo] : []}
+                  onChange={(files) => setS({ photo: files[0] ?? null })}
                 />
               </div>
 
-              <div>
-                <label className={labelCls} htmlFor="contactPhone">
-                  WhatsApp / Téléphone *
-                </label>
-                <input
-                  id="contactPhone"
-                  type="tel"
-                  required
-                  minLength={7}
-                  maxLength={30}
-                  placeholder="Ex : 77 123 45 67"
-                  value={simple.contactPhone}
-                  onChange={(e) => setS({ contactPhone: e.target.value })}
-                  className={inputCls}
+              {/* ── Logo de la marque (demande utilisateur) ── */}
+              <div className="rounded-2xl border border-violet-200 bg-violet-50/60 p-4">
+                <p className="mb-1 flex items-center gap-2 text-sm font-bold text-violet-800">
+                  🏷️ Votre logo (optionnel)
+                </p>
+                <p className="mb-3 text-xs text-violet-600/80">
+                  Il s&apos;affichera sur la page produit, à côté de votre nom d&apos;artisan — vos clients reconnaîtront votre marque instantanément.
+                </p>
+                <PhotoPicker
+                  label="Logo de votre marque"
+                  helpText="De préférence carré, sur fond uni."
+                  maxCount={1}
+                  files={simple.logo ? [simple.logo] : []}
+                  onChange={(files) => setS({ logo: files[0] ?? null })}
                 />
               </div>
 
-              <div>
-                <label className={labelCls} htmlFor="contactEmail">
-                  Email (optionnel)
-                </label>
-                <input
-                  id="contactEmail"
-                  type="email"
-                  maxLength={120}
-                  placeholder="Ex : aissata@gmail.com"
-                  value={simple.contactEmail}
-                  onChange={(e) => setS({ contactEmail: e.target.value })}
-                  className={inputCls}
-                />
-              </div>
-
-              <div>
-                <label className={labelCls} htmlFor="productPrice">
-                  💰 Prix affiché aux clients (optionnel)
-                </label>
-                <input
-                  id="productPrice"
-                  type="text"
-                  maxLength={40}
-                  placeholder="Ex : 5 000 FCFA le pot"
-                  value={simple.productPrice}
-                  onChange={(e) => setS({ productPrice: e.target.value })}
-                  className={inputCls}
-                />
-              </div>
+              <PhotoPicker
+                label="Photos de votre atelier (jusqu'à 3, optionnel)"
+                helpText="Montrez votre savoir-faire : fabrication, matière première, finition."
+                maxCount={3}
+                multiple
+                files={simple.galleryPhotos}
+                onChange={(files) => setS({ galleryPhotos: files })}
+              />
                 </>
               )}
 
-              {/* ═══ ÉTAPE 4/5 — POUR MIEUX VENDRE ═══ */}
-              {step === 3 && (
+              {/* ═══ ÉTAPE 6/7 — POUR MIEUX VENDRE ═══ */}
+              {step === 5 && (
                 <>
               <div className="rounded-xl border border-pink-200 bg-pink-50 p-4">
                 <p className="mb-3 text-sm font-bold text-pink-800">
@@ -1161,21 +1196,28 @@ export default function ActivatePackClient({
                     onChange={(e) => setS({ storageConditions: e.target.value })}
                     className={`${inputCls} resize-none`}
                   />
-                  <PhotoPicker
-                    label="Photos de votre atelier (jusqu'à 3)"
-                    helpText="Montrez votre savoir-faire : fabrication, matière première, finition."
-                    maxCount={3}
-                    multiple
-                    files={simple.galleryPhotos}
-                    onChange={(files) => setS({ galleryPhotos: files })}
-                  />
                 </div>
+              </div>
+
+              <div>
+                <label className={labelCls} htmlFor="productPrice">
+                  💰 Prix affiché aux clients (optionnel)
+                </label>
+                <input
+                  id="productPrice"
+                  type="text"
+                  maxLength={40}
+                  placeholder="Ex : 5 000 FCFA le pot"
+                  value={simple.productPrice}
+                  onChange={(e) => setS({ productPrice: e.target.value })}
+                  className={inputCls}
+                />
               </div>
                 </>
               )}
 
-              {/* ═══ ÉTAPE 5/5 — RÉCAPITULATIF & ACTIVATION ═══ */}
-              {step === 4 && (
+              {/* ═══ ÉTAPE 7/7 — RÉCAPITULATIF & ACTIVATION ═══ */}
+              {step === 6 && (
                 <>
                   <div className="rounded-2xl border border-emerald-200 bg-white p-5 shadow-sm">
                     <p className="mb-1 flex items-center gap-2 text-sm font-extrabold text-gray-900">
@@ -1186,33 +1228,37 @@ export default function ActivatePackClient({
                     </p>
                     <div className="space-y-2">
                       {recapRow(
+                        "Marque & WhatsApp",
+                        `${simple.artisanName} · ${simple.contactPhone}`,
+                        () => setStep(0),
+                      )}
+                      {recapRow(
                         "Produit",
                         `${simple.productName}${simple.contenance ? ` · ${simple.contenance}` : ""}`,
-                        () => setStep(0),
+                        () => setStep(1),
                       )}
-                      {simple.productPrice &&
-                        recapRow("Prix", simple.productPrice, () => setStep(2))}
-                      {recapRow(
-                        "Photo du produit",
-                        simple.photo ? simple.photo.name : "Non fournie",
-                        () => setStep(0),
-                      )}
-                      {recapRow("Logo", simple.logo ? simple.logo.name : "Aucun", () => setStep(0))}
-                      {recapRow("Fabrication", formatFrDate(simple.manufacturingDate), () => setStep(1))}
-                      {recapRow("À utiliser avant", formatFrDate(simple.expirationDate), () => setStep(1))}
                       {recapRow(
                         "Ingrédients",
                         simple.ingredients.length > 70
                           ? `${simple.ingredients.slice(0, 70)}…`
                           : simple.ingredients,
-                        () => setStep(1),
+                        () => setStep(2),
                       )}
+                      {recapRow("Fabrication", formatFrDate(simple.manufacturingDate), () => setStep(3))}
+                      {recapRow("À utiliser avant", formatFrDate(simple.expirationDate), () => setStep(3))}
+                      {recapRow(
+                        "Photo du produit",
+                        simple.photo ? simple.photo.name : "Non fournie",
+                        () => setStep(4),
+                      )}
+                      {recapRow("Logo", simple.logo ? simple.logo.name : "Aucun", () => setStep(4))}
+                      {simple.productPrice &&
+                        recapRow("Prix", simple.productPrice, () => setStep(5))}
                       {recapRow(
                         "Conseils",
                         `${simple.usageTips.split("\n").filter((t) => t.trim()).length} conseil(s)`,
-                        () => setStep(3),
+                        () => setStep(5),
                       )}
-                      {recapRow("Artisan", `${simple.artisanName} · ${simple.contactPhone}`, () => setStep(2))}
                     </div>
                   </div>
 
