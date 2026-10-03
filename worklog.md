@@ -5442,3 +5442,19 @@ Work Log:
 Stage Summary:
 - Les DEUX modes d'activation utilisent désormais l'onboarding guidé (simple 7 étapes, flexible 6 étapes) ; l'ancien formulaire monolithique a disparu.
 - Prod à vérifier après redeploy : /api/health → commit 187d3c4…, puis /activer-pack/<maître> → « Activer par produits différents » = wizard.
+
+---
+Task ID: 12
+Agent: Super Z (principal)
+Task: « avez-vous réglé le problème de l'insertion du nouveau design ? » — confirmation + vérification prod
+
+Work Log:
+- État dépôt : 187d3c4 + 3564abf étaient présents localement mais origin/main vu à 3756cdf (refs remote-tracking périmées) → `git push origin main` → « Everything up-to-date », origin/main désormais à 3564abf, main synchronisé.
+- GET https://verifscan.com/api/health → commit 3564abf : le redeploy Coolify est passé, la prod tourne sur le wizard flexible.
+- Vérification navigateur PRODUCTION (viewport mobile 390×844) : /activer-pack/MASTER-CMUSNJ33-P01 → écran de choix → « Activer par produits différents » → wizard 6 étapes (pills Marque/Produits/Ingrédients/Fraîcheur/Photos/Confirmer) → étape Marque saisie → Continuer → étape Produits avec répartition live (« Restant après activation : 200 ») + « Ajouter un autre produit ». AUCUNE activation soumise (formulaire non soumis, bouton retour Modes).
+- Re-test e2e local : test-flexible-activation 51/51 OK.
+- Captures preuve : download/prod-flex-step1-marque.png, download/prod-flex-step2-produits.png.
+
+Stage Summary:
+- Les deux modes d'activation (simple 7 étapes, flexible 6 étapes) sont en PRODUCTION sur verifscan.com (commit 3564abf).
+- Si l'artisan voit encore l'ancien design : cache navigateur/PWA → forcer le rechargement (Ctrl+Shift+R) ou fermer/rouvrir la PWA installée.
