@@ -1,19 +1,20 @@
 /**
- * E2E — Page artisan WOW v5 : correctifs retour test mobile.
+ * E2E — Page artisan v6 : retour test n°2.
  *
  * 1. Login SuperAdmin
- * 2. POST batch de test 1/1/0 → 1 code maître
- * 3. Activation avec productDesignation + prix
- * 4. GET /a/<maître> → vérifie les 5 correctifs :
- *    a) hero plus bas sur mobile (min-h-[75svh] + sm:min-h-[92svh])
- *    b) overlay allégé (from-stone-950/95 via-stone-950/15 to-stone-950/5)
- *       + description ABSENTE du hero (présente 1× dans la carte)
- *    c) badges opaques (bg-emerald-600 / bg-amber-500 / bg-white)
- *    d) logo VerifScan EN COULEUR (verifscan-logo.webp) sur pastille blanche
- *       dans le hero ET le footer (plus de verifscan-logo-white)
- *    e) logos artisan object-contain (2 occurrences)
+ * 2. POST batch 1/1/0 + activation (designation + prix) + logo horizontal
+ *    + 3 photos atelier
+ * 3. GET /a/<maître> → vérifie :
+ *    a) HERO 100 % IMAGE : plus AUCUNE superposition (ni badges, ni titre,
+ *       ni étoiles/avis) — logo VerifScan couleur + bouton Découvrir seuls
+ *    b) overlay très léger
+ *    c) badges carte EN VEDETTE (gradients pleins Fait main/Naturel/Local)
+ *    d) péremption à FOND VERT (gradient emerald→teal plein)
+ *    e) galerie atelier en SLIDER grandes images (plus de grille h-24)
+ *    f) non-régressions (logo couleur, object-contain, footer, wa.me…)
  *
- * Usage : BASE=http://localhost:3100 bun scripts/test-artisan-fixes-v5.ts
+ * Usage : BASE=http://localhost:3100 ADMIN_PASSWORD=… DATABASE_URL=file:… \
+ *          bun scripts/test-artisan-fixes-v5.ts
  */
 const BASE = process.env.BASE ?? "http://localhost:3100";
 
@@ -83,7 +84,7 @@ function expect(html: string, label: string, needle: string, mustHave = true) {
 
 async function main() {
   console.log("1. Login SuperAdmin...");
-  const ok = await login(process.env.ADMIN_PASSWORD ?? "ChangeMeOnFirstLogin!2025");
+  const ok = await login(process.env.ADMIN_PASSWORD ?? "Admin123!2025");
   console.log("   login:", ok ? "OK" : "ÉCHEC");
   if (!ok) process.exit(1);
 
@@ -122,52 +123,88 @@ async function main() {
   console.log("   status:", act.status, act.body?.message ?? act.body?.error ?? "");
   if (act.status !== 200) process.exit(1);
 
-  console.log("3b. Attribution d'un logo HORIZONTAL 400x120 au pack (cas testé)...");
+  console.log("3b. Logo horizontal + 3 photos atelier sur le pack (cas testés)...");
   const { PrismaClient } = await import("@prisma/client");
   const db = new PrismaClient();
-  await db.pack.updateMany({ data: { logoUrl: "/test-logo-horizontal.png" } });
+  await db.pack.updateMany({
+    data: {
+      logoUrl: "/test-logo-horizontal.png",
+      artisanPhotos: JSON.stringify([
+        "/test-atelier-1.png",
+        "/test-atelier-2.png",
+        "/test-atelier-3.png",
+      ]),
+    },
+  });
   const packCount = await db.pack.count();
   await db.$disconnect();
-  console.log(`   ✓ logoUrl défini sur ${packCount} pack(s)`);
+  console.log(`   ✓ logoUrl + artisanPhotos définis sur ${packCount} pack(s)`);
 
-  console.log("4. GET /a/" + master1 + " — vérification des 5 correctifs...");
+  console.log("4. GET /a/" + master1 + " — vérification retour test n°2...");
   const page = await req(`/a/${master1}`);
   console.log("   status:", page.status);
   if (page.status !== 200) process.exit(1);
   const html: string = page.body;
   // Le HTML servi contient le payload RSC d'hydratation (<script>…JSON…</script>)
-  // qui DUPRIQUE le markup — ne compter que le DOM visible.
+  // qui duplique le markup — ne compter que le DOM visible.
   const visible = html.replace(/<script[\s\S]*?<\/script>/g, "");
+  // Le hero est le seul <header> de la page.
+  const hero = visible.split("<header")[1]?.split("</header>")[0] ?? "";
+  const after = visible.split("</header>")[1] ?? "";
 
-  console.log("   a) Hero mobile compact :");
-  expect(html, "hero 75svh mobile", "min-h-[75svh]");
-  expect(html, "hero 92svh desktop", "sm:min-h-[92svh]");
+  console.log("   a) HERO 100 % image (plus de superpositions) :");
+  expect(hero, "hero SANS badge Produit authentique", "Produit authentique", false);
+  expect(hero, "hero SANS badge Fait main", "Fait main", false);
+  expect(hero, "hero SANS sur-titre Création artisanale", "Création artisanale", false);
+  expect(hero, "hero SANS titre h1", "<h1", false);
+  expect(hero, "hero SANS étoiles/avis", "Avis vérifiés", false);
+  expect(hero, "hero avec logo couleur", "verifscan-logo.webp?v=5");
+  expect(hero, "hero avec bouton Découvrir", "Découvrir");
 
-  console.log("   b) Image produit visible :");
-  expect(html, "overlay allégé (haut quasi transparent)", "from-stone-950/95 via-stone-950/15 to-stone-950/5");
-  // La désignation ne doit apparaître qu'UNE fois visible (carte), jamais dans le hero.
+  console.log("   b) Overlay très léger :");
+  expect(visible, "voile léger", "from-stone-950/70 via-stone-950/5 to-transparent");
+  expect(visible, "ancien voile supprimé", "via-stone-950/15", false);
+
+  console.log("   c) Badges carte EN VEDETTE :");
+  expect(after, "Fait main gradient plein", "from-amber-500 to-orange-500");
+  expect(after, "Naturel gradient plein", "from-emerald-500 to-teal-500");
+  expect(after, "Local gradient plein", "from-sky-500 to-blue-600");
+
+  console.log("   d) Péremption à FOND VERT :");
+  expect(after, "fond vert plein", "from-emerald-500 via-green-500 to-teal-600");
+  expect(after, "date en blanc sur fond vert", "text-[1.55rem] font-black leading-tight text-white");
+  expect(after, "ancienne carte blanche supprimée", "rounded-[calc(2rem-1.5px)] bg-white", false);
+
+  console.log("   e) Galerie atelier en SLIDER :");
+  expect(after, "photo atelier 1 servie", "test-atelier-1.png");
+  expect(after, "photo atelier 2 servie", "test-atelier-2.png");
+  expect(after, "photo atelier 3 servie", "test-atelier-3.png");
+  expect(after, "piste scrollbar masquée", "art-hide-scrollbar");
+  expect(after, "piste scroll-snap", "snap-x snap-mandatory");
+  expect(after, "grandes images h-60", "h-60 w-full object-cover");
+  expect(after, "flèches navigation", "Photo suivante");
+  expect(after, "points indicateurs", "Aller à la photo 2");
+  expect(after, "ancienne grille supprimée", "grid grid-cols-3 gap-2", false);
+
+  console.log("   f) Non-régression :");
+  expect(after, "nom produit (carte)", "Beurre de karité pur");
+  expect(after, "prix", "5 000 FCFA");
+  expect(after, "désignation 1× (carte)", "ideal pour la peau et les cheveux");
+  expect(visible, "2 avatars logo object-contain", "object-contain p-0.5");
+  expect(after, "footer vérifié", "Vérifié par VerifScan");
+  expect(after, "WhatsApp wa.me", "wa.me/221771234567");
+  expect(after, "logo horizontal servi", "test-logo-horizontal.png");
+
+  // Désignation : 1 seule occurrence visible (carte, jamais hero)
   const designation = "ideal pour la peau et les cheveux";
   const occurrences = visible.split(designation).length - 1;
   if (occurrences !== 1) {
-    console.error(`   ✗ désignation affichée ${occurrences}× (attendu 1× — carte seulement)`);
+    console.error(`   ✗ désignation affichée ${occurrences}× (attendu 1× — carte)`);
     failed++;
   } else {
-    console.log("   ✓ désignation affichée 1× (carte flottante, plus de recouvrement hero)");
+    console.log("   ✓ désignation affichée 1× (carte flottante)");
   }
-
-  console.log("   c) Badges visibles :");
-  expect(html, "badge authentique opaque", "bg-emerald-600");
-  expect(html, "badge fait main opaque", "bg-amber-500");
-  expect(html, "badge naturel blanc", "text-emerald-700 shadow-lg ring-1 ring-white");
-
-  console.log("   d) Logo VerifScan en couleur :");
-  expect(html, "logo couleur hero", "verifscan-logo.webp?v=5");
-  expect(html, "plus de logo blanc", "verifscan-logo-white", false);
-  expect(html, "pastille blanche hero", "rounded-full bg-white px-5 py-2.5");
-  expect(html, "carte blanche footer", "rounded-3xl bg-white px-6 py-3.5");
-
-  console.log("   e) Logo artisan non coupé :");
-  expect(visible, "logo horizontal servi", "test-logo-horizontal.png");
+  // object-contain ×2 exactement (carte + histoire)
   const containCount = (visible.match(/object-contain p-0\.5/g) ?? []).length;
   if (containCount !== 2) {
     console.error(`   ✗ object-contain p-0.5 présent ${containCount}× (attendu 2×)`);
@@ -176,18 +213,11 @@ async function main() {
     console.log("   ✓ 2 avatars logo en object-contain (carte + histoire)");
   }
 
-  console.log("   f) Non-régression :");
-  expect(html, "nom produit", "Beurre de karité pur");
-  expect(html, "prix", "5 000 FCFA");
-  expect(html, "badge fait main carte", "Fait main");
-  expect(html, "footer vérifié", "Vérifié par VerifScan");
-  expect(html, "WhatsApp wa.me", "wa.me/221771234567");
-
   if (failed > 0) {
     console.error(`\n✗ ${failed} échec(s)`);
     process.exit(1);
   }
-  console.log("\n✓ Tous les correctifs sont en place.");
+  console.log("\n✓ Retour test n°2 : tous les changements sont en place.");
 }
 
 main();

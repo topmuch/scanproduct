@@ -462,6 +462,15 @@ html.dark { color-scheme: dark; }
   will-change: transform, opacity;
 }
 
+/* Carrousel atelier : masque la scrollbar (swipe + flèches/points à la place) */
+.art-hide-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.art-hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 /* Reflet balayeur (barre de progression, prix) */
 @keyframes art-shimmer-x {
   0% {

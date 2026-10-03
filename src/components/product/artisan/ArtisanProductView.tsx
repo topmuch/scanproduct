@@ -1,12 +1,14 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import {
   AlertTriangle,
   BadgeCheck,
   Check,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   ChevronUp,
   Facebook,
   FlaskConical,
@@ -310,6 +312,126 @@ const RATING_LABELS = [
   "Très satisfait",
   "Coup de cœur !",
 ];
+
+/**
+ * AtelierSlider — carrousel « L'atelier en images » à GRANDES images
+ * (retour test : remplacer la grille 3 miniatures par un slide).
+ *
+ * Scroll-snap horizontal (swipe natif mobile, aucune dépendance), flèches
+ * ‹ › et points indicateurs cliquables ; clic sur une photo → lightbox.
+ */
+function AtelierSlider({
+  photos,
+  artisanName,
+  onZoom,
+}: {
+  photos: string[];
+  artisanName: string;
+  onZoom: (url: string) => void;
+}) {
+  const trackRef = useRef<HTMLDivElement>(null);
+  const [current, setCurrent] = useState(0);
+
+  /** Amène la slide `i` au centre (flèches / points). */
+  function goTo(i: number) {
+    const track = trackRef.current;
+    if (!track) return;
+    const clamped = Math.max(0, Math.min(photos.length - 1, i));
+    (track.children[clamped] as HTMLElement | undefined)?.scrollIntoView({
+      behavior: "smooth",
+      block: "nearest",
+      inline: "center",
+    });
+  }
+
+  return (
+    <div className="relative">
+      {/* Piste scrollable — scrollbar masquée, snap au centre */}
+      <div
+        ref={trackRef}
+        className="art-hide-scrollbar -mx-1 flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-p-4 px-1 pb-1"
+        onScroll={(e) => {
+          // Slide la plus proche du centre = index courant (points + flèches)
+          const el = e.currentTarget;
+          const slides = Array.from(el.children) as HTMLElement[];
+          const center = el.scrollLeft + el.clientWidth / 2;
+          let best = 0;
+          let bestDist = Infinity;
+          slides.forEach((s, i) => {
+            const c = s.offsetLeft + s.offsetWidth / 2;
+            const d = Math.abs(c - center);
+            if (d < bestDist) {
+              bestDist = d;
+              best = i;
+            }
+          });
+          setCurrent(best);
+        }}
+      >
+        {photos.map((url, i) => (
+          <button
+            key={url}
+            type="button"
+            onClick={() => onZoom(url)}
+            aria-label={`Agrandir la photo ${i + 1} de l'atelier de ${artisanName}`}
+            className="group relative w-[88%] flex-shrink-0 cursor-zoom-in snap-center overflow-hidden rounded-3xl border border-amber-100 shadow-md sm:w-[75%]"
+          >
+            <SafeImage
+              src={url}
+              alt={`Atelier de ${artisanName} — photo ${i + 1}`}
+              className="h-60 w-full object-cover transition-transform duration-500 group-hover:scale-105 sm:h-72"
+              emoji="📷"
+            />
+            <span className="absolute bottom-3 right-3 rounded-full bg-black/60 px-2.5 py-1 text-[11px] font-bold text-white backdrop-blur">
+              {i + 1}/{photos.length}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      {/* Flèches ‹ › (desktop surtout ; swipe naturel sur mobile) */}
+      {photos.length > 1 && (
+        <>
+          <button
+            type="button"
+            onClick={() => goTo(current - 1)}
+            disabled={current === 0}
+            aria-label="Photo précédente"
+            className="absolute left-2 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/95 text-stone-700 shadow-lg ring-1 ring-black/5 transition-all hover:scale-110 hover:bg-white disabled:pointer-events-none disabled:opacity-0"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => goTo(current + 1)}
+            disabled={current === photos.length - 1}
+            aria-label="Photo suivante"
+            className="absolute right-2 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/95 text-stone-700 shadow-lg ring-1 ring-black/5 transition-all hover:scale-110 hover:bg-white disabled:pointer-events-none disabled:opacity-0"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </button>
+
+          {/* Points indicateurs cliquables */}
+          <div className="mt-3 flex items-center justify-center gap-1.5">
+            {photos.map((_, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => goTo(i)}
+                aria-label={`Aller à la photo ${i + 1}`}
+                className={`h-2 rounded-full transition-all duration-300 ${
+                  i === current
+                    ? "w-7 bg-gradient-to-r from-amber-500 to-orange-500"
+                    : "w-2 bg-stone-300 hover:bg-stone-400"
+                }`}
+              />
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
 
 export function ArtisanProductView({
   lot,
@@ -666,10 +788,10 @@ export function ArtisanProductView({
           )}
         </div>
 
-        {/* Voile de lisibilité : sombre UNIQUEMENT en bas (sous le texte),
-            quasi transparent en haut — la photo produit reste bien visible
-            (retour test : l'image était trop recouverte par l'overlay). */}
-        <div className="absolute inset-0 bg-gradient-to-t from-stone-950/95 via-stone-950/15 to-stone-950/5" />
+        {/* Voile TRÈS léger : le hero ne porte plus AUCUN texte (retour test :
+            titre/badges/avis supprimés de l'image) — juste une petite ombre
+            en bas pour asseoir le bouton Découvrir. */}
+        <div className="absolute inset-0 bg-gradient-to-t from-stone-950/70 via-stone-950/5 to-transparent" />
 
         {/* Pilule marque VerifScan (verre dépoli) */}
         <div className="art-fade-down relative z-10 flex justify-center pt-5">
@@ -684,53 +806,19 @@ export function ArtisanProductView({
           </Link>
         </div>
 
-        {/* Espace flexible → contenu collé en bas */}
+        {/* Espace flexible → bouton collé en bas */}
         <div className="flex-1" />
 
-        {/* Badges flottants + titre révélé + étoiles */}
-        <div className="relative z-10 mx-auto w-full max-w-lg px-5 pb-5 text-white">
-          {/* Badges OPACES (retour test : les versions translucides se
-              noyaient dans la photo) — lisibles sur n'importe quelle image. */}
-          <div className="mb-5 flex flex-wrap items-center gap-2">
-            <span className="art-float inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-3.5 py-2 text-[13px] font-black text-white shadow-lg shadow-emerald-950/50 ring-1 ring-emerald-300/70">
-              <ShieldCheck className="h-4 w-4" /> Produit authentique
-            </span>
-            <span className="art-float-delay inline-flex items-center gap-1.5 rounded-full bg-amber-500 px-3.5 py-2 text-[13px] font-black text-white shadow-lg shadow-amber-950/50 ring-1 ring-amber-200/80">
-              <Hand className="h-4 w-4" /> Fait main
-            </span>
-            <span className="art-float-delay-2 inline-flex items-center gap-1.5 rounded-full bg-white px-3.5 py-2 text-[13px] font-black text-emerald-700 shadow-lg ring-1 ring-white">
-              <Leaf className="h-4 w-4" /> Naturel
-            </span>
-          </div>
-
-          <p className="art-fade-up art-delay-1 mb-2 text-[11px] font-bold uppercase tracking-[0.22em] text-amber-200/90">
-            Création artisanale · Sénégal
-          </p>
-          <h1 className="art-title-reveal text-[2.55rem] font-black leading-[1.06] tracking-tight drop-shadow-sm">
-            {lot.productName}
-          </h1>
-          {/* NB : la désignation (description) n'est PAS affichée ici —
-              elle recouvrait la photo produit (retour test). Elle reste
-              visible dans la carte flottante section 2. */}
-          <div className="art-fade-up art-delay-3 mt-4 flex items-center gap-2">
-            <Stars
-              value={avgRating > 0 ? Math.round(avgRating) : 5}
-              className="h-5 w-5"
-              emptyClassName="text-white/30"
-            />
-            <span className="text-xs font-semibold text-white/80">
-              {avgRating > 0
-                ? `${avgRating.toFixed(1)}/5 · ${reviews.length} avis vérifié${reviews.length > 1 ? "s" : ""}`
-                : "Avis vérifiés par scan"}
-            </span>
-          </div>
-        </div>
+        {/* HERO 100 % IMAGE (retour test) : PLUS AUCUNE superposition sur la
+            photo — badges, titre, étoiles et avis ont été déplacés ou
+            supprimés. La photo produit se suffit à elle-même. Toutes les
+            informations sont dans la carte flottante ci-dessous. */}
 
         {/* Bouton « Découvrir » — scroll fluide vers la carte produit.
             pb-24 : la carte flottante (-mt-16 = 64 px d'overlap) recouvre le
             bas du hero → le bouton doit rester AU-DESSUS de cette zone
             (sinon il est recouvert et inclicable — bug détecté au test). */}
-        <div className="art-fade-up art-delay-4 relative z-30 flex justify-center pb-24">
+        <div className="art-fade-up art-delay-2 relative z-30 flex justify-center pb-24">
           <button
             type="button"
             onClick={scrollToProduct}
@@ -803,15 +891,16 @@ export function ArtisanProductView({
                 </span>
               </div>
 
-              {/* Badges dynamiques */}
+              {/* Badges EN VEDETTE (retour test : « mettre en valeur fait main,
+                  naturel et local ») — couleurs pleines, texte blanc, plus grands. */}
               <div className="mt-4 flex flex-wrap gap-2">
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-700 ring-1 ring-amber-200/80">
-                  <Hand className="h-3.5 w-3.5" /> Fait main
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 px-4 py-2 text-[13px] font-black text-white shadow-md shadow-amber-500/30">
+                  <Hand className="h-4 w-4" /> Fait main
                 </span>
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700 ring-1 ring-emerald-200/80">
-                  <Leaf className="h-3.5 w-3.5" /> Naturel
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 px-4 py-2 text-[13px] font-black text-white shadow-md shadow-emerald-500/30">
+                  <Leaf className="h-4 w-4" /> Naturel
                 </span>
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-50 px-3 py-1.5 text-xs font-bold text-sky-700 ring-1 ring-sky-200/80">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-sky-500 to-blue-600 px-4 py-2 text-[13px] font-black text-white shadow-md shadow-sky-500/30">
                   🇸🇳 Local
                 </span>
               </div>
@@ -859,89 +948,97 @@ export function ArtisanProductView({
           </section>
         </Reveal>
 
-        {/* ════ 3. BARRE DE FRAÎCHEUR ANIMÉE — PÉREMPTION EN VEDETTE ══════ */}
+        {/* ════ 3. PÉREMPTION EN VEDETTE — CARTE À FOND VERT PLEIN ═══════
+            (retour test : « le rubrique péremption le mettre en valeur avec
+            un couleur de fond vert »). Le fond est VERT pour un produit
+            frais ; il devient ambre (≤ 30 jours) ou rouge (périmé) pour
+            rester honnête — la mise en valeur est conservée dans tous les
+            cas. Texte blanc, cercle blanc, gros contraste. */}
         <Reveal delay={90}>
-          <section className="mt-4 rounded-[2rem] bg-gradient-to-br from-emerald-400 via-teal-400 to-green-500 p-[1.5px] shadow-xl shadow-emerald-900/10">
-            <div className="rounded-[calc(2rem-1.5px)] bg-white p-6">
-              <Eyebrow>Du frais, prouvé</Eyebrow>
-              <div className="flex items-center gap-5">
-                {/* Compte à rebours circulaire + anneau pulsant si très frais */}
-                <div className="relative flex-shrink-0">
-                  {isVeryFresh && (
-                    <span
-                      className="art-ring absolute inset-0 rounded-full border-4 border-emerald-300"
-                      aria-hidden
-                    />
-                  )}
-                  <div
-                    className={`relative flex h-24 w-24 flex-col items-center justify-center rounded-full border-4 ${
+          <section
+            className={`mt-4 rounded-[2rem] bg-gradient-to-br p-6 shadow-2xl ${
+              isExpired
+                ? "from-red-500 via-rose-500 to-red-600 shadow-red-900/30"
+                : daysLeft !== null && daysLeft <= 30
+                  ? "from-amber-500 via-orange-500 to-amber-600 shadow-amber-900/30"
+                  : "from-emerald-500 via-green-500 to-teal-600 shadow-emerald-900/30"
+            }`}
+          >
+            <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.18em] text-white/90">
+              🌿 Du frais, prouvé — péremption
+            </p>
+            <div className="flex items-center gap-5">
+              {/* Compte à rebours : disque BLANC sur fond coloré + anneau pulsant */}
+              <div className="relative flex-shrink-0">
+                {isVeryFresh && (
+                  <span
+                    className="art-ring absolute inset-0 rounded-full border-4 border-white/70"
+                    aria-hidden
+                  />
+                )}
+                <div className="relative flex h-24 w-24 flex-col items-center justify-center rounded-full bg-white shadow-lg ring-4 ring-white/40">
+                  <span
+                    className={`text-2xl font-black leading-none ${
                       isExpired
-                        ? "border-red-100 bg-red-50"
+                        ? "text-red-600"
                         : daysLeft !== null && daysLeft <= 30
-                          ? "border-amber-100 bg-amber-50"
-                          : "border-emerald-100 bg-emerald-50"
+                          ? "text-amber-600"
+                          : "text-emerald-600"
                     }`}
                   >
-                    <span
-                      className={`text-2xl font-black leading-none ${
-                        isExpired
-                          ? "text-red-600"
-                          : daysLeft !== null && daysLeft <= 30
-                            ? "text-amber-600"
-                            : "text-emerald-600"
-                      }`}
-                    >
-                      {isExpired ? Math.abs(daysLeft ?? 0) : daysLeft ?? 0}
-                    </span>
-                    <span className="mt-1 text-[9px] font-bold uppercase tracking-wider text-stone-500">
-                      {isExpired ? "jours dépassé" : "jours restants"}
-                    </span>
-                  </div>
-                </div>
-
-                {/* LA date de péremption, en gros */}
-                <div className="min-w-0 flex-1">
-                  <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-stone-400">
-                    À utiliser avant le
-                  </p>
-                  <p className="mt-0.5 text-[1.55rem] font-black leading-tight text-emerald-700">
-                    {formatDate(lot.expirationDate)}
-                  </p>
-                  {freshnessStatus && (
-                    <span
-                      className={`mt-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ring-1 ${freshnessStatus.chip}`}
-                    >
-                      <span
-                        className={`h-2 w-2 rounded-full ${freshnessStatus.dot} ${
-                          isVeryFresh ? "animate-pulse" : ""
-                        }`}
-                      />
-                      {freshnessStatus.label}
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              {/* Barre de progression durée de vie + reflet shimmer */}
-              <div className="art-shimmer mt-5 h-2.5 rounded-full bg-stone-100">
-                <div
-                  className={`h-full rounded-full transition-all duration-1000 ${
-                    isExpired
-                      ? "bg-gradient-to-r from-red-400 to-rose-500"
-                      : "bg-gradient-to-r from-emerald-400 via-green-400 to-emerald-500"
-                  }`}
-                  style={{ width: `${shelfLifePct}%` }}
-                />
-              </div>
-              <div className="mt-1.5 flex justify-between text-[11px] font-semibold text-stone-400">
-                <span>
-                  Fabriqué le{" "}
-                  <span className="font-bold text-stone-600">
-                    {formatDate(lot.manufacturingDate)}
+                    {isExpired ? Math.abs(daysLeft ?? 0) : daysLeft ?? 0}
                   </span>
-                </span>
-                <span>Péremption</span>
+                  <span
+                    className={`mt-1 text-[9px] font-bold uppercase tracking-wider ${
+                      isExpired
+                        ? "text-red-500/80"
+                        : daysLeft !== null && daysLeft <= 30
+                          ? "text-amber-600/80"
+                          : "text-emerald-600/80"
+                    }`}
+                  >
+                    {isExpired ? "jours dépassé" : "jours restants"}
+                  </span>
+                </div>
               </div>
+
+              {/* LA date de péremption, en gros sur le fond vert */}
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-white/85">
+                  À utiliser avant le
+                </p>
+                <p className="mt-0.5 text-[1.55rem] font-black leading-tight text-white drop-shadow-sm">
+                  {formatDate(lot.expirationDate)}
+                </p>
+                {freshnessStatus && (
+                  <span className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-xs font-bold text-stone-800 shadow-sm">
+                    <span
+                      className={`h-2 w-2 rounded-full ${freshnessStatus.dot} ${
+                        isVeryFresh ? "animate-pulse" : ""
+                      }`}
+                    />
+                    {freshnessStatus.label}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Barre de progression durée de vie : piste translucide,
+                remplissage blanc + reflet shimmer */}
+            <div className="art-shimmer mt-5 h-2.5 rounded-full bg-white/30">
+              <div
+                className="h-full rounded-full bg-white shadow-sm transition-all duration-1000"
+                style={{ width: `${shelfLifePct}%` }}
+              />
+            </div>
+            <div className="mt-1.5 flex justify-between text-[11px] font-semibold text-white/85">
+              <span>
+                Fabriqué le{" "}
+                <span className="font-bold text-white">
+                  {formatDate(lot.manufacturingDate)}
+                </span>
+              </span>
+              <span>Péremption</span>
             </div>
           </section>
         </Reveal>
@@ -1134,30 +1231,18 @@ export function ArtisanProductView({
                 </div>
               </div>
 
-              {/* Galerie — l'atelier en images */}
+              {/* Galerie — l'atelier en images : SLIDER grandes photos
+                  (retour test : la grille 3 miniatures h-24 était trop petite) */}
               {artisanPhotos.length > 0 && (
                 <div className="mt-5">
                   <p className="mb-3 text-sm font-bold text-stone-800">
                     📷 L&rsquo;atelier en images
                   </p>
-                  <div className="grid grid-cols-3 gap-2">
-                    {artisanPhotos.map((url) => (
-                      <button
-                        key={url}
-                        type="button"
-                        onClick={() => setLightbox(url)}
-                        aria-label={`Agrandir la photo de l'atelier de ${lot.artisanName}`}
-                        className="group h-24 cursor-zoom-in overflow-hidden rounded-2xl border border-amber-100 shadow-sm"
-                      >
-                        <SafeImage
-                          src={url}
-                          alt={`Atelier de ${lot.artisanName}`}
-                          className="h-24 w-full object-cover transition-transform duration-500 group-hover:scale-110"
-                          emoji="📷"
-                        />
-                      </button>
-                    ))}
-                  </div>
+                  <AtelierSlider
+                    photos={artisanPhotos}
+                    artisanName={lot.artisanName}
+                    onZoom={setLightbox}
+                  />
                 </div>
               )}
             </div>
