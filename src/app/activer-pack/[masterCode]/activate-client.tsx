@@ -220,6 +220,51 @@ const SIMPLE_STEPS = [
   },
 ];
 
+/**
+ * ONBOARDING (mode flexible) — même parcours guidé que le mode simple,
+ * adapté à la répartition par produits : UNE question par écran, et à
+ * l'intérieur d'un même sujet, UNE carte par produit. L'artisan avance
+ * étape par étape sans jamais affronter le formulaire complet d'un coup.
+ */
+const FLEX_STEPS = [
+  {
+    label: "Marque",
+    title: "Votre marque",
+    icon: User,
+    hint: "Commun à tous vos produits — le nom que vos clients verront.",
+  },
+  {
+    label: "Produits",
+    title: "Vos produits",
+    icon: Layers,
+    hint: "Un nom par produit et le nombre d'étiquettes pour chacun.",
+  },
+  {
+    label: "Ingrédients",
+    title: "Vos ingrédients",
+    icon: FlaskConical,
+    hint: "La recette réelle de chaque produit — jamais inventée pour vous.",
+  },
+  {
+    label: "Fraîcheur",
+    title: "Fraîcheur & dates",
+    icon: CalendarDays,
+    hint: "Contenance et dates de chaque produit — la péremption se calcule.",
+  },
+  {
+    label: "Photos",
+    title: "Photos & logo",
+    icon: Camera,
+    hint: "Logo, atelier, photos produit… Tout est optionnel ici.",
+  },
+  {
+    label: "Confirmer",
+    title: "Tout est prêt ?",
+    icon: ClipboardCheck,
+    hint: "Vérifiez la répartition, puis lancez l'activation.",
+  },
+];
+
 export default function ActivatePackClient({
   masterCode,
   initialPackInfo,
@@ -331,6 +376,61 @@ export default function ActivatePackClient({
   const goBack = () => {
     setStepError("");
     setStep((v) => Math.max(v - 1, 0));
+    if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  // ── ONBOARDING (mode flexible) : mêmes principes, étapes adaptées ──
+  const [flexStep, setFlexStep] = useState(0);
+
+  const validateFlexStep = (s: number): string => {
+    switch (s) {
+      case 0: // Marque (commun)
+        if (shared.artisanName.trim().length < 2)
+          return "Indiquez le nom de votre marque (2 caractères minimum).";
+        if (shared.contactPhone.trim().length < 7)
+          return "Indiquez un numéro WhatsApp / téléphone valide.";
+        return "";
+      case 1: // Produits (répartition)
+        if (groups.some((g) => g.productName.trim().length < 2))
+          return "Donnez un nom (2 caractères minimum) à chaque produit.";
+        if (groups.some((g) => !Number.isInteger(parseInt(g.count, 10)) || parseInt(g.count, 10) < 1))
+          return "Chaque produit doit avoir au moins 1 étiquette.";
+        if (groups.length < 1)
+          return "Ajoutez au moins un produit.";
+        if (overflow)
+          return `Vous avez réparti ${allocated} étiquettes mais il n'en reste que ${packInfo.remaining} — réduisez les quantités.`;
+        return "";
+      case 2: // Ingrédients par produit
+        if (groups.some((g) => g.ingredients.trim().length < 2))
+          return "Tapez les ingrédients réels de chaque produit — c'est votre recette.";
+        return "";
+      case 3: // Fraîcheur & détails par produit
+        if (groups.some((g) => !g.contenance.trim()))
+          return "Indiquez la contenance de chaque produit (ex : 250g, 100ml).";
+        if (groups.some((g) => !g.manufacturingDate))
+          return "Indiquez la date de fabrication de chaque produit.";
+        if (groups.some((g) => !g.expirationDate))
+          return "Indiquez la date de péremption de chaque produit.";
+        return "";
+      default:
+        return "";
+    }
+  };
+
+  const flexGoNext = () => {
+    const err = validateFlexStep(flexStep);
+    if (err) {
+      setStepError(err);
+      return;
+    }
+    setStepError("");
+    setFlexStep((v) => Math.min(v + 1, FLEX_STEPS.length - 1));
+    if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const flexGoBack = () => {
+    setStepError("");
+    setFlexStep((v) => Math.max(v - 1, 0));
     if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -738,7 +838,7 @@ export default function ActivatePackClient({
           <p className="mt-1 text-sm text-gray-600">
             {mode === "simple"
               ? "Remplissez ces infos une seule fois — elles s'appliquent à toutes les étiquettes restantes."
-              : `Un formulaire par produit. Total à répartir : ${packInfo.remaining} QR codes.`}
+              : `Le parcours guidé, un sujet par écran. Total à répartir : ${packInfo.remaining} QR codes.`}
           </p>
           {masterCode && (
             <div className="mt-3 inline-flex items-center gap-2 rounded-lg bg-white px-3 py-1.5 shadow-sm">
@@ -1312,246 +1412,280 @@ export default function ActivatePackClient({
           ) : (
             /* ═══════════ MODE 2 — groupes produits ═══════════ */
             <>
-              {/* Récapitulatif de répartition */}
-              <div
-                className={`sticky top-2 z-10 rounded-xl border p-3 text-sm shadow-sm ${
-                  overflow
-                    ? "border-red-200 bg-red-50 text-red-700"
-                    : "border-emerald-200 bg-emerald-50 text-emerald-800"
-                }`}
-                data-testid="flex-summary"
-              >
-                <div className="flex items-center justify-between font-bold">
+              {/* ── Barre de progression de l'onboarding flexible ── */}
+              <div className="sticky top-2 z-10 rounded-2xl border border-amber-200 bg-white/95 p-4 shadow-md backdrop-blur">
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <p className="flex items-center gap-2 text-sm font-extrabold text-gray-900">
+                    {(() => {
+                      const StepIcon = FLEX_STEPS[flexStep].icon;
+                      return <StepIcon className="h-4 w-4 text-amber-500" />;
+                    })()}
+                    {FLEX_STEPS[flexStep].title}
+                  </p>
+                  <p className="flex-shrink-0 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-bold text-amber-700">
+                    {flexStep + 1}/{FLEX_STEPS.length}
+                  </p>
+                </div>
+                <div className="h-2 overflow-hidden rounded-full bg-amber-100">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-amber-400 to-orange-500 transition-all duration-300"
+                    style={{ width: `${((flexStep + 1) / FLEX_STEPS.length) * 100}%` }}
+                  />
+                </div>
+                <p className="mt-2 text-xs leading-snug text-gray-500">
+                  {FLEX_STEPS[flexStep].hint}
+                </p>
+                <div className="mt-3 flex items-stretch justify-between gap-1">
+                  {FLEX_STEPS.map((s, i) => {
+                    const StepPillIcon = s.icon;
+                    return (
+                      <button
+                        key={s.label}
+                        type="button"
+                        onClick={() => {
+                          if (i < flexStep) {
+                            setFlexStep(i);
+                            setStepError("");
+                          }
+                        }}
+                        aria-label={`Étape ${i + 1} : ${s.label}`}
+                        className={`flex flex-1 flex-col items-center gap-1 rounded-lg py-1 transition-colors ${
+                          i === flexStep
+                            ? "text-amber-600"
+                            : i < flexStep
+                              ? "text-emerald-600 hover:bg-emerald-50"
+                              : "text-gray-300"
+                        }`}
+                      >
+                        <span
+                          className={`flex h-7 w-7 items-center justify-center rounded-full border-2 text-[10px] font-bold ${
+                            i === flexStep
+                              ? "border-amber-500 bg-amber-500 text-white shadow-sm"
+                              : i < flexStep
+                                ? "border-emerald-400 bg-emerald-50"
+                                : "border-gray-200 bg-white"
+                          }`}
+                        >
+                          {i < flexStep ? <Check className="h-3.5 w-3.5" /> : <StepPillIcon className="h-3.5 w-3.5" />}
+                        </span>
+                        <span className="text-[9px] font-bold leading-none">{s.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                {/* Répartition toujours visible (le cœur du mode flexible) */}
+                <div
+                  className={`mt-3 flex items-center justify-between rounded-lg px-3 py-1.5 text-[11px] font-bold ${
+                    overflow ? "bg-red-50 text-red-700" : "bg-emerald-50 text-emerald-800"
+                  }`}
+                >
                   <span>
-                    Réparti : {allocated}/{packInfo.remaining} QR codes
+                    Réparti : {allocated}/{packInfo.remaining} étiquettes
                   </span>
-                  <span>
+                  <span className={overflow ? "text-red-600" : "text-emerald-600"}>
                     {overflow
                       ? `${allocated - packInfo.remaining} de trop !`
-                      : `Restant après activation : ${packInfo.remaining - allocated}`}
+                      : `${packInfo.remaining - allocated} restante${packInfo.remaining - allocated > 1 ? "s" : ""}`}
                   </span>
                 </div>
-                {overflow && (
-                  <p className="mt-1 text-xs">
-                    La somme dépasse les QR codes restants — réduisez les
-                    quantités.
-                  </p>
-                )}
               </div>
 
-              {/* Infos communes (identité + réseaux + galerie) */}
-              <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-                <p className="mb-1 text-sm font-extrabold text-gray-900">
-                  🧑‍🌾 Vos infos d&apos;artisan
-                </p>
-                <p className="mb-3 text-xs text-gray-500">
-                  Communes à tous vos produits (identité, contact, réseaux,
-                  atelier).
-                </p>
-                <div className="space-y-3">
-                  <div>
-                    <label className={labelCls} htmlFor="sharedName">
-                      Votre nom / Marque *
-                    </label>
-                    <input
-                      id="sharedName"
-                      type="text"
-                      required
-                      minLength={2}
-                      maxLength={120}
-                      placeholder="Ex : Aïssata Cosmétiques"
-                      value={shared.artisanName}
-                      onChange={(e) => setSh({ artisanName: e.target.value })}
-                      className={inputCls}
-                    />
-                  </div>
-                  <div>
-                    <label className={labelCls} htmlFor="sharedPhone">
-                      WhatsApp / Téléphone *
-                    </label>
-                    <input
-                      id="sharedPhone"
-                      type="tel"
-                      required
-                      minLength={7}
-                      maxLength={30}
-                      placeholder="Ex : 77 123 45 67"
-                      value={shared.contactPhone}
-                      onChange={(e) => setSh({ contactPhone: e.target.value })}
-                      className={inputCls}
-                    />
-                  </div>
-                  <div>
-                    <label className={labelCls} htmlFor="sharedEmail">
-                      Email (optionnel)
-                    </label>
-                    <input
-                      id="sharedEmail"
-                      type="email"
-                      maxLength={120}
-                      value={shared.contactEmail}
-                      onChange={(e) => setSh({ contactEmail: e.target.value })}
-                      className={inputCls}
-                    />
-                  </div>
-                  <input
-                    type="url"
-                    maxLength={200}
-                    placeholder="Instagram (optionnel) : https://instagram.com/…"
-                    value={shared.instagramUrl}
-                    onChange={(e) => setSh({ instagramUrl: e.target.value })}
-                    className={inputCls}
-                  />
-                  <input
-                    type="url"
-                    maxLength={200}
-                    placeholder="Facebook (optionnel) : https://facebook.com/…"
-                    value={shared.facebookUrl}
-                    onChange={(e) => setSh({ facebookUrl: e.target.value })}
-                    className={inputCls}
-                  />
-                  <input
-                    type="url"
-                    maxLength={200}
-                    placeholder="TikTok (optionnel) : https://tiktok.com/@…"
-                    value={shared.tiktokUrl}
-                    onChange={(e) => setSh({ tiktokUrl: e.target.value })}
-                    className={inputCls}
-                  />
-                  {/* ── Logo de la marque (commun à tous les produits du pack) ── */}
-                  <PhotoPicker
-                    label="Logo de votre marque (optionnel)"
-                    helpText="Affiché à côté de votre nom sur toutes les pages produits du pack."
-                    maxCount={1}
-                    files={shared.logo ? [shared.logo] : []}
-                    onChange={(files) => setSh({ logo: files[0] ?? null })}
-                  />
-                  <PhotoPicker
-                    label="Photos de votre atelier (jusqu'à 3)"
-                    helpText="Communes à toutes vos pages produits."
-                    maxCount={3}
-                    multiple
-                    files={shared.galleryPhotos}
-                    onChange={(files) => setSh({ galleryPhotos: files })}
-                  />
+              {stepError && (
+                <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-700">
+                  {stepError}
                 </div>
-              </div>
+              )}
 
-              {/* Groupes produits */}
-              {groups.map((g, i) => (
-                <div
-                  key={i}
-                  data-testid={`flexible-group-${i}`}
-                  className="rounded-2xl border-2 border-amber-200 bg-white p-5 shadow-sm"
-                >
-                  <div className="mb-4 flex items-center justify-between gap-3">
-                    <p className="flex items-center gap-2 text-sm font-extrabold text-gray-900">
-                      <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500 text-xs font-bold text-white">
-                        {i + 1}
-                      </span>
-                      Produit {i + 1}
-                    </p>
-                    {groups.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setGroups((gs) => gs.filter((_, idx) => idx !== i))
-                        }
-                        aria-label={`Retirer le produit ${i + 1}`}
-                        className="rounded-lg p-2 text-gray-400 hover:bg-red-50 hover:text-red-500"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    )}
-                  </div>
-
-                  <div className="mb-4 rounded-xl bg-amber-50 p-3">
-                    <label
-                      className={labelCls}
-                      htmlFor={`g${i}-count`}
-                    >
-                      Nombre de QR codes pour ce produit *
-                    </label>
-                    <input
-                      id={`g${i}-count`}
-                      data-testid={`group-count-${i}`}
-                      type="number"
-                      required
-                      min={1}
-                      max={packInfo.remaining}
-                      placeholder={`Ex : ${Math.max(packInfo.remaining - (allocated - (parseInt(g.count, 10) || 0)), 1)}`}
-                      value={g.count}
-                      onChange={(e) => setG(i, { count: e.target.value })}
-                      className={`${inputCls} font-bold`}
-                    />
-                  </div>
-
+              {/* ═══ ÉTAPE 1/6 — VOTRE MARQUE (commun à tous les produits) ═══ */}
+              {flexStep === 0 && (
+                <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+                  <p className="mb-1 text-sm font-extrabold text-gray-900">
+                    🧑‍🌾 Vos infos d&apos;artisan
+                  </p>
+                  <p className="mb-3 text-xs text-gray-500">
+                    Communes à tous vos produits — affichées sur chaque page.
+                  </p>
                   <div className="space-y-3">
                     <div>
-                      <label className={labelCls} htmlFor={`g${i}-name`}>
-                        Nom du produit *
+                      <label className={labelCls} htmlFor="sharedName">
+                        Votre nom / Marque *
                       </label>
                       <input
-                        id={`g${i}-name`}
-                        data-testid={`group-name-${i}`}
+                        id="sharedName"
                         type="text"
                         required
                         minLength={2}
                         maxLength={120}
-                        placeholder={i === 0 ? "Ex : Savon au karité pur" : "Ex : Savon à la lavande"}
-                        value={g.productName}
-                        onChange={(e) => setG(i, { productName: e.target.value })}
+                        placeholder="Ex : Aïssata Cosmétiques"
+                        value={shared.artisanName}
+                        onChange={(e) => setSh({ artisanName: e.target.value })}
                         className={inputCls}
                       />
+                      <p className="mt-1 text-[11px] text-gray-400">
+                        C&apos;est le nom affiché à vos clients sur la page produit.
+                      </p>
                     </div>
                     <div>
-                      <label className={labelCls} htmlFor={`g${i}-designation`}>
-                        Désignation (optionnel)
+                      <label className={labelCls} htmlFor="sharedPhone">
+                        WhatsApp / Téléphone *
                       </label>
                       <input
-                        id={`g${i}-designation`}
-                        type="text"
-                        maxLength={300}
-                        placeholder="Description courte affichée sous le nom"
-                        value={g.productDesignation}
-                        onChange={(e) => setG(i, { productDesignation: e.target.value })}
+                        id="sharedPhone"
+                        type="tel"
+                        required
+                        minLength={7}
+                        maxLength={30}
+                        placeholder="Ex : 77 123 45 67"
+                        value={shared.contactPhone}
+                        onChange={(e) => setSh({ contactPhone: e.target.value })}
                         className={inputCls}
                       />
                     </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className={labelCls} htmlFor={`g${i}-contenance`}>
-                          Contenance *
-                        </label>
-                        <input
-                          id={`g${i}-contenance`}
-                          data-testid={`group-contenance-${i}`}
-                          type="text"
-                          required
-                          maxLength={40}
-                          placeholder="Ex : 250g"
-                          value={g.contenance}
-                          onChange={(e) => setG(i, { contenance: e.target.value })}
-                          className={inputCls}
-                        />
+                    <div>
+                      <label className={labelCls} htmlFor="sharedEmail">
+                        Email (optionnel)
+                      </label>
+                      <input
+                        id="sharedEmail"
+                        type="email"
+                        maxLength={120}
+                        value={shared.contactEmail}
+                        onChange={(e) => setSh({ contactEmail: e.target.value })}
+                        className={inputCls}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ═══ ÉTAPE 2/6 — VOS PRODUITS (répartition des étiquettes) ═══ */}
+              {flexStep === 1 && (
+                <>
+                  <div
+                    className={`rounded-xl border p-3 text-sm shadow-sm ${
+                      overflow
+                        ? "border-red-200 bg-red-50 text-red-700"
+                        : "border-emerald-200 bg-emerald-50 text-emerald-800"
+                    }`}
+                    data-testid="flex-summary"
+                  >
+                    <div className="flex items-center justify-between font-bold">
+                      <span>
+                        Réparti : {allocated}/{packInfo.remaining} QR codes
+                      </span>
+                      <span>
+                        {overflow
+                          ? `${allocated - packInfo.remaining} de trop !`
+                          : `Restant après activation : ${packInfo.remaining - allocated}`}
+                      </span>
+                    </div>
+                    {overflow && (
+                      <p className="mt-1 text-xs">
+                        La somme dépasse les QR codes restants — réduisez les
+                        quantités.
+                      </p>
+                    )}
+                  </div>
+
+                  {groups.map((g, i) => (
+                    <div
+                      key={i}
+                      data-testid={`flexible-group-${i}`}
+                      className="rounded-2xl border-2 border-amber-200 bg-white p-5 shadow-sm"
+                    >
+                      <div className="mb-4 flex items-center justify-between gap-3">
+                        <p className="flex items-center gap-2 text-sm font-extrabold text-gray-900">
+                          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500 text-xs font-bold text-white">
+                            {i + 1}
+                          </span>
+                          Produit {i + 1}
+                        </p>
+                        {groups.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setGroups((gs) => gs.filter((_, idx) => idx !== i))
+                            }
+                            aria-label={`Retirer le produit ${i + 1}`}
+                            className="rounded-lg p-2 text-gray-400 hover:bg-red-50 hover:text-red-500"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        )}
                       </div>
-                      <div>
-                        <label className={labelCls} htmlFor={`g${i}-price`}>
-                          Prix (optionnel)
-                        </label>
-                        <input
-                          id={`g${i}-price`}
-                          data-testid={`group-price-${i}`}
-                          type="text"
-                          maxLength={40}
-                          placeholder="Ex : 5 000 FCFA"
-                          value={g.productPrice}
-                          onChange={(e) => setG(i, { productPrice: e.target.value })}
-                          className={inputCls}
-                        />
+                      <div className="space-y-3">
+                        <div className="rounded-xl bg-amber-50 p-3">
+                          <label className={labelCls} htmlFor={`g${i}-count`}>
+                            Nombre de QR codes pour ce produit *
+                          </label>
+                          <input
+                            id={`g${i}-count`}
+                            data-testid={`group-count-${i}`}
+                            type="number"
+                            required
+                            min={1}
+                            max={packInfo.remaining}
+                            placeholder={`Ex : ${Math.max(packInfo.remaining - (allocated - (parseInt(g.count, 10) || 0)), 1)}`}
+                            value={g.count}
+                            onChange={(e) => setG(i, { count: e.target.value })}
+                            className={`${inputCls} font-bold`}
+                          />
+                        </div>
+                        <div>
+                          <label className={labelCls} htmlFor={`g${i}-name`}>
+                            Nom du produit *
+                          </label>
+                          <input
+                            id={`g${i}-name`}
+                            data-testid={`group-name-${i}`}
+                            type="text"
+                            required
+                            minLength={2}
+                            maxLength={120}
+                            placeholder={i === 0 ? "Ex : Savon au karité pur" : "Ex : Savon à la lavande"}
+                            value={g.productName}
+                            onChange={(e) => setG(i, { productName: e.target.value })}
+                            className={inputCls}
+                          />
+                        </div>
                       </div>
                     </div>
-                    <div>
+                  ))}
+
+                  {groups.length < 10 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const left = packInfo.remaining - allocated;
+                        setGroups((gs) => [...gs, { ...emptyGroup(), count: left > 0 ? String(left) : "" }]);
+                      }}
+                      data-testid="add-group"
+                      className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-amber-300 bg-amber-50/60 py-3.5 text-sm font-bold text-amber-700 transition-colors hover:border-amber-400 hover:bg-amber-50"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Ajouter un autre produit
+                    </button>
+                  )}
+                </>
+              )}
+
+              {/* ═══ ÉTAPE 3/6 — INGRÉDIENTS (la recette réelle de chaque produit) ═══ */}
+              {flexStep === 2 && (
+                <>
+                  {groups.map((g, i) => (
+                    <div
+                      key={i}
+                      className="rounded-2xl border-2 border-amber-200 bg-white p-5 shadow-sm"
+                    >
+                      <p className="mb-3 flex items-center gap-2 text-sm font-extrabold text-gray-900">
+                        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500 text-xs font-bold text-white">
+                          {i + 1}
+                        </span>
+                        {g.productName || `Produit ${i + 1}`}
+                        <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
+                          {g.count} étiquette{parseInt(g.count, 10) > 1 ? "s" : ""}
+                        </span>
+                      </p>
                       <label className={labelCls} htmlFor={`g${i}-ingredients`}>
                         Ingrédients *
                       </label>
@@ -1559,184 +1693,416 @@ export default function ActivatePackClient({
                         id={`g${i}-ingredients`}
                         data-testid={`group-ingredients-${i}`}
                         required
-                        rows={2}
+                        rows={3}
                         maxLength={2000}
                         placeholder="Ex : Beurre de karité, huile de coco…"
                         value={g.ingredients}
                         onChange={(e) => setG(i, { ingredients: e.target.value })}
                         className={`${inputCls} resize-none`}
                       />
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className={labelCls} htmlFor={`g${i}-mfg`}>
-                          Fabrication *
-                        </label>
-                        <input
-                          id={`g${i}-mfg`}
-                          data-testid={`group-mfg-${i}`}
-                          type="date"
-                          required
-                          value={g.manufacturingDate}
-                          onChange={(e) =>
-                            setG(i, {
-                              manufacturingDate: e.target.value,
-                              // Auto-calcul si produit type sélectionné
-                              ...(g.template
-                                ? { expirationDate: calcExp(e.target.value, g.template) }
-                                : {}),
-                            })
-                          }
-                          className={`${inputCls} px-3`}
-                        />
-                      </div>
-                      <div>
-                        <label className={labelCls} htmlFor={`g${i}-exp`}>
-                          Péremption *
-                        </label>
-                        <input
-                          id={`g${i}-exp`}
-                          data-testid={`group-exp-${i}`}
-                          type="date"
-                          required
-                          value={g.expirationDate}
-                          onChange={(e) => setG(i, { expirationDate: e.target.value })}
-                          className={`${inputCls} px-3 ${
-                            g.template && g.expirationDate
-                              ? "border-emerald-300 bg-emerald-50"
-                              : ""
-                          }`}
-                        />
-                        {g.template && g.expirationDate && (
-                          <p className="mt-1 text-xs text-emerald-700">
-                            Auto-calculée ({templateShelfLifeLabel(g.template)})
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    {/* ── Assistant intelligent par produit ── */}
-                    <div className="rounded-xl border border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50 p-3">
-                      <p className="mb-2 flex items-center gap-1.5 text-xs font-bold text-amber-800">
-                        <Sparkles className="h-3.5 w-3.5" /> Assistant intelligent
+                      <p className="mt-1 text-[11px] text-gray-400">
+                        Un ingrédient par ligne si vous préférez — vos clients
+                        verront exactement ce que vous tapez ici.
                       </p>
-                      <SmartProductSelector
-                        onTemplateSelect={(template) =>
-                          setG(i, {
-                            template,
-                            productName: g.productName || template.name,
-                            // Ingrédients JAMAIS pré-remplis — la recette
-                            // appartient à l'artisan (retour utilisateur).
-                            usageTips: template.usageTips.slice(0, 3).join("\n"),
-                            precautions: template.precautions.join("\n"),
-                            storageConditions: template.storageConditions,
-                            expirationDate: g.manufacturingDate
-                              ? calcExp(g.manufacturingDate, template)
-                              : g.expirationDate,
-                          })
-                        }
-                        onClear={() =>
-                          setG(i, { template: null, precautions: "", storageConditions: "" })
-                        }
-                        selectedTemplate={g.template}
-                        compact
-                      />
                     </div>
-                    <div>
+                  ))}
+                </>
+              )}
+
+              {/* ═══ ÉTAPE 4/6 — FRAÎCHEUR & DÉTAILS (par produit) ═══ */}
+              {flexStep === 3 && (
+                <>
+                  {groups.map((g, i) => (
+                    <div
+                      key={i}
+                      className="rounded-2xl border-2 border-amber-200 bg-white p-5 shadow-sm"
+                    >
+                      <p className="mb-3 flex items-center gap-2 text-sm font-extrabold text-gray-900">
+                        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500 text-xs font-bold text-white">
+                          {i + 1}
+                        </span>
+                        {g.productName || `Produit ${i + 1}`}
+                        <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
+                          {g.count} étiquette{parseInt(g.count, 10) > 1 ? "s" : ""}
+                        </span>
+                      </p>
+                      <div className="space-y-3">
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className={labelCls} htmlFor={`g${i}-contenance`}>
+                              Contenance *
+                            </label>
+                            <input
+                              id={`g${i}-contenance`}
+                              data-testid={`group-contenance-${i}`}
+                              type="text"
+                              required
+                              maxLength={40}
+                              placeholder="Ex : 250g"
+                              value={g.contenance}
+                              onChange={(e) => setG(i, { contenance: e.target.value })}
+                              className={inputCls}
+                            />
+                          </div>
+                          <div>
+                            <label className={labelCls} htmlFor={`g${i}-price`}>
+                              Prix (optionnel)
+                            </label>
+                            <input
+                              id={`g${i}-price`}
+                              data-testid={`group-price-${i}`}
+                              type="text"
+                              maxLength={40}
+                              placeholder="Ex : 5 000 FCFA"
+                              value={g.productPrice}
+                              onChange={(e) => setG(i, { productPrice: e.target.value })}
+                              className={inputCls}
+                            />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className={labelCls} htmlFor={`g${i}-mfg`}>
+                              Fabrication *
+                            </label>
+                            <input
+                              id={`g${i}-mfg`}
+                              data-testid={`group-mfg-${i}`}
+                              type="date"
+                              required
+                              value={g.manufacturingDate}
+                              onChange={(e) =>
+                                setG(i, {
+                                  manufacturingDate: e.target.value,
+                                  // Auto-calcul si produit type sélectionné
+                                  ...(g.template
+                                    ? { expirationDate: calcExp(e.target.value, g.template) }
+                                    : {}),
+                                })
+                              }
+                              className={`${inputCls} px-3`}
+                            />
+                          </div>
+                          <div>
+                            <label className={labelCls} htmlFor={`g${i}-exp`}>
+                              Péremption *
+                            </label>
+                            <input
+                              id={`g${i}-exp`}
+                              data-testid={`group-exp-${i}`}
+                              type="date"
+                              required
+                              value={g.expirationDate}
+                              onChange={(e) => setG(i, { expirationDate: e.target.value })}
+                              className={`${inputCls} px-3 ${
+                                g.template && g.expirationDate
+                                  ? "border-emerald-300 bg-emerald-50"
+                                  : ""
+                              }`}
+                            />
+                            {g.template && g.expirationDate && (
+                              <p className="mt-1 text-xs text-emerald-700">
+                                Auto-calculée ({templateShelfLifeLabel(g.template)})
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        {/* ── Assistant intelligent par produit ── */}
+                        <div className="rounded-xl border border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50 p-3">
+                          <p className="mb-2 flex items-center gap-1.5 text-xs font-bold text-amber-800">
+                            <Sparkles className="h-3.5 w-3.5" /> Assistant intelligent
+                          </p>
+                          <SmartProductSelector
+                            onTemplateSelect={(template) =>
+                              setG(i, {
+                                template,
+                                productName: g.productName || template.name,
+                                // Ingrédients JAMAIS pré-remplis — la recette
+                                // appartient à l'artisan (retour utilisateur).
+                                usageTips: template.usageTips.slice(0, 3).join("\n"),
+                                precautions: template.precautions.join("\n"),
+                                storageConditions: template.storageConditions,
+                                expirationDate: g.manufacturingDate
+                                  ? calcExp(g.manufacturingDate, template)
+                                  : g.expirationDate,
+                              })
+                            }
+                            onClear={() =>
+                              setG(i, { template: null, precautions: "", storageConditions: "" })
+                            }
+                            selectedTemplate={g.template}
+                            compact
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </>
+              )}
+
+              {/* ═══ ÉTAPE 5/6 — PHOTOS & LOGO (tout est optionnel) ═══ */}
+              {flexStep === 4 && (
+                <>
+                  <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+                    <p className="mb-1 text-sm font-extrabold text-gray-900">
+                      🧑‍🌾 Identité de votre marque
+                    </p>
+                    <p className="mb-3 text-xs text-gray-500">
+                      Communes à tous vos produits. Tout est optionnel ici.
+                    </p>
+                    <div className="space-y-3">
                       <PhotoPicker
-                        label="Photo du produit"
-                        helpText="Caméra ou galerie — propre à ce produit."
+                        label="Logo de votre marque (optionnel)"
+                        helpText="Affiché à côté de votre nom sur toutes les pages produits du pack."
                         maxCount={1}
-                        files={g.photo ? [g.photo] : []}
-                        onChange={(files) => setG(i, { photo: files[0] ?? null })}
+                        files={shared.logo ? [shared.logo] : []}
+                        onChange={(files) => setSh({ logo: files[0] ?? null })}
                       />
-                    </div>
-                    <div>
-                      <label className={labelCls} htmlFor={`g${i}-bio`}>
-                        Histoire de ce produit (optionnel)
-                      </label>
-                      <textarea
-                        id={`g${i}-bio`}
-                        rows={2}
-                        maxLength={1200}
-                        value={g.artisanBio}
-                        onChange={(e) => setG(i, { artisanBio: e.target.value })}
-                        className={`${inputCls} resize-none`}
+                      <PhotoPicker
+                        label="Photos de votre atelier (jusqu'à 3)"
+                        helpText="Communes à toutes vos pages produits."
+                        maxCount={3}
+                        multiple
+                        files={shared.galleryPhotos}
+                        onChange={(files) => setSh({ galleryPhotos: files })}
                       />
-                    </div>
-                    <div>
-                      <label className={labelCls} htmlFor={`g${i}-tips`}>
-                        Conseils d&apos;utilisation (optionnel, un par ligne)
-                      </label>
-                      <textarea
-                        id={`g${i}-tips`}
-                        rows={2}
-                        maxLength={800}
-                        value={g.usageTips}
-                        onChange={(e) => setG(i, { usageTips: e.target.value })}
-                        className={`${inputCls} resize-none`}
+                      <input
+                        type="url"
+                        maxLength={200}
+                        placeholder="Instagram (optionnel) : https://instagram.com/…"
+                        value={shared.instagramUrl}
+                        onChange={(e) => setSh({ instagramUrl: e.target.value })}
+                        className={inputCls}
                       />
-                    </div>
-                    <div>
-                      <label className={labelCls} htmlFor={`g${i}-precautions`}>
-                        Précautions d&apos;emploi (optionnel, une par ligne)
-                      </label>
-                      <textarea
-                        id={`g${i}-precautions`}
-                        rows={2}
-                        maxLength={800}
-                        value={g.precautions}
-                        onChange={(e) => setG(i, { precautions: e.target.value })}
-                        className={`${inputCls} resize-none`}
+                      <input
+                        type="url"
+                        maxLength={200}
+                        placeholder="Facebook (optionnel) : https://facebook.com/…"
+                        value={shared.facebookUrl}
+                        onChange={(e) => setSh({ facebookUrl: e.target.value })}
+                        className={inputCls}
                       />
-                    </div>
-                    <div>
-                      <label className={labelCls} htmlFor={`g${i}-storage`}>
-                        Conservation (optionnel)
-                      </label>
-                      <textarea
-                        id={`g${i}-storage`}
-                        rows={2}
-                        maxLength={500}
-                        placeholder="Ex : à l'abri de la chaleur et de l'humidité"
-                        value={g.storageConditions}
-                        onChange={(e) => setG(i, { storageConditions: e.target.value })}
-                        className={`${inputCls} resize-none`}
+                      <input
+                        type="url"
+                        maxLength={200}
+                        placeholder="TikTok (optionnel) : https://tiktok.com/@…"
+                        value={shared.tiktokUrl}
+                        onChange={(e) => setSh({ tiktokUrl: e.target.value })}
+                        className={inputCls}
                       />
                     </div>
                   </div>
-                </div>
-              ))}
 
-              {/* Ajouter un produit */}
-              {groups.length < 10 && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    const left = packInfo.remaining - allocated;
-                    setGroups((gs) => [...gs, { ...emptyGroup(), count: left > 0 ? String(left) : "" }]);
-                  }}
-                  data-testid="add-group"
-                  className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-amber-300 bg-amber-50/60 py-3.5 text-sm font-bold text-amber-700 transition-colors hover:border-amber-400 hover:bg-amber-50"
-                >
-                  <Plus className="h-4 w-4" />
-                  Ajouter un autre produit
-                </button>
+                  {groups.map((g, i) => (
+                    <div
+                      key={i}
+                      className="rounded-2xl border-2 border-amber-200 bg-white p-5 shadow-sm"
+                    >
+                      <p className="mb-3 flex items-center gap-2 text-sm font-extrabold text-gray-900">
+                        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500 text-xs font-bold text-white">
+                          {i + 1}
+                        </span>
+                        {g.productName || `Produit ${i + 1}`}
+                      </p>
+                      <div className="space-y-3">
+                        <PhotoPicker
+                          label="Photo du produit"
+                          helpText="Caméra ou galerie — propre à ce produit."
+                          maxCount={1}
+                          files={g.photo ? [g.photo] : []}
+                          onChange={(files) => setG(i, { photo: files[0] ?? null })}
+                        />
+                        <div>
+                          <label className={labelCls} htmlFor={`g${i}-designation`}>
+                            Désignation (optionnel)
+                          </label>
+                          <input
+                            id={`g${i}-designation`}
+                            type="text"
+                            maxLength={300}
+                            placeholder="Description courte affichée sous le nom"
+                            value={g.productDesignation}
+                            onChange={(e) => setG(i, { productDesignation: e.target.value })}
+                            className={inputCls}
+                          />
+                        </div>
+                        <div>
+                          <label className={labelCls} htmlFor={`g${i}-bio`}>
+                            Histoire de ce produit (optionnel)
+                          </label>
+                          <textarea
+                            id={`g${i}-bio`}
+                            rows={2}
+                            maxLength={1200}
+                            value={g.artisanBio}
+                            onChange={(e) => setG(i, { artisanBio: e.target.value })}
+                            className={`${inputCls} resize-none`}
+                          />
+                        </div>
+                        <div>
+                          <label className={labelCls} htmlFor={`g${i}-tips`}>
+                            Conseils d&apos;utilisation (optionnel, un par ligne)
+                          </label>
+                          <textarea
+                            id={`g${i}-tips`}
+                            rows={2}
+                            maxLength={800}
+                            value={g.usageTips}
+                            onChange={(e) => setG(i, { usageTips: e.target.value })}
+                            className={`${inputCls} resize-none`}
+                          />
+                        </div>
+                        <div>
+                          <label className={labelCls} htmlFor={`g${i}-precautions`}>
+                            Précautions d&apos;emploi (optionnel, une par ligne)
+                          </label>
+                          <textarea
+                            id={`g${i}-precautions`}
+                            rows={2}
+                            maxLength={800}
+                            value={g.precautions}
+                            onChange={(e) => setG(i, { precautions: e.target.value })}
+                            className={`${inputCls} resize-none`}
+                          />
+                        </div>
+                        <div>
+                          <label className={labelCls} htmlFor={`g${i}-storage`}>
+                            Conservation (optionnel)
+                          </label>
+                          <textarea
+                            id={`g${i}-storage`}
+                            rows={2}
+                            maxLength={500}
+                            placeholder="Ex : à l'abri de la chaleur et de l'humidité"
+                            value={g.storageConditions}
+                            onChange={(e) => setG(i, { storageConditions: e.target.value })}
+                            className={`${inputCls} resize-none`}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </>
               )}
 
-              <button
-                type="submit"
-                disabled={loading || allocated < 1 || overflow}
-                data-testid="flexible-submit"
-                className="mt-2 w-full rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 py-4 text-lg font-bold text-white shadow-lg transition-all hover:shadow-xl disabled:opacity-50"
-              >
-                {loading
-                  ? "Activation en cours…"
-                  : `Activer mes ${allocated} QR codes`}
-              </button>
-              <p className="text-center text-xs text-gray-500">
-                Les {packInfo.remaining - allocated} QR codes non répartis
-                resteront activables plus tard (re-scannez le QR Maître).
-              </p>
+              {/* ═══ ÉTAPE 6/6 — RÉCAPITULATIF & ACTIVATION ═══ */}
+              {flexStep === 5 && (
+                <>
+                  <div
+                    className={`rounded-xl border p-3 text-sm shadow-sm ${
+                      overflow
+                        ? "border-red-200 bg-red-50 text-red-700"
+                        : "border-emerald-200 bg-emerald-50 text-emerald-800"
+                    }`}
+                    data-testid="flex-summary"
+                  >
+                    <div className="flex items-center justify-between font-bold">
+                      <span>
+                        Réparti : {allocated}/{packInfo.remaining} QR codes
+                      </span>
+                      <span>
+                        {overflow
+                          ? `${allocated - packInfo.remaining} de trop !`
+                          : `Restant après activation : ${packInfo.remaining - allocated}`}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border border-emerald-200 bg-white p-5 shadow-sm">
+                    <p className="mb-1 flex items-center gap-2 text-sm font-extrabold text-gray-900">
+                      <ClipboardCheck className="h-4 w-4 text-emerald-600" /> Récapitulatif
+                    </p>
+                    <p className="mb-4 text-xs text-gray-500">
+                      Une erreur ? Touchez « Modifier » sur la ligne concernée.
+                    </p>
+                    <div className="space-y-2">
+                      {recapRow("Marque & WhatsApp", `${shared.artisanName} · ${shared.contactPhone}`, () => setFlexStep(0))}
+                      {recapRow(
+                        "Produits",
+                        groups.map((g) => `${g.productName || "?"} × ${g.count || "?"}`).join(" · "),
+                        () => setFlexStep(1),
+                      )}
+                      {recapRow(
+                        "Ingrédients",
+                        groups.every((g) => g.ingredients)
+                          ? groups.length === 1
+                            ? groups[0].ingredients.length > 70
+                              ? `${groups[0].ingredients.slice(0, 70)}…`
+                              : groups[0].ingredients
+                            : `${groups.length} recettes saisies`
+                          : "—",
+                        () => setFlexStep(2),
+                      )}
+                      {recapRow(
+                        "Fabrication",
+                        groups.map((g) => formatFrDate(g.manufacturingDate)).join(" · "),
+                        () => setFlexStep(3),
+                      )}
+                      {recapRow(
+                        "À utiliser avant",
+                        groups.map((g) => formatFrDate(g.expirationDate)).join(" · "),
+                        () => setFlexStep(3),
+                      )}
+                      {recapRow("Logo", shared.logo ? shared.logo.name : "Aucun", () => setFlexStep(4))}
+                      {recapRow(
+                        "Photos produit",
+                        groups.some((g) => g.photo) ? `${groups.filter((g) => g.photo).length}/${groups.length} fournie(s)` : "Aucune",
+                        () => setFlexStep(4),
+                      )}
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={loading || allocated < 1 || overflow}
+                    data-testid="flexible-submit"
+                    className="mt-2 w-full rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 py-4 text-lg font-bold text-white shadow-lg transition-all hover:shadow-xl disabled:opacity-50"
+                  >
+                    {loading
+                      ? "Activation en cours…"
+                      : `✨ Activer mes ${allocated} QR codes`}
+                  </button>
+                  <p className="text-center text-xs text-gray-500">
+                    Les {packInfo.remaining - allocated} QR codes non répartis
+                    resteront activables plus tard (re-scannez le QR Maître).
+                  </p>
+                </>
+              )}
+
+              {/* ── Navigation de l'onboarding ── */}
+              <div className="flex gap-2">
+                {flexStep === 0 ? (
+                  <button
+                    type="button"
+                    onClick={() => setMode(null)}
+                    className="flex items-center justify-center gap-1.5 rounded-xl border-2 border-gray-200 bg-white px-4 py-3.5 text-sm font-bold text-gray-600 hover:border-gray-300"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    Modes
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={flexGoBack}
+                    className="flex items-center justify-center gap-1.5 rounded-xl border-2 border-gray-200 bg-white px-5 py-3.5 text-sm font-bold text-gray-700 hover:border-gray-300"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    Retour
+                  </button>
+                )}
+                {flexStep < FLEX_STEPS.length - 1 && (
+                  <button
+                    type="button"
+                    onClick={flexGoNext}
+                    data-testid="wizard-next"
+                    className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 py-3.5 text-base font-bold text-white shadow-md transition-all hover:shadow-lg active:scale-[0.99]"
+                  >
+                    Continuer
+                    <ChevronRight className="h-5 w-5" />
+                  </button>
+                )}
+              </div>
+
             </>
           )}
         </form>

@@ -134,26 +134,41 @@ async function main() {
     console.log("\n── Mode flexible via UI : 100 karité + 50 lavande + 50 miel ──");
     await page.getByTestId("choose-flexible").click();
 
-    // Infos communes
+    // É1/6 — Marque (infos communes)
+    await page.waitForSelector("#sharedName", { timeout: 10000 });
     await page.fill("#sharedName", "Atelier Flexible");
     await page.fill("#sharedPhone", "775001122");
+    await page.getByTestId("wizard-next").click();
 
     const groupsData = [
       { count: "100", name: "Savon Karité", cont: "250 g", ing: "Beurre de karité, huile de coco", price: "5 000 FCFA" },
       { count: "50", name: "Savon Lavande", cont: "150 g", ing: "Huile essentielle de lavande, soude", price: "3 000 FCFA" },
       { count: "50", name: "Savon Miel", cont: "100 g", ing: "Miel, glycérine végétale", price: "4 000 FCFA" },
     ];
+    // É2/6 — Produits (répartition)
     for (let i = 0; i < groupsData.length; i++) {
       if (i > 0) await page.getByTestId("add-group").click();
       const g = groupsData[i];
       await page.getByTestId(`group-count-${i}`).fill(g.count);
       await page.getByTestId(`group-name-${i}`).fill(g.name);
-      await page.getByTestId(`group-contenance-${i}`).fill(g.cont);
-      await page.getByTestId(`group-ingredients-${i}`).fill(g.ing);
-      await page.getByTestId(`group-price-${i}`).fill(g.price);
+    }
+    await page.getByTestId("wizard-next").click();
+    // É3/6 — Ingrédients (par produit)
+    for (let i = 0; i < groupsData.length; i++) {
+      await page.getByTestId(`group-ingredients-${i}`).fill(groupsData[i].ing);
+    }
+    await page.getByTestId("wizard-next").click();
+    // É4/6 — Fraîcheur & détails (par produit)
+    for (let i = 0; i < groupsData.length; i++) {
+      await page.getByTestId(`group-contenance-${i}`).fill(groupsData[i].cont);
+      await page.getByTestId(`group-price-${i}`).fill(groupsData[i].price);
       await page.getByTestId(`group-mfg-${i}`).fill("2026-01-15");
       await page.getByTestId(`group-exp-${i}`).fill("2027-01-15");
     }
+    await page.getByTestId("wizard-next").click();
+    // É5/6 — Photos & logo (optionnel) → passer
+    await page.getByTestId("wizard-next").click();
+    // É6/6 — Récapitulatif
     check("récapitulatif répartition 200/200", (await page.getByTestId("flex-summary").textContent())?.includes("200/200") ?? false);
     await page.screenshot({ path: `${SHOTS}/flexible-form.png`, fullPage: true });
 
