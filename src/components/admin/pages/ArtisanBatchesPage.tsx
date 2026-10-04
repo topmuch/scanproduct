@@ -305,12 +305,15 @@ export function ArtisanBatchesPage() {
 
   // ── Suppression de packs (demande utilisateur : « un bouton supprimer et
   // un bouton tout supprimer » — nettoyage des anciens packs cassés/test).
+  // Bug corrigé : quand le dernier pack d'un batch est supprimé, l'API
+  // supprime aussi le batch (plus de carte fantôme « 0/N packs »).
   const [deletingPack, setDeletingPack] = useState<string | null>(null);
   const deletePack = async (pack: PackItem) => {
     const msg =
       `Supprimer le Pack ${pack.packNumber} (${pack.quantity} étiquettes) ?\n\n` +
       `Le QR Maître ${pack.masterQrCode} et TOUTES ses étiquettes deviendront\n` +
-      `inutilisables (scans et avis inclus). Action DÉFINITIVE.`;
+      `inutilisables (scans et avis inclus). Action DÉFINITIVE.\n\n` +
+      `Si c'était le dernier pack du batch, le batch entier sera supprimé aussi.`;
     if (!window.confirm(msg)) return;
     setDeletingPack(pack.id);
     try {
@@ -318,7 +321,10 @@ export function ArtisanBatchesPage() {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
       toast.success(
-        `Pack ${pack.packNumber} supprimé (${data.lotsDeleted} étiquettes, ${data.scansDeleted} scans)`,
+        `Pack ${pack.packNumber} supprimé (${data.lotsDeleted} étiquettes, ${data.scansDeleted} scans)` +
+          (data.batchDeleted
+            ? `\nBatch ${pack.masterQrCode.split("-")[1] ?? ""} supprimé aussi — plus aucun pack restant`
+            : ""),
         { duration: 8000 }
       );
       await fetchBatches({ skipHeal: true });
@@ -326,6 +332,36 @@ export function ArtisanBatchesPage() {
       toast.error(e instanceof Error ? e.message : "Suppression impossible");
     } finally {
       setDeletingPack(null);
+    }
+  };
+
+  // ── Suppression d'un batch ENTIERS en un clic (bug : la suppression des
+  // packs laissait le nom du batch et ses infos dans la liste ; ce bouton
+  // nettoie aussi les batchs fantômes déjà présents en base).
+  const [deletingBatch, setDeletingBatch] = useState<string | null>(null);
+  const deleteBatch = async (batch: BatchItem) => {
+    const label = batch.id.slice(0, 8).toUpperCase();
+    const msg =
+      `Supprimer le Batch ${label} en entier ?\n\n` +
+      `${batch.packs.length} pack(s), ${batch.packs.reduce((n, p) => n + p.lotsCount, 0)} étiquettes,\n` +
+      `scans et avis associés seront DÉFINITIVEMENT supprimés.`;
+    if (!window.confirm(msg)) return;
+    setDeletingBatch(batch.id);
+    try {
+      const res = await fetch(`/api/admin/batches/${batch.id}`, { method: "DELETE" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+      toast.success(
+        `Batch ${label} supprimé (${data.packsDeleted} pack(s), ${data.lotsDeleted} étiquettes, ` +
+          `${data.scansDeleted} scans)`,
+        { duration: 8000 }
+      );
+      if (expanded === batch.id) setExpanded(null);
+      await fetchBatches({ skipHeal: true });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Suppression impossible");
+    } finally {
+      setDeletingBatch(null);
     }
   };
 
@@ -524,12 +560,22 @@ export function ArtisanBatchesPage() {
                     )}
                   </div>
                   <p className="mt-1 text-[13px] text-[#6B7280]">
-                    {batch.totalQuantity} QR codes · {batch.numberOfPacks} packs
-                    de {batch.packSize} · créé le{" "}
-                    {new Date(batch.createdAt).toLocaleDateString("fr-FR")}
+                    {batch.packs.length === batch.numberOfPacks ? (
+                      <>
+                        {batch.totalQuantity} QR codes · {batch.numberOfPacks} packs
+                        de {batch.packSize} · créé le{" "}
+                        {new Date(batch.createdAt).toLocaleDateString("fr-FR")}
+                      </>
+                    ) : (
+                      <>
+                        {batch.packs.length} pack(s) restant(s) sur{" "}
+                        {batch.numberOfPacks} · {batch.packSize} QR/pack · créé le{" "}
+                        {new Date(batch.createdAt).toLocaleDateString("fr-FR")}
+                      </>
+                    )}
                   </p>
                   <p className="mt-0.5 text-[12px] text-[#9CA3AF]">
-                    {batch.stats.activatedPacks}/{batch.numberOfPacks} packs
+                    {batch.stats.activatedPacks}/{batch.packs.length} packs
                     activés · {batch.stats.activeLots} QR actifs
                   </p>
                 </div>
@@ -549,6 +595,20 @@ export function ArtisanBatchesPage() {
                       <ChevronDown className="h-4 w-4" />
                     )}
                     Packs
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => deleteBatch(batch)}
+                    disabled={deletingBatch === batch.id}
+                    className="border-red-200 text-red-600 hover:bg-red-50"
+                    title="Supprime DÉFINITIVEMENT ce batch avec tous ses packs, étiquettes, scans et avis"
+                    data-testid={`delete-batch-${batch.id}`}
+                  >
+                    <Trash2
+                      className={`mr-1 h-4 w-4 ${deletingBatch === batch.id ? "animate-pulse" : ""}`}
+                    />
+                    {deletingBatch === batch.id ? "Suppression…" : "Supprimer"}
                   </Button>
                 </div>
               </div>

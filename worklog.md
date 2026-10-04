@@ -5501,3 +5501,20 @@ Stage Summary:
 - Garde-fous : la vente admin reste prioritaire (lot vendu au tiers ne peut pas être capté par une session) ; la bannière wizard + le hint admin rendent la liaison visible.
 - Déployé via push → Coolify. À vérifier en prod : /api/health → nouveau commit ; wizard avec token artisan → bannière « Bon retour ».
 - NOTE déploiement : push ceafdf9 effectué à 13:12 UTC ; après ~15 min la prod tourne toujours sur 2bf381c (uptime non recyclé) → le webhook Coolify ne s'est pas déclenché automatiquement ce coup-ci ; un Redeploy manuel depuis le dashboard Coolify peut être nécessaire.
+
+---
+Task ID: 15
+Agent: Super Z (main)
+Task: Bug suppression — « je supprime des packs de QR mais le nom du batch et ses infos ne se suppriment pas » (Batch CMUSNJ33 0/5 packs · 0 QR actifs restait affiché)
+
+Work Log:
+- Diagnostic : DELETE /api/admin/packs/[packId] supprimait pack + lots + scans + avis mais laissait le Batch parent INTACT (commentaire d'époque « Les Batch restent intacts ») → batchs fantômes « 0/N packs · 0 QR actifs » dans la liste.
+- FIX 1 src/app/api/admin/packs/[packId]/route.ts : deletePackCascade compte les packs restants du batch APRÈS suppression du pack ; si 0 → tx.batch.delete dans la MÊME transaction (aucune fenêtre visible de batch vide). Réponse enrichie batchDeleted=true. Audit ADMIN_DELETE_BATCH_AUTO quand le batch est ainsi purgé.
+- FIX 2 NOUVEAU src/app/api/admin/batches/[batchId]/route.ts : DELETE batch ENTIERS (scans → avis → lots → packs → batch, deleteMany explicites sans compter sur les FK CASCADE) + heal P2021 + audit ADMIN_DELETE_BATCH + 404 introuvable/inconnu.
+- FIX 3 ArtisanBatchesPage.tsx : bouton « Supprimer » rouge par CARTE BATCH (testid delete-batch-<id>, confirmation, toast compteurs) ; toast pack mentionne « Batch XXXXXXXX supprimé aussi — plus aucun pack restant » via batchDeleted ; compteurs RÉELS sur la carte (packs.length vs numberOfPacks : « X pack(s) restant(s) sur N » + « activatedPacks/packs.length packs activés »).
+- Tests : scripts/test-pack-deletion.ts étendu (BASE/DATABASE_URL paramétrables) — 52/52 OK : batch A vidé→supprimé+audit auto, batch M 2 packs (reste au 1er, supprimé au dernier), DELETE batch B entier (compteurs, re-404), 403×3, purge ne trouve plus aucun fantôme, UI Playwright (bouton batch visible, suppression pack→batch fantôme retiré, confirm).
+- Environnement local reconstruit : db:push+seed (db/custom.db était vide 0 octet) → build standalone → serveur :3100 → test.
+
+Stage Summary:
+- Plus AUCUN batch fantôme possible : un batch n'existe que tant qu'il a au moins un pack ; suppression batch entier en 1 clic ; les batchs fantômes déjà en DB (ex. CMUSNJ33 en prod) se suppriment via le nouveau bouton « Supprimer » de la carte batch.
+- Déployé via push → Coolify (webhook à surveiller : ceafdf9 n'avait PAS déclenché de redeploy auto — vérifier /api/health commit et Redeploy manuel si besoin).

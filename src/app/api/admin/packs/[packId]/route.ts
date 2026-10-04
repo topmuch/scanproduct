@@ -14,8 +14,13 @@ import {
  *
  * DELETE /api/admin/packs/<packId>
  *   → supprime le pack ET toutes ses données liées, dans l'ordre sûr :
- *     scans → avis → étiquettes (lots) → pack. Les Batch restent intacts
- *     (le pack disparaît simplement de la liste).
+ *     scans → avis → étiquettes (lots) → pack.
+ *
+ * NETTOYAGE DU BATCH (bug signalé : « je supprime un pack mais le nom du
+ * batch et ses infos restent ») : si le batch parent n'a PLUS AUCUN pack
+ * après la suppression, il est supprimé aussi — plus de batch fantôme
+ * « 0/5 packs activés · 0 QR actifs » qui traîne dans la liste.
+ * La réponse porte batchDeleted=true pour que l'UI le signale.
  *
  * Suppression EXPLICITE (deleteMany en transaction) plutôt que de compter
  * sur les FK ON DELETE CASCADE : les DB de prod créées par d'anciens DDL
@@ -28,12 +33,21 @@ import {
 
 type RouteCtx = { params: Promise<{ packId: string }> };
 
-/** Supprime le pack et tout ce qui pend à ses lots. Retourne les compteurs. */
+/**
+ * Supprime le pack, tout ce qui pend à ses lots, ET le batch parent si
+ * celui-ci se retrouve vide (plus aucun pack). Retourne les compteurs.
+ */
 async function deletePackCascade(packId: string) {
   return db.$transaction(async (tx) => {
     const pack = await tx.pack.findUnique({
       where: { id: packId },
-      select: { id: true, masterQrCode: true, quantity: true, lots: { select: { id: true } } },
+      select: {
+        id: true,
+        masterQrCode: true,
+        quantity: true,
+        batchId: true,
+        lots: { select: { id: true } },
+      },
     });
     if (!pack) return null;
 
@@ -47,11 +61,22 @@ async function deletePackCascade(packId: string) {
     const lots = await tx.preActivatedLot.deleteMany({ where: { packId } });
     await tx.pack.delete({ where: { id: packId } });
 
+    // Batch fantôme : dernier pack supprimé → le batch (et son nom, ses
+    // infos « 0/N packs ») n'a plus de raison d'exister. Dans la MÊME
+    // transaction → aucune fenêtre où un batch vide est visible.
+    let batchDeleted = false;
+    const remaining = await tx.pack.count({ where: { batchId: pack.batchId } });
+    if (remaining === 0) {
+      await tx.batch.delete({ where: { id: pack.batchId } });
+      batchDeleted = true;
+    }
+
     return {
       masterQrCode: pack.masterQrCode,
       lotsDeleted: lots.count,
       scansDeleted: scans.count,
       reviewsDeleted: reviews.count,
+      batchDeleted,
     };
   });
 }
@@ -67,6 +92,22 @@ export async function DELETE(_request: NextRequest, ctx: RouteCtx) {
     const result = await deletePackCascade(packId);
     if (!result) {
       return { status: 404, body: { error: "Pack introuvable" } };
+    }
+
+    if (result.batchDeleted) {
+      await db.auditLog.create({
+        data: {
+          userId: session.user?.id ?? null,
+          action: "ADMIN_DELETE_BATCH_AUTO",
+          entity: "Batch",
+          entityId: null,
+          metadata: JSON.stringify({
+            reason: "dernier pack supprimé — batch vidé puis supprimé",
+            viaPackId: packId,
+            ...result,
+          }),
+        },
+      });
     }
 
     await db.auditLog.create({
