@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { normalizePhone } from "@/lib/artisan-auth";
+import { getArtisanFromToken } from "@/lib/artisan-auth";
+import { resolveArtisanForPack } from "@/lib/artisan-link";
 import {
   asciiHeader,
   ensureArtisanTables,
@@ -29,6 +29,11 @@ import {
  *   1er groupe (comportement identique au Mode 1).
  * - Lien artisan (compte, vente, réseaux, galerie) posé à la 1re
  *   activation ; les passes suivantes n'écrasent que ce qui est fourni.
+ * - RACHAT DE LOT : si le client a DÉJÀ un compte (lot précédent), le
+ *   nouveau lot rejoint son dashboard existant. Ordre de priorité :
+ *   pack déjà lié (vente admin) → session connectée (JWT portail envoyé
+ *   par le wizard) → téléphone → email d'un pack précédent → création.
+ *   (cf. src/lib/artisan-link.ts)
  * - Compat mono-produit : un seul groupe couvrant TOUT le pack remplit
  *   aussi Pack.productPrice/productDesignation (lecture historique).
  *
@@ -130,6 +135,11 @@ export async function POST(request: NextRequest) {
   if (!masterCode.startsWith("MASTER-")) {
     return NextResponse.json({ error: "Code maître invalide" }, { status: 400 });
   }
+
+  // Client déjà connecté à son portail (dashboard artisan) ? Le wizard
+  // transmet son JWT s'il est présent dans le localStorage : le nouveau
+  // lot rejoindra son dashboard EXISTANT (rachat de lot).
+  const authArtisan = getArtisanFromToken(request);
 
   // Dates valides pour CHAQUE groupe (péremption après fabrication)
   const groupDates = groups.map((g) => {
@@ -234,28 +244,17 @@ export async function POST(request: NextRequest) {
           });
         }
 
-        // 3. Lien artisan (1re activation) — compte créé/lié pour que le
-        //    dashboard affiche immédiatement le pack (mot de passe 0000).
-        const normalizedPhone = normalizePhone(shared.contactPhone).replace(/^\+/, "");
-        let artisanId = pack.artisanId;
-        if (!artisanId) {
-          let artisan = await tx.artisan.findUnique({ where: { phone: normalizedPhone } });
-          if (!artisan) {
-            artisan = await tx.artisan.create({
-              data: {
-                phone: normalizedPhone,
-                password: await bcrypt.hash("0000", 10),
-                name: shared.artisanName,
-              },
-            });
-          } else if (!artisan.name) {
-            artisan = await tx.artisan.update({
-              where: { id: artisan.id },
-              data: { name: shared.artisanName },
-            });
-          }
-          artisanId = artisan.id;
-        }
+        // 3. Lien artisan — LE CLIENT EXISTANT RETROUVE SON DASHBOARD :
+        //    pack déjà lié (vente admin) → session connectée (JWT) →
+        //    téléphone → email d'un pack précédent → création du compte.
+        //    (le mot de passe du compte créé reste « 0000 »)
+        const link = await resolveArtisanForPack({
+          tx,
+          packId: pack.id,
+          shared,
+          authArtisanId: authArtisan?.artisanId ?? null,
+        });
+        const artisanId = link.artisanId;
 
         // 4. Statut du pack + champs partagés
         const activatedTotal = activeCount + sum;
@@ -339,6 +338,8 @@ export async function POST(request: NextRequest) {
           fullyActivated,
           firstCode,
           groupsApplied,
+          isNewArtisan: link.isNew,
+          linkedBy: link.matchedBy,
         };
       },
       { timeout: 25000 }
@@ -353,6 +354,10 @@ export async function POST(request: NextRequest) {
       fullyActivated: result.fullyActivated,
       firstCode: result.firstCode,
       groups: result.groupsApplied,
+      // Rachat de lot : le client était déjà connu → son dashboard existant
+      // affiche désormais ce nouveau lot.
+      existingClient: !result.isNewArtisan,
+      linkedBy: result.linkedBy,
       message: `${result.activated} QR codes activés — ${result.activatedTotal}/${result.quantity} au total`,
     });
   };

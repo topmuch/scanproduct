@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   CheckCircle2,
@@ -125,6 +125,8 @@ type SuccessState = {
   remaining: number;
   fullyActivated: boolean;
   firstCode: string;
+  /** Rachat de lot : le client avait déjà un dashboard → lot ajouté dedans. */
+  existingClient: boolean;
 };
 
 const inputCls =
@@ -317,6 +319,47 @@ export default function ActivatePackClient({
   const [error, setError] = useState("");
   const [success, setSuccess] = useState<SuccessState | null>(null);
 
+  // ── RACHAT DE LOT : client déjà connecté à son portail artisan ? ──
+  // Si un JWT est présent dans le localStorage (connexion au dashboard
+  // /artisan/dashboard), on récupère son profil : préremplissage de la
+  // marque + bannière « ce lot rejoindra votre tableau de bord ».
+  const [loggedInArtisan, setLoggedInArtisan] = useState<{
+    name: string;
+    phone: string;
+    packsCount: number;
+  } | null>(null);
+
+  useEffect(() => {
+    const token = window.localStorage.getItem("verifscan_artisan_token");
+    if (!token) return;
+    fetch("/api/artisan/me", { headers: { Authorization: `Bearer ${token}` } })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        const a = d?.artisan;
+        if (!a) return;
+        setLoggedInArtisan({
+          name: a.name ?? "",
+          phone: a.phone ?? "",
+          packsCount: Number(d.packsCount ?? 0),
+        });
+        // Préremplissage — une activation précédente du MÊME pack
+        // (previousInfo) reste prioritaire : on ne remplit que le vide.
+        setSimple((f) => ({
+          ...f,
+          artisanName: f.artisanName || a.name || "",
+          contactPhone: f.contactPhone || a.phone || "",
+        }));
+        setShared((f) => ({
+          ...f,
+          artisanName: f.artisanName || a.name || "",
+          contactPhone: f.contactPhone || a.phone || "",
+        }));
+      })
+      .catch(() => {
+        /* token absent/invalide → wizard anonyme classique */
+      });
+  }, []);
+
   // ── MÉMOIRE D'ACTIVATION : données de la première activation ──
   const prevProduct = previousInfo?.products?.[0] ?? null;
 
@@ -499,6 +542,18 @@ export default function ActivatePackClient({
     setError("");
     setLoading(true);
     try {
+      // Rachat de lot : si le client est connecté à son portail (dashboard
+      // artisan), on transmet son JWT → le serveur rattache le nouveau lot
+      // à SON tableau de bord existant (au lieu de créer un 2e compte).
+      const artisanToken =
+        typeof window !== "undefined"
+          ? window.localStorage.getItem("verifscan_artisan_token")
+          : null;
+      const authHeaders: Record<string, string> = {
+        "Content-Type": "application/json",
+        ...(artisanToken ? { Authorization: `Bearer ${artisanToken}` } : {}),
+      };
+
       let payloadGroups: ApiGroup[] = [];
 
       if (mode === "simple") {
@@ -554,7 +609,7 @@ export default function ActivatePackClient({
         };
         const res = await fetch("/api/artisan/activate-groups", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: authHeaders,
           body: JSON.stringify({ masterCode, groups: payloadGroups, shared: sharedPayload }),
         });
         await handleResponse(res);
@@ -607,7 +662,7 @@ export default function ActivatePackClient({
       }
       const res = await fetch("/api/artisan/activate-groups", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: authHeaders,
         body: JSON.stringify({
           masterCode,
           groups: apiGroups,
@@ -641,6 +696,7 @@ export default function ActivatePackClient({
       remaining: data.remaining ?? 0,
       fullyActivated: Boolean(data.fullyActivated),
       firstCode: typeof data.firstCode === "string" ? data.firstCode : "",
+      existingClient: Boolean(data.existingClient),
     };
     // Met à jour la progression locale (barre + groupes affichés)
     const applied: Array<{ productName: string; count: number }> = Array.isArray(data.groups)
@@ -662,6 +718,28 @@ export default function ActivatePackClient({
       ? Math.min(Math.round((packInfo.activatedCount / packInfo.quantity) * 100), 100)
       : 0;
 
+  // ── Bannière « Bon retour » — le client a déjà un dashboard ──────────
+  // Affichée sur l'écran de choix ET en tête du wizard : le nouveau lot
+  // sera automatiquement rattaché à son tableau de bord existant.
+  const welcomeBackBanner = loggedInArtisan ? (
+    <div
+      className="mb-5 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800"
+      data-testid="existing-client-banner"
+    >
+      <p className="font-extrabold">
+        👋 Bon retour{loggedInArtisan.name ? `, ${loggedInArtisan.name}` : ""} !
+      </p>
+      <p className="mt-0.5">
+        Vous avez déjà un compte VerifScan
+        {loggedInArtisan.packsCount > 0
+          ? ` avec ${loggedInArtisan.packsCount} lot${loggedInArtisan.packsCount > 1 ? "s" : ""}`
+          : ""}
+        . Ce nouveau lot sera automatiquement ajouté à votre tableau de bord
+        existant.
+      </p>
+    </div>
+  ) : null;
+
   // ── Écran de SUCCÈS ─────────────────────────────────────────────────────
   if (success) {
     return (
@@ -677,6 +755,16 @@ export default function ActivatePackClient({
             </strong>{" "}
             QR codes de votre pack sont maintenant visibles par vos clients.
           </p>
+
+          {/* Rachat de lot : le lot rejoint le dashboard existant */}
+          {success.existingClient && (
+            <div
+              className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800"
+              data-testid="success-existing-client"
+            >
+              ✅ Ce nouveau lot a été ajouté à votre tableau de bord existant.
+            </div>
+          )}
 
           {/* Progression du pack */}
           <div className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
@@ -762,6 +850,8 @@ export default function ActivatePackClient({
               </div>
             )}
           </div>
+
+          {welcomeBackBanner}
 
           {/* Progression si pack déjà partiellement activé */}
           {isPartial && (
@@ -889,6 +979,8 @@ export default function ActivatePackClient({
             </div>
           )}
         </div>
+
+        {welcomeBackBanner}
 
         {error && (
           <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">

@@ -42,6 +42,9 @@ const BodySchema = z.object({
 
 const DEFAULT_PASSWORD = "0000";
 
+/**
+ * Message WhatsApp — NOUVEAU client : identifiants complets (0000).
+ */
 function buildWhatsAppMessage(opts: {
   artisanName: string;
   quantity: number;
@@ -66,6 +69,33 @@ function buildWhatsAppMessage(opts: {
   ].join("\n");
 }
 
+/**
+ * Message WhatsApp — CLIENT EXISTANT (rachat de lot) : pas de nouveau
+ * mot de passe, le lot rejoint automatiquement son dashboard existant.
+ */
+function buildReturningWhatsAppMessage(opts: {
+  artisanName: string;
+  quantity: number;
+  loginUrl: string;
+  phone: string;
+}): string {
+  return [
+    `🎉 Bonjour ${opts.artisanName} !`,
+    "",
+    `Votre NOUVEAU pack de ${opts.quantity} QR codes est prêt.`,
+    "",
+    "✅ Il a été ajouté à votre tableau de bord VerifScan existant.",
+    "",
+    "📱 Connectez-vous avec vos identifiants habituels :",
+    opts.loginUrl,
+    `🔑 Identifiant : ${opts.phone}`,
+    "",
+    "💡 Scannez le QR Code Maître de ce nouveau lot pour activer vos produits.",
+    "",
+    "L'équipe VerifScan",
+  ].join("\n");
+}
+
 const run = async (
   packId: string,
   artisanPhoneRaw: string,
@@ -85,7 +115,11 @@ const run = async (
     }
 
     // 2. Compte Artisan (créé avec le mot de passe « 0000 » par défaut)
-    let artisan = await tx.artisan.findUnique({ where: { phone } });
+    //    RACHAT DE LOT : si le compte existe DÉJÀ (lot précédent), on le
+    //    réutilise — le nouveau lot rejoindra le dashboard existant.
+    const existing = await tx.artisan.findUnique({ where: { phone } });
+    const existed = Boolean(existing);
+    let artisan = existing;
     if (!artisan) {
       artisan = await tx.artisan.create({
         data: {
@@ -114,17 +148,24 @@ const run = async (
       },
     });
 
-    return { pack: updated, artisan };
+    return { pack: updated, artisan, existed };
   });
 
   const loginUrl = `${origin.replace(/\/$/, "")}/artisan/login`;
-  const message = buildWhatsAppMessage({
-    artisanName: result.artisan.name ?? artisanName,
-    quantity: result.pack.quantity,
-    loginUrl,
-    phone: result.artisan.phone,
-    password: DEFAULT_PASSWORD,
-  });
+  const message = result.existed
+    ? buildReturningWhatsAppMessage({
+        artisanName: result.artisan.name ?? artisanName,
+        quantity: result.pack.quantity,
+        loginUrl,
+        phone: result.artisan.phone,
+      })
+    : buildWhatsAppMessage({
+        artisanName: result.artisan.name ?? artisanName,
+        quantity: result.pack.quantity,
+        loginUrl,
+        phone: result.artisan.phone,
+        password: DEFAULT_PASSWORD,
+      });
   const whatsappLink = `https://wa.me/221${result.artisan.phone}?text=${encodeURIComponent(message)}`;
 
   return NextResponse.json({
@@ -145,6 +186,9 @@ const run = async (
     loginUrl,
     whatsappLink,
     whatsappMessage: message,
+    // Rachat de lot : true = le client avait déjà un compte → le lot
+    // rejoint son dashboard existant (mot de passe inchangé).
+    existingClient: result.existed,
     message: "Pack vendu avec succès. Cliquez sur le lien WhatsApp pour envoyer les codes.",
   });
 };

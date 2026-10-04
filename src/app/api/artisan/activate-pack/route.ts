@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { normalizePhone } from "@/lib/artisan-auth";
+import { getArtisanFromToken } from "@/lib/artisan-auth";
+import { resolveArtisanForPack } from "@/lib/artisan-link";
 import {
   asciiHeader,
   ensureArtisanTables,
@@ -120,6 +120,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Code maître invalide" }, { status: 400 });
   }
 
+  // Client déjà connecté à son portail (dashboard artisan) ? → le nouveau
+  // lot rejoindra son dashboard EXISTANT (rachat de lot).
+  const authArtisan = getArtisanFromToken(request);
+
   const manufacturingDate = new Date(`${productData.manufacturingDate}T00:00:00.000Z`);
   const expirationDate = new Date(`${productData.expirationDate}T00:00:00.000Z`);
   if (Number.isNaN(manufacturingDate.getTime()) || Number.isNaN(expirationDate.getTime())) {
@@ -208,26 +212,21 @@ export async function POST(request: NextRequest) {
         });
 
         // 4. Enregistrer l'artisan sur le pack + statut activated.
-        //    Portail artisan : le compte Artisan est créé/lié (téléphone =
-        //    identifiant, mot de passe par défaut « 0000 ») pour que le
-        //    dashboard /artisan/dashboard affiche immédiatement le pack,
-        //    même si le pack n'a pas été « vendu » au préalable.
-        const normalizedPhone = normalizePhone(productData.contactPhone).replace(/^\+/, "");
-        let artisan = await tx.artisan.findUnique({ where: { phone: normalizedPhone } });
-        if (!artisan) {
-          artisan = await tx.artisan.create({
-            data: {
-              phone: normalizedPhone,
-              password: await bcrypt.hash("0000", 10),
-              name: productData.artisanName,
-            },
-          });
-        } else if (!artisan.name) {
-          artisan = await tx.artisan.update({
-            where: { id: artisan.id },
-            data: { name: productData.artisanName },
-          });
-        }
+        //    Portail artisan : compte créé/lié (mot de passe « 0000 ») pour
+        //    que le dashboard /artisan/dashboard affiche immédiatement le
+        //    pack. RACHAT DE LOT : client existant retrouvé via pack déjà
+        //    lié → session connectée (JWT) → téléphone → email d'un pack
+        //    précédent (cf. src/lib/artisan-link.ts).
+        const link = await resolveArtisanForPack({
+          tx,
+          packId: masterLot.packId,
+          shared: {
+            artisanName: productData.artisanName,
+            contactPhone: productData.contactPhone,
+            contactEmail: productData.contactEmail || null,
+          },
+          authArtisanId: authArtisan?.artisanId ?? null,
+        });
 
         const fullyActivated =
           inactiveLots.length +
@@ -241,7 +240,7 @@ export async function POST(request: NextRequest) {
             soldTo: productData.artisanName,
             soldAt: new Date(),
             artisanPhone: productData.contactPhone,
-            artisanId: artisan.id,
+            artisanId: link.artisanId,
             artisanEmail: productData.contactEmail || null,
             instagramUrl: productData.instagramUrl || null,
             facebookUrl: productData.facebookUrl || null,
@@ -260,6 +259,8 @@ export async function POST(request: NextRequest) {
           // Code du 1er produit activé → le bouton « Voir le produit activé »
           // de l'écran de succès mène directement à la page publique.
           firstCode: inactiveLots[0]?.qrCode ?? masterLot.qrCode,
+          isNewArtisan: link.isNew,
+          linkedBy: link.matchedBy,
         };
       },
       { timeout: 20000 }
@@ -269,6 +270,8 @@ export async function POST(request: NextRequest) {
       success: true,
       activated: result.activated,
       firstCode: result.firstCode,
+      existingClient: !result.isNewArtisan,
+      linkedBy: result.linkedBy,
       message: `${result.activated} produits activés avec succès !`,
     });
   };

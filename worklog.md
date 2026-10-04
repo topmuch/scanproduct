@@ -5476,3 +5476,27 @@ Stage Summary:
 - L'assistant intelligent couvre désormais l'agroalimentaire sénégalais (31 produits) avec désignation + ingrédients éditables (« adaptez à votre recette réelle ») + péremption auto-calculée depuis la table de durées fournie.
 - Le wizard se SOUVIENT : revenir activer 20/30 QR après en avoir activé 10 reprend automatiquement marque, WhatsApp, réseaux et les produits déjà activés (chips de reprise en 1 clic — il ne reste que le nombre d'étiquettes à saisir).
 - À vérifier en prod après redeploy : /api/health → commit ; wizard → « Jus de bissap » préremplit tout ; activer 2 QR puis re-scanner → bannière + chips.
+
+---
+Task ID: 14
+Agent: Super Z (principal)
+Task: « synchronise la version github avec la version locale » puis « faire en sorte que le client qui a déjà acheté un lot et créé son dashboard, quand il rachète un autre lot, ce nouveau lot soit associé à son dashboard existant »
+
+Work Log:
+- Synchronisation : environnement local réinitialisé → re-clone → GitHub déjà à jour (2bf381c = prod). Aucun push nécessaire.
+- Exploration : le dashboard /artisan/dashboard agrège DÉJÀ tous les packs via OR(artisanId, artisanPhone) → aucune modification dashboard requise ; le gap est la LIAISON D'IDENTITÉ à la vente/activation (uniquement par téléphone, wizard anonyme).
+- NOUVEAU src/lib/artisan-link.ts — resolveArtisanForPack(), source de vérité unique, ordre de priorité : 1) pack.artisanId (vente admin, prioritaire — pas de vol de lot) 2) session connectée (JWT portail) 3) téléphone normalisé 4) email d'un pack précédent (Pack.artisanEmail) 5) création (mdp 0000). Retourne {artisanId, isNew, matchedBy}.
+- activate-groups : JWT lu via getArtisanFromToken(request) → helper → réponse enrichie {existingClient, linkedBy}.
+- activate-pack (legacy) : même helper (cohérence).
+- NOUVEAU GET /api/artisan/me : profil + packsCount pour le wizard (préremplissage marque/téléphone si champs vides, previousInfo reste prioritaire ; 401 sans token).
+- Wizard activate-client.tsx : JWT du localStorage (verifscan_artisan_token) envoyé dans Authorization des 2 submits activate-groups ; useEffect /api/artisan/me → préremplissage ; bannière verte « 👋 Bon retour X ! Ce nouveau lot sera automatiquement ajouté à votre tableau de bord » (testid existing-client-banner) sur l'écran de choix + en-tête wizard ; encadré succès « Ce nouveau lot a été ajouté à votre tableau de bord existant » (testid success-existing-client).
+- sell-pack : suivi existed → existingClient dans la réponse + message WhatsApp DÉDIÉ rachat (« ajouté à votre tableau de bord VerifScan existant », sans mot de passe) vs nouveau client (0000).
+- NOUVEAU GET /api/admin/artisan-lookup?phone= (SuperAdmin) + SellPackModal : lookup live 400 ms après saisie → encadré émeraude « ✅ Client existant : X (N lots) — ce lot sera ajouté à son tableau de bord » + préremplissage du nom (testid existing-client-hint).
+- Aucune migration DB requise (email via Pack.artisanEmail, pas de colonne Artisan.email).
+- Tests : NOUVEAU scripts/test-multi-lot-dashboard.ts — 43/43 OK (vente nouveau client + WhatsApp 0000, rachat même numéro + WhatsApp « tableau de bord existant », JWT gagne sur lot non vendu, vente admin prioritaire/pas de vol de lot, rattrapage email, rattrapage téléphone formats +221/espacés, dashboard A = 5 lots, stats, /me, lookup). Pré-nettoyage au démarrage + process.exitCode (le finally nettoie). Régressions : flexible 51/51 OK.
+- Piège environnement : /home/z/my-project/.env global définit DATABASE_URL=file:/home/z/my-project/db/custom.db (prioritaire sur le .env projet pour la CLI prisma) → DB unifiée sur ce chemin.
+
+Stage Summary:
+- RACHAT DE LOT : quel que soit le chemin (rachat vendu au même numéro, client connecté qui active lui-même, email identique, numéro reformaté), le nouveau lot atterrit dans le dashboard EXISTANT du client — plus de comptes en double.
+- Garde-fous : la vente admin reste prioritaire (lot vendu au tiers ne peut pas être capté par une session) ; la bannière wizard + le hint admin rendent la liaison visible.
+- Déployé via push → Coolify. À vérifier en prod : /api/health → nouveau commit ; wizard avec token artisan → bannière « Bon retour ».

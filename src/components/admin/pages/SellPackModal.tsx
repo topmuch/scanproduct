@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { CheckCircle2, Copy, MessageCircle, Phone, User, X } from "lucide-react";
 import { toast } from "sonner";
 
@@ -47,6 +47,45 @@ export function SellPackModal({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState<SaleResult | null>(null);
+  // RACHAT DE LOT : client déjà connu ? (lookup live pendant la saisie)
+  const [existing, setExisting] = useState<{
+    id: string;
+    phone: string;
+    name: string | null;
+    packsCount: number;
+  } | null>(null);
+
+  // Dès que le téléphone ressemble à un numéro valide, on interroge
+  // l'API admin : si le client existe déjà (lot précédent), on affiche
+  // « Client existant — ce lot rejoindra son dashboard » et on
+  // préremplit son nom de marque (évite les comptes en double).
+  useEffect(() => {
+    const digits = phone.replace(/\D/g, "");
+    if (digits.length < 6) {
+      setExisting(null);
+      return;
+    }
+    const t = setTimeout(async () => {
+      try {
+        const res = await fetch(
+          `/api/admin/artisan-lookup?phone=${encodeURIComponent(phone)}`
+        );
+        if (!res.ok) {
+          setExisting(null);
+          return;
+        }
+        const json = await res.json();
+        setExisting(json.artisan ?? null);
+        if (json.artisan?.name) {
+          setName((n) => n || json.artisan.name);
+        }
+      } catch {
+        setExisting(null);
+      }
+    }, 400);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phone]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -142,6 +181,23 @@ export function SellPackModal({
               <p className="mt-1 text-[12px] text-gray-500">
                 Servira d&apos;identifiant de connexion.
               </p>
+
+              {existing && (
+                <div
+                  className="mt-2 rounded-xl bg-emerald-50 px-4 py-3 text-[13px] text-emerald-800"
+                  data-testid="existing-client-hint"
+                >
+                  <p className="font-bold">
+                    ✅ Client existant : {existing.name || existing.phone} ({existing.packsCount}{' '}
+                    lot{existing.packsCount > 1 ? "s" : ""} enregistré
+                    {existing.packsCount > 1 ? "s" : ""})
+                  </p>
+                  <p className="mt-0.5">
+                    Ce nouveau lot sera ajouté à son tableau de bord existant —
+                    pas de nouveau compte créé.
+                  </p>
+                </div>
+              )}
 
               <label className="mb-2 mt-4 block text-sm font-semibold text-gray-700">
                 👤 Nom de l&apos;artisan / marque *
