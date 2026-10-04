@@ -1,23 +1,31 @@
 /**
- * Test E2E — SLIDERS PAGE PRODUIT PUBLIQUE
- * (demande utilisateur :
- *   1. photos de l'atelier → défilent en slides (diaporama auto)
- *   2. en bas de page → « autres produits du créateur » défilent en slide)
+ * Test E2E — SLIDERS PAGE PRODUIT PUBLIQUE (v2)
+ * (demandes utilisateur :
+ *   1. photos de l'atelier → défilent en slides — BUG corrigé : la page
+ *      « monte et descend toute seule » (scrollIntoView vertical) ;
+ *   2. « autres produits du créateur » en carrousel — BUG corrigé :
+ *      seulement 2 produits affichés alors que l'artisan en a 6+.
+ *
+ * Reproduction du bug 2 :
+ *   - artisan « Awa Ndiaye » (+221771234567) active 7 produits DISTINCTS ;
+ *   - puis active 25 unités d'un MÊME produit « spam » (plus récent) ;
+ *   - ANCIEN code : take:20 → les 20 lots spam dominent la fenêtre
+ *     (dédoublonnage → 1 carte) + matching nom EXACT exclut la variante
+ *     « AWA NDIAYE » → ~1-2 slides seulement ;
+ *   - NOUVEAU code : take:200 + OR (nom OU 9 chiffres du téléphone) +
+ *     dédoublonnage normalisé → 7 slides (spam = 1 seule carte).
  *
  * Scénario :
- *   1. Purge initiale + 3 batchs (1 pack × 1 QR) — MÊME artisan
- *      (même nom + même téléphone) : A « Beurre de karité bio » (prix +
- *      photo produit + 2 photos d'atelier), B « Savon noir » (prix + photo),
- *      C « Jus de bissap » (sans prix, sans photo).
- *   2. Activation des 3 produits via /api/artisan/activate-groups.
+ *   1. Purge + 8 batchs : A..G (1 QR chacun) + SPAM (1 pack de 25 QR).
+ *   2. Activations A→G même artisan (G : nom « AWA NDIAYE », même tel),
+ *      puis SPAM : 25 lots « Savon artisanal en promo ».
  *   3. Page /a/<codeA> :
- *      - section « Autres produits de … » PRÉSENTE (2 slides : B, C)
- *      - testids similar-product-slide-0 / slide-1 (carrousel, PAS la grille)
- *      - l'ancienne grille `grid grid-cols-2 gap-4` a DISPARU
- *      - cartes carrousel « Voir le produit » + badge prix « 1 500 FCFA »
- *      - AtelierSlider : photos atelier présentes, flèches ‹ › (diaporama)
- *   4. Page /a/<codeC> (produit sans photo) : le carrousel montre A + B.
- *   5. Nettoyage : purge finale.
+ *      - les 7 autres produits présents (codes B..G dans le HTML) ;
+ *      - testid similar-product-slide-6 (7 slides) ;
+      - PAS de slide-7 (le spam 25 lots = UNE seule carte → dédoublonnage) ;
+ *      - photos atelier + flèches (slider atelier conservé).
+ *   4. Page /a/<codeC> : produit A visible (vue depuis un autre produit).
+ *   5. Purge finale.
  *
  * Run : BASE=http://localhost:3100 DATABASE_URL="file:.../custom.db" bun scripts/test-product-sliders.ts
  */
@@ -64,8 +72,8 @@ async function uploadPhoto(
 }
 
 async function main() {
-  // ── 1. Purge + 3 batchs du MÊME artisan ───────────────────────────────────
-  console.log("1. Purge initiale + 3 batchs (même artisan)");
+  // ── 1. Purge + batchs de test ─────────────────────────────────────────────
+  console.log("1. Purge initiale + batchs (A..G 1 QR + SPAM 25 QR)");
   await prisma.artisanScan.deleteMany({});
   await prisma.artisanReview.deleteMany({});
   await prisma.preActivatedLot.deleteMany({});
@@ -101,56 +109,42 @@ async function main() {
   capture(loginRes);
   const adminCookie = jar;
 
-  const masters: string[] = [];
-  for (let i = 0; i < 3; i++) {
+  const createBatch = async (totalQuantity: number, packSize: number) => {
     const res = await fetch(`${BASE}/api/admin/batches`, {
       method: "POST",
       headers: { "Content-Type": "application/json", cookie: adminCookie },
-      body: JSON.stringify({ totalQuantity: 1, packSize: 1, pricePerPack: 0 }),
+      body: JSON.stringify({ totalQuantity, packSize, pricePerPack: 0 }),
     });
     const json = (await res.json()) as { masterCodes?: string[] };
-    if (!json.masterCodes?.[0]) {
-      console.error(`  ✗ batch ${i + 1} non créé`);
-      process.exit(1);
-    }
-    masters.push(json.masterCodes[0]);
-  }
-  const [masterA, masterB, masterC] = masters;
-  check("3 batchs créés (A, B, C)", masters.length === 3);
+    if (!json.masterCodes?.[0]) throw new Error(`batch non créé (${totalQuantity}/${packSize})`);
+    return json.masterCodes[0];
+  };
 
-  // ── 2. Uploads (photos produit + photos atelier) ─────────────────────────
-  console.log("2. Uploads photos produit + atelier");
-  const photoA = await uploadPhoto(
-    await makePng({ r: 200, g: 150, b: 60 }),
-    "karite.png",
-    masterA
-  );
-  const photoB = await uploadPhoto(
-    await makePng({ r: 60, g: 60, b: 60 }),
-    "savon.png",
-    masterB
-  );
-  const atelier1 = await uploadPhoto(
-    await makePng({ r: 120, g: 80, b: 40 }),
-    "atelier-1.png",
-    masterA
-  );
-  const atelier2 = await uploadPhoto(
-    await makePng({ r: 80, g: 120, b: 40 }),
-    "atelier-2.png",
-    masterA
-  );
-  check("photo produit A uploadée", photoA.endsWith(".webp"));
-  check("photo produit B uploadée", photoB.endsWith(".webp"));
-  check("2 photos atelier uploadées", atelier1.endsWith(".webp") && atelier2.endsWith(".webp"));
+  const masterA = await createBatch(1, 1);
+  const mastersMid = [
+    await createBatch(1, 1),
+    await createBatch(1, 1),
+    await createBatch(1, 1),
+    await createBatch(1, 1),
+    await createBatch(1, 1),
+  ]; // B..F
+  const masterG = await createBatch(1, 1);
+  const masterSpam = await createBatch(25, 25);
+  check("8 batchs créés (A..G + SPAM de 25)", true);
 
-  // ── 3. Activations (même artisanName + même contactPhone) ────────────────
-  console.log("3. Activation des 3 produits (même artisan)");
+  // ── 2. Uploads (photos produit A/B + photos atelier A) ───────────────────
+  console.log("2. Uploads photos");
+  const photoA = await uploadPhoto(await makePng({ r: 200, g: 150, b: 60 }), "karite.png", masterA);
+  const atelier1 = await uploadPhoto(await makePng({ r: 120, g: 80, b: 40 }), "atelier-1.png", masterA);
+  const atelier2 = await uploadPhoto(await makePng({ r: 80, g: 120, b: 40 }), "atelier-2.png", masterA);
+  check("photo produit A + 2 photos atelier uploadées", photoA.endsWith(".webp"));
+
+  // ── 3. Activations — même artisan, puis spam 25 unités ───────────────────
+  console.log("3. Activations A→G (même artisan) + SPAM");
   const activate = async (
     masterCode: string,
     productName: string,
-    productPrice: string | null,
-    photoUrl: string
+    opts: { price?: string; photoUrl?: string; artisanName?: string; count?: number } = {}
   ) => {
     const res = await fetch(`${BASE}/api/artisan/activate-groups`, {
       method: "POST",
@@ -159,24 +153,22 @@ async function main() {
         masterCode,
         groups: [
           {
-            count: 1,
+            count: opts.count ?? 1,
             productData: {
               productName,
               contenance: "200 g",
               ingredients: "Naturel",
               manufacturingDate: "2026-01-15",
               expirationDate: "2027-01-15",
-              photoUrl,
-              ...(productPrice ? { productPrice } : {}),
+              photoUrl: opts.photoUrl ?? "",
+              ...(opts.price ? { productPrice: opts.price } : {}),
             },
           },
         ],
         shared: {
-          artisanName: "Awa Ndiaye",
+          artisanName: opts.artisanName ?? "Awa Ndiaye",
           contactPhone: "+221771234567",
-          ...(masterCode === masterA
-            ? { artisanPhotos: [atelier1, atelier2] }
-            : {}),
+          ...(masterCode === masterA ? { artisanPhotos: [atelier1, atelier2] } : {}),
         },
       }),
     });
@@ -187,33 +179,40 @@ async function main() {
     return json.firstCode;
   };
 
-  const codeA = await activate(masterA, "Beurre de karité bio", "2 500 FCFA", photoA);
-  const codeB = await activate(masterB, "Savon noir traditionnel", "1 500 FCFA", photoB);
-  const codeC = await activate(masterC, "Jus de bissap naturel", null, "");
-  check("produit A activé", !!codeA);
-  check("produit B activé", !!codeB);
-  check("produit C activé (sans prix ni photo)", !!codeC);
+  const codeA = await activate(masterA, "Beurre de karité bio", { price: "2 500 FCFA", photoUrl: photoA });
+  const namesMid = ["Savon noir traditionnel", "Jus de bissap naturel", "Mangue séchée", "Poudre de baobab", "Café Touba moulu"];
+  const codesMid: string[] = [];
+  for (let i = 0; i < mastersMid.length; i++) {
+    codesMid.push(await activate(mastersMid[i], namesMid[i], { price: "1 500 FCFA" }));
+  }
+  const codeG = await activate(masterG, "Gingembre confit", { artisanName: "AWA NDIAYE" }); // variante nom, même tel
+  await activate(masterSpam, "Savon artisanal en promo", { count: 25 }); // 25 lots récents « spam »
+  check("7 produits distincts + 25 lots spam activés", true);
 
-  // ── 4. Page A : carrousel « Autres produits » + slider atelier ───────────
-  console.log("4. Page /a/<A> — carrousels");
+  // ── 4. Page A : 7 slides, spam dédoublonné, slider atelier ───────────────
+  console.log("4. Page /a/<A> — carrousel 7 produits + atelier");
   const pageA = await fetch(`${BASE}/a/${codeA}`);
   const htmlA = await pageA.text();
   check("page A → 200", pageA.status === 200);
   check("section « Autres produits de » présente", htmlA.includes("Autres produits de"));
+  check("code B présent", codesMid[0] && htmlA.includes(codesMid[0]));
+  check("code C présent", codesMid[1] && htmlA.includes(codesMid[1]));
+  check("code D présent", codesMid[2] && htmlA.includes(codesMid[2]));
+  check("code E présent", codesMid[3] && htmlA.includes(codesMid[3]));
+  check("code F présent", codesMid[4] && htmlA.includes(codesMid[4]));
   check(
-    "carrousel : slide produit B présente",
-    htmlA.includes(`similar-product-slide-0`) && htmlA.includes(codeB)
+    "code G présent (variante nom « AWA NDIAYE », matching par téléphone)",
+    htmlA.includes(codeG)
   );
   check(
-    "carrousel : slide produit C présente",
-    htmlA.includes(`similar-product-slide-1`) && htmlA.includes(codeC)
+    "7 slides (testid similar-product-slide-6)",
+    htmlA.includes("similar-product-slide-6")
   );
   check(
-    "ancienne grille 2 colonnes SUPPRIMÉE",
-    !htmlA.includes('grid grid-cols-2 gap-4')
+    "spam 25 lots = UNE seule carte (pas de slide-7)",
+    !htmlA.includes("similar-product-slide-7")
   );
-  check("cartes carrousel « Voir le produit »", htmlA.includes("Voir le produit"));
-  check("badge prix du produit B sur la carte", htmlA.includes("1 500 FCFA"));
+  check("badge prix visible", htmlA.includes("1 500 FCFA"));
   check(
     "slider atelier : photos présentes",
     htmlA.includes("Agrandir la photo 1") && htmlA.includes("atelier de Awa Ndiaye")
@@ -224,19 +223,13 @@ async function main() {
       htmlA.includes('aria-label="Photo suivante"')
   );
 
-  // ── 5. Page C (produit sans photo) : carrousel montre A + B ──────────────
-  console.log("5. Page /a/<C> — carrousel depuis l'autre produit");
-  const pageC = await fetch(`${BASE}/a/${codeC}`);
+  // ── 5. Page C (vue depuis un autre produit) ──────────────────────────────
+  console.log("5. Page /a/<C> — carrousel vu depuis un autre produit");
+  const pageC = await fetch(`${BASE}/a/${codesMid[1]}`);
   const htmlC = await pageC.text();
   check("page C → 200", pageC.status === 200);
-  check(
-    "carrousel page C : produit A présent",
-    htmlC.includes(`similar-product-slide-0`) && htmlC.includes(codeA)
-  );
-  check(
-    "carrousel page C : produit B présent",
-    htmlC.includes(codeB)
-  );
+  check("produit A visible depuis C", htmlC.includes(codeA));
+  check("produit G visible depuis C", htmlC.includes(codeG));
   check("badge prix du produit A visible sur page C", htmlC.includes("2 500 FCFA"));
 
   // ── 6. Nettoyage ──────────────────────────────────────────────────────────

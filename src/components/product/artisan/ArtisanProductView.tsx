@@ -341,18 +341,34 @@ function AtelierSlider({
   const [hovering, setHovering] = useState(false);
   const [interacting, setInteracting] = useState(false);
   const interactTimer = useRef<number | null>(null);
+  // L'auto-défilement ne tourne que quand le carrousel est visible.
+  const [inView, setInView] = useState(false);
 
-  /** Amène la slide `i` au centre (flèches / points). */
+  /** Amène la slide `i` au centre — scrollTo SUR LE RAIL uniquement.
+   *  ⚠️ JAMAIS scrollIntoView : il fait aussi défiler la PAGE verticalement
+   *  quand le carrousel est hors écran (bug « la page monte et descend
+   *  toute seule » rapporté en test avec l'auto-défilement). */
   function goTo(i: number) {
     const track = trackRef.current;
     if (!track) return;
     const clamped = Math.max(0, Math.min(photos.length - 1, i));
-    (track.children[clamped] as HTMLElement | undefined)?.scrollIntoView({
-      behavior: "smooth",
-      block: "nearest",
-      inline: "center",
-    });
+    const slide = track.children[clamped] as HTMLElement | undefined;
+    if (!slide) return;
+    const target = slide.offsetLeft - (track.clientWidth - slide.offsetWidth) / 2;
+    track.scrollTo({ left: Math.max(0, target), behavior: "smooth" });
   }
+
+  // Observation : le carrousel est-il à l'écran ?
+  useEffect(() => {
+    const el = trackRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const obs = new IntersectionObserver(
+      (entries) => setInView(entries[0]?.isIntersecting ?? false),
+      { threshold: 0.3 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
 
   /** Interaction utilisateur → pause de l'auto-défilement 8 s. */
   function markInteract() {
@@ -363,7 +379,7 @@ function AtelierSlider({
 
   // Diaporama automatique : avance toutes les 4 s, boucle au début.
   useEffect(() => {
-    if (hovering || interacting || photos.length < 2) return;
+    if (!inView || hovering || interacting || photos.length < 2) return;
     const t = window.setInterval(() => {
       goTo(current >= photos.length - 1 ? 0 : current + 1);
     }, 4000);
@@ -488,18 +504,33 @@ function ProductsSlider({ products }: { products: SimilarProduct[] }) {
   const [hovering, setHovering] = useState(false);
   const [interacting, setInteracting] = useState(false);
   const interactTimer = useRef<number | null>(null);
+  // L'auto-défilement ne tourne que quand le carrousel est visible.
+  const [inView, setInView] = useState(false);
 
-  /** Amène la carte `i` au centre (flèches / points). */
+  /** Amène la carte `i` au centre — scrollTo SUR LE RAIL uniquement
+   *  (jamais scrollIntoView : il fait aussi défiler la page verticalement
+   *  quand le carrousel est hors écran — bug « page qui monte/descend »). */
   function goTo(i: number) {
     const track = trackRef.current;
     if (!track) return;
     const clamped = Math.max(0, Math.min(products.length - 1, i));
-    (track.children[clamped] as HTMLElement | undefined)?.scrollIntoView({
-      behavior: "smooth",
-      block: "nearest",
-      inline: "center",
-    });
+    const slide = track.children[clamped] as HTMLElement | undefined;
+    if (!slide) return;
+    const target = slide.offsetLeft - (track.clientWidth - slide.offsetWidth) / 2;
+    track.scrollTo({ left: Math.max(0, target), behavior: "smooth" });
   }
+
+  // Observation : le carrousel est-il à l'écran ?
+  useEffect(() => {
+    const el = trackRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const obs = new IntersectionObserver(
+      (entries) => setInView(entries[0]?.isIntersecting ?? false),
+      { threshold: 0.3 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
 
   /** Interaction utilisateur → pause de l'auto-défilement 8 s. */
   function markInteract() {
@@ -510,7 +541,7 @@ function ProductsSlider({ products }: { products: SimilarProduct[] }) {
 
   // Diaporama automatique : avance toutes les 4,5 s, boucle au début.
   useEffect(() => {
-    if (hovering || interacting || products.length < 2) return;
+    if (!inView || hovering || interacting || products.length < 2) return;
     const t = window.setInterval(() => {
       goTo(current >= products.length - 1 ? 0 : current + 1);
     }, 4500);

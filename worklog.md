@@ -5557,3 +5557,20 @@ Stage Summary:
 - Les deux sections demandées défilent désormais en slides avec démarrage automatique, sans dépendance externe (scroll-snap natif).
 - Piège HTML : les apostrophes React sont échappées (&#x27;) — les assertions de texte des aria-labels ne doivent pas contenir d'apostrophe brute.
 - Commit en cours de push ; Redeploy Coolify manuel probablement requis (webhook instable) — vérifier /api/health.
+
+---
+Task ID: 18
+Agent: Super Z (main)
+Task: Fix page produit — sauts verticaux (auto-slide) + « autres produits » tronqués à 2
+
+Work Log:
+- Bug 1 (page qui monte/descend toute seule) : scrollIntoView() du diaporama scrollait AUSSI la fenêtre verticalement quand le carrousel était hors écran → remplacé par track.scrollTo({left}) horizontal uniquement (AtelierSlider + ProductsSlider) ; l'auto-défilement ne tourne plus que si le carrousel est visible (IntersectionObserver, threshold 0.3).
+- Bug 2 (2 produits au lieu de 6+) : (a) take:20 — les 20 lots les plus récents (multi-unités d'un même produit) évacuaient les autres noms de la fenêtre → take:200 + dédoublonnage AVANT slice(8) ; (b) matching artisanName EXACT seul → OR (artisanName = X OU contactPhone contient les 9 chiffres locaux, indicatif 221 retiré) — même clé d'identité que le dashboard artisan ; (c) dédoublonnage productName normalisé (casse/espaces).
+- Test test-product-sliders.ts v2 — 22/22 OK : 7 produits + 25 lots « spam » récents ; page A = 7 slides (B..G dont variante nom « AWA NDIAYE » matchée par téléphone), spam = 1 carte (pas de slide-7), régression atelier OK. Régressions : lab-certificate 23/23, pack-deletion 52/52.
+- ⚠️ PIÈGE DÉCOUVERT : Next 16 renomme le process « next-server (v15) » — `pkill -f "server.js"` ne le tue PAS → l'ancien serveur restait sur :3100 (nouveau bind en échec silencieux) et les tests tournaient contre l'ANCIEN build (symptômes : take:20 + nom exact encore actifs). Toujours pkill -9 -f "next-server" EN PREMIER.
+- Piège Zod : flatten() regroupe les erreurs imbriquées sous le champ racine (« groups » = souvent ingredients min(2) etc.) ; activate-groups exige ingredients ≥ 2 chars.
+
+Stage Summary:
+- Diaporamas : scroll strictement horizontal + pause hors écran — plus de sauts de page.
+- Carrousel : jusqu'à 8 produits du créateur (nom OU téléphone), dédoublonnage robuste aux multi-unités.
+- Commit en cours de push ; Redeploy Coolify manuel requis (vérifier /api/health).

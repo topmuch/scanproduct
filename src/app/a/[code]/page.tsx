@@ -209,12 +209,19 @@ export default async function ArtisanCodePage({
   // Avis clients réels (section 9)
   const reviews = await loadReviews(lot.id);
 
-  // Produits similaires : autres produits ACTIFS du même artisan (max 4),
+  // Produits similaires : autres produits ACTIFS du même artisan (max 8),
   // de NOM DIFFÉRENT (retour utilisateur : un pack multi-unités active
   // plusieurs lots portant LE MÊME productName — ils ne doivent pas
-  // apparaître comme « autres produits »). distinct sur productName →
-  // une seule carte par produit différent ; si l'artisan n'a qu'UN seul
-  // produit, la section disparaît complètement.
+  // apparaître comme « autres produits »).
+  // ⚠️ Bug rapporté : « seulement 2 produits alors que l'artisan en a 6+ ».
+  // Causes corrigées :
+  //   a) take: 20 — si les 20 lots les plus récents sont dominés par des
+  //      multi-unités du même produit, les noms distincts restants sortent
+  //      de la fenêtre → take: 200 (dédoublonnage AVANT slice 8).
+  //   b) matching par artisanName EXACT uniquement — les lots activés avec
+  //      une variante du nom (casse, +221 vs local) étaient invisibles →
+  //      OR artisanName = X OU contactPhone contient les 9 chiffres locaux
+  //      (même clé d'identité que le dashboard artisan : le téléphone).
   let similarProducts: Array<{
     qrCode: string;
     productName: string;
@@ -223,28 +230,43 @@ export default async function ArtisanCodePage({
     productPrice: string | null;
   }> = [];
   try {
+    // 9 derniers chiffres du téléphone (indicatif 221 retiré) — match
+    // « +221771234567 » ET « 771234567 » ; espaces/séparateurs non gérés
+    // en SQL, couverts si le nom correspond aussi (OR).
+    const phoneLocal = (lot.contactPhone ?? "")
+      .replace(/[\s.\-()+]/g, "")
+      .replace(/^00221/, "")
+      .replace(/^221(?=\d{9}$)/, "")
+      .slice(-9);
     // ⚠️ PAS de `distinct` Prisma : sur SQLite il dédoublonne sur la
     // COMBINAISON des colonnes sélectionnées (qrCode différent par lot →
     // aucun dédoublonnage réel). On dédoublonne donc côté JS par
-    // productName — une seule carte par produit DIFFÉRENT.
+    // productName normalisé (casse/espaces) — une seule carte par produit
+    // DIFFÉRENT.
     const rows = await db.preActivatedLot.findMany({
       where: {
-        artisanName: lot.artisanName ?? undefined,
         status: "active",
         isMaster: false,
         id: { not: lot.id },
-        ...(lot.productName
-          ? { productName: { not: lot.productName } }
-          : {}),
+        ...(lot.productName ? { productName: { not: lot.productName } } : {}),
+        OR: [
+          ...(lot.artisanName ? [{ artisanName: lot.artisanName }] : []),
+          ...(phoneLocal.length >= 9
+            ? [{ contactPhone: { contains: phoneLocal } }]
+            : []),
+        ],
       },
       select: { qrCode: true, productName: true, photoUrl: true, contenance: true, productPrice: true },
       orderBy: { activatedAt: "desc" },
-      take: 20, // large : plusieurs unités du même produit possibles
+      take: 200, // large : les multi-unités d'un même produit ne doivent pas évacuer les autres
     });
     const seen = new Set<string>();
     similarProducts = rows
       .filter((p) => {
-        const name = p.productName ?? "Produit artisanal";
+        const name = (p.productName ?? "Produit artisanal")
+          .trim()
+          .toLowerCase()
+          .replace(/\s+/g, " ");
         if (seen.has(name)) return false;
         seen.add(name);
         return true;
