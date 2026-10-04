@@ -5500,3 +5500,4 @@ Stage Summary:
 - RACHAT DE LOT : quel que soit le chemin (rachat vendu au même numéro, client connecté qui active lui-même, email identique, numéro reformaté), le nouveau lot atterrit dans le dashboard EXISTANT du client — plus de comptes en double.
 - Garde-fous : la vente admin reste prioritaire (lot vendu au tiers ne peut pas être capté par une session) ; la bannière wizard + le hint admin rendent la liaison visible.
 - Déployé via push → Coolify. À vérifier en prod : /api/health → nouveau commit ; wizard avec token artisan → bannière « Bon retour ».
+- NOTE déploiement : push ceafdf9 effectué à 13:12 UTC ; après ~15 min la prod tourne toujours sur 2bf381c (uptime non recyclé) → le webhook Coolify ne s'est pas déclenché automatiquement ce coup-ci ; un Redeploy manuel depuis le dashboard Coolify peut être nécessaire.
