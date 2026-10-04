@@ -9,6 +9,7 @@ import {
   isReliableRegion,
   parseCounterfeitAlert,
 } from "@/lib/artisan-anti-counterfeit";
+import { getProductTemplateById } from "@/lib/product-templates";
 import { ensureArtisanTables, isTableMissingError } from "@/lib/ensure-artisan-tables";
 
 /**
@@ -205,6 +206,26 @@ export default async function ArtisanCodePage({
 
   // Produit actif → compteur de scans (preuve sociale « Vérifié N fois »)
   const scanCount = await db.artisanScan.count({ where: { lotId: lot.id } }).catch(() => 0);
+  // Preuve sociale dynamique : date du DERNIER scan (« il y a 2 h »)
+  const lastScan = await db.artisanScan
+    .findFirst({
+      where: { lotId: lot.id },
+      orderBy: { scannedAt: "desc" },
+      select: { scannedAt: true },
+    })
+    .catch(() => null);
+
+  // Catégorie du produit (template choisi à l'activation) → adapte les
+  // textes de la page publique : « peaux sensibles » (cosmétique) ne veut
+  // rien dire pour un jus de bissap (agroalimentaire). Emoji = icône du
+  // template (fallback 🧴 / 🍯 selon catégorie). ⚠️ getProductTemplateById
+  // cherche dans ALL (cosmétique + agroalimentaire) — PRODUCT_TEMPLATES
+  // ne contient que les cosmétiques.
+  const template = getProductTemplateById(lot.templateId);
+  const productCategory: "cosmetique" | "agroalimentaire" | null =
+    template?.category ?? null;
+  const productEmoji =
+    template?.icon ?? (productCategory === "agroalimentaire" ? "🍯" : "🧴");
 
   // Avis clients réels (section 9)
   const reviews = await loadReviews(lot.id);
@@ -271,6 +292,12 @@ export default async function ArtisanCodePage({
         seen.add(name);
         return true;
       })
+      // Ordre ALPHABÉTIQUE (suggestion revue : « activatedAt desc » mettait
+      // le produit le plus récemment activé en 1ʳᵉ position, ce qui donnait
+      // un ordre erratique entre deux visites — l'alpha est neutre et stable).
+      .sort((a, b) =>
+        (a.productName ?? "").localeCompare(b.productName ?? "", "fr")
+      )
       .slice(0, 8)
       .map((p) => ({
         qrCode: p.qrCode,
@@ -318,8 +345,13 @@ export default async function ArtisanCodePage({
         // Auto-complétion intelligente (assistant produit à l'activation)
         precautions: lot.precautions,
         storageConditions: lot.storageConditions,
+        // Catégorie + emoji du template → textes/visuels adaptés
+        // (agroalimentaire ≠ cosmétique).
+        category: productCategory,
+        emoji: productEmoji,
       }}
       scanCount={scanCount}
+      lastScanAt={lastScan?.scannedAt ?? null}
       counterfeitAlert={(() => {
         const alert = parseCounterfeitAlert(lot.counterfeitAlert);
         if (!alert) return null;

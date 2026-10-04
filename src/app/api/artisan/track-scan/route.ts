@@ -79,6 +79,31 @@ const run = async (request: NextRequest): Promise<NextResponse> => {
     },
   });
 
+  // ── EMAIL « Nouveau scan » à l'artisan (demande utilisateur) ──────────────
+  // Envoyé À CHAQUE scan si l'artisan a renseigné son email à l'activation
+  // (pack.artisanEmail). Fire-and-forget + anti-flood 60 s dans la lib :
+  // jamais dans le chemin critique, le scan du client ne doit pas attendre.
+  void (async () => {
+    try {
+      const { notifyArtisanScan } = await import("@/lib/artisan-scan-notify");
+      const totalScans = await db.artisanScan.count({ where: { lotId: lot.id } });
+      await notifyArtisanScan({
+        to: lot.pack.artisanEmail,
+        lotId: lot.id,
+        productName: lot.productName ?? "Produit artisanal",
+        artisanName: lot.artisanName ?? "Artisan",
+        qrCode: code,
+        deviceType: deviceType || null,
+        timezone: timezone || null,
+        city: h.get("x-vercel-ip-city"),
+        country: h.get("x-vercel-ip-country") ?? h.get("cf-ipcountry"),
+        totalScans,
+      });
+    } catch (err) {
+      console.error("[track-scan] notification scan échouée (non bloquant):", err);
+    }
+  })();
+
   // Anti-contrefaçon : même QR scanné depuis 2 régions en < 48 h
   if (timezone) {
     const alert = await detectCounterfeit(lot.id, timezone);

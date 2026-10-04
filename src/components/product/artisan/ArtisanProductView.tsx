@@ -67,6 +67,9 @@ type SimilarProduct = {
   productPrice?: string | null;
 };
 
+/** Catégorie produit (template choisi à l'activation) — adapte les textes. */
+type ProductCategory = "cosmetique" | "agroalimentaire" | null;
+
 /** Alerte contrefaçon (JSON stocké sur PreActivatedLot.counterfeitAlert). */
 export type CounterfeitAlertInfo = {
   detectedAt: string;
@@ -108,9 +111,16 @@ type Props = {
     // conservation (texte libre), remplis via l'assistant à l'activation.
     precautions?: string | null;
     storageConditions?: string | null;
+    /** Catégorie du produit (du template choisi à l'activation) —
+     *  null = inconnu → texte cosmétique par défaut (historique). */
+    category?: ProductCategory;
+    /** Emoji représentatif (icône du template, fallback par catégorie). */
+    emoji?: string | null;
   };
   /** Preuve sociale : nombre de scans enregistrés pour ce produit. */
   scanCount?: number;
+  /** Preuve sociale dynamique : date du dernier scan (« il y a 2 h »). */
+  lastScanAt?: Date | string | null;
   /** Alerte anti-contrefaçon (scans multi-régions en < 48 h). */
   counterfeitAlert?: CounterfeitAlertInfo | null;
   /** Réseaux sociaux de l'artisan (remplis à l'activation). */
@@ -159,7 +169,8 @@ function Eyebrow({ children }: { children: ReactNode }) {
   );
 }
 
-/** Rangée d'étoiles (remplies jusqu'à `value`, jaunes ; vides personnalisables). */
+/** Rangée d'étoiles — supporte les DEMI-étoiles (moyenne 4.5 = 4½ pleines)
+ *  au lieu d'arrondir à 5 (retour revue : Math.round(4.5)=5 trompait). */
 function Stars({
   value,
   className = "h-4 w-4",
@@ -169,19 +180,43 @@ function Stars({
   className?: string;
   emptyClassName?: string;
 }) {
+  const starPath =
+    "M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z";
   return (
-    <div className="flex">
-      {[...Array(5)].map((_, i) => (
-        <svg
-          key={i}
-          className={`${className} ${i < value ? "text-amber-400" : emptyClassName}`}
-          fill="currentColor"
-          viewBox="0 0 20 20"
-          aria-hidden
-        >
-          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-        </svg>
-      ))}
+    <div className="flex" role="img" aria-label={`${value.toFixed(1)} sur 5`}>
+      {[...Array(5)].map((_, i) => {
+        // Remplissage de l'étoile i : 1 = pleine, 0.5 = demi, 0 = vide.
+        const fill = Math.max(0, Math.min(1, value - i));
+        const full = fill >= 0.75;
+        const half = !full && fill >= 0.25;
+        return (
+          <span key={i} className="relative inline-flex">
+            <svg
+              className={`${className} ${emptyClassName}`}
+              fill="currentColor"
+              viewBox="0 0 20 20"
+              aria-hidden
+            >
+              <path d={starPath} />
+            </svg>
+            {(full || half) && (
+              <span
+                className="absolute inset-0 overflow-hidden"
+                style={{ width: full ? "100%" : "50%" }}
+              >
+                <svg
+                  className={`${className} text-amber-400`}
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                  aria-hidden
+                >
+                  <path d={starPath} />
+                </svg>
+              </span>
+            )}
+          </span>
+        );
+      })}
     </div>
   );
 }
@@ -281,33 +316,42 @@ function splitIngredients(raw: string): string[] {
     .filter(Boolean);
 }
 
-/** Cards de la section « Pourquoi choisir ce produit » (apparition staggered). */
-const WHY_CARDS = [
-  {
-    icon: Leaf,
-    bg: "bg-emerald-100 text-emerald-600",
-    title: "100 % Naturel",
-    text: "Une formule naturelle, sans additifs de synthèse.",
-  },
-  {
-    icon: Hand,
-    bg: "bg-amber-100 text-amber-600",
-    title: "Fait main",
-    text: "Fabriqué avec soin, pièce par pièce, au Sénégal.",
-  },
-  {
-    icon: ShieldCheck,
-    bg: "bg-sky-100 text-sky-600",
-    title: "Authenticité prouvée",
-    text: "Chaque scan vérifie l'authenticité du produit.",
-  },
-  {
-    icon: Heart,
-    bg: "bg-rose-100 text-rose-600",
-    title: "Soutien direct",
-    text: "Votre confiance soutient directement l'artisan.",
-  },
-] as const;
+/** Cards de la section « Pourquoi choisir ce produit » (apparition staggered).
+ *  Textes adaptés à la catégorie : cosmétique (peau) vs agroalimentaire
+ *  (recette / goût) — un jus de bissap n'a pas de « peau sensible ». */
+function whyCards(category: ProductCategory | undefined) {
+  const isFood = category === "agroalimentaire";
+  return [
+    {
+      icon: Leaf,
+      bg: "bg-emerald-100 text-emerald-600",
+      title: "100 % Naturel",
+      text: isFood
+        ? "Une recette authentique, sans additifs de synthèse."
+        : "Une formule naturelle, sans additifs de synthèse.",
+    },
+    {
+      icon: Hand,
+      bg: "bg-amber-100 text-amber-600",
+      title: "Fait main",
+      text: isFood
+        ? "Préparé avec soin, à l'atelier, au Sénégal."
+        : "Fabriqué avec soin, pièce par pièce, au Sénégal.",
+    },
+    {
+      icon: ShieldCheck,
+      bg: "bg-sky-100 text-sky-600",
+      title: "Authenticité prouvée",
+      text: "Chaque scan vérifie l'authenticité du produit.",
+    },
+    {
+      icon: Heart,
+      bg: "bg-rose-100 text-rose-600",
+      title: "Soutien direct",
+      text: "Votre confiance soutient directement l'artisan.",
+    },
+  ] as const;
+}
 
 /** Libellés du sélecteur d'étoiles interactif (formulaire d'avis). */
 const RATING_LABELS = [
@@ -498,7 +542,14 @@ function AtelierSlider({
  * boucle, pause au survol / 8 s après interaction). Cartes produit
  * larges : photo, prix en badge, nom, contenance, CTA « Voir ».
  */
-function ProductsSlider({ products }: { products: SimilarProduct[] }) {
+function ProductsSlider({
+  products,
+  emoji = "🧴",
+}: {
+  products: SimilarProduct[];
+  /** Emoji du placeholder si pas de photo (icône du template produit). */
+  emoji?: string;
+}) {
   const trackRef = useRef<HTMLDivElement>(null);
   const [current, setCurrent] = useState(0);
   const [hovering, setHovering] = useState(false);
@@ -589,7 +640,7 @@ function ProductsSlider({ products }: { products: SimilarProduct[] }) {
                 src={p.photoUrl}
                 alt={p.productName}
                 className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
-                emoji="🧴"
+                emoji={emoji}
               />
             </div>
             {p.productPrice && (
@@ -667,6 +718,7 @@ function ProductsSlider({ products }: { products: SimilarProduct[] }) {
 export function ArtisanProductView({
   lot,
   scanCount = 0,
+  lastScanAt = null,
   counterfeitAlert = null,
   socials,
   logoUrl = null,
@@ -692,6 +744,28 @@ export function ArtisanProductView({
 
   // ── Partage : Web Share API, repli = copie du lien ──────────────────────
   const [shareCopied, setShareCopied] = useState(false);
+
+  // ── CTA WhatsApp STICKY mobile (recommandation revue) ────────────────────
+  // Visible sur mobile après le hero, MASQUÉ quand le grand CTA WhatsApp
+  // est à l'écran (pas de doublon à l'écran) ni quand la lightbox est ouverte.
+  const [stickyCta, setStickyCta] = useState(false);
+  const bigCtaRef = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    const onScroll = () => setStickyCta(window.scrollY > 560);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+  useEffect(() => {
+    const el = bigCtaRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const obs = new IntersectionObserver(
+      (entries) => entries[0]?.isIntersecting && setStickyCta(false),
+      { threshold: 0.25 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
 
   // ── Lightbox galerie atelier (zoom plein écran, fermeture au clic) ──────
   const [lightbox, setLightbox] = useState<string | null>(null);
@@ -776,6 +850,25 @@ export function ArtisanProductView({
     lot.productName,
     `Bonjour ${lot.artisanName}, je viens de scanner un QR code VerifScan (produit : ${lot.productName}) et une alerte de possible contrefaçon s'affiche. Je vous signale ce produit suspect.`
   );
+
+  // ── Catégorie produit : textes/emoji adaptés (agroalimentaire ≠ cosmétique)
+  const isFood = lot.category === "agroalimentaire";
+  const productEmoji = lot.emoji || (isFood ? "🍯" : "🧴");
+
+  /** Temps relatif FR pour la preuve sociale « dernier scan ». */
+  const lastScanLabel = (() => {
+    if (!lastScanAt) return null;
+    const diff = Date.now() - new Date(lastScanAt).getTime();
+    const minutes = Math.floor(diff / 60000);
+    if (minutes < 1) return "À l'instant";
+    if (minutes < 60) return `il y a ${minutes} min`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `il y a ${hours} h`;
+    const days = Math.floor(hours / 24);
+    if (days < 30) return `il y a ${days} j`;
+    const months = Math.floor(days / 30);
+    return `il y a ${months} mois`;
+  })();
 
   /** Bouton « Découvrir » du hero → scroll fluide vers la carte produit. */
   function scrollToProduct() {
@@ -909,18 +1002,30 @@ export function ArtisanProductView({
     };
   })();
 
-  // ── Conseils : remplis par l'artisan, sinon défauts ──────────────────
+  // ── Conseils : remplis par l'artisan, sinon défauts ADAPTÉS À LA CATÉGORIE
   const usageTips =
     (lot.usageTips ?? "")
       .split("\n")
       .map((t) => t.trim())
       .filter(Boolean) || [];
-  const tips = usageTips.length > 0 ? usageTips : [
-    "Appliquer sur peau propre",
-    "Masser délicatement en mouvements circulaires",
-    "Utiliser matin et soir pour un résultat optimal",
-    "Conserver à l'abri de la chaleur",
-  ];
+  const tips =
+    usageTips.length > 0 ? (
+      usageTips
+    ) : isFood ? (
+      [
+        "À consommer de préférence avant la date indiquée",
+        "Après ouverture, refermer soigneusement le sachet",
+        "Conserver dans un endroit frais et sec",
+        "À l'abri de la chaleur et de l'humidité",
+      ]
+    ) : (
+      [
+        "Appliquer sur peau propre",
+        "Masser délicatement en mouvements circulaires",
+        "Utiliser matin et soir pour un résultat optimal",
+        "Conserver à l'abri de la chaleur",
+      ]
+    );
 
   // ── Précautions + conservation (assistant intelligent) ─────────────────
   const precautions: string[] = (() => {
@@ -996,7 +1101,7 @@ export function ArtisanProductView({
             className="art-kenburns h-full w-full object-cover"
             icon={
               <span className="art-float text-[6.5rem] drop-shadow-2xl" aria-hidden>
-                🧴
+                {productEmoji}
               </span>
             }
           />
@@ -1069,7 +1174,12 @@ export function ArtisanProductView({
       </header>
 
       {/* ════ CONTENU DÉROULANT (cartes flottantes au-dessus du hero) ════ */}
-      <div id="produit" className="relative z-20 mx-auto -mt-16 max-w-lg scroll-mt-4 px-4 pb-2">
+      <div
+        id="produit"
+        className={`relative z-20 mx-auto -mt-16 max-w-lg scroll-mt-4 px-4 ${
+          stickyCta ? "pb-24" : "pb-2"
+        }`}
+      >
         {/* ════ 2. CARTE PRODUIT FLOTTANTE — GLASSMORPHISM ═══════════════ */}
         <Reveal>
           <section className="relative overflow-hidden rounded-[2rem] border border-white/70 bg-white/80 shadow-2xl shadow-stone-900/10 backdrop-blur-2xl">
@@ -1109,6 +1219,15 @@ export function ArtisanProductView({
                     <p className="text-[10px] font-semibold uppercase tracking-wide text-amber-700/80">
                       scan{scanCount > 1 ? "s" : ""}
                     </p>
+                    {/* Preuve sociale dynamique (recommandation revue) */}
+                    {lastScanLabel && (
+                      <p
+                        className="mt-0.5 text-[9px] font-semibold text-amber-600/70"
+                        suppressHydrationWarning
+                      >
+                        Dernier scan {lastScanLabel}
+                      </p>
+                    )}
                   </div>
                 )}
               </div>
@@ -1121,7 +1240,9 @@ export function ArtisanProductView({
                 </p>
               )}
               <div className="mt-2 flex items-center gap-2">
-                <Stars value={avgRating > 0 ? Math.round(avgRating) : 5} />
+                {/* Moyenne BRUTE → les demi-étoiles s'affichent (4.5 = 4½),
+                    plus d'arrondi trompeur à 5. */}
+                <Stars value={avgRating > 0 ? avgRating : 5} />
                 <span className="text-xs font-semibold text-stone-500">
                   {avgRating > 0
                     ? `${avgRating.toFixed(1)}/5 · ${reviews.length} avis`
@@ -1318,7 +1439,7 @@ export function ArtisanProductView({
             <h2 className="text-xl font-bold">Pourquoi choisir ce produit&nbsp;?</h2>
           </Reveal>
           <div className="mt-4 grid grid-cols-2 gap-3">
-            {WHY_CARDS.map((card, i) => (
+            {whyCards(lot.category).map((card, i) => (
               <Reveal key={card.title} delay={i * 90} className="h-full">
                 <div className="group h-full rounded-3xl border border-stone-200/80 bg-white p-4 shadow-sm transition-all duration-300 hover:-translate-y-1.5 hover:border-amber-200 hover:shadow-xl hover:shadow-amber-900/5">
                   <div
@@ -1392,10 +1513,14 @@ export function ArtisanProductView({
                 </span>
                 <div>
                   <p className="text-sm font-bold text-emerald-900">
-                    Sans allergènes de synthèse
+                    {isFood
+                      ? "Sans conservateurs de synthèse"
+                      : "Sans allergènes de synthèse"}
                   </p>
                   <p className="text-xs text-emerald-700/80">
-                    Formule naturelle, adaptée aux peaux sensibles
+                    {isFood
+                      ? "Recette naturelle, adaptée à toute la famille"
+                      : "Formule naturelle, adaptée aux peaux sensibles"}
                   </p>
                 </div>
               </div>
@@ -1562,7 +1687,7 @@ export function ArtisanProductView({
         {/* ════ 10. CTA WHATSAPP GÉANT — anneaux pulsants ═════════════════ */}
         {lot.contactPhone && (
           <Reveal>
-            <section className="mt-8">
+            <section className="mt-8" ref={bigCtaRef}>
               <div className="relative">
                 <a
                   href={waLink}
@@ -1777,7 +1902,7 @@ export function ArtisanProductView({
               <h2 className="mb-4 flex items-center gap-2 text-xl font-bold">
                 <span className="text-2xl">🛍️</span> Autres produits de {lot.artisanName}
               </h2>
-              <ProductsSlider products={similarProducts} />
+              <ProductsSlider products={similarProducts} emoji={productEmoji} />
             </section>
           </Reveal>
         )}
@@ -1823,6 +1948,38 @@ export function ArtisanProductView({
             </div>
           </section>
         </Reveal>
+
+        {/* CTA WhatsApp STICKY mobile (recommandation revue n°3) — visible
+            après le hero, masqué quand le grand CTA est à l'écran. Seulement
+            sur mobile (lg:hidden) : sur desktop le CTA géant suffit. */}
+        {stickyCta && lot.contactPhone && !lightbox && (
+          <div
+            data-testid="sticky-wa-cta"
+            className="fixed inset-x-0 bottom-0 z-40 border-t border-stone-200/70 bg-white/95 px-4 py-3 shadow-[0_-8px_24px_rgba(0,0,0,0.10)] backdrop-blur-md lg:hidden"
+          >
+            <a
+              href={waLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 py-3.5 text-[15px] font-bold text-white shadow-lg shadow-emerald-600/30 transition-transform active:scale-[0.98]"
+            >
+              <svg
+                className="h-5 w-5"
+                fill="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden
+              >
+                <path d={WHATSAPP_SVG_PATH} />
+              </svg>
+              Commander sur WhatsApp
+              {lot.productPrice && (
+                <span className="ml-1 rounded-full bg-white/20 px-2.5 py-1 text-xs font-black">
+                  {lot.productPrice}
+                </span>
+              )}
+            </a>
+          </div>
+        )}
 
         {/* Lightbox plein écran (galerie atelier) */}
         {lightbox && (

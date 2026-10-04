@@ -5574,3 +5574,44 @@ Stage Summary:
 - Diaporamas : scroll strictement horizontal + pause hors écran — plus de sauts de page.
 - Carrousel : jusqu'à 8 produits du créateur (nom OU téléphone), dédoublonnage robuste aux multi-unités.
 - Commit en cours de push ; Redeploy Coolify manuel requis (vérifier /api/health).
+
+---
+Task ID: 8
+Agent: main
+Task: Revue complète de la page produit publique (/a/[code]) — avis + suggestions après fix sliders
+
+Work Log:
+- Vérifié que les fixes Bug A (scroll vertical) et Bug B (produits) sont en place (commit bb85ac6, poussé).
+- ⚠️ constaté : la PRODUCTION tourne encore sur 0b990f5 (api/health) → Redeploy Coolify requis pour livrer bb85ac6.
+- Reconstruit le standalone local + serveur :3100, exécuté scripts/test-product-sliders.ts → 22/22 OK (7 produits + 25 lots spam dédoublonnés, matching nom OU téléphone).
+- Créé /home/z/my-project/scripts/demo-data.ts (6 produits Awa Ndiaye, photos sharp, avis via API publique) — pièges corrigés : precautions = lignes \n (PAS JSON.stringify), artisanBio dans productData (pas shared), DB directe = db/custom.db (base réelle du serveur standalone lancé depuis la racine).
+- Inspection visuelle Playwright (390px + 1366px, captures complètes) : hero, carte produit, fraîcheur, composition, précautions, conservation, histoire+atelier, conseils, CTA WhatsApp, coordonnées, avis (4.5/5), slider autres produits (5 slides), footer.
+- Confirmé : artefact Reveal (sections vides en capture plein écran = animations non déclenchées, pas un bug réel).
+- Nettoyé résidus de test (prisma/db/, scripts/demo-data-run.ts).
+
+Stage Summary:
+- Page validée visuellement et fonctionnellement ; 2 bugs précédents confirmés corrigés.
+- Suggestions documentées pour l'utilisateur : (1) REDEPLOY Coolify urgent ; (2) textes cosmétiques en dur à adapter selon templateId.category (agroalimentaire) ; (3) demi-étoiles pour moyennes .5 ; (4) ordre slider autres produits (activatedAt desc → option alpha) ; (5) CTA WhatsApp sticky mobile ; (6) "dernier scan il y a Xh" ; (7) fallback no-JS pour Reveal.
+- Aucun changement de code dans ce passage (revue uniquement) — repo propre sur bb85ac6.
+
+---
+Task ID: 9
+Agent: main
+Task: 5 recommandations page produit + dashboard responsive + email « nouveau scan » à l'artisan
+
+Work Log:
+- R1 catégorie produit : page.tsx résout lot.templateId via getProductTemplateById (⚠️ ALL_PRODUCT_TEMPLATES — PRODUCT_TEMPLATES = cosmétiques SEULEMENT, bug trouvé au test bissap) → ArtisanProductView adapte : badge composition (« Sans conservateurs de synthèse / Recette naturelle, adaptée à toute la famille » en food), cards « Pourquoi choisir » (recette vs formule), conseils par défaut (conservation food vs application peau), emoji hero/placeholder (icône template, fallback 🍯/🧴).
+- R2 demi-étoiles : Stars reécrite (overlay 50% pour la demi-étoile, aria-label « 4.5 sur 5 ») ; moyenne BRUTE passée au lieu de Math.round → 4.5 = 4½ étoiles.
+- R3 CTA WhatsApp sticky mobile : fixed bottom lg:hidden, apparait scrollY>560, masqué par IntersectionObserver quand le CTA géant est visible (+pb-24 anti-recouvrement). Testid sticky-wa-cta.
+- R4 ordre « autres produits » : tri alphabétique fr après dédoublonnage (l'ordre activatedAt desc était erratique).
+- R5 preuve sociale : page.tsx charge dernier scan (artisanScan.scannedAt — PAS createdAt) → chip « Dernier scan il y a X min/h/j » (suppressHydrationWarning).
+- Email nouveau scan : src/lib/artisan-scan-notify.ts (HTML+texte, à chaque scan SI pack.artisanEmail renseigné, anti-flood mémoire 60 s/destinataire×lot, EmailLog tracé) branché fire-and-forget dans /api/artisan/track-scan (compte total scans inclus).
+- Dashboard responsive : overflow 413px→360px à 360px — cause : grille racine `grid gap-5 lg:grid-cols-3` SANS grid-cols-1 (piste auto = contenu max) → grid-cols-1 + min-w-0 sur les 2 colonnes. Vérifié 360/768/1366 = zéro overflow.
+- Pièges environnement : pkill "standalone/server.js" ne tue PAS le child next-server (vieux build servi !) → kill par PID ; DATABASE_URL relatif résolu différemment par bun vs next-server → chemin absolu ; NEXTAUTH_SECRET requis en prod standalone.
+- Tests : scripts/test-scan-notify.ts créé (10/10 — activation avec email, 1 email logué skipped, anti-flood, scans comptés, badge Dernier scan) ; test-product-sliders 22/22 ; tsc src OK ; eslint 0 erreur.
+- Données démo recréées via /home/z/my-project/scripts/demo-data.ts (base db/custom.db).
+
+Stage Summary:
+- Commit à venir : 5 recommandations + responsive dashboard + notification email scan.
+- Textes food/cosmétique vérifiés sur 2 pages démo (jus-bissap vs karité).
+- Redeploy Coolify requis pour la prod (encore sur 0b990f5 → 2 releases en attente).

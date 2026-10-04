@@ -312,9 +312,12 @@ export default function ArtisanDashboardPage() {
         )}
 
         {data && (
-          <div className="grid gap-5 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
             {/* ═══ COLONNE PRINCIPALE ══════════════════════════════════════ */}
-            <div className="space-y-5 lg:col-span-2">
+            {/* min-w-0 : sans lui, la piste auto du grid déborde de 50 px
+                sur mobile (textes nowrap + mono masterQrCode) — bug
+                « dashboard pas responsive » signalé au test 360 px. */}
+            <div className="min-w-0 space-y-5 lg:col-span-2">
               {/* ── Stats rapides (4 cartes) ─────────────────────────────── */}
               <section className="grid grid-cols-2 gap-3 lg:grid-cols-4" data-testid="dashboard-stats">
                 <StatCard
@@ -620,7 +623,7 @@ export default function ArtisanDashboardPage() {
             </div>
 
             {/* ═══ COLONNE LATÉRALE ════════════════════════════════════════ */}
-            <div className="space-y-5">
+            <div className="min-w-0 space-y-5">
               {/* ── Actions rapides ──────────────────────────────────────── */}
               <section
                 className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-black/5"
