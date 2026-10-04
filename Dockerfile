@@ -39,10 +39,11 @@ RUN apt-get update && \
     fc-cache -f && \
     rm -rf /var/lib/apt/lists/*
 
-# Install a PINNED bun version (matches the version used to generate
-# bun.lock locally). Newer bun versions can change lockfile semantics
-# and break `bun install` mid-deploy.
-ARG BUN_VERSION=1.3.14
+# Install a PINNED bun version. 1.4.2 fixes the tarball-extraction
+# fragility of 1.3.x (« Fail extracting tarball ») seen on Coolify builds
+# while reading the same text bun.lock (verified: --frozen-lockfile,
+# 949 packages, zero diff on bun.lock).
+ARG BUN_VERSION=1.4.2
 RUN npm install -g bun@${BUN_VERSION} && \
     bun --version && \
     which bun
@@ -60,7 +61,19 @@ ARG CACHEBUST=""
 
 # ── 1. Dependencies (cached between source changes) ──────────────────────
 COPY package.json bun.lock ./
-RUN bun install --frozen-lockfile --no-progress
+# Retry ×3 with bun cache purge between attempts: a truncated tarball
+# (network/CDN hiccup, e.g. « Fail extracting tarball for effect ») no
+# longer kills the build permanently.
+RUN set -e; \
+    attempt=1; \
+    while [ "$attempt" -le 3 ]; do \
+      echo "=== [attempt $attempt/3] bun install ==="; \
+      if bun install --frozen-lockfile --no-progress; then break; fi; \
+      rm -rf /root/.bun/install/cache /root/.cache/bun; \
+      if [ "$attempt" -eq 3 ]; then echo "=== bun install FAILED after 3 attempts ==="; exit 1; fi; \
+      sleep 8; \
+      attempt=$((attempt+1)); \
+    done
 
 # ── 2. Prisma client (schema cached separately) ──────────────────────────
 COPY prisma ./prisma

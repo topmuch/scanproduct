@@ -1,10 +1,44 @@
 # =============================================================================
 # VerifScan — Dockerfile « INLINE COOLIFY » (auto-suffisant, sans contexte)
 # =============================================================================
+# ⚠️ v2 (4 oct 2026) : BUN 1.3.14 → 1.4.2 + RETRIES.
+#    Cause : builds Coolify en échec « error: Fail extracting tarball for
+#    "effect" » alors que bun.lock n'avait PAS changé (dernier déploiement
+#    OK = même lockfile). Bun 1.3.14 échoue à extraire certains tarballs
+#    quand le réseau/CDN renvoie un flux gzip légèrement différent
+#    (reproductible localement : @next/swc-linux-x64-gnu en échec permanent
+#    avec 1.3.14, install 949/949 OK avec 1.4.2 dans le même environnement).
+#    Défenses ajoutées :
+#      1. bun épinglé à 1.4.2 (lit le même bun.lock textuel, vérifié
+#         --frozen-lockfile 949 packages, zéro diff sur bun.lock) ;
+#      2. boucle RETRY ×3 sur `bun install` (purge du cache bun entre les
+#         tentatives) — absorbe les téléchargements tronqués/transitoires ;
+#      3. boucle RETRY ×3 sur le `git clone` GitHub.
+#    Vérification que la nouvelle version est bien en place : le log de
+#    build Coolify doit afficher « bun install v1.4.2 » et
+#    « === [attempt 1/3] bun install === ».
+#
 # UTILISATION : coller TOUT ce fichier dans le champ « Dockerfile » de la
 # ressource Coolify (mode contenu inline). Il est utilisé quand la ressource
 # Coolify n'attache PAS le dépôt au build (contexte vide : « transferring
 # context: 10kB »), ce qui fait échouer tout `COPY package.json …`.
+#
+# ⚠️ v2 (4 oct 2026) : BUN 1.3.14 → 1.4.2 + RETRIES.
+#    Cause : builds Coolify en échec « error: Fail extracting tarball for
+#    "effect" » alors que bun.lock n'avait PAS changé (dernier déploiement
+#    OK = même lockfile). Bun 1.3.x échoue à extraire certains tarballs
+#    quand le réseau/CDN renvoie un flux gzip légèrement différent
+#    (reproductible localement : @next/swc-linux-x64-gnu en échec permanent
+#    avec 1.3.14, install 949/949 OK avec 1.4.2 dans le même environnement).
+#    Défenses : (1) bun épinglé à 1.4.2 — lit le même bun.lock textuel,
+#    --frozen-lockfile 949 packages validé, zéro diff sur bun.lock ;
+#    (2) retry ×3 sur `bun install` avec purge du cache entre tentatives ;
+#    (3) retry ×3 sur le `git clone`.
+#    ✅ Vérif que la nouvelle version est bien active : le log de build
+#    Coolify doit afficher « bun install v1.4.2 » et
+#    « === [attempt 1/3] bun install === ».
+# ⚠️ Ce fichier est COPIÉ-COLLÉ dans l'UI Coolify : le modifier ici ne
+# change RIEN tant qu'il n'est pas re-collé dans Coolify.
 #
 # Stratégie : le build clone lui-même le dépôt GitHub public (source de
 # vérité unique = branche main), bake le SHA exact cloné dans
@@ -35,8 +69,11 @@ RUN apt-get update && \
     fc-cache -f && \
     rm -rf /var/lib/apt/lists/*
 
-# ── Bun épinglé (même version que bun.lock) ───────────────────────────────
-ARG BUN_VERSION=1.3.14
+# ── Bun épinglé ──────────────────────────────────────────────────
+# 1.4.2 : corrige la fragilité d'extraction des tarballs de 1.3.x
+# (« Fail extracting tarball ») — lit le même bun.lock textuel
+# (validé : bun install --frozen-lockfile, 949 packages, bun.lock intact).
+ARG BUN_VERSION=1.4.2
 RUN npm install -g bun@${BUN_VERSION} && \
     bun --version && \
     which bun
@@ -49,7 +86,17 @@ WORKDIR /app
 ADD https://github.com/topmuch/scanproduct/commits/main.atom /tmp/cachebust.atom
 
 # ── 1. Clone du dépôt (source de vérité) + bake du SHA déployé ────────────
-RUN git clone --depth 1 --single-branch https://github.com/topmuch/scanproduct.git /app && \
+# Clone avec retry ×3 : un git clone qui échoue ne doit pas tuer le build.
+RUN set -e; \
+    attempt=1; \
+    while [ "$attempt" -le 3 ]; do \
+      echo "=== [attempt $attempt/3] git clone ==="; \
+      if git clone --depth 1 --single-branch https://github.com/topmuch/scanproduct.git /app; then break; fi; \
+      rm -rf /app; \
+      if [ "$attempt" -eq 3 ]; then echo "=== ECHEC git clone après 3 tentatives ==="; exit 1; fi; \
+      sleep 8; \
+      attempt=$((attempt+1)); \
+    done; \
     SHA="$(git -C /app rev-parse HEAD)" && \
     echo -n "$SHA" > /app/.deploy-commit && \
     echo "=== Cloned deployed commit: $SHA ===" && \
@@ -58,7 +105,19 @@ RUN git clone --depth 1 --single-branch https://github.com/topmuch/scanproduct.g
     chmod -R 777 /app/public/uploads /app/data
 
 # ── 2. Dépendances + client Prisma ─────────────────────────────────────────
-RUN bun install --frozen-lockfile --no-progress
+# `bun install` avec retry ×3 + purge du cache bun entre chaque tentative :
+# un tarball tronqué (réseau/CDN, ex. « Fail extracting tarball for effect »)
+# ne fait plus échouer le build définitivement.
+RUN set -e; \
+    attempt=1; \
+    while [ "$attempt" -le 3 ]; do \
+      echo "=== [attempt $attempt/3] bun install ==="; \
+      if bun install --frozen-lockfile --no-progress; then break; fi; \
+      rm -rf /root/.bun/install/cache /root/.cache/bun; \
+      if [ "$attempt" -eq 3 ]; then echo "=== ECHEC bun install après 3 tentatives ==="; exit 1; fi; \
+      sleep 8; \
+      attempt=$((attempt+1)); \
+    done
 RUN bunx prisma generate
 
 # ── 3. Build standalone (inclut fix-standalone-sharp.sh et

@@ -1770,7 +1770,8 @@ export function ArtisanProductView({
                   <p className="text-3xl font-black leading-tight text-amber-600">
                     {avgRating.toFixed(1)}
                   </p>
-                  <Stars value={Math.round(avgRating)} />
+                  {/* Moyenne brute → 4.5 affiche 4½ (cohérent avec le header) */}
+                  <Stars value={avgRating} />
                 </div>
                 <p className="text-sm text-stone-600">
                   {reviews.length === 1
