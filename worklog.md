@@ -5538,3 +5538,22 @@ Stage Summary:
 - L'artisan peut joindre le certificat de son laboratoire (PDF ou photo) produit par produit à l'activation ; le document est stocké en DB (survit aux redéploiements) et servi en application/pdf.
 - La rubrique publique n'apparaît que si un document existe — anti-surenchère « certifié » sans preuve.
 - Déployé via push → Coolify (surveiller le webhook ; Redeploy manuel si besoin comme tasks 14/15).
+
+---
+Task ID: 17
+Agent: Super Z (main)
+Task: Page produit — photos de l'atelier en diaporama + « Autres produits du créateur » en carrousel à slides
+
+Work Log:
+- Environnement reconstruit (container reset) : re-clone GitHub, bun install, db:push + db:seed, build standalone, serveur :3100.
+- AtelierSlider (photos de l'atelier) : ajout AUTO-DÉFILEMENT — avance toutes les 4 s, boucle au début ; pause au survol (desktop) et 8 s après interaction (touch / flèches / points) via markInteract(). Swipe natif + flèches + points déjà existants conservés.
+- NOUVEAU composant ProductsSlider (« Autres produits du créateur », bas de page) : remplace la grille statique 2×2. Scroll-snap horizontal, cartes larges 72 % mobile / 46 % desktop, photo h-44/h-52, badge prix (productPrice), nom, contenance, CTA « Voir le produit », flèches ‹ ›, points indicateurs + AUTO-DÉFILEMENT 4,5 s (même logique pause que l'atelier).
+- page.tsx /a/[code] : similarProducts 4 → 8 produits max (le carrousel défile), ajout productPrice au select + mapping ; dédoublonnage par productName inchangé.
+- ArtisanProductView : SimilarProduct type étendu (productPrice) ; section 12b rend <ProductsSlider products={similarProducts} /> (grid-cols-2 supprimée).
+- Test NOUVEAU scripts/test-product-sliders.ts — 22/22 OK : 3 produits même artisan (même nom+téléphone), page A = 2 slides (testids similar-product-slide-0/1), grille grid-cols-2 disparue, badge prix, photos atelier + flèches, page C voit A+B.
+- Régressions : test-lab-certificate 23/23 OK, test-pack-deletion 52/52 OK.
+
+Stage Summary:
+- Les deux sections demandées défilent désormais en slides avec démarrage automatique, sans dépendance externe (scroll-snap natif).
+- Piège HTML : les apostrophes React sont échappées (&#x27;) — les assertions de texte des aria-labels ne doivent pas contenir d'apostrophe brute.
+- Commit en cours de push ; Redeploy Coolify manuel probablement requis (webhook instable) — vérifier /api/health.

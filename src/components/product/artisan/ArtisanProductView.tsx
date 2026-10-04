@@ -63,6 +63,8 @@ type SimilarProduct = {
   productName: string;
   photoUrl: string | null;
   contenance: string | null;
+  /** Prix affiché sur la carte du carrousel (optionnel). */
+  productPrice?: string | null;
 };
 
 /** Alerte contrefaçon (JSON stocké sur PreActivatedLot.counterfeitAlert). */
@@ -334,6 +336,11 @@ function AtelierSlider({
 }) {
   const trackRef = useRef<HTMLDivElement>(null);
   const [current, setCurrent] = useState(0);
+  // AUTO-DÉFILEMENT — suspendu pendant le survol (desktop) ou 8 s après
+  // une interaction (touch / flèches / points) pour laisser la main.
+  const [hovering, setHovering] = useState(false);
+  const [interacting, setInteracting] = useState(false);
+  const interactTimer = useRef<number | null>(null);
 
   /** Amène la slide `i` au centre (flèches / points). */
   function goTo(i: number) {
@@ -347,12 +354,34 @@ function AtelierSlider({
     });
   }
 
+  /** Interaction utilisateur → pause de l'auto-défilement 8 s. */
+  function markInteract() {
+    setInteracting(true);
+    if (interactTimer.current) window.clearTimeout(interactTimer.current);
+    interactTimer.current = window.setTimeout(() => setInteracting(false), 8000);
+  }
+
+  // Diaporama automatique : avance toutes les 4 s, boucle au début.
+  useEffect(() => {
+    if (hovering || interacting || photos.length < 2) return;
+    const t = window.setInterval(() => {
+      goTo(current >= photos.length - 1 ? 0 : current + 1);
+    }, 4000);
+    return () => window.clearInterval(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [current, hovering, interacting, photos.length]);
+
   return (
-    <div className="relative">
+    <div
+      className="relative"
+      onMouseEnter={() => setHovering(true)}
+      onMouseLeave={() => setHovering(false)}
+    >
       {/* Piste scrollable — scrollbar masquée, snap au centre */}
       <div
         ref={trackRef}
         className="art-hide-scrollbar -mx-1 flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-p-4 px-1 pb-1"
+        onTouchStart={markInteract}
         onScroll={(e) => {
           // Slide la plus proche du centre = index courant (points + flèches)
           const el = e.currentTarget;
@@ -397,7 +426,10 @@ function AtelierSlider({
         <>
           <button
             type="button"
-            onClick={() => goTo(current - 1)}
+            onClick={() => {
+              markInteract();
+              goTo(current - 1);
+            }}
             disabled={current === 0}
             aria-label="Photo précédente"
             className="absolute left-2 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/95 text-stone-700 shadow-lg ring-1 ring-black/5 transition-all hover:scale-110 hover:bg-white disabled:pointer-events-none disabled:opacity-0"
@@ -406,7 +438,10 @@ function AtelierSlider({
           </button>
           <button
             type="button"
-            onClick={() => goTo(current + 1)}
+            onClick={() => {
+              markInteract();
+              goTo(current + 1);
+            }}
             disabled={current === photos.length - 1}
             aria-label="Photo suivante"
             className="absolute right-2 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/95 text-stone-700 shadow-lg ring-1 ring-black/5 transition-all hover:scale-110 hover:bg-white disabled:pointer-events-none disabled:opacity-0"
@@ -420,8 +455,170 @@ function AtelierSlider({
               <button
                 key={i}
                 type="button"
-                onClick={() => goTo(i)}
+                onClick={() => {
+                  markInteract();
+                  goTo(i);
+                }}
                 aria-label={`Aller à la photo ${i + 1}`}
+                className={`h-2 rounded-full transition-all duration-300 ${
+                  i === current
+                    ? "w-7 bg-gradient-to-r from-amber-500 to-orange-500"
+                    : "w-2 bg-stone-300 hover:bg-stone-400"
+                }`}
+              />
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+/**
+ * ProductsSlider — carrousel « Autres produits du créateur » (bas de page).
+ *
+ * Même mécanique que AtelierSlider : scroll-snap horizontal (swipe natif
+ * mobile), flèches ‹ ›, points indicateurs + AUTO-DÉFILEMENT (4,5 s,
+ * boucle, pause au survol / 8 s après interaction). Cartes produit
+ * larges : photo, prix en badge, nom, contenance, CTA « Voir ».
+ */
+function ProductsSlider({ products }: { products: SimilarProduct[] }) {
+  const trackRef = useRef<HTMLDivElement>(null);
+  const [current, setCurrent] = useState(0);
+  const [hovering, setHovering] = useState(false);
+  const [interacting, setInteracting] = useState(false);
+  const interactTimer = useRef<number | null>(null);
+
+  /** Amène la carte `i` au centre (flèches / points). */
+  function goTo(i: number) {
+    const track = trackRef.current;
+    if (!track) return;
+    const clamped = Math.max(0, Math.min(products.length - 1, i));
+    (track.children[clamped] as HTMLElement | undefined)?.scrollIntoView({
+      behavior: "smooth",
+      block: "nearest",
+      inline: "center",
+    });
+  }
+
+  /** Interaction utilisateur → pause de l'auto-défilement 8 s. */
+  function markInteract() {
+    setInteracting(true);
+    if (interactTimer.current) window.clearTimeout(interactTimer.current);
+    interactTimer.current = window.setTimeout(() => setInteracting(false), 8000);
+  }
+
+  // Diaporama automatique : avance toutes les 4,5 s, boucle au début.
+  useEffect(() => {
+    if (hovering || interacting || products.length < 2) return;
+    const t = window.setInterval(() => {
+      goTo(current >= products.length - 1 ? 0 : current + 1);
+    }, 4500);
+    return () => window.clearInterval(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [current, hovering, interacting, products.length]);
+
+  return (
+    <div
+      className="relative"
+      onMouseEnter={() => setHovering(true)}
+      onMouseLeave={() => setHovering(false)}
+    >
+      {/* Piste scrollable — scrollbar masquée, snap au centre */}
+      <div
+        ref={trackRef}
+        className="art-hide-scrollbar -mx-1 flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-p-4 px-1 pb-1"
+        onTouchStart={markInteract}
+        onScroll={(e) => {
+          const el = e.currentTarget;
+          const slides = Array.from(el.children) as HTMLElement[];
+          const center = el.scrollLeft + el.clientWidth / 2;
+          let best = 0;
+          let bestDist = Infinity;
+          slides.forEach((s, i) => {
+            const c = s.offsetLeft + s.offsetWidth / 2;
+            const d = Math.abs(c - center);
+            if (d < bestDist) {
+              bestDist = d;
+              best = i;
+            }
+          });
+          setCurrent(best);
+        }}
+      >
+        {products.map((p, i) => (
+          <Link
+            key={p.qrCode}
+            href={`/a/${p.qrCode}`}
+            data-testid={`similar-product-slide-${i}`}
+            className="group relative w-[72%] flex-shrink-0 snap-center overflow-hidden rounded-3xl border border-stone-200/80 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl sm:w-[46%]"
+          >
+            <div className="h-44 overflow-hidden bg-gradient-to-br from-amber-100 to-orange-100 sm:h-52">
+              <SafeImage
+                src={p.photoUrl}
+                alt={p.productName}
+                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                emoji="🧴"
+              />
+            </div>
+            {p.productPrice && (
+              <span className="absolute right-3 top-3 rounded-full bg-white/95 px-2.5 py-1 text-xs font-black text-amber-700 shadow-md backdrop-blur">
+                {p.productPrice}
+              </span>
+            )}
+            <div className="p-3.5">
+              <p className="truncate text-sm font-bold text-stone-800">
+                {p.productName}
+              </p>
+              {p.contenance && (
+                <p className="mt-0.5 text-xs text-stone-500">{p.contenance}</p>
+              )}
+              <span className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-amber-600 transition-all group-hover:gap-2">
+                Voir le produit <ChevronRight className="h-3 w-3" />
+              </span>
+            </div>
+          </Link>
+        ))}
+      </div>
+
+      {/* Flèches ‹ › + points (identiques au slider atelier) */}
+      {products.length > 1 && (
+        <>
+          <button
+            type="button"
+            onClick={() => {
+              markInteract();
+              goTo(current - 1);
+            }}
+            disabled={current === 0}
+            aria-label="Produit précédent"
+            className="absolute left-2 top-[38%] flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/95 text-stone-700 shadow-lg ring-1 ring-black/5 transition-all hover:scale-110 hover:bg-white disabled:pointer-events-none disabled:opacity-0"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              markInteract();
+              goTo(current + 1);
+            }}
+            disabled={current === products.length - 1}
+            aria-label="Produit suivant"
+            className="absolute right-2 top-[38%] flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/95 text-stone-700 shadow-lg ring-1 ring-black/5 transition-all hover:scale-110 hover:bg-white disabled:pointer-events-none disabled:opacity-0"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </button>
+
+          <div className="mt-3 flex items-center justify-center gap-1.5">
+            {products.map((_, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => {
+                  markInteract();
+                  goTo(i);
+                }}
+                aria-label={`Aller au produit ${i + 1}`}
                 className={`h-2 rounded-full transition-all duration-300 ${
                   i === current
                     ? "w-7 bg-gradient-to-r from-amber-500 to-orange-500"
@@ -1549,36 +1746,10 @@ export function ArtisanProductView({
               <h2 className="mb-4 flex items-center gap-2 text-xl font-bold">
                 <span className="text-2xl">🛍️</span> Autres produits de {lot.artisanName}
               </h2>
-              <div className="grid grid-cols-2 gap-4">
-                {similarProducts.map((p) => (
-                  <Link
-                    key={p.qrCode}
-                    href={`/a/${p.qrCode}`}
-                    className="group overflow-hidden rounded-3xl border border-stone-200/80 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
-                  >
-                    <div className="h-32 overflow-hidden bg-gradient-to-br from-amber-100 to-orange-100">
-                      <SafeImage
-                        src={p.photoUrl}
-                        alt={p.productName}
-                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
-                        emoji="🧴"
-                      />
-                    </div>
-                    <div className="p-3">
-                      <p className="truncate text-sm font-bold text-stone-800">
-                        {p.productName}
-                      </p>
-                      {p.contenance && (
-                        <p className="text-xs text-stone-500">{p.contenance}</p>
-                      )}
-                    </div>
-                  </Link>
-                ))}
-              </div>
+              <ProductsSlider products={similarProducts} />
             </section>
           </Reveal>
         )}
-
         {/* ════ 13. FOOTER VÉRIFICATION — dark mode + blockchain ══════════ */}
         <Reveal>
           <section className="relative mb-10 overflow-hidden rounded-[2rem] bg-gradient-to-br from-stone-950 via-blue-950 to-stone-900 p-8 text-center shadow-2xl">

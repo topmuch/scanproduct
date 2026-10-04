@@ -220,6 +220,7 @@ export default async function ArtisanCodePage({
     productName: string;
     photoUrl: string | null;
     contenance: string | null;
+    productPrice: string | null;
   }> = [];
   try {
     // ⚠️ PAS de `distinct` Prisma : sur SQLite il dédoublonne sur la
@@ -236,7 +237,7 @@ export default async function ArtisanCodePage({
           ? { productName: { not: lot.productName } }
           : {}),
       },
-      select: { qrCode: true, productName: true, photoUrl: true, contenance: true },
+      select: { qrCode: true, productName: true, photoUrl: true, contenance: true, productPrice: true },
       orderBy: { activatedAt: "desc" },
       take: 20, // large : plusieurs unités du même produit possibles
     });
@@ -248,12 +249,13 @@ export default async function ArtisanCodePage({
         seen.add(name);
         return true;
       })
-      .slice(0, 4)
+      .slice(0, 8)
       .map((p) => ({
         qrCode: p.qrCode,
         productName: p.productName ?? "Produit artisanal",
         photoUrl: p.photoUrl,
         contenance: p.contenance,
+        productPrice: p.productPrice,
       }));
   } catch (e) {
     // Non bloquant : la page produit reste fonctionnelle sans suggestions
