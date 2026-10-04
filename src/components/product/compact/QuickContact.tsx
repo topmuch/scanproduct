@@ -1,5 +1,6 @@
 import { MessageCircle, Phone, Mail, HelpCircle } from "lucide-react";
 import type { LotWithDetails } from "@/lib/public-data";
+import { toWhatsAppDigits } from "@/lib/whatsapp";
 
 /**
  * QuickContact — prominent contact buttons (WhatsApp / Phone / Email).
@@ -16,11 +17,9 @@ type Props = {
 };
 
 function normalizePhone(p: string): string {
-  const trimmed = p.trim();
-  const digits = trimmed.replace(/[^\d+]/g, "");
-  if (digits.startsWith("+")) return digits.slice(1);
-  if (digits.startsWith("00")) return digits.slice(2);
-  return digits;
+  // Module partagé : indicatif 221 ajouté si absent + zéros parasites
+  // retirés (sinon WhatsApp affiche « destinataire introuvable »).
+  return toWhatsAppDigits(p);
 }
 
 export function QuickContact({ fabricant }: Props) {

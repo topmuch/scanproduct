@@ -5640,3 +5640,25 @@ Stage Summary:
 - ⚠️ ACTION UTILISATEUR : re-coller Dockerfile.coolify-inline dans le champ Dockerfile de l'UI Coolify (mode inline = copie locale) puis Redeploy ; vérifier df -h si nouvel échec ; /api/health doit afficher e0f2217.
 - Emails scan : prêts, mais SMTP à configurer (Admin → Paramètres → Email & Notifications, ou env SMTP_*) sinon EmailLog = skipped.
 - Features f45c21f validées de bout en bout sur environnement neuf : 10/10 + 22/22 + visuel 390/1366.
+
+---
+Task ID: 10
+Agent: Super Z (main)
+Task: Bug prod « Commander sur WhatsApp » → « Ce destinataire n'est pas sur WhatsApp » alors que le numéro est renseigné.
+
+Work Log:
+- Diagnostic sur PROD via API admin (NextAuth credentials, session SUPERADMIN) : 2 lots actifs, 2 numéros différents — ART-CMUU0Z0L-P01-0001 (Karité Brut, Beauty secrets) → contactPhone 781351394, ART-CMURC8EQ-P04-0001 (Savon noir) → 784858226 (= numéro du compte propriétaire).
+- Vérifié le HTML rendu en prod : le lien wa.me est BIEN construit (wa.me/221781351394 + texte prérempli) — le normalisateur existant gérait déjà 00/+221/0/≤9 chiffres. Le CTA géant, le sticky mobile et le signalement contrefaçon utilisent le même waLink.
+- Conclusion : l'app ne casse pas le numéro ; l'erreur WhatsApp signifie que la ligne saisie (78 135 13 94 sur le Karité) n'est pas celle enregistrée sur WhatsApp. Le Savon noir porte l'autre numéro (78 485 82 26) → confusion de lignes côté artisan.
+- Classe de bug trouvée au passage : les templates wow/compact (ContactOrb, QuickContact) construisaient wa.me SANS indicatif et SANS purge des zéros parasites (+221 0 78…, 0781351394) → « destinataire introuvable » garanti pour une saisie locale.
+- Nouveau module partagé src/lib/whatsapp.ts : toWhatsAppDigits (indicatif 221 auto, zéros parasites retirés, indicatifs étrangers respectés, 0+9 chiffres géré AVANT la branche « numéro long »), displayIntlPhone (+221 78 135 13 94), isLikelyLocalMobile, buildWhatsAppLink, buildWhatsAppTestLink.
+- Nouveau composant src/components/WhatsAppFieldHint.tsx (client) : aperçu live du numéro international EXACT que les clients vont appeler + bouton « Tester sur WhatsApp » (ouvre le chat normalisé avec message de test) + avertissement ambre si ≠ mobile sénégalais (9 chiffres, commence par 7).
+- Intégré sous CHAMP WhatsApp : wizard activation mode simple (remplace le paragraphe statique) et mode groupe, édition produit artisan, SellPackModal admin (à la source de la saisie).
+- ArtisanProductView.toWhatsAppLink délégué au module partagé (source de vérité unique) ; ContactOrb + QuickContact idem (fix indicatif manquant).
+- Tests : scripts/test-whatsapp.ts 16/16 (dont « 221 0 78… », « 0781351394 », « +33… ») ; tsc src/ clean ; eslint 0 erreur ; E2E scripts/test-product-sliders.ts TOUS OK sur rebuild standalone :3100.
+- Pièges serveur local re-confirmés : standalone exige DATABASE_URL ABSOLU + NEXTAUTH_SECRET/NEXTAUTH_URL sinon auth 500 et DB « Unable to open ».
+
+Stage Summary:
+- Lien wa.me vérifié correct en prod ; cause réelle = numéro stocké ≠ ligne WhatsApp réelle de l'artisan (78 135 13 94 vs 78 485 82 26).
+- App désormais blindée : aperçu du numéro international + bouton de test auto-service partout où le numéro est saisi ; templates wow/compact corrigés (indicatif manquant).
+- ⚠️ ACTION UTILISATEUR : (1) vérifier sur SON téléphone le numéro enregistré sur WhatsApp (Réglages → profil → Téléphone) ; (2) sur la page d'édition du produit Karité Brut, corriger 78 135 13 94 si besoin et cliquer « Tester sur WhatsApp » ; (3) Redeploy Coolify pour livrer l'aperçu + le test + le fix wow/compact.

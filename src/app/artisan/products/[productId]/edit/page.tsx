@@ -4,6 +4,7 @@ import { use, useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, CheckCircle2, Save, X } from "lucide-react";
 import PhotoPicker from "@/components/product/artisan/PhotoPicker";
+import { WhatsAppFieldHint } from "@/components/WhatsAppFieldHint";
 
 /**
  * /artisan/products/[productId]/edit — Modification EN MASSE d'un produit
@@ -464,6 +465,7 @@ export default function EditProductPage({
                 className={inputCls}
                 data-testid="edit-contactPhone"
               />
+              <WhatsAppFieldHint phone={form.contactPhone} />
             </div>
             <div>
               <label className={labelCls}>Email (optionnel)</label>

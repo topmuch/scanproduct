@@ -30,6 +30,7 @@ import {
 import { ScanTracker } from "./ScanTracker";
 import { Logo } from "@/components/landing/Logo";
 import { Reveal } from "./Reveal";
+import { buildWhatsAppLink } from "@/lib/whatsapp";
 
 /**
  * ArtisanProductView — page produit artisanale PREMIUM « effet waouh » (v4).
@@ -282,23 +283,22 @@ function SafeImage({
   );
 }
 
-/** Normalise un numéro sénégalais/local vers le format international wa.me. */
+/**
+ * Construit le lien wa.me via le module partagé `lib/whatsapp` (source de
+ * vérité unique) : indicatif 221 ajouté si absent, zéros parasites après
+ * l'indicatif retirés. Corrige « Ce destinataire n'est pas sur WhatsApp »
+ * quand le numéro est saisi au format local ou avec un 0 parasite.
+ */
 function toWhatsAppLink(
   phone: string,
   artisanName: string,
   productName: string,
   customMessage?: string
 ): string {
-  const digits = phone.replace(/\D/g, "");
-  let international = digits;
-  if (international.startsWith("00")) international = international.slice(2);
-  else if (international.startsWith("221")) international = international;
-  else if (international.startsWith("0")) international = `221${international.slice(1)}`;
-  else if (international.length <= 9) international = `221${international}`;
   const message =
     customMessage ??
     `Bonjour ${artisanName}, je suis intéressé(e) par votre ${productName} vu sur VerifScan.`;
-  return `https://wa.me/${international}?text=${encodeURIComponent(message)}`;
+  return buildWhatsAppLink(phone, message);
 }
 
 /**

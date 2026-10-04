@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { CheckCircle2, Copy, MessageCircle, Phone, User, X } from "lucide-react";
 import { toast } from "sonner";
+import { WhatsAppFieldHint } from "@/components/WhatsAppFieldHint";
 
 /**
  * SellPackModal — VENTE d'un pack de QR codes à un artisan (SuperAdmin).
@@ -181,6 +182,7 @@ export function SellPackModal({
               <p className="mt-1 text-[12px] text-gray-500">
                 Servira d&apos;identifiant de connexion.
               </p>
+              <WhatsAppFieldHint phone={phone} />
 
               {existing && (
                 <div

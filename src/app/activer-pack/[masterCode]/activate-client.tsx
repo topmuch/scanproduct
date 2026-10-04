@@ -23,6 +23,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import PhotoPicker from "@/components/product/artisan/PhotoPicker";
+import { WhatsAppFieldHint } from "@/components/WhatsAppFieldHint";
 import {
   SmartProductSelector,
 } from "@/components/SmartProductSelector";
@@ -1244,9 +1245,7 @@ export default function ActivatePackClient({
                   onChange={(e) => setS({ contactPhone: e.target.value })}
                   className={inputCls}
                 />
-                <p className="mt-1 text-xs text-gray-500">
-                  Vos clients pourront vous contacter directement sur WhatsApp.
-                </p>
+                <WhatsAppFieldHint phone={simple.contactPhone} />
               </div>
 
               <div>
@@ -1848,6 +1847,7 @@ export default function ActivatePackClient({
                         onChange={(e) => setSh({ contactPhone: e.target.value })}
                         className={inputCls}
                       />
+                      <WhatsAppFieldHint phone={shared.contactPhone} />
                     </div>
                     <div>
                       <label className={labelCls} htmlFor="sharedEmail">
