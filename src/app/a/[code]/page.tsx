@@ -288,6 +288,7 @@ export default async function ArtisanCodePage({
         productPrice: lot.productPrice ?? lot.pack.productPrice ?? null,
         productDesignation: lot.productDesignation ?? lot.pack.productDesignation ?? null,
         photoUrl: lot.photoUrl,
+        labCertificateUrl: lot.labCertificateUrl,
         artisanBio: lot.artisanBio,
         usageTips: lot.usageTips,
         // Auto-complétion intelligente (assistant produit à l'activation)

@@ -49,6 +49,10 @@ const GroupProductSchema = z.object({
   manufacturingDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   expirationDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   photoUrl: z.string().max(500).optional().or(z.literal("")),
+  // Certification laboratoire : URL du document (PDF ou photo) uploadé
+  // via /api/artisan/upload — OPTIONNEL ; page publique l'affichant seule
+  // quand renseignée.
+  labCertificateUrl: z.string().max(500).optional().or(z.literal("")),
   artisanBio: z.string().trim().max(1200).optional().or(z.literal("")),
   usageTips: z.string().trim().max(800).optional().or(z.literal("")),
   productPrice: z.string().trim().max(40).optional().or(z.literal("")),
@@ -214,6 +218,7 @@ export async function POST(request: NextRequest) {
             artisanName: shared.artisanName,
             contactPhone: shared.contactPhone,
             photoUrl: g.productData.photoUrl || null,
+            labCertificateUrl: g.productData.labCertificateUrl || null,
             productPrice: g.productData.productPrice || null,
             productDesignation: g.productData.productDesignation || null,
             artisanBio: g.productData.artisanBio || null,
@@ -310,6 +315,7 @@ export async function POST(request: NextRequest) {
               artisanName: shared.artisanName,
               contactPhone: shared.contactPhone,
               photoUrl: first.photoUrl || null,
+              labCertificateUrl: first.labCertificateUrl || null,
               productPrice: first.productPrice || null,
               productDesignation: first.productDesignation || null,
               artisanBio: first.artisanBio || null,

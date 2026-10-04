@@ -15,6 +15,8 @@ import {
   Camera,
   CalendarDays,
   FlaskConical,
+  FileText,
+  ShieldCheck,
   User,
   ClipboardCheck,
   ChevronLeft,
@@ -67,6 +69,7 @@ export type PreviousProduct = {
   precautions: string; // lignes séparées par \n
   storageConditions: string;
   templateId: string;
+  labCertificateUrl: string; // document déjà uploadé (restauration mémoire)
   count: number; // nb d'étiquettes déjà activées pour ce produit
 };
 
@@ -104,6 +107,10 @@ type GroupForm = {
   template: ProductTemplate | null;
   precautions: string;
   storageConditions: string;
+  // Certification laboratoire : nouveau fichier choisi + URL déjà uploadée
+  // (restaurée depuis une activation précédente du même pack)
+  labDoc: File | null;
+  labDocUrl: string;
 };
 
 /** Identité + réseaux + galerie + logo — communs à tous les produits du pack. */
@@ -148,6 +155,8 @@ const emptyGroup = (): GroupForm => ({
   template: null,
   precautions: "",
   storageConditions: "",
+  labDoc: null,
+  labDocUrl: "",
 });
 
 async function uploadPhoto(file: File, masterCode: string): Promise<string> {
@@ -158,6 +167,109 @@ async function uploadPhoto(file: File, masterCode: string): Promise<string> {
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.error || "Échec de l'upload d'une photo");
   return data.url as string;
+}
+
+/** Upload d'un DOCUMENT (certificat laboratoire : PDF ou photo). Même
+ *  endpoint que les photos — le serveur reconnaît les PDF par magic bytes
+ *  et les sert en application/pdf (lecteur PDF navigateur). */
+async function uploadDocument(file: File, masterCode: string): Promise<string> {
+  const fd = new FormData();
+  fd.append("file", file);
+  fd.append("masterCode", masterCode);
+  const res = await fetch("/api/artisan/upload", { method: "POST", body: fd });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || "Échec de l'envoi du document");
+  return data.url as string;
+}
+
+/**
+ * Bloc « Produit certifié en laboratoire » (OPTIONNEL) — insértion du
+ * document du laboratoire (PDF ou photo de l'attestation). La rubrique
+ * correspondante n'apparaît sur la page publique QUE si un document est
+ * fourni : pas de document → aucune mention « certifié » sur la page
+ * (exigence utilisateur, anti-sur-vente).
+ */
+function LabCertPicker({
+  idPrefix,
+  file,
+  restoredUrl,
+  onPick,
+  onClear,
+}: {
+  idPrefix: string;
+  file: File | null;
+  /** URL déjà uploadée lors d'une activation précédente (mémoire). */
+  restoredUrl?: string;
+  onPick: (f: File | null) => void;
+  onClear: () => void;
+}) {
+  const pick = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0] ?? null;
+    // Reset la valeur de l'input : re-sélectionner le MÊME fichier
+    // déclenche à nouveau onChange.
+    e.target.value = "";
+    onPick(f);
+  };
+  return (
+    <div className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-4">
+      <p className="mb-1 flex items-center gap-1.5 text-sm font-bold text-emerald-800">
+        <ShieldCheck className="h-4 w-4" /> Produit certifié en laboratoire (optionnel)
+      </p>
+      <p className="mb-3 text-xs leading-relaxed text-emerald-700/80">
+        Insérez le certificat d&apos;analyse ou l&apos;attestation de votre
+        laboratoire (PDF ou photo). Il s&apos;affichera sur la page de votre
+        produit — <strong>uniquement si vous en fournissez un</strong>.
+      </p>
+      {file ? (
+        <div
+          className="flex items-center justify-between gap-2 rounded-xl border border-emerald-300 bg-white px-3 py-2"
+          data-testid={`${idPrefix}-labdoc-file`}
+        >
+          <span className="flex min-w-0 items-center gap-2 text-sm text-emerald-900">
+            <FileText className="h-4 w-4 shrink-0 text-emerald-600" />
+            <span className="truncate font-semibold">{file.name}</span>
+          </span>
+          <button
+            type="button"
+            onClick={onClear}
+            className="shrink-0 text-xs font-bold text-red-500 hover:text-red-600"
+          >
+            Retirer
+          </button>
+        </div>
+      ) : restoredUrl ? (
+        <div
+          className="flex items-center justify-between gap-2 rounded-xl border border-emerald-300 bg-white px-3 py-2"
+          data-testid={`${idPrefix}-labdoc-restored`}
+        >
+          <span className="flex min-w-0 items-center gap-2 text-sm text-emerald-900">
+            <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
+            <span className="font-semibold">Document déjà ajouté lors d&apos;une activation précédente</span>
+          </span>
+          <label className="shrink-0 cursor-pointer text-xs font-bold text-emerald-600 hover:text-emerald-700">
+            Remplacer
+            <input type="file" accept=".pdf,application/pdf,image/*" className="hidden" onChange={pick} />
+          </label>
+        </div>
+      ) : (
+        <label
+          htmlFor={`${idPrefix}-labdoc`}
+          className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed border-emerald-300 bg-white/60 px-3 py-3 text-center text-sm font-bold text-emerald-700 transition hover:bg-emerald-100/60"
+          data-testid={`${idPrefix}-labdoc-add`}
+        >
+          <FileText className="h-4 w-4 shrink-0" />
+          Insérer le document du laboratoire
+          <input
+            id={`${idPrefix}-labdoc`}
+            type="file"
+            accept=".pdf,application/pdf,image/*"
+            className="hidden"
+            onChange={pick}
+          />
+        </label>
+      )}
+    </div>
+  );
 }
 
 /** Date ISO (yyyy-mm-dd) → format long français (« 12 avril 2026 »). */
@@ -180,6 +292,7 @@ type ApiGroup = {
     manufacturingDate: string;
     expirationDate: string;
     photoUrl: string;
+    labCertificateUrl: string;
     productPrice: string;
     artisanBio: string;
     usageTips: string;
@@ -385,6 +498,9 @@ export default function ActivatePackClient({
     usageTips: prevProduct?.usageTips ?? "",
     // Identité visuelle de la marque (logo affiché sur la page produit)
     logo: null as File | null,
+    // Certification laboratoire (document PDF/photo + URL restaurée)
+    labDoc: null as File | null,
+    labDocUrl: prevProduct?.labCertificateUrl ?? "",
     // Auto-complétion intelligente
     template: getProductTemplateById(prevProduct?.templateId),
     precautions: prevProduct?.precautions ?? "",
@@ -559,6 +675,11 @@ export default function ActivatePackClient({
       if (mode === "simple") {
         // Photo produit + logo + galerie atelier (logo non bloquant)
         const photoUrl = simple.photo ? await uploadPhoto(simple.photo, masterCode) : "";
+        // Certification laboratoire : nouveau document prioritaire, sinon
+        // l'URL restaurée de la passe précédente (mémoire d'activation).
+        const labCertificateUrl = simple.labDoc
+          ? await uploadDocument(simple.labDoc, masterCode)
+          : simple.labDocUrl;
         let logoUrl = "";
         if (simple.logo) {
           try {
@@ -586,6 +707,7 @@ export default function ActivatePackClient({
               manufacturingDate: simple.manufacturingDate,
               expirationDate: simple.expirationDate,
               photoUrl,
+              labCertificateUrl,
               productPrice: simple.productPrice,
               artisanBio: simple.artisanBio,
               usageTips: simple.usageTips,
@@ -624,6 +746,9 @@ export default function ActivatePackClient({
           throw new Error("Chaque produit doit avoir un nombre de QR codes (au moins 1).");
         }
         const photoUrl = g.photo ? await uploadPhoto(g.photo, masterCode) : "";
+        const labCertificateUrl = g.labDoc
+          ? await uploadDocument(g.labDoc, masterCode)
+          : g.labDocUrl;
         apiGroups.push({
           count,
           productData: {
@@ -634,6 +759,7 @@ export default function ActivatePackClient({
             manufacturingDate: g.manufacturingDate,
             expirationDate: g.expirationDate,
             photoUrl,
+            labCertificateUrl,
             productPrice: g.productPrice,
             artisanBio: g.artisanBio,
             usageTips: g.usageTips,
@@ -1347,6 +1473,16 @@ export default function ActivatePackClient({
                 />
               </div>
 
+              {/* ── Certification laboratoire (optionnel) — la rubrique publique
+                  n'apparaît QUE si un document est fourni ── */}
+              <LabCertPicker
+                idPrefix="simple"
+                file={simple.labDoc}
+                restoredUrl={simple.labDocUrl}
+                onPick={(f) => setS({ labDoc: f })}
+                onClear={() => setS({ labDoc: null })}
+              />
+
               {/* ── Logo de la marque (demande utilisateur) ── */}
               <div className="rounded-2xl border border-violet-200 bg-violet-50/60 p-4">
                 <p className="mb-1 flex items-center gap-2 text-sm font-bold text-violet-800">
@@ -1510,6 +1646,11 @@ export default function ActivatePackClient({
                         () => setStep(4),
                       )}
                       {recapRow("Logo", simple.logo ? simple.logo.name : "Aucun", () => setStep(4))}
+                      {recapRow(
+                        "Certificat labo",
+                        simple.labDoc ? simple.labDoc.name : simple.labDocUrl ? "Document fourni" : "Aucun",
+                        () => setStep(4),
+                      )}
                       {simple.productPrice &&
                         recapRow("Prix", simple.productPrice, () => setStep(5))}
                       {recapRow(
@@ -2147,6 +2288,13 @@ export default function ActivatePackClient({
                           files={g.photo ? [g.photo] : []}
                           onChange={(files) => setG(i, { photo: files[0] ?? null })}
                         />
+                        <LabCertPicker
+                          idPrefix={`g${i}`}
+                          file={g.labDoc}
+                          restoredUrl={g.labDocUrl}
+                          onPick={(f) => setG(i, { labDoc: f })}
+                          onClear={() => setG(i, { labDoc: null })}
+                        />
                         <div>
                           <label className={labelCls} htmlFor={`g${i}-designation`}>
                             Désignation (optionnel)
@@ -2282,6 +2430,13 @@ export default function ActivatePackClient({
                       {recapRow(
                         "Photos produit",
                         groups.some((g) => g.photo) ? `${groups.filter((g) => g.photo).length}/${groups.length} fournie(s)` : "Aucune",
+                        () => setFlexStep(4),
+                      )}
+                      {recapRow(
+                        "Certificat labo",
+                        groups.some((g) => g.labDoc || g.labDocUrl)
+                          ? `${groups.filter((g) => g.labDoc || g.labDocUrl).length}/${groups.length} document(s)`
+                          : "Aucun",
                         () => setFlexStep(4),
                       )}
                     </div>

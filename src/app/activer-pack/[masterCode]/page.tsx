@@ -108,6 +108,7 @@ async function loadPackInfo(
             precautions,
             storageConditions: l.storageConditions ?? "",
             templateId: l.templateId ?? "",
+            labCertificateUrl: l.labCertificateUrl ?? "",
             count: lots.length,
           };
         },

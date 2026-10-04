@@ -5518,3 +5518,23 @@ Work Log:
 Stage Summary:
 - Plus AUCUN batch fantôme possible : un batch n'existe que tant qu'il a au moins un pack ; suppression batch entier en 1 clic ; les batchs fantômes déjà en DB (ex. CMUSNJ33 en prod) se suppriment via le nouveau bouton « Supprimer » de la carte batch.
 - Déployé via push → Coolify (webhook à surveiller : ceafdf9 n'avait PAS déclenché de redeploy auto — vérifier /api/health commit et Redeploy manuel si besoin).
+
+---
+Task ID: 16
+Agent: Super Z (main)
+Task: Nouvelle rubrique « Produit certifié en laboratoire » — insertion du document du laboratoire à l'activation, affichage public UNIQUEMENT si un document est fourni
+
+Work Log:
+- Prisma : PreActivatedLot.labCertificateUrl String? (par produit, activation flexible) — db:push OK.
+- /api/artisan/upload : support PDF par MAGIC BYTES (%PDF) — stockage BRUT (sharp = images seulement), mimeType application/pdf, filename artisan-<uuid>.pdf ; images inchangées (WebP) ; rejet 415 si format inconnu.
+- /api/artisan/photo/[filename] : regex garde-fou élargie à .pdf ; Content-Type servi depuis la DB → lecteur PDF navigateur en inline.
+- activate-groups : GroupProductSchema.labCertificateUrl + lotData (chaque lot du groupe) + copie sur le maître (pack complet, 1er groupe).
+- Wizard (activate-client.tsx) : composant LabCertPicker (bloc émeraude « Produit certifié en laboratoire (optionnel) », input .pdf+image, fichier choisi + Retirer, état restauré « déjà ajouté » + Remplacer, e.target.value="" pour re-sélection) ; inséré DANS l'étape Photos (mode simple, après photo produit) et PAR GROUPE (mode flexible) ; soumission : nouveau fichier prioritaire sinon URL restaurée (mémoire d'activation) ; ApiGroup/PreviousProduct/groupes/simple types étendus ; lignes récap « Certificat labo » (2 modes) ; uploadDocument() dédié.
+- Mémoire serveur (activer-pack/[masterCode]/page.tsx) : PreviousProduct.labCertificateUrl reconstruit depuis les lots activés → restauré au retour sur pack partiel.
+- Page publique /a/[code] + ArtisanProductView : prop labCertificateUrl ; carte émeraude conditionnelle {lot.labCertificateUrl && …} (testid lab-certificate, ShieldCheck, « Voir le certificat ») entre les badges Fait main/Naturel/Local et le prix — AUCUN document = AUCUNE rubrique.
+- Tests : NOUVEAU scripts/test-lab-certificate.ts — 23/23 OK (PDF upload+service octet-pour-octet, image WebP régression, 415 docx, rubrique PRÉSENTE avec certificat / ABSENTE sans, DB lot+maître, purge). Régressions : flexible 51/51 OK, suppression 52/52 OK. Piège bun fetch : login NextAuth 302 → redirect:"manual" sinon Set-Cookie de session perdu.
+
+Stage Summary:
+- L'artisan peut joindre le certificat de son laboratoire (PDF ou photo) produit par produit à l'activation ; le document est stocké en DB (survit aux redéploiements) et servi en application/pdf.
+- La rubrique publique n'apparaît que si un document existe — anti-surenchère « certifié » sans preuve.
+- Déployé via push → Coolify (surveiller le webhook ; Redeploy manuel si besoin comme tasks 14/15).

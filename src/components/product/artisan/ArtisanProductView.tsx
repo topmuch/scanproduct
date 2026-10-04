@@ -97,6 +97,9 @@ type Props = {
     /** Désignation du produit : description courte sous le nom (champ artisan). */
     productDesignation?: string | null;
     photoUrl?: string | null;
+    /** Certificat laboratoire (PDF ou photo) — la rubrique publique
+     *  n'apparaît QUE si ce champ est renseigné. */
+    labCertificateUrl?: string | null;
     artisanBio?: string | null;
     usageTips?: string | null;
     // Auto-complétion intelligente — précautions (JSON array encodé) +
@@ -911,6 +914,36 @@ export function ArtisanProductView({
                   🇸🇳 Local
                 </span>
               </div>
+
+              {/* RUBRIQUE « PRODUIT CERTIFIÉ EN LABORATOIRE » — affichée
+                  UNIQUEMENT quand un document a été inséré à l'activation
+                  (exigence utilisateur : pas de document → pas de rubrique,
+                  aucune mention « certifié » sur la page). PDF ouvert dans
+                  le lecteur navigateur, image affichée dans un onglet. */}
+              {lot.labCertificateUrl && (
+                <a
+                  href={lot.labCertificateUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-4 flex items-center gap-3 rounded-2xl border border-emerald-200 bg-gradient-to-r from-emerald-50 to-teal-50 p-4 transition-all hover:-translate-y-0.5 hover:border-emerald-300 hover:shadow-lg"
+                  data-testid="lab-certificate"
+                >
+                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-md shadow-emerald-500/30">
+                    <ShieldCheck className="h-6 w-6" />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-sm font-black text-emerald-900">
+                      Produit certifié en laboratoire
+                    </span>
+                    <span className="block text-xs leading-snug text-emerald-700">
+                      Analyse ou attestation officielle du laboratoire
+                    </span>
+                  </span>
+                  <span className="inline-flex shrink-0 items-center gap-1 rounded-xl bg-emerald-600 px-3.5 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-emerald-700">
+                    Voir <ChevronRight className="h-3.5 w-3.5" />
+                  </span>
+                </a>
+              )}
 
               {/* PRIX mis en valeur + contenance */}
               {(lot.productPrice || lot.contenance) && (

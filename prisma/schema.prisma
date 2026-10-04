@@ -939,6 +939,12 @@ model PreActivatedLot {
   contactPhone      String?
   photoUrl          String?
 
+  // Document de certification laboratoire (PDF ou photo de l'attestation,
+  // uploadé à l'activation — OPTIONNEL). La rubrique « Produit certifié en
+  // laboratoire » n'apparaît sur la page publique QUE si ce champ est rempli
+  // (aucun document → aucune rubrique, exigence utilisateur).
+  labCertificateUrl String?
+
   // Prix consommateur + désignation PAR PRODUIT (activation flexible :
   // un pack peut contenir plusieurs produits différents — chaque lot porte
   // les siens ; fallback sur Pack.productPrice/productDesignation pour les

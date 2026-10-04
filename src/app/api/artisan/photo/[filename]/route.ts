@@ -18,9 +18,9 @@ import { isTableMissingError, ensureArtisanTables } from "@/lib/ensure-artisan-t
  */
 export const runtime = "nodejs";
 
-/** Garde-fou : le filename doit matcher le format émis à l'upload. */
+/** Garde-fou : le filename doit matcher le format émis à l'upload (photos + PDF certificat labo). */
 function isValidFilename(name: string): boolean {
-  return /^artisan-[0-9a-f-]{36}\.(webp|jpg|jpeg|png|gif)$/i.test(name);
+  return /^artisan-[0-9a-f-]{36}\.(webp|jpg|jpeg|png|gif|pdf)$/i.test(name);
 }
 
 export async function GET(
