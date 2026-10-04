@@ -5615,3 +5615,28 @@ Stage Summary:
 - Commit à venir : 5 recommandations + responsive dashboard + notification email scan.
 - Textes food/cosmétique vérifiés sur 2 pages démo (jus-bissap vs karité).
 - Redeploy Coolify requis pour la prod (encore sur 0b990f5 → 2 releases en attente).
+
+---
+Task ID: 9
+Agent: main
+Task: Fix build Coolify « Fail extracting tarball for effect » + vérif complète des features du commit f45c21f sur environnement reconstruit
+
+Work Log:
+- Sandbox reconstruite de zéro (clone frais, bun.lock intact jusqu'à e0f2217).
+- Diagnostic déploiement Coolify en échec : « Fail extracting tarball for effect » au step bun install, alors que bun.lock N'avait PAS changé depuis le dernier déploiement OK (0b990f5) et que le tarball officiel npm (hash registry = hash lockfile) est sain.
+- Reproduction locale du MÊME classe d'erreur avec bun 1.3.14 (@next/swc-linux-x64-gnu) dans un réseau qui re-compresse les flux gzip → preuve que bun 1.3.x est fragile sur l'extraction de certains flux.
+- Fix validé : bun 1.4.2 (install propre 949/949, --frozen-lockfile, zéro diff bun.lock, build Next complet OK, prisma generate OK).
+- Dockerfile + Dockerfile.coolify-inline : BUN_VERSION=1.4.2 + retry ×3 bun install (purge cache entre tentatives) + retry ×3 git clone (inline).
+- Environnement local reconstruit : db/custom.db (piège résolu : DATABASE_URL absolu, sinon prisma résout depuis prisma/), seed admin, serveur standalone :3100 avec NEXTAUTH_SECRET.
+- Vérif E2E du commit f45c21f : scripts/test-scan-notify.ts 10/10 (email logué skipped sans SMTP, anti-flood 60s, badge Dernier scan) ; scripts/test-product-sliders.ts 22/22.
+- Vérif visuelle 390px/1366px (lot démo agroalimentaire jus-fruits-frais) : emoji jus ✓, card « Sans conservateurs de synthèse » ✓, précautions numérotées ✓, sticky WhatsApp avec badge prix ✓ (testid sticky-wa-cta), 4.5/5 avec vraie demi-étoile (aria-label 4.5 sur 5, header + résumé) ✓, « Dernier scan il y a 2 min » ✓, zéro overflow horizontal ✓.
+- Dashboard artisan : login +221771234567/0000 (auto-création), 390px sans overflow (grid-cols-1 + min-w-0 du commit f45c21f confirmés), activité récente live ✓.
+- Fix bonus : résumé avis (ArtisanProductView) utilisait encore Math.round(avgRating) → aligné sur la moyenne brute (4½ cohérent partout).
+- scripts/demo-visual-check.ts : helper de démo visuelle (batch 1 QR → activation agro → scan), committé.
+- Push e0f2217.
+
+Stage Summary:
+- Root cause du build Coolify : fragilité d'extraction bun 1.3.x + flux réseau variable → bun 1.4.2 épinglé + retries ×3 dans les 2 Dockerfiles.
+- ⚠️ ACTION UTILISATEUR : re-coller Dockerfile.coolify-inline dans le champ Dockerfile de l'UI Coolify (mode inline = copie locale) puis Redeploy ; vérifier df -h si nouvel échec ; /api/health doit afficher e0f2217.
+- Emails scan : prêts, mais SMTP à configurer (Admin → Paramètres → Email & Notifications, ou env SMTP_*) sinon EmailLog = skipped.
+- Features f45c21f validées de bout en bout sur environnement neuf : 10/10 + 22/22 + visuel 390/1366.
