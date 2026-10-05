@@ -233,6 +233,22 @@ export default async function ProductPage({
   const marqueNom =
     lot.product.brand || lot.fabricant.companyName || "VerifScan";
   const notesApprouvees = (lot.reviews ?? []).map((r) => r.rating);
+  // ── Exigence Google « Extraits de produits » ────────────────────────────
+  // Un graphe « Product » DOIT contenir au moins UN de : offers / review /
+  // aggregateRating — sinon Search Console signale le problème critique
+  // « Il faut indiquer "offers", "review", ou "aggregateRating" » et la
+  // page perd son éligibilité aux rich results.
+  //   - Avis approuvés → aggregateRating + review[] (étoiles dans Google).
+  //   - Aucun avis     → Offer de secours (honnête : disponibilité + URL +
+  //     devise ; le produit fabricant n'expose pas de prix public — ne
+  //     JAMAIS inventer un prix ni un avis).
+  const offersFallback = {
+    "@type": "Offer",
+    url: `${siteUrlPage}/p/${lotId}`,
+    priceCurrency: "XOF",
+    availability: "https://schema.org/InStock",
+    itemCondition: "https://schema.org/NewCondition",
+  };
   const jsonLd: Record<string, unknown> = {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -262,8 +278,25 @@ export default async function ProductPage({
               ) / 10,
             reviewCount: notesApprouvees.length,
           },
+          review: (lot.reviews ?? [])
+            .filter((r) => r.authorName || r.comment)
+            .slice(0, 10)
+            .map((r) => ({
+              "@type": "Review",
+              ...(r.authorName
+                ? { author: { "@type": "Person", name: r.authorName } }
+                : {}),
+              ...(r.comment ? { reviewBody: r.comment } : {}),
+              datePublished: r.createdAt.toISOString().slice(0, 10),
+              reviewRating: {
+                "@type": "Rating",
+                ratingValue: r.rating,
+                bestRating: 5,
+                worstRating: 1,
+              },
+            })),
         }
-      : {}),
+      : { offers: offersFallback }),
   };
 
   return (

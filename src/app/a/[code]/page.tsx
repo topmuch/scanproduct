@@ -10,6 +10,7 @@ import {
   parseCounterfeitAlert,
 } from "@/lib/artisan-anti-counterfeit";
 import { getProductTemplateById } from "@/lib/product-templates";
+import { getSiteUrl } from "@/lib/seo";
 import { ensureArtisanTables, isTableMissingError } from "@/lib/ensure-artisan-tables";
 
 /**
@@ -322,8 +323,84 @@ export default async function ArtisanCodePage({
     }
   })();
 
+  // ── JSON-LD « Product » (SEO) ───────────────────────────────────────────
+  // Exigence Google « Extraits de produits » : un graphe Product doit
+  // contenir offers OU review OU aggregateRating. Ici on a LES TROIS :
+  // le prix artisan (productPrice), les avis clients vérifiés par scan et
+  // la note agrégée → étoiles + prix possibles dans les résultats Google.
+  // Prix : texte libre (« 2 500 FCFA », « 5 000 »…) → extraction numérique
+  // honnête ; si non parsable, Offer sans prix (jamais de prix inventé).
+  const siteUrl = await getSiteUrl();
+  const prixTexte = lot.productPrice ?? lot.pack.productPrice ?? null;
+  const prixChiffre = (() => {
+    if (!prixTexte) return null;
+    const digits = prixTexte.replace(/[^\d]/g, "");
+    if (!digits) return null;
+    const n = parseInt(digits, 10);
+    return n > 0 && n < 100_000_000 ? n : null;
+  })();
+  const avisPourSeo = reviews.filter((r) => r.authorName || r.comment);
+  const jsonLdProduit: Record<string, unknown> = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: lot.productName ?? "Produit artisanal",
+    ...(lot.productDesignation || lot.artisanBio
+      ? { description: lot.productDesignation ?? lot.artisanBio }
+      : {}),
+    ...(lot.photoUrl ? { image: [lot.photoUrl] } : {}),
+    url: `${siteUrl}/a/${code}`,
+    brand: { "@type": "Brand", name: lot.artisanName ?? "Artisan VerifScan" },
+    manufacturer: {
+      "@type": "Organization",
+      name: lot.artisanName ?? "Artisan VerifScan",
+    },
+    sku: lot.qrCode,
+    offers: {
+      "@type": "Offer",
+      url: `${siteUrl}/a/${code}`,
+      priceCurrency: "XOF",
+      ...(prixChiffre ? { price: prixChiffre } : {}),
+      availability: "https://schema.org/InStock",
+      itemCondition: "https://schema.org/NewCondition",
+    },
+    ...(avisPourSeo.length > 0
+      ? {
+          aggregateRating: {
+            "@type": "aggregateRating",
+            ratingValue:
+              Math.round(
+                (avisPourSeo.reduce((s, r) => s + r.rating, 0) /
+                  avisPourSeo.length) *
+                  10,
+              ) / 10,
+            reviewCount: avisPourSeo.length,
+          },
+          review: avisPourSeo.slice(0, 10).map((r) => ({
+            "@type": "Review",
+            ...(r.authorName
+              ? { author: { "@type": "Person", name: r.authorName } }
+              : {}),
+            ...(r.comment ? { reviewBody: r.comment } : {}),
+            datePublished: r.createdAt.toISOString().slice(0, 10),
+            reviewRating: {
+              "@type": "Rating",
+              ratingValue: r.rating,
+              bestRating: 5,
+              worstRating: 1,
+            },
+          })),
+        }
+      : {}),
+  };
+
   return (
-    <ArtisanProductView
+    <>
+      {/* Données structurées pour Googlebot — serveur uniquement */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdProduit) }}
+      />
+      <ArtisanProductView
       lot={{
         qrCode: lot.qrCode,
         productName: lot.productName ?? "Produit artisanal",
@@ -373,5 +450,6 @@ export default async function ArtisanCodePage({
       initialReviews={reviews}
       similarProducts={similarProducts}
     />
+    </>
   );
 }

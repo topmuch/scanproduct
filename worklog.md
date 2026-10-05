@@ -5679,3 +5679,22 @@ Stage Summary:
 - Badges alignés sur 1 ligne équilibrée sur tous les mobiles (320→390px), desktop intact.
 - scripts/demo-min.ts committé pour recréer un lot de démo en 1 commande.
 - Commit + push à faire suivre d'un Redeploy Coolify.
+
+---
+Task ID: 12
+Agent: Super Z (main)
+Task: Sync GitHub/local + correction Search Console « Extraits de produits » (offers/review/aggregateRating).
+
+Work Log:
+- Sandbox réinitialisée → re-clone du repo ; confirmé : local = origin/main (b20dfe8), zéro écart de synchronisation.
+- Cause de l'alerte Google : /p/[lotId] émettait un graphe Product SANS offers, et n'ajoutait aggregateRating QUE si des avis approuvés existaient → les produits sans avis violaient l'exigence critique Search Console. La page artisan /a/[code] n'émettait AUCUN JSON-LD.
+- Fix /p/[lotId] : avis approuvés → aggregateRating + review[] (10 max : auteur Person, reviewBody, datePublished, Rating best/worst) ; AUCUN avis → Offer de secours honnête (url + priceCurrency XOF + availability InStock + itemCondition NewCondition, sans prix inventé).
+- Fix /a/[code] : nouveau JSON-LD Product complet — offers avec prix PARSED depuis productPrice texte (« 2 500 FCFA » → 2500 XOF, jamais de prix inventé si non parsable), aggregateRating + review[] depuis les avis artisans (hidden:false), sku = qrCode, brand/manufacturer = artisanName, image = photoUrl.
+- Environnement reconstruit : bun install (949), prisma generate, db push + seed admin/fabricants + seed-blog, build standalone OK.
+- Vérifs locales : /a/ART-… → Product + offers(price 2500 XOF) + aggregateRating 4.5/2 avis + 2 reviews ✅ ; /p/SAR-BAO-250-001 (3 avis) → aggregateRating 4.7 + 3 reviews ✅ ; /p/SAR-MOR-100-004 (0 avis, test par désapprobation) → offers fallback ✅ — exigence « 1 des 3 » VALIDÉE dans les 3 cas.
+- tsc src/ clean, eslint clean sur les 2 pages.
+
+Stage Summary:
+- Toutes les pages produit (fabricant + artisan) émettent désormais un graphe Product conforme Google (offers / review / aggregateRating toujours présent).
+- Bonus SEO majeur : les pages ARTISAN gagnent les rich results (étoiles + prix possibles dans Google) grâce au JSON-LD complet.
+- Après Redeploy : demander la revalidation dans Search Console (Sections « Extraits de produits » → Valider la correction).
