@@ -8,9 +8,13 @@ import { Logo } from "@/components/landing/Logo";
 
 /**
  * ImmersiveHero — hero plein écran « effet waouh » pour la page produit
- * classique (/p/[lotId]). Reproduit à l'identique le hero de la page
- * artisan (/a/[code]) :
- *   - photo produit PLEIN ÉCRAN en zoom lent Ken Burns (art-kenburns) ;
+ * classique (/p/[lotId]). S'inspire du hero de la page artisan (/a/[code]) :
+ *   - MOBILE : photo produit plein écran en zoom lent Ken Burns
+ *     (art-kenburns) — les photos portrait (majoritaires) remplissent
+ *     naturellement l'écran portrait ;
+ *   - DESKTOP : produit entièrement visible (object-contain centré) sur un
+ *     fond ambiant = même photo floutée en zoom lent — une photo portrait
+ *     en cover sur écran paysage était rognée à ~36 % (produit tronqué) ;
  *   - halos lumineux animés (art-gradient-pan) pour la profondeur ;
  *   - pilule marque VerifScan centrée en haut ;
  *   - bouton « Découvrir » (scroll fluide vers la carte produit) + badge
@@ -19,8 +23,10 @@ import { Logo } from "@/components/landing/Logo";
  *
  * Demande utilisateur : « sur la page de produit classique je veux que
  * l'image du produit classique s'affiche comme l'image page produit
- * artisan » — la photo occupe désormais tout le premier écran, exactement
- * comme côté artisan, au lieu du petit carré 176 px dans la carte.
+ * artisan » — puis retour test desktop : « l'image occupe tout le header
+ * donc on ne voit pas bien l'image produit, par contre sur la version
+ * mobile il s'affiche bien » → affichage adapté par breakpoint (cover sur
+ * mobile, contain + fond flouté sur desktop).
  *
  * Client component : le bouton « Découvrir » a besoin d'un onClick, et le
  * filet de sécurité image (404 → placeholder) a besoin de state. Le
@@ -69,17 +75,58 @@ export function ImmersiveHero({
   }
 
   return (
-    <header className="relative flex min-h-[75svh] flex-col overflow-hidden bg-stone-950 sm:min-h-[92svh]">
-      {/* Photo produit plein écran (zoom Ken Burns) ou placeholder stylisé */}
+    <header className="relative flex min-h-[75svh] flex-col overflow-hidden bg-stone-950">
+      {/* Photo produit ou placeholder stylisé.
+
+          ⚠️ Retour test (production, lot « Jus de Bouye » — photo portrait
+          412×744) : en object-cover sur un écran DESKTOP paysage, la photo
+          était agrandie ×3 pour remplir la largeur → ~64 % rognés haut/bas,
+          produit tronqué (« on ne voit pas bien l'image produit »).
+
+          → MOBILE (<sm) : inchangé — cover plein écran + Ken Burns (le
+            format portrait remplit naturellement l'écran portrait).
+          → DESKTOP (sm+) : produit ENTIÈREMENT visible (object-contain,
+            centré, padding) posé sur un AMBIANCE = même photo floutée
+            (object-cover + blur) en zoom lent Ken Burns. Le produit est
+            net et complet, le fond prolonge ses couleurs. */}
       <div className="absolute inset-0">
         {showPhoto ? (
-          <img
-            ref={imgRef}
-            src={imageUrl}
-            alt={productName}
-            className="art-kenburns h-full w-full object-cover"
-            onError={() => setFailed(true)}
-          />
+          <>
+            {/* Desktop : fond ambiant — même photo, floutée, zoom lent */}
+            <div
+              className="absolute inset-0 hidden scale-110 sm:block"
+              aria-hidden
+            >
+              <img
+                ref={imgRef}
+                src={imageUrl}
+                alt=""
+                className="art-kenburns h-full w-full object-cover opacity-60 blur-2xl"
+                onError={() => setFailed(true)}
+              />
+            </div>
+
+            {/* Desktop : produit net, entier, centré.
+                pb-40 : dégager la zone des boutons (Découvrir + badge,
+                ~150 px en bas) pour que la base du produit ne soit jamais
+                recouverte. */}
+            <img
+              ref={imgRef}
+              src={imageUrl}
+              alt={productName}
+              className="absolute inset-0 mx-auto hidden h-full w-full object-contain px-10 pt-8 pb-40 sm:block"
+              onError={() => setFailed(true)}
+            />
+
+            {/* Mobile : cover plein écran + zoom Ken Burns (inchangé) */}
+            <img
+              ref={imgRef}
+              src={imageUrl}
+              alt={productName}
+              className="art-kenburns h-full w-full object-cover sm:hidden"
+              onError={() => setFailed(true)}
+            />
+          </>
         ) : (
           <div
             role="img"
