@@ -5744,3 +5744,20 @@ Work Log:
 Stage Summary:
 - Les DEUX pages produit (classique + artisan) ont désormais un hero desktop « produit entier sur fond flouté » et un mobile cover inchangé — comportement unifié.
 - Redeploy Coolify requis pour appliquer sur verifscan.com.
+
+---
+Task ID: 16
+Agent: Super Z (main)
+Task: Design QR officiel non pris en compte — « j'ai inséré un nouveau design mais c'est toujours l'ancien design qui s'affiche dans la génération des QR codes ».
+
+Work Log:
+- Diagnostic complet de la chaîne QR : génération (generate/bulk-generate) ne rend PAS le PNG (rendu à la demande au téléchargement) ; 4 causes trouvées : (1) export-zip n'appelait JAMAIS renderQRBuffer avec templatePath → ZIP toujours jaune ; (2) print-batch (PDF packs artisans SuperAdmin) idem ; (3) BadgeQRPreview = SVG jaune CODÉ EN DUR → tous les aperçus dashboard/landing ignoraient le design importé ; (4) /api/uploads/site/* servi en Cache-Control immutable 1 an avec nom de fichier STABLE (qr-badge.<ext>) → ancien design collé au navigateur.
+- Fixes : export-zip + print-batch passent templatePath (résolution resolveBadgeTemplatePath / Setting qrBadgeTemplateUrl) ; nouveau endpoint PUBLIC GET /api/qr-codes/badge-template/preview {url, version=mtime} (perso session → officiel → null) ; BadgeQRPreview compose fidèlement côté client (fond cover + quiet zone blanche 62 % arrondie 5 % + QR 50 % centré, géométrie identique à renderCustomTemplateQR) avec repli SVG jaune ; site/* → must-revalidate (UUIDs restent immutable) ; cache-buster ?v= sur <img> SettingsPage + version mtime côté preview.
+- ⚠️ incident corrigé en cours de route : le nouveau endpoint avait été créé EN ÉCRASANT /api/qr-codes/badge-template (upload design personnel fabricant GET/POST/DELETE utilisé par ParametresPage) — fichier restauré via git checkout, endpoint public déplacé en /preview. Route fabricant intacte.
+- Tests : tsc src/ 0 erreur ; eslint 0 erreur ; build OK ; verify-qr-design.sh 12/12 (endpoint preview url+version, must-revalidate, print-batch PDF 6 QR coins ROUGES, export-zip coins ROUGES, render-badge coins ROUGES, repli fabricant) avec template de test rouge distinctif + scripts qr-fix-prep/cleanup/qr-corner-check.py ; Playwright landing : 7 instances BadgeQRPreview rendent le design importé (capture à l'appui). IMPORTANT : l'anti-brand-abuse de render-badge limite les URL au domaine servi (403 sur verifscan.com en local = normal).
+- Commit b5d5554 poussé sur origin/main.
+
+Stage Summary:
+- Le design QR officiel importé s'applique désormais partout : PDF packs artisans (print-batch), export ZIP, téléchargements unitaires, PDF étiquettes, bulk-generate ET tous les aperçus client (grille QR, modales, landing).
+- Priorité inchangée : design personnel du fabricant > design officiel plateforme > badge jaune.
+- Redeploy Coolify requis ; après deploy, le SuperAdmin doit RE-télécharger son design (ou simplement recharger : le cache navigateur des anciens fichiers site/ immutable peut persister — un re-upload force la version).
