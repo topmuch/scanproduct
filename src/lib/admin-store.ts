@@ -13,6 +13,7 @@ export type AdminPage =
   | "stats"
   | "support"
   | "ticket-detail"
+  | "messages"
   | "settings"
   | "plans";
 
@@ -36,4 +37,19 @@ export const useAdminNav = create<AdminState>((set) => ({
   openDetail: (page, id) => set({ page, selectedId: id }),
   setSettingsSection: (settingsSection) => set({ settingsSection }),
   goBack: () => set({ page: "dashboard", selectedId: null }),
+}));
+
+/**
+ * Compteur de messages de contact NON LUS (badge de la barre latérale).
+ * Petit store dédié : le fetch vit dans AdminSidebar et n'alourdit pas le
+ * payload AdminData servi au chargement de toutes les pages admin.
+ */
+type ContactBadgeState = {
+  newCount: number | null;
+  setNewCount: (n: number | null) => void;
+};
+
+export const useContactMessagesBadge = create<ContactBadgeState>((set) => ({
+  newCount: null,
+  setNewCount: (newCount) => set({ newCount }),
 }));

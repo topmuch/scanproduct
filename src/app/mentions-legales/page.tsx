@@ -59,10 +59,10 @@ export default function MentionsLegalesPage() {
           <li>
             Téléphone :{" "}
             <a
-              href="tel:+221783821822"
+              href="tel:+221773821822"
               className="font-medium text-[#022150] underline-offset-2 hover:underline"
             >
-              +221 78 382 18 22
+              +221 77 382 18 22
             </a>
           </li>
         </ul>
@@ -246,10 +246,10 @@ export default function MentionsLegalesPage() {
           <li>
             Par téléphone :{" "}
             <a
-              href="tel:+221783821822"
+              href="tel:+221773821822"
               className="font-medium text-[#022150] underline-offset-2 hover:underline"
             >
-              +221 78 382 18 22
+              +221 77 382 18 22
             </a>
           </li>
           <li>Par courrier : Dakar, Sénégal</li>

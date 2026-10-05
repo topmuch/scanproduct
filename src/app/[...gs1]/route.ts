@@ -21,6 +21,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { gererRequeteResolver } from "@/lib/gs1-resolver";
+import { db } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
@@ -29,5 +30,29 @@ export async function GET(
   contexte: { params: Promise<{ gs1: string[] }> }
 ): Promise<NextResponse> {
   const { gs1 } = await contexte.params;
+
+  // ── IndexNow : fichier de clé à la racine /{clé}.txt ──────────────────
+  // La spécification IndexNow (api.indexnow.org — Bing/Yandex/Seznam/Naver)
+  // exige que la clé soit prouvable en ligne à la racine du domaine :
+  //   GET https://verifscan.com/{indexNowKey}.txt → la clé en texte brut.
+  // Servie ici (catch-all racine) pour n'ajouter AUCUNE route au routeur :
+  // tout autre *.txt ou chemin inconnu suit le flux GS1/404 habituel.
+  if (gs1?.length === 1 && gs1[0].endsWith(".txt")) {
+    try {
+      const row = await db.setting.findUnique({ where: { key: "indexNowKey" } });
+      if (row?.value && gs1[0] === `${row.value}.txt`) {
+        return new NextResponse(row.value, {
+          status: 200,
+          headers: {
+            "Content-Type": "text/plain; charset=utf-8",
+            "Cache-Control": "no-store",
+          },
+        });
+      }
+    } catch {
+      /* DB indisponible → flux GS1/404 habituel */
+    }
+  }
+
   return gererRequeteResolver(request, gs1 ?? []);
 }

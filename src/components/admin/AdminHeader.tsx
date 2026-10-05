@@ -19,6 +19,7 @@ const PAGE_TITLES: Record<AdminPage, { breadcrumb: string; title: string }> = {
   stats: { breadcrumb: "Statistiques", title: "Statistiques Globales" },
   support: { breadcrumb: "Support", title: "Support & Tickets" },
   "ticket-detail": { breadcrumb: "Support / Ticket", title: "Détail Ticket" },
+  messages: { breadcrumb: "Messages", title: "Messages de contact" },
   settings: { breadcrumb: "Paramètres", title: "Paramètres" },
 };
 

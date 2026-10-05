@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import {
   LayoutDashboard,
   Users,
@@ -9,12 +10,13 @@ import {
   QrCode,
   BarChart3,
   LifeBuoy,
+  Mail,
   Settings,
   LogOut,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { Logo } from "@/components/landing/Logo";
-import { useAdminNav, type AdminPage } from "@/lib/admin-store";
+import { useAdminNav, useContactMessagesBadge, type AdminPage } from "@/lib/admin-store";
 import { useAdminData } from "@/components/admin/AdminDataProvider";
 import type { AdminData } from "@/lib/admin-server-data";
 import { cn } from "@/lib/utils";
@@ -29,6 +31,8 @@ type NavItem = {
   badgeColor?: string;
   /** returns the badge text from current admin data; undefined hides the badge */
   badgeFromData?: (data: AdminData) => string | undefined;
+  /** badge calculé hors AdminData (compteur du store contact, résolu au rendu) */
+  externalBadge?: () => string | undefined;
 };
 
 type NavSection = {
@@ -86,6 +90,20 @@ const NAV_SECTIONS: NavSection[] = [
           return openCount > 0 ? String(openCount) : undefined;
         },
       },
+      {
+        key: "messages",
+        page: "messages",
+        label: "Messages",
+        icon: Mail,
+        badgeColor: "#F59E0B",
+        // Résolu À CHAQUE RENDU depuis le store (getState — pas un hook,
+        // NAV_SECTIONS est hors composant) ; le composant s'abonne au store
+        // pour se re-rendre quand le compteur change.
+        externalBadge: () => {
+          const n = useContactMessagesBadge.getState().newCount;
+          return n && n > 0 ? String(n) : undefined;
+        },
+      },
     ],
   },
 ];
@@ -103,6 +121,7 @@ const PAGE_TO_KEY: Record<AdminPage, string> = {
   stats: "stats",
   support: "tickets",
   "ticket-detail": "tickets",
+  messages: "messages",
   settings: "settings",
 };
 
@@ -110,6 +129,29 @@ export function AdminSidebar() {
   const { page, setPage } = useAdminNav();
   const data = useAdminData();
   const activeKey = PAGE_TO_KEY[page];
+
+  // Compteur de messages de contact NON LUS — fetché localement (hors
+  // AdminData) pour ne pas alourdir le payload serveur de tout l'admin.
+  // L'abonnement (sélecteur) déclenche le re-rendu du badge à chaque change.
+  const setNewCount = useContactMessagesBadge((s) => s.setNewCount);
+  // Lecture « réactive » : maintient le composant abonné au compteur.
+  useContactMessagesBadge((s) => s.newCount);
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/admin/contact-messages?count=1")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!cancelled && d && typeof d.newCount === "number") {
+          setNewCount(d.newCount);
+        }
+      })
+      .catch(() => {
+        /* badge simplement absent si l'API est indisponible */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [page, setNewCount]);
 
   return (
     <aside className="fixed inset-y-0 left-0 z-40 hidden w-[260px] flex-col border-r border-white/10 bg-gradient-to-b from-[#0D3068] to-[#0A2B5F] lg:flex">
@@ -134,7 +176,7 @@ export function AdminSidebar() {
             <ul className="space-y-0.5 px-3">
               {section.items.map((item) => {
                 const isActive = activeKey === item.key;
-                const badgeText = item.badgeFromData?.(data);
+                const badgeText = item.externalBadge?.() ?? item.badgeFromData?.(data);
                 return (
                   <li key={item.key}>
                     <button

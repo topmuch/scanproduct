@@ -3,22 +3,27 @@
 import { useState } from "react";
 import { Mail, Phone, MapPin, Clock, Navigation, Send, CheckCircle2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { VERIFSCAN_DIRECTIONS_URL } from "@/lib/contact";
+import {
+  VERIFSCAN_DIRECTIONS_URL,
+  VERIFSCAN_EMAIL,
+  VERIFSCAN_PHONE_DISPLAY,
+  VERIFSCAN_PHONE_TEL,
+} from "@/lib/contact";
 
 const CONTACT_INFO = [
   {
     icon: Mail,
     label: "Email",
-    value: "contact@verifscan.com",
-    href: "mailto:contact@verifscan.com",
+    value: VERIFSCAN_EMAIL,
+    href: `mailto:${VERIFSCAN_EMAIL}`,
     color: "#022150",
     bg: "#F0F4F9",
   },
   {
     icon: Phone,
     label: "Téléphone",
-    value: "+221 78 382 18 22",
-    href: "tel:+221783821822",
+    value: VERIFSCAN_PHONE_DISPLAY,
+    href: VERIFSCAN_PHONE_TEL,
     color: "#10B981",
     bg: "#ECFDF5",
   },
@@ -48,24 +53,44 @@ export function ContactForm() {
     e.preventDefault();
     setSubmitting(true);
 
-    const formData = new FormData(e.currentTarget);
+    const form = e.currentTarget;
+    const formData = new FormData(form);
     const data = {
       name: formData.get("name"),
       email: formData.get("email"),
       phone: formData.get("phone"),
       subject: formData.get("subject"),
       message: formData.get("message"),
+      // Honeypot anti-bot : champ caché, rempli uniquement par les bots →
+      // l'API répond un faux succès sans stocker ni notifier.
+      website: formData.get("website"),
     };
 
     try {
-      // Simulate API call — in production, this would POST to /api/contact
-      await new Promise((resolve) => setTimeout(resolve, 1200));
-      console.log("Contact form submitted:", data);
+      // POST réel vers /api/contact : stockage en base (onglet SuperAdmin
+      // « Messages ») + notification email à contact@verifscan.com.
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) {
+        let msg = "Erreur lors de l'envoi. Veuillez réessayer.";
+        try {
+          const body = await res.json();
+          if (body?.error) msg = body.error;
+        } catch {
+          /* corps non JSON — message par défaut */
+        }
+        throw new Error(msg);
+      }
       setSent(true);
       toast.success("Message envoyé ! Nous vous répondrons sous 24h.");
-      (e.target as HTMLFormElement).reset();
-    } catch {
-      toast.error("Erreur lors de l'envoi. Veuillez réessayer.");
+      form.reset();
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Erreur lors de l'envoi. Veuillez réessayer.",
+      );
     } finally {
       setSubmitting(false);
     }
@@ -159,6 +184,20 @@ export function ContactForm() {
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-5">
+              {/* Honeypot anti-bot — hors écran, ignoré par les humains avec
+                  lecteur d'écran (aria-hidden + tabIndex -1 + autocomplete off). */}
+              <div aria-hidden="true" className="absolute -left-[9999px] h-0 w-0 overflow-hidden">
+                <label htmlFor="website">Ne pas remplir ce champ</label>
+                <input
+                  type="text"
+                  id="website"
+                  name="website"
+                  tabIndex={-1}
+                  autoComplete="off"
+                  defaultValue=""
+                />
+              </div>
+
               <div>
                 <h2 className="font-display text-2xl font-bold text-[#111827]">
                   Envoyez-nous un message

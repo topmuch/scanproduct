@@ -16,6 +16,7 @@ import { ArtisanBatchesPage } from "./pages/ArtisanBatchesPage";
 import { StatsPage } from "./pages/StatsPage";
 import { SupportPage } from "./pages/SupportPage";
 import { TicketDetailPage } from "./pages/TicketDetailPage";
+import { MessagesPage } from "./pages/MessagesPage";
 import { SettingsPage } from "./pages/SettingsPage";
 
 function renderPage(page: string) {
@@ -40,6 +41,8 @@ function renderPage(page: string) {
     case "support":
     case "ticket-detail":
       return page === "ticket-detail" ? <TicketDetailPage /> : <SupportPage />;
+    case "messages":
+      return <MessagesPage />;
     case "settings":
       return <SettingsPage />;
     default:

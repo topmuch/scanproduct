@@ -20,7 +20,7 @@ export const DEFAULT_SITE_URL = "https://verifscan.com";
 export const DEFAULT_CONTACT_EMAIL = "contact@verifscan.com";
 
 /** Fallback public phone (JSON-LD contactPoint). */
-export const DEFAULT_CONTACT_PHONE = "+221783821822";
+export const DEFAULT_CONTACT_PHONE = "+221773821822";
 
 /**
  * Resolve the canonical public origin of the site.

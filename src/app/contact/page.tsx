@@ -15,7 +15,7 @@ export async function generateMetadata(): Promise<Metadata> {
   title:
     "Contact & Itinéraire — VerifScan Dakar (Ouest Foire) | Email, Téléphone, Carte",
   description:
-    "Contactez VerifScan : contact@verifscan.com · +221 78 382 18 22 · Lot n°13, Ouest Foire, Dakar, Sénégal. Carte Google Maps, itinéraire, horaires et formulaire — réponse sous 24h.",
+    "Contactez VerifScan : contact@verifscan.com · +221 77 382 18 22 · Lot n°13, Ouest Foire, Dakar, Sénégal. Carte Google Maps, itinéraire, horaires et formulaire — réponse sous 24h.",
   alternates: await buildAlternates("/contact"),
   openGraph: {
     title: "Contact & Itinéraire — VerifScan Dakar (Ouest Foire)",
@@ -41,7 +41,7 @@ function LocalBusinessJsonLd() {
     description:
       "Passeport numérique produit : traçabilité alimentaire et cosmétique, authentification QR code, lutte contre la contrefaçon.",
     url: "https://verifscan.com/contact",
-    telephone: "+221783821822",
+    telephone: "+221773821822",
     email: "contact@verifscan.com",
     image: "https://verifscan.com/og-image.png",
     priceRange: "$$",
@@ -74,7 +74,7 @@ function LocalBusinessJsonLd() {
     contactPoint: [
       {
         "@type": "ContactPoint",
-        telephone: "+221783821822",
+        telephone: "+221773821822",
         email: "contact@verifscan.com",
         contactType: "customer service",
         areaServed: ["SN", "FR", "BE", "CH", "CA"],
@@ -101,8 +101,8 @@ const CONTACT_CHANNELS = [
   {
     icon: Clock,
     label: "Téléphone / WhatsApp",
-    value: "+221 78 382 18 22",
-    href: "tel:+221783821822",
+    value: "+221 77 382 18 22",
+    href: "tel:+221773821822",
   },
   {
     icon: MapPin,
@@ -258,10 +258,10 @@ export default function ContactPage() {
                   Obtenir l&apos;itinéraire
                 </a>
                 <a
-                  href="tel:+221783821822"
+                  href="tel:+221773821822"
                   className="inline-flex items-center justify-center gap-2 rounded-xl border-2 border-[#022150] px-6 py-3.5 text-[15px] font-semibold text-[#022150] transition-colors hover:bg-[#F0F4F9]"
                 >
-                  Appeler le +221 78 382 18 22
+                  Appeler le +221 77 382 18 22
                 </a>
               </div>
             </div>

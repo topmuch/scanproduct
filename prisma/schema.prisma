@@ -1074,3 +1074,29 @@ model Webhook {
 
   @@index([active])
 }
+
+// ============================================================================
+// Messages du formulaire de contact public (/contact) — onglet « Messages »
+// du SuperAdmin. Chaque soumission est stockée en base (aucune perte, même
+// si l'email échoue) ET notifiée par email à contact@verifscan.com via le
+// service email central (sendEmail → EmailLog). `subject` = code du choix
+// du formulaire (demo | partner | support | press | other).
+// ============================================================================
+model ContactMessage {
+  id          String    @id @default(cuid())
+  name        String
+  email       String
+  phone       String?
+  subject     String
+  message     String
+  status      String    @default("NEW") // NEW | READ | ARCHIVED
+  emailStatus String    @default("PENDING") // PENDING | SENT | SKIPPED | FAILED
+  ip          String?
+  userAgent   String?
+  createdAt   DateTime  @default(now())
+  readAt      DateTime?
+  archivedAt  DateTime?
+
+  @@index([status])
+  @@index([createdAt])
+}
