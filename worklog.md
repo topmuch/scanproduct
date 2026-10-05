@@ -5729,3 +5729,18 @@ Work Log:
 Stage Summary:
 - Desktop : le produit est désormais entier et net sur fond flouté premium ; mobile strictement identique (validé par captures avec la photo réelle du lot signalé).
 - Redeploy Coolify requis pour appliquer sur verifscan.com.
+
+---
+Task ID: 15
+Agent: Super Z (main)
+Task: Hero artisan desktop — « la version web ne s'affiche pas bien » (même problème que page classique).
+
+Work Log:
+- Diagnostic avec la vraie page signalée (verifscan.com/a/ART-CMUU0Z0L-P01-0001) : photo KARITÉ BRUT carrée 1024×1024 téléchargée depuis /api/artisan/photo. En object-cover desktop paysage + Ken Burns → zoom effectif ×1,25→×1,42 : produit géant, rogné haut/bas, bouton Découvrir sur l'étiquette (capture Playwright prod à l'appui).
+- Fix ArtisanProductView hero (même recette qu'ImmersiveHero) : MOBILE <sm inchangé (cover + Ken Burns) ; DESKTOP sm+ → produit ENTIÈREMENT visible object-contain centré (px-10 pt-8 pb-48 : pb supérieur au classique car la zone boutons est plus haute — pb-24 — et la carte flottante -mt-16 recouvre le bas du hero) sur fond ambiant = même photo floutée (cover + blur-2xl + opacity-60, wrapper scale-110) en zoom lent. Hero desktop 92svh → 75svh. Branche sans photo : placeholder gradient+emoji inchangé.
+- Tests : tsc src/ 0 erreur ; eslint 0 erreur (4 warnings préexistants, directives inutilisées hors zone modifiée) ; build OK ; verify-hero-artisan.sh 9/9 ; captures Playwright avec la VRAIE photo prod (route-interception) : desktop 1280×900 pot entier net, zéro chevauchement ; mobile 390×844 inchangé. Scripts : find-artisan-code.ts, set-artisan-photo.ts, verify-hero-artisan.sh, shot-hero-artisan.ts, shot-prod-artisan.ts.
+- Commit 47f41fe poussé sur origin/main.
+
+Stage Summary:
+- Les DEUX pages produit (classique + artisan) ont désormais un hero desktop « produit entier sur fond flouté » et un mobile cover inchangé — comportement unifié.
+- Redeploy Coolify requis pour appliquer sur verifscan.com.
