@@ -5777,3 +5777,21 @@ Stage Summary:
 - Page produit classique : photo hero toujours dégagée — zéro logo/menu superposés, desktop + mobile, y compris au scroll retour.
 - En cohérence : les DEUX pages produit (classique + artisan) sont désormais sans barre de navigation au-dessus du hero.
 - Redeploy Coolify requis pour appliquer sur verifscan.com (regroupe Tasks 13→17 non encore déployées).
+
+---
+Task ID: 18
+Agent: Super Z (main)
+Task: SEO — recommandations consultant : URLs parlantes /p/, vérif SSR/ISR, mots-clés conformité export.
+
+Work Log:
+- Audit rendu (point 2 consultant) : DÉJÀ CONFORME — /p/[lotId] force-dynamic (HTML complet côté serveur, JSON-LD servi), /metiers/[slug] SSG generateStaticParams (12 pages), /produits force-dynamic. Googlebot lit tout sans JS. Aucun changement nécessaire.
+- URLs parlantes (point 1) : helpers lib/seo.ts (slugifyFr ASCII 60c, buildProductPath → /p/{id}-{nom-marque}, parseLotIdParam — cuid sans tiret, découpe au 1er tiret). Page /p accepte les 2 formes (QR imprimés courts inchangés, servis 200) ; canonical + OG + JSON-LD url → forme parlante ; sitemap.xml lots actifs en parlant (select product.name/brand) ; liens internes parlants : SimilarProducts + 5 cartes landing + catalogue v2 (QR ENCODÉS restent courts : ProductQRCode/qr-url/GS1/exports intacts).
+- Mots-clés (point 3) : SITE_KEYWORDS enrichi de 8 termes conformité export (certificat phytosanitaire, conformité HACCP, traçabilité Global GAP, norme IFS, norme BRC, traçabilité export, export agroalimentaire, mise en conformité export).
+- Environnement : repo re-cloné (workspace nettoyé) — bun install, db:push + seed recréés (nouvelles IDs de lots). ⚠️ Prisma résout DATABASE_URL relatif hors du repo → toujours passer le chemin absolu file:/home/z/my-project/scanproduct/db/custom.db.
+- Tests : tsc 0 erreur src/ (examples/+scripts/ préexistants) ; eslint 0 sur les 11 fichiers ; build OK ; NOUVEAU verify-seo-slugs.sh 9/9 (auto-découverte du lot via sitemap) ; verify-hero-classic.sh recréé (version Tasks 13-18) 19/19.
+- Commits : 0d40e7e poussé sur origin/main.
+
+Stage Summary:
+- Google référence désormais des URLs descriptives /p/{id}-{nom-produit-marque} (canonical + sitemap + liens internes alignés) ; les QR imprimés courts continuent de fonctionner et consolident vers l'URL parlante.
+- Prochain levier SEO (hors code) : articles de blog ciblant les requêtes conformité export (HACCP, IFS/BRC, phytosanitaire) — les pages métiers/blog portent déjà ces thèmes dans title/H1/contenu.
+- Redeploy Coolify requis (regroupe Tasks 13→18).
