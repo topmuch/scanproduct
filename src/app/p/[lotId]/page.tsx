@@ -311,10 +311,16 @@ export default async function ProductPage({
 
       {/* ── HERO IMMERSIF — photo produit PLEIN ÉCRAN, même présentation que
           la page artisan (/a/[code]) : zoom lent Ken Burns, pilule VerifScan,
-          bouton « Découvrir » + badge d'authenticité. Placé AVANT le header
-          public : la photo occupe tout le premier écran au scan (demande
-          utilisateur), le header reste accessible juste en dessous et se
-          colle en haut au défilement. */}
+          bouton « Découvrir » + badge d'authenticité. La photo occupe tout
+          le premier écran au scan (demande utilisateur).
+
+          ⚠️ PAS de PublicHeader sur cette page (retour utilisateur : la barre
+          sticky logo + menu se collait en haut au défilement puis glissait
+          PAR-DESSUS la photo du hero — « le logo se chevauche sur l'image »,
+          « le menu ne doit pas s'afficher sur la page produit », web comme
+          mobile). Même présentation que la page artisan : la navigation
+          reste assurée par la pilule VerifScan du hero (lien accueil) et le
+          footer (Connexion, Devenir partenaire, plan du site). */}
       <ImmersiveHero
         imageUrl={lot.product.imageUrl}
         productName={lot.product.name}
@@ -340,14 +346,12 @@ export default async function ProductPage({
         />
       </div>
 
-      <PublicHeader />
-
       <main className="relative mx-auto w-full max-w-2xl flex-1 space-y-6 px-4 py-6">
         {/* 1. HERO WOW — bandeau authentique + carte produit + stats.
             Ancre #produit : cible du bouton « Découvrir » du hero immersif.
-            scroll-mt-24 : compense le header sticky (80 px) pour que le
-            bandeau authentique ne soit pas recouvert après le scroll. */}
-        <div id="produit" className="scroll-mt-24">
+            scroll-mt-6 : petite marge de respiration sous le bord haut —
+            plus de header sticky à compenser (barre retirée de cette page). */}
+        <div id="produit" className="scroll-mt-6">
           <WowHero
             product={lot.product}
             lot={lot}
