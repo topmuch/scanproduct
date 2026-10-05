@@ -16,7 +16,8 @@ import { PublicFooter } from "@/components/public/PublicFooter";
 import { SimilarProducts } from "@/components/product/SimilarProducts";
 
 // WOW premium components
-import { WowHero } from "@/components/product/wow/WowHero";
+import { WowHero, categoryEmoji } from "@/components/product/wow/WowHero";
+import { ImmersiveHero } from "@/components/product/wow/ImmersiveHero";
 import { FreshnessGlow } from "@/components/product/wow/FreshnessGlow";
 import { ContactOrb } from "@/components/product/wow/ContactOrb";
 import { WowAccordion } from "@/components/product/wow/WowAccordion";
@@ -308,6 +309,20 @@ export default async function ProductPage({
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
+      {/* ── HERO IMMERSIF — photo produit PLEIN ÉCRAN, même présentation que
+          la page artisan (/a/[code]) : zoom lent Ken Burns, pilule VerifScan,
+          bouton « Découvrir » + badge d'authenticité. Placé AVANT le header
+          public : la photo occupe tout le premier écran au scan (demande
+          utilisateur), le header reste accessible juste en dessous et se
+          colle en haut au défilement. */}
+      <ImmersiveHero
+        imageUrl={lot.product.imageUrl}
+        productName={lot.product.name}
+        emoji={categoryEmoji(lot.product.category)}
+        isActive={lot.status === "ACTIVE"}
+        targetId="produit"
+      />
+
       {/* ── Background decorations: floating colored blobs ───────────────
           Three large blurred circles that slowly float around, creating
           a dynamic, premium atmosphere. `pointer-events-none` so they
@@ -328,12 +343,17 @@ export default async function ProductPage({
       <PublicHeader />
 
       <main className="relative mx-auto w-full max-w-2xl flex-1 space-y-6 px-4 py-6">
-        {/* 1. HERO WOW — bandeau authentique + carte produit + stats */}
-        <WowHero
-          product={lot.product}
-          lot={lot}
-          fabricant={lot.fabricant}
-        />
+        {/* 1. HERO WOW — bandeau authentique + carte produit + stats.
+            Ancre #produit : cible du bouton « Découvrir » du hero immersif.
+            scroll-mt-24 : compense le header sticky (80 px) pour que le
+            bandeau authentique ne soit pas recouvert après le scroll. */}
+        <div id="produit" className="scroll-mt-24">
+          <WowHero
+            product={lot.product}
+            lot={lot}
+            fabricant={lot.fabricant}
+          />
+        </div>
 
         {/* 2. FRAÎCHEUR GLOW — barre de fraîcheur animée */}
         <FreshnessGlow

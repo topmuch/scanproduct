@@ -1,7 +1,6 @@
 import { CheckCircle2, XCircle, Star, BadgeCheck } from "lucide-react";
 import type { LotWithDetails } from "@/lib/public-data";
 import { formatDate, formatDateShort, daysUntil, cn } from "@/lib/utils";
-import { ZoomableProductImage } from "@/components/product/wow/ZoomableProductImage";
 
 /**
  * WowHero — spectacular hero section for the premium product page.
@@ -10,8 +9,9 @@ import { ZoomableProductImage } from "@/components/product/wow/ZoomableProductIm
  *   A. A full-width gradient authenticity banner (green/red) with pulse glow,
  *      ping ring and date badge.
  *   B. A premium glassmorphism product card with glow blur behind it,
- *      product image with hover scale, category badge, manufacturer info
- *      card and star rating.
+ *      category pill, product name, manufacturer info card and star rating.
+ *      (La photo produit n'est plus ici : elle s'affiche désormais en hero
+ *      plein écran ImmersiveHero — même présentation que la page artisan.)
  *   C. Three gradient stat cards (LOT / DLC / SCANS) with colored glow
  *      shadows and pulse animation on near-expiry DLC.
  *
@@ -37,7 +37,7 @@ const CATEGORY_EMOJI: Record<string, string> = {
   hygiene: "🧼",
 };
 
-function categoryEmoji(category: string | null | undefined): string {
+export function categoryEmoji(category: string | null | undefined): string {
   if (!category) return "📦";
   const k = category.toLowerCase().trim();
   for (const [key, val] of Object.entries(CATEGORY_EMOJI)) {
@@ -160,108 +160,87 @@ export function WowHero({ product, lot, fabricant }: Props) {
         <div className="absolute -inset-1 rounded-[2rem] bg-gradient-to-br from-[#4E74A8] via-purple-400 to-pink-400 opacity-20 blur-2xl transition-opacity duration-500 group-hover:opacity-40" />
 
         <div className="wow-glass wow-shadow-card relative overflow-hidden rounded-3xl p-4 sm:p-5">
-          <div className="flex flex-col gap-4 sm:flex-row">
-            {/* Product image — large, aspect ratio preserved, tap to zoom */}
-            <div className="relative mx-auto w-full max-w-[260px] flex-shrink-0 sm:mx-0 sm:w-44 sm:max-w-none">
-              {/* Gradient blur behind image */}
-              <div className="absolute -inset-2 rounded-3xl bg-gradient-to-br from-[#8FA9C9] via-purple-300 to-pink-300 opacity-50 blur-lg" />
+          {/* Carte 100 % informations : la photo produit vit désormais dans le
+              hero immersif plein écran (ImmersiveHero — même présentation que
+              la page artisan /a/[code]). Redondance supprimée : la photo
+              n'apparaît qu'une seule fois, en grand. */}
+          <div className="flex min-w-0 flex-col justify-center">
+            {/* Catégorie en pilule dégradée au-dessus du nom */}
+            {product.category && (
+              <span className="mb-2 inline-flex w-fit items-center gap-1 rounded-full bg-gradient-to-r from-[#2E5383] to-purple-500 px-3 py-1 text-[11px] font-bold text-white shadow-md sm:text-xs">
+                {emoji} {product.category}
+              </span>
+            )}
 
-              <div className="relative h-48 w-full sm:h-44 sm:w-44">
-                <div className="relative h-full w-full overflow-hidden rounded-2xl border-4 border-white bg-white shadow-xl">
-                  {product.imageUrl ? (
-                    <ZoomableProductImage
-                      src={product.imageUrl}
-                      alt={product.name}
-                      className="h-full w-full"
-                    />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#F0F4F9] to-purple-50 text-6xl">
-                      {emoji}
-                    </div>
+            <h2 className="font-display line-clamp-2 text-xl font-bold leading-tight text-gray-900 sm:text-2xl">
+              {product.name}
+            </h2>
+
+            {product.brand && (
+              <p className="mt-1 text-sm font-medium text-gray-600 sm:text-base">
+                {product.brand}
+              </p>
+            )}
+
+            {/* Manufacturer info card */}
+            <div className="mt-3 flex items-center gap-3 rounded-2xl bg-gradient-to-r from-[#F0F4F9] to-purple-50 p-2.5">
+              {fabricant.logoUrl ? (
+                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-xl border border-[#DCE7F2] bg-white shadow-md">
+                  <img
+                    src={fabricant.logoUrl}
+                    alt={`Logo ${companyName}`}
+                    className="h-full w-full object-contain"
+                    loading="lazy"
+                  />
+                </div>
+              ) : (
+                <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#2E5383] to-purple-600 text-sm font-bold text-white shadow-md">
+                  {companyName.charAt(0).toUpperCase()}
+                </div>
+              )}
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1">
+                  <span className="truncate text-sm font-semibold text-gray-900">
+                    {companyName}
+                  </span>
+                  {fabricant.isVerified && (
+                    <BadgeCheck className="h-4 w-4 flex-shrink-0 text-[#2E5383]" />
                   )}
                 </div>
-
-                {/* Floating category badge top-right */}
-                {product.category && (
-                  <div className="absolute -right-2 -top-2 z-10 rounded-full bg-gradient-to-r from-[#2E5383] to-purple-500 px-2.5 py-1 text-[10px] font-bold text-white shadow-lg sm:text-xs">
-                    {emoji} {product.category}
-                  </div>
+                {(fabricant.city || fabricant.country) && (
+                  <p className="truncate text-xs text-gray-500">
+                    {[fabricant.city, fabricant.country]
+                      .filter(Boolean)
+                      .join(", ")}
+                  </p>
                 )}
               </div>
             </div>
 
-            {/* Product info */}
-            <div className="flex min-w-0 flex-1 flex-col justify-center">
-              <h2 className="font-display line-clamp-2 text-xl font-bold leading-tight text-gray-900 sm:text-2xl">
-                {product.name}
-              </h2>
-
-              {product.brand && (
-                <p className="mt-1 text-sm font-medium text-gray-600 sm:text-base">
-                  {product.brand}
-                </p>
-              )}
-
-              {/* Manufacturer info card */}
-              <div className="mt-3 flex items-center gap-3 rounded-2xl bg-gradient-to-r from-[#F0F4F9] to-purple-50 p-2.5">
-                {fabricant.logoUrl ? (
-                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-xl border border-[#DCE7F2] bg-white shadow-md">
-                    <img
-                      src={fabricant.logoUrl}
-                      alt={`Logo ${companyName}`}
-                      className="h-full w-full object-contain"
-                      loading="lazy"
+            {/* Star rating */}
+            {totalReviews > 0 && rating > 0 && (
+              <div className="mt-2 flex items-center gap-1.5">
+                <div className="flex">
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <Star
+                      key={i}
+                      className={cn(
+                        "h-4 w-4 drop-shadow-sm",
+                        i <= Math.round(rating)
+                          ? "fill-amber-400 text-amber-400"
+                          : "fill-gray-200 text-gray-200",
+                      )}
                     />
-                  </div>
-                ) : (
-                  <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#2E5383] to-purple-600 text-sm font-bold text-white shadow-md">
-                    {companyName.charAt(0).toUpperCase()}
-                  </div>
-                )}
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-1">
-                    <span className="truncate text-sm font-semibold text-gray-900">
-                      {companyName}
-                    </span>
-                    {fabricant.isVerified && (
-                      <BadgeCheck className="h-4 w-4 flex-shrink-0 text-[#2E5383]" />
-                    )}
-                  </div>
-                  {(fabricant.city || fabricant.country) && (
-                    <p className="truncate text-xs text-gray-500">
-                      {[fabricant.city, fabricant.country]
-                        .filter(Boolean)
-                        .join(", ")}
-                    </p>
-                  )}
+                  ))}
                 </div>
+                <span className="text-sm font-semibold text-gray-900">
+                  {rating.toFixed(1)}
+                </span>
+                <span className="text-xs text-gray-500">
+                  ({totalReviews} avis)
+                </span>
               </div>
-
-              {/* Star rating */}
-              {totalReviews > 0 && rating > 0 && (
-                <div className="mt-2 flex items-center gap-1.5">
-                  <div className="flex">
-                    {[1, 2, 3, 4, 5].map((i) => (
-                      <Star
-                        key={i}
-                        className={cn(
-                          "h-4 w-4 drop-shadow-sm",
-                          i <= Math.round(rating)
-                            ? "fill-amber-400 text-amber-400"
-                            : "fill-gray-200 text-gray-200",
-                        )}
-                      />
-                    ))}
-                  </div>
-                  <span className="text-sm font-semibold text-gray-900">
-                    {rating.toFixed(1)}
-                  </span>
-                  <span className="text-xs text-gray-500">
-                    ({totalReviews} avis)
-                  </span>
-                </div>
-              )}
-            </div>
+            )}
           </div>
         </div>
       </div>
