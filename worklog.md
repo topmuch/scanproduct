@@ -5795,3 +5795,21 @@ Stage Summary:
 - Google référence désormais des URLs descriptives /p/{id}-{nom-produit-marque} (canonical + sitemap + liens internes alignés) ; les QR imprimés courts continuent de fonctionner et consolident vers l'URL parlante.
 - Prochain levier SEO (hors code) : articles de blog ciblant les requêtes conformité export (HACCP, IFS/BRC, phytosanitaire) — les pages métiers/blog portent déjà ces thèmes dans title/H1/contenu.
 - Redeploy Coolify requis (regroupe Tasks 13→18).
+
+---
+Task ID: 19
+Agent: Super Z (main)
+Task: SEO — recommandations consultant (2e lot) : generateMetadata SSR, sitemap dynamique lots, contenu dupliqué (méta identiques entre lots d'un même produit), maillage interne.
+
+Work Log:
+- Audit préalable : generateMetadata /p/[lotId] DÉJÀ EN PLACE (SSR force-dynamic, title/description/canonical parlante/keywords/OG+Twitter avec image produit, JSON-LD Product) ; sitemap.xml liste déjà TOUS les lots actifs en URL parlante (take 5000) ; /metiers/[slug] + /blog/[slug] ont leur generateMetadata (SSG). Points 1 (sitemap) et 2 (SSR) du consultant = conformes — rien à changer.
+- Contenu dupliqué (point 2) : la description méta reprenait lot.product.description — IDENTIQUE pour tous les lots d'un même produit (50 lots → 50 méta identiques). Fix : buildLotMetaDescription() injecte des variables propres à CHAQUE lot (référence/numéro de lot, date de fabrication fr-FR, lieu de fabrication/transformation, péremption avec phrasé adapté alimentaire vs cosmétique) → chaque passeport a un extrait Google distinct ; titre enrichi « {nom} — {marque} · Lot {ref} | Passeport numérique VerifScan », OG/Twitter alignés (cap 300 c).
+- JSON-LD : productionDate + expiryDate ajoutés au graphe Product (propriétés différenciantes par lot).
+- Maillage interne (point 3) : nouvelle section « Explorer VerifScan » sur la page produit (serveur, liens réels) : catalogue /produits, page /metiers/{secteur} mappée depuis la catégorie produit (industryIdForCategory — matching mots-clés sans accents, 12 métiers ; catégorie générique « Agro-alimentaire » → pas de lien, comportement voulu), /blog avec ancres injectant les mots-clés conformité export en visible (HACCP, certificat phytosanitaire, IFS/BRC, Global GAP).
+- Tests : tsc 0 erreur src/ ; eslint 0 page.tsx ; build OK ; NOUVEAU verify-seo-lot-meta.sh 9/9 (titre enrichi, variables uniques en description, JSON-LD dates, 3 liens internes, PREUVE anti-dupe : 2 lots → 2 descriptions distinctes) ; verify-seo-slugs.sh 9/9 ; verify-hero-classic.sh 19/19 (rendu dynamique du nom/catégorie depuis le JSON-LD — plus de produit codé en dur) ; captures Playwright desktop+mobile de la section (scripts/shots/explorer-*.png).
+- Commit : 6a30b01 poussé sur origin/main.
+
+Stage Summary:
+- Chaque passeport /p/ expose désormais title + description UNIQUES par lot (anti-contenu dupliqué) et alimente le maillage interne vers catalogue/métiers/blog — les requêtes du consultant (sitemap dynamique, SSR, contenu dupliqué, maillage interne) sont toutes traitées ou confirmées conformes.
+- Les mots-clés conformité export sont maintenant aussi dans le corps VISIBLE des pages produit (ancres blog), pas seulement dans meta keywords.
+- Redeploy Coolify requis (regroupe Tasks 13→19).
