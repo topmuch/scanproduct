@@ -5714,3 +5714,18 @@ Work Log:
 Stage Summary:
 - La page produit classique ouvre désormais sur la photo plein écran « effet waouh », identique à la page artisan ; la carte produit ne garde que les infos (fini la photo en double).
 - Commit 88e3867 poussé sur origin/main → Redeploy Coolify requis pour la production.
+
+---
+Task ID: 14
+Agent: Super Z (main)
+Task: Hero desktop — « l'image occupe tout le header, on ne voit pas bien l'image produit » (mobile OK).
+
+Work Log:
+- Diagnostic avec la VRAIE page signalée (verifscan.com/p/cmswdnidj000jo201o90uq4x2) : photo « Jus de Bouye » PORTRAIT 412×744 téléchargée depuis /api/uploads. En object-cover sur desktop paysage (1280px), zoom ×3,1 → ~64 % de la photo rognés haut/bas → produit tronqué. Sur mobile portrait, cover remplit naturellement → OK (conforme au retour).
+- Fix ImmersiveHero par breakpoint : MOBILE <sm inchangé (cover + Ken Burns) ; DESKTOP sm+ → produit ENTIÈREMENT visible en object-contain centré (px-10 pt-8 pb-40 : base dégagée de la zone boutons) sur fond ambiant = même photo floutée (cover + blur-2xl + opacity-60, wrapper scale-110 anti-bords) en zoom Ken Burns lent. Hero desktop 92svh → 75svh (contenu visible plus tôt).
+- Tests : tsc src/ 0 erreur, eslint 0/0, build OK, verify-hero-classic.sh 20/20 (nouvelles assertions contain + fond flouté), Playwright route-interception avec la vraie photo portrait prod → captures desktop 1280×900 (bouteille entière, nette, zéro chevauchement) + mobile 390×844 (inchangé). Scripts : shot-hero-portrait.ts.
+- Commits : 5dcac78 (fix), poussé origin/main.
+
+Stage Summary:
+- Desktop : le produit est désormais entier et net sur fond flouté premium ; mobile strictement identique (validé par captures avec la photo réelle du lot signalé).
+- Redeploy Coolify requis pour appliquer sur verifscan.com.
