@@ -1251,15 +1251,17 @@ export function ArtisanProductView({
               </div>
 
               {/* Badges EN VEDETTE (retour test : « mettre en valeur fait main,
-                  naturel et local ») — couleurs pleines, texte blanc, plus grands. */}
-              <div className="mt-4 flex flex-wrap gap-2">
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 px-4 py-2 text-[13px] font-black text-white shadow-md shadow-amber-500/30">
-                  <Hand className="h-4 w-4" /> Fait main
+                  naturel et local ») — MOBILE : grille 3 colonnes équilibrée
+                  (un flex-wrap donnait 2+1 avec « Local » orphelin à la ligne)
+                  · SM+ : retour au flux wrap avec pills larges. */}
+              <div className="mt-4 grid grid-cols-3 gap-1.5 sm:flex sm:flex-wrap sm:gap-2">
+                <span className="inline-flex min-w-0 items-center justify-center gap-1 whitespace-nowrap rounded-full bg-gradient-to-r from-amber-500 to-orange-500 px-1 py-2 text-[11px] font-black text-white shadow-md shadow-amber-500/30 sm:gap-1.5 sm:px-4 sm:text-[13px]">
+                  <Hand className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> Fait main
                 </span>
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 px-4 py-2 text-[13px] font-black text-white shadow-md shadow-emerald-500/30">
-                  <Leaf className="h-4 w-4" /> Naturel
+                <span className="inline-flex min-w-0 items-center justify-center gap-1 whitespace-nowrap rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 px-1 py-2 text-[11px] font-black text-white shadow-md shadow-emerald-500/30 sm:gap-1.5 sm:px-4 sm:text-[13px]">
+                  <Leaf className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> Naturel
                 </span>
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-sky-500 to-blue-600 px-4 py-2 text-[13px] font-black text-white shadow-md shadow-sky-500/30">
+                <span className="inline-flex min-w-0 items-center justify-center gap-1 whitespace-nowrap rounded-full bg-gradient-to-r from-sky-500 to-blue-600 px-1 py-2 text-[11px] font-black text-white shadow-md shadow-sky-500/30 sm:gap-1.5 sm:px-4 sm:text-[13px]">
                   🇸🇳 Local
                 </span>
               </div>

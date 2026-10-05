@@ -5662,3 +5662,20 @@ Stage Summary:
 - Lien wa.me vérifié correct en prod ; cause réelle = numéro stocké ≠ ligne WhatsApp réelle de l'artisan (78 135 13 94 vs 78 485 82 26).
 - App désormais blindée : aperçu du numéro international + bouton de test auto-service partout où le numéro est saisi ; templates wow/compact corrigés (indicatif manquant).
 - ⚠️ ACTION UTILISATEUR : (1) vérifier sur SON téléphone le numéro enregistré sur WhatsApp (Réglages → profil → Téléphone) ; (2) sur la page d'édition du produit Karité Brut, corriger 78 135 13 94 si besoin et cliquer « Tester sur WhatsApp » ; (3) Redeploy Coolify pour livrer l'aperçu + le test + le fix wow/compact.
+
+---
+Task ID: 11
+Agent: Super Z (main)
+Task: Badges « Fait main / Naturel / 🇸🇳 Local » mal affichés en mobile.
+
+Work Log:
+- Reproduction locale : recréation d'un lot de démo (scripts/demo-min.ts, committé — l'ancien jeu de démo avait été purgé par les tests E2E + sandbox reconstruite).
+- Mesures DOM à 360px : flex-wrap donnait 2+1 — « Fait main » + « Naturel » ligne 1, « 🇸🇳 Local » orphelin ligne 2 (y=684 vs y=728). Screenshot confirme l'aspect déséquilibré.
+- Fix ArtisanProductView : mobile = grille grid-cols-3 gap-1.5, pills centrées whitespace-nowrap px-1 py-2 text-[11px], icônes h-3.5 ; SM+ = retour au flux flex-wrap px-4 text-[13px] icônes h-4 (identique à avant).
+- Vérif post-build : 1 seule ligne à 320/360/390px, zéro overflow horizontal ; desktop 1366px inchangé (13px, pill 111px).
+- En passant : vérif visuelle du hero mobile OK (avatar, scan counter, prix).
+
+Stage Summary:
+- Badges alignés sur 1 ligne équilibrée sur tous les mobiles (320→390px), desktop intact.
+- scripts/demo-min.ts committé pour recréer un lot de démo en 1 commande.
+- Commit + push à faire suivre d'un Redeploy Coolify.
