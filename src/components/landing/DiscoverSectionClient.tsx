@@ -4,6 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { Star, QrCode, ShieldCheck, Leaf } from "lucide-react";
 import { cn, LEVEL_CONFIG, getLevelFromScore } from "@/lib/utils";
+import { buildProductPath } from "@/lib/seo";
 import { ProductQRCode } from "@/components/landing/ProductQRCode";
 
 /**
@@ -91,7 +92,9 @@ function FeaturedProductCard({ item }: { item: DiscoverItem }) {
   const level = getLevelFromScore(score);
   const cfg = LEVEL_CONFIG[level];
   const emoji = item.categoryEmoji ?? "📦";
-  const href = item.latestLotId ? `/p/${item.latestLotId}` : `/p/${item.id}`;
+  const href = item.latestLotId
+    ? buildProductPath(item.latestLotId, item.name, item.brand)
+    : `/p/${item.id}`;
   const fabricantName =
     item.fabricant?.companyName ?? item.fabricant?.name ?? "Fabricant";
 
@@ -194,7 +197,9 @@ function DiscoverCard({ item }: { item: DiscoverItem }) {
   const level = getLevelFromScore(score);
   const cfg = LEVEL_CONFIG[level];
   const emoji = item.categoryEmoji ?? "📦";
-  const href = item.latestLotId ? `/p/${item.latestLotId}` : `/p/${item.id}`;
+  const href = item.latestLotId
+    ? buildProductPath(item.latestLotId, item.name, item.brand)
+    : `/p/${item.id}`;
   const fabricantName =
     item.fabricant?.companyName ?? item.fabricant?.name ?? "Fabricant";
 

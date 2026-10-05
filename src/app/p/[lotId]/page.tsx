@@ -9,7 +9,7 @@ import {
   recordScan,
   isBotUserAgent,
 } from "@/lib/public-data";
-import { getSiteUrl } from "@/lib/seo";
+import { getSiteUrl, buildProductPath, parseLotIdParam } from "@/lib/seo";
 import { PublicHeader } from "@/components/public/PublicHeader";
 import { PublicFooter } from "@/components/public/PublicFooter";
 
@@ -68,9 +68,12 @@ export async function generateMetadata({
   params: Promise<{ lotId: string }>;
 }): Promise<Metadata> {
   const { lotId } = await params;
+  // Le param peut porter un suffixe slug SEO (« {id}-beurre-de-karite ») —
+  // les QR codes imprimés pointent la forme courte, les deux sont servies.
+  const realLotId = parseLotIdParam(lotId);
   let lot: Awaited<ReturnType<typeof getLotWithDetails>> = null;
   try {
-    lot = await getLotWithDetails(lotId);
+    lot = await getLotWithDetails(realLotId);
   } catch (e) {
     console.error("[generateMetadata /p/[lotId]] getLotWithDetails threw:", e);
   }
@@ -99,7 +102,11 @@ export async function generateMetadata({
   return {
     title: `${lot.product.name} — Passeport numérique VerifScan`,
     description: lot.product.description?.slice(0, 160) ?? undefined,
-    alternates: { canonical: `/p/${lotId}` },
+    // Canonical « parlante » : /p/{id}-{nom-produit-marque}. La forme
+    // courte (QR codes) est servie en 200 et consolidée ici par Google.
+    alternates: {
+      canonical: buildProductPath(lot.id, lot.product.name, lot.product.brand),
+    },
     keywords: [
       lot.product.name,
       lot.product.brand,
@@ -115,7 +122,7 @@ export async function generateMetadata({
     openGraph: {
       title: `${lot.product.name} — Passeport numérique VerifScan`,
       description: lot.product.description?.slice(0, 160) ?? undefined,
-      url: `/p/${lotId}`,
+      url: buildProductPath(lot.id, lot.product.name, lot.product.brand),
       type: "website",
       ...(imageProduit ? { images: [{ url: imageProduit }] } : {}),
     },
@@ -141,10 +148,13 @@ export default async function ProductPage({
 }) {
   const { lotId } = await params;
   const { code: qrCodeId } = await searchParams;
+  // URL parlante acceptée : /p/{id}-{slug} — on récupère le vrai id de lot
+  // (cuid sans tiret) avant la requête. Les QR codes courts passent tels quels.
+  const realLotId = parseLotIdParam(lotId);
 
   let lot: Awaited<ReturnType<typeof getLotWithDetails>> = null;
   try {
-    lot = await getLotWithDetails(lotId);
+    lot = await getLotWithDetails(realLotId);
   } catch (e) {
     // This is the real "server-side exception" path. Log it clearly so we
     // can debug, then fall through to the not-found / mock handling below.
@@ -243,9 +253,15 @@ export default async function ProductPage({
   //   - Aucun avis     → Offer de secours (honnête : disponibilité + URL +
   //     devise ; le produit fabricant n'expose pas de prix public — ne
   //     JAMAIS inventer un prix ni un avis).
+  // ── URL passeport « parlante » (SEO) — réutilisée par le JSON-LD ──────
+  const cheminParlant = buildProductPath(
+    lot.id,
+    lot.product.name,
+    lot.product.brand,
+  );
   const offersFallback = {
     "@type": "Offer",
-    url: `${siteUrlPage}/p/${lotId}`,
+    url: `${siteUrlPage}${cheminParlant}`,
     priceCurrency: "XOF",
     availability: "https://schema.org/InStock",
     itemCondition: "https://schema.org/NewCondition",
@@ -258,7 +274,7 @@ export default async function ProductPage({
       ? { description: lot.product.description }
       : {}),
     ...(imagePage ? { image: [imagePage] } : {}),
-    url: `${siteUrlPage}/p/${lotId}`,
+    url: `${siteUrlPage}${cheminParlant}`,
     brand: { "@type": "Brand", name: marqueNom },
     manufacturer: {
       "@type": "Organization",

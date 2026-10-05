@@ -4,6 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { Star, Search, ShieldCheck } from "lucide-react";
 import { cn, LEVEL_CONFIG, getLevelFromScore } from "@/lib/utils";
+import { buildProductPath } from "@/lib/seo";
 import { ProductQRCode } from "@/components/landing/ProductQRCode";
 
 /**
@@ -106,7 +107,9 @@ function TabColumn({
 
 function TabRow({ item }: { item: ProductTabItem }) {
   const emoji = item.categoryEmoji ?? "📦";
-  const href = item.latestLotId ? `/p/${item.latestLotId}` : `/p/${item.id}`;
+  const href = item.latestLotId
+    ? buildProductPath(item.latestLotId, item.name, item.brand)
+    : `/p/${item.id}`;
   const level = getLevelFromScore(item.transparencyScore);
   const cfg = LEVEL_CONFIG[level];
 

@@ -86,3 +86,57 @@ export function parseKeywords(raw: string | null | undefined): string[] {
     .map((k) => k.trim())
     .filter((k) => k.length > 0);
 }
+
+/* ── URLs passeports « parlantes » (SEO) ────────────────────────────────────
+ * Google favorise les URL descriptives : /p/{lotId}-{nom-produit-marque}.
+ *
+ *   - Les QR CODES (imprimés, GS1, étiquettes) gardent l'URL courte
+ *     /p/{lotId} : stable même si le produit est renommé, plus dense car
+ *     plus courte → ne JAMAIS les faire pointer vers l'URL à slug.
+ *   - Les URL canoniques / sitemap / liens internes utilisent la forme
+ *     parlante ; l'ancienne forme courte reste servie (200) et la balise
+ *     canonical consolide les signaux vers la forme parlante (pattern
+ *     standard e-commerce).
+ *   - Les ids de lots sont des cuid() (jamais de tiret) → « {id}-{slug} »
+ *     se découpe sans ambiguïté sur le PREMIER tiret.
+ */
+
+/** Slug ASCII français : minuscules, sans accents, tirets, tronqué à 60. */
+export function slugifyFr(input: string): string {
+  return input
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "") // diacritiques → lettres de base
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 60)
+    .replace(/-+$/g, "");
+}
+
+/**
+ * Chemin passeport parlant : /p/{lotId}-{slug nom + marque}.
+ * Sans nom exploitable → retombe sur /p/{lotId} (forme courte, toujours
+ * valide côté route).
+ */
+export function buildProductPath(
+  lotId: string,
+  productName?: string | null,
+  brand?: string | null,
+): string {
+  const slug = slugifyFr(
+    [productName, brand].filter((s): s is string => !!s?.trim()).join(" "),
+  );
+  return slug ? `/p/${lotId}-${slug}` : `/p/${lotId}`;
+}
+
+/**
+ * Extrait le vrai id de lot d'un param de route qui peut porter un suffixe
+ * slug : « cmuv...eua-beurre-de-karite » → « cmuv...eua ». L'entrée courte
+ * « cmuv...eua » (QR codes imprimés) passe inchangée. Décodage %XX par
+ * sécurité (les URL GS1 encodent le chemin).
+ */
+export function parseLotIdParam(param: string): string {
+  const decoded = decodeURIComponent(param);
+  const dash = decoded.indexOf("-");
+  return dash > 0 ? decoded.slice(0, dash) : decoded;
+}

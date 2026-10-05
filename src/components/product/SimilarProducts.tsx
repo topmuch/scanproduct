@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { LEVEL_CONFIG, getLevelFromScore } from "@/lib/utils";
 import { getSimilarProducts } from "@/lib/public-data";
+import { buildProductPath } from "@/lib/seo";
 
 type Props = {
   products: Awaited<ReturnType<typeof getSimilarProducts>>;
@@ -56,7 +57,9 @@ export function SimilarProducts({ products }: Props) {
           const level = getLevelFromScore(score);
           const cfg = LEVEL_CONFIG[level];
           const emoji = categoryEmoji(p.category);
-          const href = p.latestLot ? `/p/${p.latestLot.id}` : "/produits";
+          const href = p.latestLot
+            ? buildProductPath(p.latestLot.id, p.name, p.brand)
+            : "/produits";
           return (
             <Link
               key={p.id}

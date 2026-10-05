@@ -138,6 +138,15 @@ export const SITE_KEYWORDS = [
   "transparence produit",
   "information consommateur",
   "confiance consommateur",
+  // Conformité export (requêtes des acheteurs UE/USA — pages métiers & blog)
+  "certificat phytosanitaire",
+  "conformité HACCP",
+  "traçabilité Global GAP",
+  "norme IFS",
+  "norme BRC",
+  "traçabilité export",
+  "export agroalimentaire",
+  "mise en conformité export",
   // Secteurs
   "agro-alimentaire",
   "agro-industrie",

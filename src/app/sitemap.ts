@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 import { db } from "@/lib/db";
 import { INDUSTRIES } from "@/lib/industries";
-import { getSiteUrl } from "@/lib/seo";
+import { getSiteUrl, buildProductPath } from "@/lib/seo";
 
 /**
  * Sitemap dynamique (/sitemap.xml).
@@ -65,15 +65,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // « tous les produits des fabricants doivent être référencés sur
     // Google ». Les lots RECALLED / EXPIRED / DRAFT sont volontairement
     // exclus (pages à contenu dégradé ou retiré de la vente).
+    // URL « parlantes » /p/{id}-{nom-produit-marque} — alignées sur les
+    // canonicals des pages (la forme courte QR reste servie en 200).
     const lots = await db.lot.findMany({
       where: { status: "ACTIVE" },
-      select: { id: true, updatedAt: true },
+      select: {
+        id: true,
+        updatedAt: true,
+        product: { select: { name: true, brand: true } },
+      },
       orderBy: { updatedAt: "desc" },
       take: 5000,
     });
 
     const lotEntries: MetadataRoute.Sitemap = lots.map((lot) => ({
-      url: `${SITE_URL}/p/${lot.id}`,
+      url: `${SITE_URL}${buildProductPath(lot.id, lot.product.name, lot.product.brand)}`,
       lastModified: lot.updatedAt ?? now,
       changeFrequency: "weekly",
       priority: 0.6,

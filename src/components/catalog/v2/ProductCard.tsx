@@ -20,6 +20,7 @@ import {
   cn,
 } from "@/lib/utils";
 import type { ProductWithRelations } from "@/lib/public-data";
+import { buildProductPath } from "@/lib/seo";
 
 type ViewMode = "grid" | "list";
 
@@ -90,7 +91,9 @@ function ProductCardGrid({ product, index }: { product: ProductWithRelations; in
   const cfg = LEVEL_CONFIG[level];
 
   const emoji = product.categoryRef?.emoji || categoryEmoji(product.category);
-  const href = product.latestLot ? `/p/${product.latestLot.id}` : `/p/${product.id}`;
+  const href = product.latestLot
+    ? buildProductPath(product.latestLot.id, product.name, product.brand)
+    : `/p/${product.id}`;
   const isNew = isNewProduct(product.createdAt, product.totalScans);
   const popular = isPopularProduct(product.totalScans);
   const scans = product.totalScans ?? 0;
@@ -256,7 +259,9 @@ function ProductCardList({ product, index }: { product: ProductWithRelations; in
   const cfg = LEVEL_CONFIG[level];
 
   const emoji = product.categoryRef?.emoji || categoryEmoji(product.category);
-  const href = product.latestLot ? `/p/${product.latestLot.id}` : `/p/${product.id}`;
+  const href = product.latestLot
+    ? buildProductPath(product.latestLot.id, product.name, product.brand)
+    : `/p/${product.id}`;
   const isNew = isNewProduct(product.createdAt, product.totalScans);
   const popular = isPopularProduct(product.totalScans);
   const scans = product.totalScans ?? 0;
