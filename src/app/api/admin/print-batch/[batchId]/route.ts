@@ -3,7 +3,7 @@ import PDFDocument from "pdfkit";
 import { db } from "@/lib/db";
 import { requireSuperAdmin } from "@/lib/admin-guard";
 import { resolveSiteOrigin } from "@/lib/site-origin";
-import { renderQRBuffer } from "@/lib/qr-server";
+import { renderQRBuffer, resolveLogoPath } from "@/lib/qr-server";
 
 /**
  * GET /api/admin/print-batch/[batchId]
@@ -12,9 +12,11 @@ import { renderQRBuffer } from "@/lib/qr-server";
  * "MAÎTRE"). Marque le batch comme "printed" à la première génération.
  *
  * ── Design officiel « LABEL VERIFSCAN » ──────────────────────────
- * Chaque étiquette porte le badge officiel (cercle jaune #F8E805, textes
- * en arc, QR noir au centre) rendu côté serveur par qr-badge.ts — le
- * même rendu que les QR fabricant (render-badge, labels-pdf, export-zip).
+ * Chaque étiquette porte le badge officiel rendu côté serveur par
+ * qr-badge.ts — le même rendu que les QR fabricant (render-badge,
+ * labels-pdf, export-zip). Si le SuperAdmin a importé un design
+ * officiel (Setting qrBadgeTemplateUrl), CE design est utilisé —
+ * sinon repli sur le badge jaune (cercle #F8E805, textes en arc).
  * Historique : ce PDF utilisait un QR brut bleu (#022150) généré par
  * qrcode.toDataURL — « l'ancien design » signalé par le client.
  *
@@ -45,6 +47,15 @@ export async function GET(
   // l'origine directe, sinon NEXT_PUBLIC_APP_URL/SCAN_URL, et on ignore
   // toujours 0.0.0.0/localhost en production.
   const scanOrigin = resolveSiteOrigin(request);
+
+  // ── Design officiel importé (Setting qrBadgeTemplateUrl) ────────
+  // Les batchs sont des packs artisans SANS fabricant propriétaire :
+  // c'est le design officiel de la plateforme qui s'applique (repli
+  // badge jaune si aucun design importé ou fichier introuvable).
+  const officialTemplateUrl = (
+    await db.setting.findUnique({ where: { key: "qrBadgeTemplateUrl" } })
+  )?.value;
+  const badgeTemplatePath = resolveLogoPath(officialTemplateUrl ?? null);
 
   const batch = await db.batch.findUnique({
     where: { id: batchId },
@@ -127,11 +138,12 @@ export async function GET(
         // Design officiel « LABEL VERIFSCAN » : rendu badge serveur (sharp)
         // — cohérent avec render-badge / labels-pdf / export-zip. Le badge
         // impose ECC Q (modules plus grands à l'impression) et un QR noir
-        // centré dans le cercle jaune.
+        // centré. Template importé (design officiel plateforme) priorisé.
         const rendered = await renderQRBuffer(`${scanOrigin}/a/${lot.qrCode}`, {
           size: 512,
           design: "badge",
           errorCorrectionLevel: "Q",
+          ...(badgeTemplatePath ? { templatePath: badgeTemplatePath } : {}),
         });
         const x = LEFT + col * (QR_SIZE + H_SPACING);
 

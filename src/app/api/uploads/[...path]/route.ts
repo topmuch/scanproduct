@@ -32,8 +32,11 @@ import {
  * - Content-Type is derived from magic bytes, so a mismatched extension
  *   (e.g. JPEG content saved as .png by a legacy bug) still gets the
  *   correct `image/jpeg` header and the browser can decode it.
- * - Long-cache headers for performance (immutable, since filenames are
- *   UUID-based and never change after upload).
+ * - Long-cache headers (immutable) for UUID-named files — they never
+ *   change after upload. EXCEPTION: `site/` assets (qr-badge.*, favicon,
+ *   og-image…) keep a STABLE filename across uploads, so they are served
+ *   with must-revalidate — otherwise browsers would keep showing the
+ *   OLD image for up to a year after the SuperAdmin uploads a new one.
  */
 export const runtime = "nodejs";
 
@@ -141,14 +144,24 @@ export async function GET(
     const stats = await stat(filepath);
     const lastModified = stats.mtime.toUTCString();
 
-    // Stream the file with long-cache headers. Filenames are UUID-based
-    // and never change after upload, so caching is safe.
+    // ── Politique de cache ─────────────────────────────────────────
+    // - UUID-named files (products, QR PNGs…) : immutable 1 an — le nom
+    //   ne change jamais, le contenu non plus.
+    // - site/* (qr-badge, favicon, og-image…) : nom STABLE remplacé à
+    //   chaque upload → revalidation systématique (sinon l'ancien design
+    //   reste affiché jusqu'à un an malgré le nouvel upload).
+    const isSiteAsset = segments[0] === "site";
+    const cacheControl = isSiteAsset
+      ? "public, max-age=0, must-revalidate"
+      : "public, max-age=31536000, immutable";
+
+    // Stream the file with the appropriate cache headers.
     return new NextResponse(data, {
       status: 200,
       headers: {
         "Content-Type": mimeType,
         "Content-Length": String(data.length),
-        "Cache-Control": "public, max-age=31536000, immutable",
+        "Cache-Control": cacheControl,
         "Last-Modified": lastModified,
         "X-Content-Type-Options": "nosniff",
       },

@@ -335,7 +335,13 @@ function GeneralSection() {
     fetch("/api/admin/settings/qr-badge-template")
       .then((r) => (r.ok ? r.json() : { url: null }))
       .then((data) => {
-        if (!cancelled) setQrBadgeUrl(data?.url ?? null);
+        if (!cancelled && data?.url) {
+          // Cache-buster : voir handleQrBadgeChange (le fichier servi
+          // garde un nom stable d'un upload à l'autre).
+          setQrBadgeUrl(`${data.url}?v=${Date.now()}`);
+        } else if (!cancelled) {
+          setQrBadgeUrl(null);
+        }
       })
       .catch(() => {
         /* non-fatal */
@@ -444,7 +450,11 @@ function GeneralSection() {
       if (!res.ok || !data.url) {
         throw new Error(data.error || "Échec de l'import du design officiel.");
       }
-      setQrBadgeUrl(data.url);
+      // Cache-buster d'affichage : l'URL stockée en base est stable
+      // (site/qr-badge.<ext>) — sans version, le <img> réafficherait
+      // l'ancien design servi par le cache navigateur (uploads déjà
+      // cachés « immutable » avant la correction des en-têtes).
+      setQrBadgeUrl(`${data.url}?v=${Date.now()}`);
       toast.success("Design QR officiel importé", {
         description:
           "Appliqué à tous les fabricants qui n'ont pas importé leur propre design.",

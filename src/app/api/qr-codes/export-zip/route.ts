@@ -3,6 +3,7 @@ import { getToken } from "next-auth/jwt";
 import { ZipArchive } from "archiver";
 import { db } from "@/lib/db";
 import { renderQRBuffer } from "@/lib/qr-server";
+import { resolveBadgeTemplatePath } from "@/lib/qr-badge-template";
 import { UPLOAD_DIR } from "@/lib/upload-config";
 import { construireUrlQrPourLot } from "@/lib/gs1-resolver";
 import { ErreurGs1 } from "@/lib/gs1";
@@ -21,7 +22,9 @@ import { promises as fs } from "fs";
  * unitaires re-rendent déjà le badge (render-badge), mais il n'existait
  * AUCUN moyen de récupérer le nouveau design en masse. Cette route
  * re-rend chaque QR côté serveur dans le design à jour :
- *   - design "badge" (défaut) → renderBadgeQR (design officiel) ;
+ *   - design "badge" (défaut) → renderBadgeQR avec le template importé
+ *     en priorité (design personnel du fabricant → design officiel de
+ *     la plateforme importé par le SuperAdmin) puis badge jaune ;
  *   - design "classic"        → PNG persisté du QR (ancien design,
  *     choix explicite du fabricant) ; si le fichier manque, repli
  *     sur un rendu classic à la volée.
@@ -108,6 +111,11 @@ export async function POST(request: NextRequest) {
       process.env.NEXT_PUBLIC_SCAN_URL?.replace(/\/$/, "") ||
       "https://verifscan.com";
 
+    // ── Résolution du design importé (une seule fois pour tout le ZIP) ─
+    // Priorité : design personnel du fabricant → design officiel de la
+    // plateforme (Setting qrBadgeTemplateUrl) → badge jaune par défaut.
+    const badgeTemplatePath = await resolveBadgeTemplatePath(token.sub);
+
     // ── Rendu de chaque QR (badge officiel ou PNG classic persisté) ──
     // archiver v8 = ESM pur : la fabrique historique `archiver("zip")`
     // n'existe plus, on instancie directement la classe ZipArchive.
@@ -177,6 +185,9 @@ export async function POST(request: NextRequest) {
         size,
         design: q.design === "classic" ? "classic" : "badge",
         errorCorrectionLevel: q.design === "classic" ? "M" : "Q",
+        ...(q.design === "classic" || !badgeTemplatePath
+          ? {}
+          : { templatePath: badgeTemplatePath }),
       });
       zip.append(rendu.buffer, { name: nom });
       rendus++;
