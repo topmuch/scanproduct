@@ -1090,21 +1090,88 @@ export function ArtisanProductView({
       )}
 
       {/* ════ 1. HERO IMMERSIF PLEIN ÉCRAN ═══════════════════════════════ */}
-      {/* Mobile : hero plus bas (75svh) — corrige le grand vide entre la photo
-          et la pilule VerifScan signalé sur téléphone. Desktop : 92svh. */}
-      <header className="relative flex min-h-[75svh] flex-col overflow-hidden bg-stone-950 sm:min-h-[92svh]">
-        {/* Photo produit plein écran (zoom Ken Burns) ou placeholder stylisé */}
+      {/* Hero 75svh mobile ET desktop — corrige le retour test desktop
+          (« la version web ne s'affiche pas bien ») : en object-cover sur un
+          écran paysage, une photo carrée/portrait (1024×1024 en prod sur
+          ART-CMUU0Z0L-P01-0001) était agrandie ×1,25→×1,42 avec le Ken Burns
+          → produit géant, rogné haut/bas, bouton Découvrir sur l'étiquette. */}
+      <header className="relative flex min-h-[75svh] flex-col overflow-hidden bg-stone-950">
+        {/* Photo produit ou placeholder stylisé.
+            Même correctif que la page classique (ImmersiveHero) :
+            → MOBILE <sm : inchangé — cover plein écran + zoom Ken Burns
+              (le format portrait/carré remplit naturellement l'écran) ;
+            → DESKTOP sm+ : produit ENTIÈREMENT visible (object-contain
+              centré, pt-8 pb-48 pour dégager les boutons ET la carte
+              flottante -mt-16) posé sur un fond ambiant = même photo
+              floutée (blur + opacité) en zoom lent Ken Burns. */}
         <div className="absolute inset-0">
-          <SafeImage
-            src={lot.photoUrl}
-            alt={lot.productName}
-            className="art-kenburns h-full w-full object-cover"
-            icon={
-              <span className="art-float text-[6.5rem] drop-shadow-2xl" aria-hidden>
-                {productEmoji}
-              </span>
-            }
-          />
+          {lot.photoUrl ? (
+            <>
+              {/* Desktop : fond ambiant — même photo, floutée, zoom lent */}
+              <div
+                className="absolute inset-0 hidden scale-110 sm:block"
+                aria-hidden
+              >
+                <SafeImage
+                  src={lot.photoUrl}
+                  alt=""
+                  className="art-kenburns h-full w-full object-cover opacity-60 blur-2xl"
+                  icon={
+                    <span
+                      className="art-float text-[6.5rem] drop-shadow-2xl"
+                      aria-hidden
+                    >
+                      {productEmoji}
+                    </span>
+                  }
+                />
+              </div>
+
+              {/* Desktop : produit net, entier, centré */}
+              <SafeImage
+                src={lot.photoUrl}
+                alt={lot.productName}
+                className="absolute inset-0 mx-auto hidden h-full w-full object-contain px-10 pt-8 pb-48 sm:block"
+                icon={
+                  <span
+                    className="art-float text-[6.5rem] drop-shadow-2xl"
+                    aria-hidden
+                  >
+                    {productEmoji}
+                  </span>
+                }
+              />
+
+              {/* Mobile : cover plein écran + zoom Ken Burns (inchangé) */}
+              <SafeImage
+                src={lot.photoUrl}
+                alt={lot.productName}
+                className="art-kenburns h-full w-full object-cover sm:hidden"
+                icon={
+                  <span
+                    className="art-float text-[6.5rem] drop-shadow-2xl"
+                    aria-hidden
+                  >
+                    {productEmoji}
+                  </span>
+                }
+              />
+            </>
+          ) : (
+            <SafeImage
+              src={lot.photoUrl}
+              alt={lot.productName}
+              className="art-kenburns h-full w-full object-cover"
+              icon={
+                <span
+                  className="art-float text-[6.5rem] drop-shadow-2xl"
+                  aria-hidden
+                >
+                  {productEmoji}
+                </span>
+              }
+            />
+          )}
         </div>
 
         {/* Halos lumineux animés (profondeur, effet premium) */}
