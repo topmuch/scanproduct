@@ -5813,3 +5813,23 @@ Stage Summary:
 - Chaque passeport /p/ expose désormais title + description UNIQUES par lot (anti-contenu dupliqué) et alimente le maillage interne vers catalogue/métiers/blog — les requêtes du consultant (sitemap dynamique, SSR, contenu dupliqué, maillage interne) sont toutes traitées ou confirmées conformes.
 - Les mots-clés conformité export sont maintenant aussi dans le corps VISIBLE des pages produit (ancres blog), pas seulement dans meta keywords.
 - Redeploy Coolify requis (regroupe Tasks 13→19).
+
+---
+Task ID: 20
+Agent: Super Z (main)
+Task: (1) Messages du formulaire /contact → contact@verifscan.com + onglet SuperAdmin « Messages » ; (2) téléphone 77 382 18 22 ; (3) script d'automatisation de l'indexation des lots (sitemap).
+
+Work Log:
+- Découverte clé : le formulaire /contact SIMULAIT l'envoi (setTimeout + console.log) — tous les messages étaient PERDUS.
+- Contact : nouveau model Prisma ContactMessage (status NEW/READ/ARCHIVED, emailStatus PENDING/SENT/SKIPPED/FAILED, ip, userAgent) + db:push ; POST /api/contact (zod, honeypot « website » → faux succès sans stockage, rate-limit mémoire 5/h/IP, stockage systématique, notification email ASYNC à contact@verifscan.com via sendEmail central — SMTP Paramètres sinon « skipped », Reply-To = visiteur, EmailLog) ; ContactForm → vrai POST + gestion erreurs (message 429 affiché).
+- Admin « Messages » : admin-store (page + store dédié useContactMessagesBadge), AdminSidebar (item SUPPORT avec badge orange non-lus, fetch ?count=1 local), AdminHeader (titre), AdminShell (case), GET /api/admin/contact-messages (filtres status/q/limit, mode badge), PATCH/DELETE [id] (requireSuperAdmin, horodatages auto), MessagesPage (cartes dépliables, filtres+recherche, mailto/tel, statut email avec hint SMTP, actions confirmées).
+- Téléphone : 78 382 18 22 → 77 382 18 22 dans 10 fichiers (contact.ts/seo.ts central + footers public/landing + ContactForm + cgu/cookies/mentions/confidentialité/contact). Vérifié : 0 occurrence de l'ancien.
+- Indexation : GET|POST /api/seo/ping?secret= (SEO_PING_SECRET ou NEXTAUTH_SECRET, comparaison temps constant) — lit le sitemap (totalUrls/lotUrls), soumet les lots ≤ 30 j à IndexNow (api.indexnow.org, canal ACTIF Bing/Yandex/Seznam ; clé hex générée en Setting indexNowKey, servie à la racine /{clé}.txt DEPUIS le catch-all GS1 — zéro nouvelle route), pings historiques Google (404)/Bing (410) constatés RETIRÉS par les moteurs → conservés en rapport, log Setting seoLastPing ; scripts/ping-google.sh (repo, chmod +x, cron Coolify/crontab documenté).
+- Tests : tsc 0 erreur src/ ; eslint 0 (Reveal.tsx préexistant) ; build OK ; NOUVEAU verify-contact.sh 18/18 (POST+DB+EmailLog, honeypot sans stockage, 400, 429, 403 admin sans session, login credentials → liste/PATCH/badge newCount/DELETE, tel 77 en page, honeypot dans le HTML, ping 403/403, rapport sitemap 33 URLs dont 6 lots, clé IndexNow servie 200 + faux .txt → 404) ; régressions verify-seo-lot-meta 9/9, verify-seo-slugs 9/9, verify-hero-classic 19/19 ; capture Playwright login→onglet Messages (badge 6, carte dépliée, actions) scripts/shots/messages-admin.png.
+- Commits : 1383386 poussé sur origin/main.
+
+Stage Summary:
+- Les messages de contact ne sont plus perdus : stockés en base, notifiés à contact@verifscan.com et visibles dans le nouvel onglet SuperAdmin « Messages » (avec badge de non-lus).
+- Coordonnées à jour (77 382 18 22) sur tout le site.
+- L'indexation est automatisable : cron quotidien sur scripts/ping-google.sh (IndexNow actif ; côté Google, sitemap robots.txt en place — Search Console recommandée en complément).
+- Redeploy Coolify requis (regroupe Tasks 13→20).
