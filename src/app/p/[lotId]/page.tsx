@@ -10,6 +10,7 @@ import {
   isBotUserAgent,
 } from "@/lib/public-data";
 import { getSiteUrl, buildProductPath, parseLotIdParam } from "@/lib/seo";
+import { getIndustry } from "@/lib/industries";
 import { PublicHeader } from "@/components/public/PublicHeader";
 import { PublicFooter } from "@/components/public/PublicFooter";
 
@@ -62,6 +63,106 @@ function absolutiser(url: string, base: string): string {
   }
 }
 
+/** Date longue en français (ex. « 15 mars 2024 ») — rendu serveur uniquement. */
+function formatDateFr(date: Date | null | undefined): string | null {
+  if (!date) return null;
+  try {
+    return new Intl.DateTimeFormat("fr-FR", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    }).format(date);
+  } catch {
+    return null;
+  }
+}
+
+/** Phrasé de péremption adapté à la famille produit (alimentaire vs cosmétique). */
+function phrasettePeremption(
+  category: string | null | undefined,
+  dateFr: string,
+): string {
+  const c = (category || "").toLowerCase();
+  if (
+    c.includes("cosmét") ||
+    c.includes("cosmet") ||
+    c.includes("hygièn") ||
+    c.includes("hygien") ||
+    c.includes("savon")
+  ) {
+    return `à utiliser de préférence avant le ${dateFr}`;
+  }
+  return `à consommer de préférence avant le ${dateFr}`;
+}
+
+/**
+ * Description META UNIQUE PAR LOT (lutte anti-contenu dupliqué).
+ *
+ * La description produit saisie par le fabricant est IDENTIQUE pour tous les
+ * lots d'un même produit : 50 lots → 50 pages aux meta-descriptions identiques
+ * que Google fusionne (ou pénalise). On injecte donc des variables propres à
+ * CHAQUE lot — référence/numéro, date de fabrication, lieu, péremption — pour
+ * que chaque passeport ait un extrait Google distinct et informatif.
+ */
+function buildLotMetaDescription(
+  lot: NonNullable<Awaited<ReturnType<typeof getLotWithDetails>>>,
+): string {
+  const marque = lot.product.brand || lot.fabricant.companyName || "";
+  const base = marque
+    ? `Vérifiez l'authenticité et la traçabilité de ${lot.product.name} par ${marque}.`
+    : `Vérifiez l'authenticité et la traçabilité de ${lot.product.name}.`;
+  // Variables UNIQUES par lot (elles différencient la page de ses sœurs).
+  const details: string[] = [];
+  const refLot = lot.lotNumber || lot.reference;
+  if (refLot) details.push(`lot ${refLot}`);
+  const dateProduction = formatDateFr(lot.manufactureDate);
+  if (dateProduction) details.push(`fabriqué le ${dateProduction}`);
+  const lieu = lot.manufacturingLocation || lot.transformationLocation;
+  if (lieu) details.push(lieu);
+  const datePeremption = formatDateFr(lot.expiryDate);
+  if (datePeremption)
+    details.push(phrasettePeremption(lot.product.category, datePeremption));
+  const partieLot = details.length > 0 ? ` ${details.join(", ")}.` : "";
+  const fin = " Ingrédients, origine et certificats vérifiés sur VerifScan.";
+  return `${base}${partieLot}${fin}`.slice(0, 300);
+}
+
+/**
+ * ID métier (/metiers/[slug]) correspondant à une catégorie produit —
+ * maillage interne contextuel (le robot découvre les 12 pages métiers SSG
+ * depuis des milliers de passeports). Matching par mots-clés sur le nom de
+ * catégorie, sans accent ; null → pas de lien métiers affiché.
+ */
+export function industryIdForCategory(
+  category: string | null | undefined,
+): string | null {
+  if (!category) return null;
+  const c = category
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+  if (c.includes("cosmet") || c.includes("hygien") || c.includes("savon"))
+    return "cosmetiques";
+  if (c.includes("boisson") || c.includes("jus") || c.includes("sirop"))
+    return "boissons";
+  if (c.includes("epice")) return "epices";
+  if (c.includes("mer") || c.includes("poisson") || c.includes("crevette") || c.includes("thiof"))
+    return "produits-de-la-mer";
+  if (c.includes("viande") || c.includes("volaille") || c.includes("poulet"))
+    return "viandes";
+  if (c.includes("cereal") || c.includes("graine")) return "cereales";
+  if (c.includes("noix") || c.includes("anacarde") || c.includes("fruit sec"))
+    return "noix-fruits-secs";
+  if (c.includes("huile")) return "huiles";
+  if (c.includes("cafe") || c.includes("cacao") || c.includes("chocolat") || c.includes(" the "))
+    return "cafe-cacao";
+  if (c.includes("miel")) return "miel";
+  if (c.includes("lait") || c.includes("yaourt") || c.includes("yogurt") || c.includes("fromage"))
+    return "produits-laitiers";
+  if (c.includes("fruit") || c.includes("legume")) return "fruits-legumes";
+  return null;
+}
+
 export async function generateMetadata({
   params,
 }: {
@@ -98,10 +199,17 @@ export async function generateMetadata({
   const imageProduit = lot.product.imageUrl
     ? absolutiser(lot.product.imageUrl, siteUrl)
     : undefined;
+  // Description unique par lot + titre enrichi marque + référence de lot
+  // (anti-contenu dupliqué : chaque passeport a son propre extrait Google).
+  const metaDescription = buildLotMetaDescription(lot);
+  const refMeta = lot.lotNumber || lot.reference;
+  const titre = `${lot.product.name}${
+    lot.product.brand ? ` — ${lot.product.brand}` : ""
+  }${refMeta ? ` · Lot ${refMeta}` : ""} | Passeport numérique VerifScan`;
 
   return {
-    title: `${lot.product.name} — Passeport numérique VerifScan`,
-    description: lot.product.description?.slice(0, 160) ?? undefined,
+    title: titre,
+    description: metaDescription,
     // Canonical « parlante » : /p/{id}-{nom-produit-marque}. La forme
     // courte (QR codes) est servie en 200 et consolidée ici par Google.
     alternates: {
@@ -120,16 +228,16 @@ export async function generateMetadata({
       .filter((k): k is string => !!k)
       .join(", "),
     openGraph: {
-      title: `${lot.product.name} — Passeport numérique VerifScan`,
-      description: lot.product.description?.slice(0, 160) ?? undefined,
+      title: titre,
+      description: metaDescription,
       url: buildProductPath(lot.id, lot.product.name, lot.product.brand),
       type: "website",
       ...(imageProduit ? { images: [{ url: imageProduit }] } : {}),
     },
     twitter: {
       card: imageProduit ? "summary_large_image" : "summary",
-      title: `${lot.product.name} — Passeport numérique VerifScan`,
-      description: lot.product.description?.slice(0, 160) ?? undefined,
+      title: titre,
+      description: metaDescription,
       ...(imageProduit ? { images: [imageProduit] } : {}),
     },
   };
@@ -233,6 +341,11 @@ export default async function ProductPage({
     (lot.fabricantCerts?.length ?? 0) +
     (lot.productCertifications?.length ?? 0);
 
+  // Maillage interne contextuel : page métiers du secteur de la catégorie.
+  const industrie = getIndustry(
+    industryIdForCategory(lot.product.category) ?? "",
+  );
+
   // ── JSON-LD « Product » — référencement Google des passeports produits ──
   // Données structurées lues par Googlebot (rich results) : nom, marque,
   // image, SKU/GTIN, note agrégée des avis approuvés. Sécurité : les
@@ -281,6 +394,12 @@ export default async function ProductPage({
       name: lot.fabricant.companyName || lot.fabricant.name || marqueNom,
     },
     sku: lot.lotNumber || lot.reference,
+    // Dates propres au lot — données structurées différenciantes (Google
+    // ignore les propriétés inconnues, les connues enrichissent la fiche).
+    ...(lot.manufactureDate
+      ? { productionDate: lot.manufactureDate.toISOString() }
+      : {}),
+    ...(lot.expiryDate ? { expiryDate: lot.expiryDate.toISOString() } : {}),
     ...(lot.product.barcode ? { gtin13: lot.product.barcode } : {}),
     ...(lot.product.category ? { category: lot.product.category } : {}),
     ...(notesApprouvees.length > 0
@@ -535,6 +654,55 @@ export default async function ProductPage({
 
         {/* Similar products (still full-width, outside accordions) */}
         {similar.length > 0 && <SimilarProducts products={similar} />}
+
+        {/* ── MAILLAGE INTERNE (SEO) — depuis chaque passeport (des milliers
+            de pages indexables), le robot découvre le catalogue, la page
+            métiers du secteur (12 pages SSG) et le blog (guides conformité
+            export). Ancres descriptives, liens réels côté serveur. */}
+        <section
+          aria-labelledby="explorer-verifscan"
+          className="rounded-2xl border border-slate-200 bg-white/80 p-5 shadow-sm"
+        >
+          <h2
+            id="explorer-verifscan"
+            className="text-[15px] font-bold text-[#111827]"
+          >
+            Explorer VerifScan
+          </h2>
+          <ul className="mt-3 space-y-2 text-[13px] leading-relaxed text-[#4B5563]">
+            <li>
+              <Link
+                href="/produits"
+                className="font-semibold text-[#059669] hover:underline"
+              >
+                Catalogue des produits vérifiés
+              </Link>{" "}
+              — tous les passeports numériques actifs de la plateforme.
+            </li>
+            {industrie && (
+              <li>
+                <Link
+                  href={`/metiers/${industrie.id}`}
+                  className="font-semibold text-[#059669] hover:underline"
+                >
+                  Traçabilité : {industrie.title}
+                </Link>{" "}
+                — défis, solutions et exigences du passeport numérique dans ce
+                secteur.
+              </li>
+            )}
+            <li>
+              <Link
+                href="/blog"
+                className="font-semibold text-[#059669] hover:underline"
+              >
+                Blog traçabilité &amp; conformité export
+              </Link>{" "}
+              — guides HACCP, certificat phytosanitaire, normes IFS/BRC,
+              Global GAP.
+            </li>
+          </ul>
+        </section>
 
         {/* 5. FOOTER VÉRIFICATION GLOW — spectacular verification footer */}
         <VerificationGlow lot={lot} />
