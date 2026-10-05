@@ -5698,3 +5698,19 @@ Stage Summary:
 - Toutes les pages produit (fabricant + artisan) émettent désormais un graphe Product conforme Google (offers / review / aggregateRating toujours présent).
 - Bonus SEO majeur : les pages ARTISAN gagnent les rich results (étoiles + prix possibles dans Google) grâce au JSON-LD complet.
 - Après Redeploy : demander la revalidation dans Search Console (Sections « Extraits de produits » → Valider la correction).
+
+---
+Task ID: 13
+Agent: Super Z (main)
+Task: Page produit classique — afficher la photo comme sur la page artisan (hero plein écran).
+
+Work Log:
+- Reproduction du hero artisan (/a/[code]) sur la page classique (/p/[lotId]) : nouveau composant client src/components/product/wow/ImmersiveHero.tsx — photo PLEIN ÉCRAN zoom Ken Burns (art-kenburns, classes art-* partagées de globals.css), halos animés, pilule VerifScan, bouton « Découvrir » (scrollIntoView smooth) + badge « Produit authentique » émeraude / « Produit rappelé » rouge si lot inactif. Placeholder dégradé ambre→orange→rose + emoji catégorie si photo absente/404 (parade hydratation type SafeImage).
+- WowHero : petite image carrée (h-48/176px) SUPPRIMÉE de la carte (photo plus affichée qu'une fois, en grand) ; pilule catégorie déplacée au-dessus du nom ; categoryEmoji exporté. Carte = infos uniquement (nom, marque, fabricant, étoiles) comme la carte artisan.
+- page.tsx : ImmersiveHero inséré AVANT PublicHeader (photo = premier écran au scan), ancre id="produit" + scroll-mt-24 autour de WowHero (compense header sticky 80px). JSON-LD Product task 12 intact.
+- Vérifs : tsc src/ 0 erreur ; eslint 0/0 ; build standalone OK ; script scripts/verify-hero-classic.sh 18/18 assertions (Ken Burns, Découvrir, badge, ancre, ancienne image disparue, JSON-LD…) ; captures Playwright 390px + 1280px conformes ; géométrie hero mobile = 633/844px = 75svh exact.
+- Scripts persistés : scripts/find-lot.ts, scripts/verify-hero-classic.sh, scripts/shot-hero-classic.ts.
+
+Stage Summary:
+- La page produit classique ouvre désormais sur la photo plein écran « effet waouh », identique à la page artisan ; la carte produit ne garde que les infos (fini la photo en double).
+- Commit 88e3867 poussé sur origin/main → Redeploy Coolify requis pour la production.
