@@ -5761,3 +5761,19 @@ Stage Summary:
 - Le design QR officiel importé s'applique désormais partout : PDF packs artisans (print-batch), export ZIP, téléchargements unitaires, PDF étiquettes, bulk-generate ET tous les aperçus client (grille QR, modales, landing).
 - Priorité inchangée : design personnel du fabricant > design officiel plateforme > badge jaune.
 - Redeploy Coolify requis ; après deploy, le SuperAdmin doit RE-télécharger son design (ou simplement recharger : le cache navigateur des anciens fichiers site/ immutable peut persister — un re-upload force la version).
+
+---
+Task ID: 17
+Agent: Super Z (main)
+Task: Page produit (web + mobile) — « le logo se chevauche sur l'image » + « le menu qui se trouve sur le hero ne doit pas s'afficher sur la page du produit ».
+
+Work Log:
+- Diagnostic : le PublicHeader (barre blanche sticky top-0 z-50 : logo + nav Accueil/Catalogue/Fonctionnalités/Blog/Contact + hamburger mobile) est rendu APRÈS le hero immersif dans /p/[lotId]. Au chargement il est sous la photo, mais dès que l'utilisateur descend (header collé en haut) puis REMONTE, la barre glisse PAR-DESSUS la photo du hero → logo + menu chevauchent l'image, web comme mobile (comportement sticky déterministe, confirmé par analyse du HTML prod verifscan.com).
+- Fix : <PublicHeader /> retiré du rendu principal de /p/[lotId] — même présentation que la page artisan (qui n'a jamais eu de header). Navigation conservée via la pilule VerifScan du hero (lien accueil) + footer (Connexion, Devenir partenaire, plan du site). Fallback « Produit introuvable » et error.tsx inchangés (pages sans hero, aucun chevauchement possible). Ancre #produit : scroll-mt-24 → scroll-mt-6 (plus de header 80px à compenser). Commentaires mis à jour.
+- Tests : tsc projet 0 erreur dans src/ (erreurs préexistantes examples/+scripts/ uniquement) ; page.tsx eslint 0 (1 erreur préexistante signalée dans artisan/Reveal.tsx sur main clean — dérive règle react-hooks/set-state-in-effect, hors périmètre) ; build OK ; verify-hero-classic.sh 23/23 (nouvelles assertions : nav absente, hamburger absent, barre sticky absente, scroll-mt-6, footer partenaire présent) ; NOUVEAU shot-no-header.ts 10/10 — DOM sans header sticky/menu sur les 2 viewports + scénario bug reproduit (descendre 60 % puis remonter à 45 svh) : elementFromPoint(20,8) = hero, pas la barre ; captures desktop/mobile dans scripts/shots/no-header-*-midhero.png.
+- Commit 796c39e poussé sur origin/main.
+
+Stage Summary:
+- Page produit classique : photo hero toujours dégagée — zéro logo/menu superposés, desktop + mobile, y compris au scroll retour.
+- En cohérence : les DEUX pages produit (classique + artisan) sont désormais sans barre de navigation au-dessus du hero.
+- Redeploy Coolify requis pour appliquer sur verifscan.com (regroupe Tasks 13→17 non encore déployées).
