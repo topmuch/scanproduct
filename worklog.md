@@ -5833,3 +5833,25 @@ Stage Summary:
 - Coordonnées à jour (77 382 18 22) sur tout le site.
 - L'indexation est automatisable : cron quotidien sur scripts/ping-google.sh (IndexNow actif ; côté Google, sitemap robots.txt en place — Search Console recommandée en complément).
 - Redeploy Coolify requis (regroupe Tasks 13→20).
+
+---
+Task ID: 21
+Agent: Super Z (main)
+Task: Synchronisation GitHub ↔ local + motifs de non-indexation Search Console (« Autre page avec balise canonique correcte », « Introuvable (404) », « Page avec redirection »).
+
+Work Log:
+- Sync : workspace re-cloné depuis origin/main (a4ad218 — Task 20 déjà poussée). bun install, db:push + seed recréés, build standalone OK.
+- Diagnostic GSC : ① URLs courtes QR /p/{id} servies 200 + canonical parlante = source du motif « Autre page avec balise canonique correcte » (attendu mais bruyant) ; ② soft-404 : lots inconnus rendaient une page amicale en STATUT 200 (pire signal possible) + 404 historiques (re-seed T18, sondes bots) ; ③ « Page avec redirection » = redirections saines (http→https, www, slashes, Coolify) — informationnel, rien à corriger.
+- Correctif 308 : /p/[lotId] redirige en 308 PERMANENT la forme courte QR ET tout slug obsolète (renommage produit) vers la forme parlante calculée — canonicalisation forte, zéro contenu dupliqué 200/200, QR imprimés suivent la redirection ; ?code= d'attribution PRÉSERVÉ dans la Location (bug au passage : Object.entries(searchParams) portait sur la Promise non déstructurée → query perdue — fix via `const sp = await searchParams`).
+- Correctif 404 : notFound() (vrai statut 404) + NOUVELLE page branding src/app/p/[lotId]/not-found.tsx (PublicHeader/Footer, « ERREUR 404 », CTAs catalogue/accueil) ; 404 globale branding src/app/not-found.tsx (filet de sécurité) ; generateMetadata lot inconnu déjà noindex — cohérent.
+- Robustesse : seo.ts decodeUrlSafe (decodeURIComponent tolérant) — les % malformés ne peuvent plus lever d'URIError non intercepté ; %ZZ → rejeté par le NOYAU Next 16 (500 sur TOUTES les routes, testé /produits%ZZ — préexistant framework, aucune page indexable servie) ; encodages VALIDES (%E2%82%AC) → 404 branding propre.
+- Google Indexing API (canal push Google actif, optionnel) : /api/seo/ping pousse les lots ≤ 30 j via urlNotifications:publish si GOOGLE_SERVICE_ACCOUNT_EMAIL + GOOGLE_PRIVATE_KEY (JWT RS256 signé node:crypto, zéro dépendance, plafond 200/j = quota) ; rapport enrichi (urlsRecentes, googleIndexing configured/submitted/status) ; sinon message procédure alternative. IndexNow inchangé.
+- Doc : docs/seo-search-console.md — explication des 3 motifs, actions Search Console (« Valider la correction » après Redeploy, jamais sur les 404 bots), cron ping, procédure compte de service GSC (rôle Propriétaire).
+- Tests : tsc 0 erreur src/ ; eslint 0 sur les 6 fichiers ; build OK ; NOUVEAU verify-gsc-fixes.sh 26/26 (308 exacts courte→parlante + slug obsolète, ?code= conservé, 404 réels + branding +footer, canonical self = URL sitemap, régressions T19 titre/JSON-LD/Explorer, robots Sitemap, ping 403, /produits /metiers /blog 200) ; captures Playwright gsc-404-desktop/mobile.png (branding complet, tel +221 77 382 18 22) + gsc-redirect-scan.png (scan QR : /p/{id} → parlante → 200).
+- Commit : 68b58aa poussé sur origin/main.
+
+Stage Summary:
+- Les 3 motifs GSC ont une cause identifiée et traitée côté code : canonique → 308 permanent, 404 → vrais 404 branding (fin des soft-404), redirections → saines par nature (explication fournie).
+- L'indexation Google est poussable automatiquement : IndexNow (actif) + Google Indexing API (activable en 10 min via compte de service — doc fournie) + cron scripts/ping-google.sh.
+- Action utilisateur après Redeploy : dans Search Console → rapport Pages → « Valider la correction » pour les 3 motifs ; les entrées 404 historiques et « autre page canonique » disparaissent en 2-4 semaines.
+- Redeploy Coolify requis (regroupe Tasks 13→21).
