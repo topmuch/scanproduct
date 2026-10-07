@@ -14,10 +14,15 @@ import crypto from "crypto";
  *      des lots mis à jour depuis ≤ 30 jours vers api.indexnow.org. La clé
  *      est générée au premier appel, stockée en Setting « indexNowKey » et
  *      servie à la racine /{clé}.txt par la route catch-all GS1 (spec IndexNow).
- *   3. Pings historiques Google/Bing (best effort) : les deux moteurs ont
+ *   3. Google Indexing API (canal ACTIF Google — OPTIONNEL) : si les vars
+ *      GOOGLE_SERVICE_ACCOUNT_EMAIL + GOOGLE_PRIVATE_KEY sont définies
+ *      (compte de service ajouté comme propriétaire dans Search Console),
+ *      les URLs des lots récents sont poussées via urlNotifications:publish
+ *      (JWT RS256 signé avec node:crypto, zéro dépendance). Quota Google :
+ *      200 requêtes/jour → plafonné à 200 URLs par ping.
+ *   4. Pings historiques Google/Bing (best effort) : les deux moteurs ont
  *      retiré ces endpoints (Google 404, Bing 410) — conservés pour le
- *      rapport et d'éventuels moteurs tiers. Pour Google, les canaux fiables
- *      restent : sitemap déclaré dans robots.txt (en place) + Search Console.
+ *      rapport et d'éventuels moteurs tiers.
  *
  * Protection : `secret` DOIT égaliser SEO_PING_SECRET (recommandé) ou à
  * défaut NEXTAUTH_SECRET — comparaison en temps constant. `baseUrl` permet
@@ -74,6 +79,137 @@ async function getOrCreateIndexNowKey(): Promise<string> {
   return key;
 }
 
+/**
+ * Push Google Indexing API — le SEUL canal Google « push » encore actif.
+ *
+ * Activé UNIQUEMENT si les variables d'environnement suivantes existent :
+ *   - GOOGLE_SERVICE_ACCOUNT_EMAIL : e-mail du compte de service
+ *     (…@…iam.gserviceaccount.com) ajouté comme PROPRIÉTAIRE dans
+ *     Search Console (Paramètres → Utilisateurs et autorisations),
+ *     avec l'API « Indexing API » activée dans Google Cloud.
+ *   - GOOGLE_PRIVATE_KEY : clé privée du compte de service (les \n
+ *     littéraux du JSON sont convertis en retours à la ligne réels).
+ *
+ * Mécanisme : JWT RS256 signé avec node:crypto (aucune dépendance), échangé
+ * contre un access token OAuth2, puis une requête urlNotifications:publish
+ * par URL (type URL_UPDATED). Quota officiel Google : 200 requêtes/jour →
+ * le nombre d'URLs est plafonné à 200 par ping (cron quotidien = quota).
+ *
+ * Sans ces variables → { configured: false } et le rapport indique le canal
+ * alternatif (sitemap robots.txt + Search Console). L'API Indexing est
+ * officiellement documentée pour JobPosting/Livestream ; Google l'accepte
+ * largement au-delà (usage standard des SEO), sans garantie de délai.
+ */
+async function googleIndexingPush(
+  urls: string[],
+): Promise<{
+  configured: boolean;
+  ok: boolean;
+  status: number;
+  submitted: number;
+  error?: string;
+}> {
+  const email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL?.trim() || "";
+  const rawKey = process.env.GOOGLE_PRIVATE_KEY?.trim() || "";
+  if (!email || !rawKey || urls.length === 0) {
+    return { configured: false, ok: false, status: 0, submitted: 0 };
+  }
+  try {
+    const privateKey = rawKey.replace(/\\n/g, "\n");
+    const iat = Math.floor(Date.now() / 1000);
+    const entete = Buffer.from(
+      JSON.stringify({ alg: "RS256", typ: "JWT" }),
+    ).toString("base64url");
+    const revendications = Buffer.from(
+      JSON.stringify({
+        iss: email,
+        scope: "https://www.googleapis.com/auth/indexing",
+        aud: "https://oauth2.googleapis.com/token",
+        iat,
+        exp: iat + 3600,
+      }),
+    ).toString("base64url");
+    const signature = crypto
+      .createSign("RSA-SHA256")
+      .update(`${entete}.${revendications}`)
+      .sign(privateKey);
+    const jwt = `${entete}.${revendications}.${signature.toString("base64url")}`;
+
+    // Échange du JWT contre un access token (grant jwt-bearer).
+    const controller = new AbortController();
+    const t = setTimeout(() => controller.abort(), 12000);
+    let accessToken: string | undefined;
+    let statusToken = 0;
+    try {
+      const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
+          assertion: jwt,
+        }).toString(),
+        signal: controller.signal,
+        cache: "no-store",
+      });
+      statusToken = tokenRes.status;
+      if (tokenRes.ok) {
+        const json = (await tokenRes.json()) as { access_token?: string };
+        accessToken = json.access_token;
+      }
+    } finally {
+      clearTimeout(t);
+    }
+    if (!accessToken) {
+      return {
+        configured: true,
+        ok: false,
+        status: statusToken,
+        submitted: 0,
+        error:
+          "token JWT refusé — vérifiez le compte de service (e-mail, clé privée, API Indexing activée)",
+      };
+    }
+
+    // Push des URLs (plafond 200 = quota journalier Google).
+    let submitted = 0;
+    let lastStatus = 0;
+    let firstError: string | undefined;
+    for (const url of urls.slice(0, 200)) {
+      const push = await fetchTimeout(
+        "https://indexing.googleapis.com/v3/urlNotifications:publish",
+        10000,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({ url, type: "URL_UPDATED" }),
+        },
+      );
+      lastStatus = push.status;
+      if (push.ok) submitted++;
+      else if (!firstError)
+        firstError = `urlNotifications ${push.status}${push.error ? ` — ${push.error.slice(0, 60)}` : ""}`;
+    }
+    return {
+      configured: true,
+      ok: submitted > 0,
+      status: lastStatus,
+      submitted,
+      error: firstError,
+    };
+  } catch (e) {
+    return {
+      configured: true,
+      ok: false,
+      status: 0,
+      submitted: 0,
+      error: e instanceof Error ? e.message : String(e),
+    };
+  }
+}
+
 async function handle(req: NextRequest) {
   // ── 1. Authentification par secret partagé ──────────────────────────────
   const provided =
@@ -118,18 +254,12 @@ async function handle(req: NextRequest) {
 
   const sitemapUrl = `${origin}/sitemap.xml`;
 
-  // ── 4a. IndexNow — canal ACTIF (Bing/Yandex/Seznam/Naver) ───────────
-  // On soumet les passeports /p/ mis à jour depuis ≤ 30 jours (étiquette
-  // IndexNow : ne pas renvoyer en boucle des URLs inchangées ; max 1 000
-  // par requête, limite API 10 000).
-  let indexNow: { ok: boolean; status: number; submitted: number; error?: string } = {
-    ok: false,
-    status: 0,
-    submitted: 0,
-  };
-  try {
-    const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
-    const locs: string[] = [];
+  // ── 4. URLs des passeports /p/ récents (≤ 30 jours) — liste partagée
+  //     par les canaux IndexNow et Google Indexing API (étiquette : ne pas
+  //     renvoyer en boucle des URLs inchangées ; max 1 000 par requête).
+  const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
+  const urlsLotsRecents: string[] = [];
+  {
     const blocRe = /<loc>([^<]+)<\/loc>\s*(?:<lastmod>([^<]+)<\/lastmod>)?/g;
     let m: RegExpExecArray | null;
     while ((m = blocRe.exec(sitemapXml)) !== null) {
@@ -137,10 +267,19 @@ async function handle(req: NextRequest) {
       if (!url.includes("/p/")) continue;
       const lastmod = m[2] ? Date.parse(m[2]) : NaN;
       if (!Number.isNaN(lastmod) && lastmod < cutoff) continue;
-      locs.push(url);
-      if (locs.length >= 1000) break;
+      urlsLotsRecents.push(url);
+      if (urlsLotsRecents.length >= 1000) break;
     }
-    if (locs.length > 0) {
+  }
+
+  // ── 4a. IndexNow — canal ACTIF (Bing/Yandex/Seznam/Naver) ───────────
+  let indexNow: { ok: boolean; status: number; submitted: number; error?: string } = {
+    ok: false,
+    status: 0,
+    submitted: 0,
+  };
+  try {
+    if (urlsLotsRecents.length > 0) {
       const key = await getOrCreateIndexNowKey();
       const res = await fetchTimeout("https://api.indexnow.org/indexnow", 12000, {
         method: "POST",
@@ -149,10 +288,10 @@ async function handle(req: NextRequest) {
           host: origin.replace(/^https?:\/\//, ""),
           key,
           keyLocation: `${origin}/${key}.txt`,
-          urlList: locs,
+          urlList: urlsLotsRecents,
         }),
       });
-      indexNow = { ...res, submitted: locs.length };
+      indexNow = { ...res, submitted: urlsLotsRecents.length };
     }
   } catch (e) {
     indexNow = {
@@ -163,7 +302,13 @@ async function handle(req: NextRequest) {
     };
   }
 
-  // ── 4b. Pings historiques (best effort — endpoints retirés par les
+  // ── 4b. Google Indexing API — canal push Google (OPTIONNEL) ──────────
+  //     Actif si GOOGLE_SERVICE_ACCOUNT_EMAIL + GOOGLE_PRIVATE_KEY sont
+  //     définies ; sinon { configured:false } → procédure alternative
+  //     (sitemap robots.txt + Search Console).
+  const googleIndexing = await googleIndexingPush(urlsLotsRecents);
+
+  // ── 4c. Pings historiques (best effort — endpoints retirés par les
   //     moteurs : Google 404, Bing 410) ──────────────────────────────────
   const [google, bing] = await Promise.all([
     fetchTimeout(`https://www.google.com/ping?sitemap=${encodeURIComponent(sitemapUrl)}`),
@@ -177,6 +322,11 @@ async function handle(req: NextRequest) {
     totalUrls,
     lotUrls,
     indexNow: { status: indexNow.status, submitted: indexNow.submitted },
+    googleIndexing: {
+      configured: googleIndexing.configured,
+      status: googleIndexing.status,
+      submitted: googleIndexing.submitted,
+    },
     google: google.status,
     bing: bing.status,
   });
@@ -196,6 +346,7 @@ async function handle(req: NextRequest) {
     sitemapUrl,
     totalUrls,
     lotUrls,
+    urlsRecentes: urlsLotsRecents.length,
     pings: {
       indexNow:
         indexNow.submitted === 0
@@ -203,10 +354,15 @@ async function handle(req: NextRequest) {
           : indexNow.ok
             ? `notifié (${indexNow.submitted} URLs)`
             : `échec (${indexNow.status}${indexNow.error ? ` — ${indexNow.error.slice(0, 80)}` : ""})`,
+      googleIndexing: !googleIndexing.configured
+        ? "non configuré — définissez GOOGLE_SERVICE_ACCOUNT_EMAIL + GOOGLE_PRIVATE_KEY (compte de service propriétaire Search Console)"
+        : googleIndexing.ok
+          ? `poussé (${googleIndexing.submitted} URLs via Indexing API)`
+          : `échec (${googleIndexing.status}${googleIndexing.error ? ` — ${googleIndexing.error.slice(0, 80)}` : ""})`,
       google: google.ok ? "notifié" : `endpoint retiré (${google.status})`,
       bing: bing.ok ? "notifié" : `endpoint retiré (${bing.status})`,
     },
-    note: "Canal actif : IndexNow (Bing/Yandex/Seznam). Pour Google : sitemap déjà déclaré dans robots.txt + Search Console — Google n'offre plus d'API de ping sans OAuth.",
+    note: "Canaux actifs : IndexNow (Bing/Yandex/Seznam) + Google Indexing API si compte de service configuré. Sinon pour Google : sitemap déclaré dans robots.txt (en place) + Search Console.",
   });
 }
 

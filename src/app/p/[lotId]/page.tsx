@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
+import { notFound, permanentRedirect } from "next/navigation";
 import { Store } from "lucide-react";
 
 import {
@@ -9,9 +10,13 @@ import {
   recordScan,
   isBotUserAgent,
 } from "@/lib/public-data";
-import { getSiteUrl, buildProductPath, parseLotIdParam } from "@/lib/seo";
+import {
+  getSiteUrl,
+  buildProductPath,
+  parseLotIdParam,
+  decodeUrlSafe,
+} from "@/lib/seo";
 import { getIndustry } from "@/lib/industries";
-import { PublicHeader } from "@/components/public/PublicHeader";
 import { PublicFooter } from "@/components/public/PublicFooter";
 
 import { SimilarProducts } from "@/components/product/SimilarProducts";
@@ -255,7 +260,11 @@ export default async function ProductPage({
   searchParams: Promise<{ code?: string }>;
 }) {
   const { lotId } = await params;
-  const { code: qrCodeId } = await searchParams;
+  // ⚠️ awaiter UNE fois dans une variable dédiée : `searchParams` reste la
+  // Promise — Object.entries(searchParams) sur la Promise renvoie [] et la
+  // query string (?code= d'attribution QR) était perdue à la redirection.
+  const sp = await searchParams;
+  const qrCodeId = sp.code;
   // URL parlante acceptée : /p/{id}-{slug} — on récupère le vrai id de lot
   // (cuid sans tiret) avant la requête. Les QR codes courts passent tels quels.
   const realLotId = parseLotIdParam(lotId);
@@ -270,36 +279,45 @@ export default async function ProductPage({
   }
 
   if (!lot) {
-    // Graceful fallback — a scanned QR code whose lot is not (yet) registered
-    // should never show a raw server 404. Instead we render a friendly
-    // "product not found" page that keeps the public header/footer and lets
-    // the visitor browse the public catalog.
-    return (
-      <div className="flex min-h-screen flex-col bg-[#F9FAFB]">
-        <PublicHeader />
-        <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col items-center justify-center px-4 py-20 text-center">
-          <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-[#FEF3C7] text-[40px]">
-            🔍
-          </div>
-          <h1 className="font-display text-[28px] font-bold text-[#111827] sm:text-[32px]">
-            Produit introuvable
-          </h1>
-          <p className="mt-3 max-w-md text-[15px] leading-relaxed text-[#6B7280]">
-            Ce QR code ne correspond à aucun lot enregistré pour le moment.
-            Le produit n&apos;a peut-être pas encore été publié, ou le lot a été
-            retiré. Vous pouvez consulter l&apos;ensemble de nos produits
-            vérifiés dans le catalogue public.
-          </p>
-          <Link
-            href="/produits"
-            className="mt-8 inline-flex items-center gap-2 rounded-lg bg-[#10B981] px-5 py-3 text-[14px] font-semibold text-white shadow-sm transition-colors hover:bg-[#059669]"
-          >
-            Voir le catalogue public
-          </Link>
-        </main>
-        <PublicFooter />
-      </div>
-    );
+    // ── VRAI statut 404 (correctif Search Console « Introuvable (404) ») ──
+    // Auparavant cette branche rendait une page amicale en STATUT 200
+    // (soft-404) : Google la considérait comme un contenu indexable et le
+    // rapport Search Console polluait les motifs de non-indexation.
+    // notFound() renvoie désormais le statut HTTP 404 correct tout en
+    // affichant une page BRANDING (voir src/app/p/[lotId]/not-found.tsx) —
+    // l'expérience « scan QR d'un lot non enregistré » reste soignée
+    // (en-tête/pied publics + lien catalogue), mais le signal envoyé aux
+    // moteurs est net : la page n'existe pas, retirez-la de l'index.
+    notFound();
+  }
+
+  // ── Canonicalisation de l'URL passeport (correctif Search Console) ─────
+  // La forme courte QR « /p/{id} » (et toute ancienne forme parlante après
+  // renommage produit) est désormais REDIRIGÉE EN 308 PERMANENT vers la
+  // forme parlante canonique au lieu d'être servie en 200 + balise
+  // canonical. Motif Search Console visé : « Autre page avec balise
+  // canonique correcte » — la redirection 308 consolide définitivement les
+  // signaux, supprime le contenu dupliqué 200/200 et nettoie le rapport.
+  // Les QR codes imprimés continuent de fonctionner (les lecteurs suivent
+  // les redirections) ; le paramètre ?code= d'attribution est préservé.
+  const cheminParlant = buildProductPath(
+    lot.id,
+    lot.product.name,
+    lot.product.brand,
+  );
+  const segmentParlant = cheminParlant.replace(/^\/p\//, "");
+  const segmentRecu = decodeUrlSafe(lotId);
+  if (segmentRecu !== segmentParlant) {
+    // Reconstruction de la query string (au minimum ?code= pour
+    // l'attribution analytics du QR scanné) — sans elle, les scans
+    // attribués par code QR seraient comptés comme scans directs.
+    const usp = new URLSearchParams();
+    for (const [cle, valeur] of Object.entries(sp)) {
+      const val = Array.isArray(valeur) ? valeur[0] : valeur;
+      if (typeof val === "string" && val !== "") usp.set(cle, val);
+    }
+    const qs = usp.toString();
+    permanentRedirect(`${cheminParlant}${qs ? `?${qs}` : ""}`);
   }
 
   // Fire and forget — don't block the page render on scan recording.
@@ -366,12 +384,8 @@ export default async function ProductPage({
   //   - Aucun avis     → Offer de secours (honnête : disponibilité + URL +
   //     devise ; le produit fabricant n'expose pas de prix public — ne
   //     JAMAIS inventer un prix ni un avis).
-  // ── URL passeport « parlante » (SEO) — réutilisée par le JSON-LD ──────
-  const cheminParlant = buildProductPath(
-    lot.id,
-    lot.product.name,
-    lot.product.brand,
-  );
+  // ── URL passeport « parlante » (SEO) — calculée plus haut pour la
+  // canonicalisation 308 ; réutilisée ici par le JSON-LD ──────────────────
   const offersFallback = {
     "@type": "Offer",
     url: `${siteUrlPage}${cheminParlant}`,

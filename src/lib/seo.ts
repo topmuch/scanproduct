@@ -94,11 +94,16 @@ export function parseKeywords(raw: string | null | undefined): string[] {
  *     /p/{lotId} : stable même si le produit est renommé, plus dense car
  *     plus courte → ne JAMAIS les faire pointer vers l'URL à slug.
  *   - Les URL canoniques / sitemap / liens internes utilisent la forme
- *     parlante ; l'ancienne forme courte reste servie (200) et la balise
- *     canonical consolide les signaux vers la forme parlante (pattern
- *     standard e-commerce).
+ *     parlante ; l'ancienne forme courte (QR imprimés) est redirigée en
+ *     308 permanent vers la forme parlante par la page /p/ (voir plus
+ *     bas) — consolidation forte des signaux, zéro contenu dupliqué.
  *   - Les ids de lots sont des cuid() (jamais de tiret) → « {id}-{slug} »
  *     se découpe sans ambiguïté sur le PREMIER tiret.
+ *
+ * SEO Search Console : la forme courte n'est PLUS servie en 200 (source du
+ * motif « Autre page avec balise canonique correcte ») — la page /p/ la
+ * REDIRIGE en 308 permanent vers la forme parlante (canonicalisation
+ * forte) ; les QR imprimés continuent de fonctionner via redirection.
  */
 
 /** Slug ASCII français : minuscules, sans accents, tirets, tronqué à 60. */
@@ -133,10 +138,25 @@ export function buildProductPath(
  * Extrait le vrai id de lot d'un param de route qui peut porter un suffixe
  * slug : « cmuv...eua-beurre-de-karite » → « cmuv...eua ». L'entrée courte
  * « cmuv...eua » (QR codes imprimés) passe inchangée. Décodage %XX par
- * sécurité (les URL GS1 encodent le chemin).
+ * sécurité (les URL GS1 encodent le chemin) — décodage TOLÉRANT : une
+ * séquence % malformée (URLs sondées par des bots) ne doit jamais provoquer
+ * de HTTP 500 mais retomber sur la chaîne brute (→ lot introuvable → 404).
  */
 export function parseLotIdParam(param: string): string {
-  const decoded = decodeURIComponent(param);
+  const decoded = decodeUrlSafe(param);
   const dash = decoded.indexOf("-");
   return dash > 0 ? decoded.slice(0, dash) : decoded;
+}
+
+/**
+ * decodeURIComponent tolérant : renvoie l'entrée brute si le décodage
+ * échoue (séquence % malformée). Utilisé partout où un param d'URL est
+ * décodé — un URIError non intercepté donnerait un 500 au lieu d'un 404.
+ */
+export function decodeUrlSafe(param: string): string {
+  try {
+    return decodeURIComponent(param);
+  } catch {
+    return param;
+  }
 }

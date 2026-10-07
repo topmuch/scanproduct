@@ -66,7 +66,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Google ». Les lots RECALLED / EXPIRED / DRAFT sont volontairement
     // exclus (pages à contenu dégradé ou retiré de la vente).
     // URL « parlantes » /p/{id}-{nom-produit-marque} — alignées sur les
-    // canonicals des pages (la forme courte QR reste servie en 200).
+    // canonicals des pages (la forme courte QR est redirigée en 308 vers
+    // cette forme — canonicalisation forte, Search Console propre).
     const lots = await db.lot.findMany({
       where: { status: "ACTIVE" },
       select: {
