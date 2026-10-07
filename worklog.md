@@ -5855,3 +5855,18 @@ Stage Summary:
 - L'indexation Google est poussable automatiquement : IndexNow (actif) + Google Indexing API (activable en 10 min via compte de service — doc fournie) + cron scripts/ping-google.sh.
 - Action utilisateur après Redeploy : dans Search Console → rapport Pages → « Valider la correction » pour les 3 motifs ; les entrées 404 historiques et « autre page canonique » disparaissent en 2-4 semaines.
 - Redeploy Coolify requis (regroupe Tasks 13→21).
+
+---
+Task ID: 22
+Agent: Super Z (main)
+Task: Vérification post-livraison — sync GitHub↔local + présence des correctifs motifs Search Console (rapport GSC re-soumis par l'utilisateur : 404 ×2, balise canonique ×2, redirection ×2).
+
+Work Log:
+- git fetch origin : branche main = origin/main, 0 commit d'écart dans les deux sens, working tree propre → sync parfaite (HEAD = 6267da0).
+- Inventaire des livrables Tasks 20-21 confirmé sur disque : docs/seo-search-console.md, scripts/ping-google.sh (chmod +x), src/app/not-found.tsx + p/[lotId]/not-found.tsx (404 branding), api/seo/ping/route.ts (IndexNow + Google Indexing API), api/admin/contact-messages/route.ts, model Prisma ContactMessage.
+- Téléphone : « 77 382 18 22 » présent dans 10 fichiers (seo/contact/settings/footers/pages légales/contact) ; 0 occurrence de l'ancien numéro.
+- Diagnostic rappel : les motifs GSC reflètent l'état de la PRODUCTION, qui tourne encore sur un code antérieur à la Task 13 — les correctifs 308/404/canonical ne sont PAS encore en ligne tant que Coolify n'a pas été redeployé.
+
+Stage Summary:
+- Aucun changement de code : session de vérification uniquement. Tout est poussé et synchronisé.
+- Seule action bloquante restante : Redeploy Coolify (Tasks 13→22), puis « Valider la correction » dans Search Console pour les 3 motifs.
