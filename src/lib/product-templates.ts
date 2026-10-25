@@ -5,14 +5,14 @@
 // (cosmétique artisanal ou agroalimentaire local) avec sa durée de
 // conservation, ses conseils d'utilisation, ses précautions d'emploi, ses
 // ingrédients typiques et ses conditions de stockage adaptées au climat
-// sénégalais (chaleur + humidité).
+// tchadais (chaleur + humidité).
 //
 // Utilisée par :
 //   - SmartProductSelector (composant commun classique + artisan)
 //   - /api/product-templates (recherche serveur)
 //   - LotCreatePage (auto-calcul de la date de péremption)
 //
-// Les conseils sont rédigés pour des petits producteurs sénégalais :
+// Les conseils sont rédigés pour des petits producteurs tchadais :
 // formulations simples, vocabulaire accessible, climat tropical.
 // ============================================================================
 
@@ -75,7 +75,7 @@ export const PRODUCT_TEMPLATES: ProductTemplate[] = [
       "Moringa ou neem en poudre",
     ],
     storageConditions:
-      "Conserver dans un endroit sec et aéré, à l'abri de la chaleur directe. Au climat sénégalais, poser le savon sur un porte-savon drainé — jamais dans une soucoupe remplie d'eau — et à l'abri du soleil.",
+      "Conserver dans un endroit sec et aéré, à l'abri de la chaleur directe. Au climat tchadais, poser le savon sur un porte-savon drainé — jamais dans une soucoupe remplie d'eau — et à l'abri du soleil.",
     allergens: ["Huile de coco", "Huile d'arachide", "Huiles essentielles"],
     icon: "🧼",
   },
@@ -138,7 +138,7 @@ export const PRODUCT_TEMPLATES: ProductTemplate[] = [
       "Vanille ou poudre de gingembre",
     ],
     storageConditions:
-      "Conserver le pot hermétiquement fermé dans un endroit sec et frais, à l'abri du soleil. La chaleur sénégalaise peut faire fondre l'huile :placer le pot dans un cellier ou le bas du réfrigérateur si la texture se sépare.",
+      "Conserver le pot hermétiquement fermé dans un endroit sec et frais, à l'abri du soleil. La chaleur tchadaise peut faire fondre l'huile :placer le pot dans un cellier ou le bas du réfrigérateur si la texture se sépare.",
     allergens: ["Huile de coco", "Miel", "Huile d'amande douce"],
     icon: "🧽",
   },
@@ -170,7 +170,7 @@ export const PRODUCT_TEMPLATES: ProductTemplate[] = [
       "Jus de citron frais",
     ],
     storageConditions:
-      "OBLIGATOIRE au réfrigérateur (4–8 °C) : la présence d'eau et de fruits frais rend le produit périssable, surtout avec la chaleur de Dakar ou de Thiès. À consommer dans le mois, à jeter au moindre changement d'odeur ou de couleur.",
+      "OBLIGATOIRE au réfrigérateur (4–8 °C) : la présence d'eau et de fruits frais rend le produit périssable, surtout avec la chaleur de N'Djaména ou de Thiès. À consommer dans le mois, à jeter au moindre changement d'odeur ou de couleur.",
     allergens: ["Yaourt (lait)", "Miel"],
     icon: "🧽",
   },
@@ -267,7 +267,7 @@ export const PRODUCT_TEMPLATES: ProductTemplate[] = [
       "Vitamine E",
     ],
     storageConditions:
-      "Conserver au frais (réfrigérateur recommandé au climat sénégalais) et à l'abri de la lumière. Toujours prélever avec un doigt ou une spatule propre : l'eau et la sueur introduites dans le pot accélèrent la contamination.",
+      "Conserver au frais (réfrigérateur recommandé au climat tchadais) et à l'abri de la lumière. Toujours prélever avec un doigt ou une spatule propre : l'eau et la sueur introduites dans le pot accélèrent la contamination.",
     allergens: ["Cire d'abeille", "Huile de moringa"],
     icon: "🧴",
   },
@@ -356,7 +356,7 @@ export const PRODUCT_TEMPLATES: ProductTemplate[] = [
       "(Sans conservateur — distillation pure)",
     ],
     storageConditions:
-      "Conserver au réfrigérateur après ouverture, dans son flacon spray bien fermé, à l'abri de la lumière. La chaleur sénégalaise accélère la fermentation : 12 mois non ouvert, 3 mois après ouverture.",
+      "Conserver au réfrigérateur après ouverture, dans son flacon spray bien fermé, à l'abri de la lumière. La chaleur tchadaise accélère la fermentation : 12 mois non ouvert, 3 mois après ouverture.",
     icon: "🌸",
   },
   {
@@ -477,7 +477,7 @@ export const PRODUCT_TEMPLATES: ProductTemplate[] = [
       "Quelques gouttes d'huile de baobab",
     ],
     storageConditions:
-      "OBLIGATOIRE au réfrigérateur (4–8 °C), pot hermétiquement fermé. Durée de vie 30 jours maximum une fois préparé — la chaleur et l'humidité du Sénégal multiplient le risque bactérien.",
+      "OBLIGATOIRE au réfrigérateur (4–8 °C), pot hermétiquement fermé. Durée de vie 30 jours maximum une fois préparé — la chaleur et l'humidité du Tchad multiplient le risque bactérien.",
     allergens: ["Yaourt (lait)", "Miel"],
     icon: "🎭",
   },
@@ -515,7 +515,7 @@ export const AGROALIMENTAIRE_TEMPLATES: ProductTemplate[] = [
       "Menthe fraîche (option)",
     ],
     storageConditions:
-      "Conserver au réfrigérateur entre 4 et 8 °C. La chaleur sénégalaise déclenche la fermentation en quelques heures : jamais de stockage à température ambiante. Jus frais sans conservateur : 2 à 3 jours maximum au réfrigérateur.",
+      "Conserver au réfrigérateur entre 4 et 8 °C. La chaleur tchadaise déclenche la fermentation en quelques heures : jamais de stockage à température ambiante. Jus frais sans conservateur : 2 à 3 jours maximum au réfrigérateur.",
     allergens: [],
     icon: "🥤",
   },
@@ -546,7 +546,7 @@ export const AGROALIMENTAIRE_TEMPLATES: ProductTemplate[] = [
       "Vanille (option)",
     ],
     storageConditions:
-      "Conserver le pot dans un endroit sec, frais et à l'abri de la lumière avant ouverture. Après ouverture : réfrigérateur obligatoire au climat sénégalais, consommation sous 1 mois. Stérilisation correcte = 12 mois de conservation.",
+      "Conserver le pot dans un endroit sec, frais et à l'abri de la lumière avant ouverture. Après ouverture : réfrigérateur obligatoire au climat tchadais, consommation sous 1 mois. Stérilisation correcte = 12 mois de conservation.",
     allergens: [],
     icon: "🍯",
   },
@@ -692,7 +692,7 @@ export const AGROALIMENTAIRE_TEMPLATES: ProductTemplate[] = [
       "(Sans huile ajoutée — mouture artisanale)",
     ],
     storageConditions:
-      "Conserver dans un pot hermétique, dans un endroit sec et frais à l'abri de la lumière. Au climat sénégalais, la chaleur fait remonter l'huile naturellement (mélanger avant usage). Au-delà de 6 mois, risque de rancissement : privilégier le réfrigérateur en saison chaude.",
+      "Conserver dans un pot hermétique, dans un endroit sec et frais à l'abri de la lumière. Au climat tchadais, la chaleur fait remonter l'huile naturellement (mélanger avant usage). Au-delà de 6 mois, risque de rancissement : privilégier le réfrigérateur en saison chaude.",
     allergens: ["Arachide"],
     icon: "🥜",
   },
@@ -784,11 +784,11 @@ export const AGROALIMENTAIRE_TEMPLATES: ProductTemplate[] = [
       "(Sans conservateur)",
     ],
     storageConditions:
-      "RÉFRIGÉRATEUR OBLIGATOIRE (4 °C maximum), dans son coffret fermé ou un bol couvert. Au climat sénégalais, une seule heure hors froid suffit à altérer le produit. 1 mois de conservation ; 5 à 7 jours après ouverture.",
+      "RÉFRIGÉRATEUR OBLIGATOIRE (4 °C maximum), dans son coffret fermé ou un bol couvert. Au climat tchadais, une seule heure hors froid suffit à altérer le produit. 1 mois de conservation ; 5 à 7 jours après ouverture.",
     allergens: ["Lait (lactose, protéines laitières)"],
     icon: "🧀",
   },
-  // ── Catalogue local sénégalais 🇸🇳 ──────────────────────────────────────
+  // ── Catalogue local tchadais 🇸🇳 ──────────────────────────────────────
   {
     id: "jus-bissap",
     name: "Jus de bissap (hibiscus)",
@@ -921,7 +921,7 @@ export const AGROALIMENTAIRE_TEMPLATES: ProductTemplate[] = [
     name: "Thiakry / Dèguè",
     category: "agroalimentaire",
     designation:
-      "Thiakry artisanal, couscous de mil au lait caillé, dessert sénégalais traditionnel",
+      "Thiakry artisanal, couscous de mil au lait caillé, dessert tchadais traditionnel",
     shelfLifeMonths: 0,
     shelfLifeDays: 5,
     usageTips: [
@@ -1148,7 +1148,7 @@ export const AGROALIMENTAIRE_TEMPLATES: ProductTemplate[] = [
       "(Produit brut — aucun additif)",
     ],
     storageConditions:
-      "Conserver pointe vers le bas, à l'abri de la chaleur. Température ambiante fraîche : 2 à 3 semaines ; réfrigérateur : 4 à 5 semaines. Au climat sénégalais, privilégier la vente rapide.",
+      "Conserver pointe vers le bas, à l'abri de la chaleur. Température ambiante fraîche : 2 à 3 semaines ; réfrigérateur : 4 à 5 semaines. Au climat tchadais, privilégier la vente rapide.",
     allergens: ["Œuf"],
     icon: "🥚",
   },
@@ -1237,7 +1237,7 @@ export const AGROALIMENTAIRE_TEMPLATES: ProductTemplate[] = [
       "(Produit brut — aucun additif)",
     ],
     storageConditions:
-      "RÉFRIGÉRATEUR (0–4 °C) dans un récipient couvert, sur lit de glaçons si possible : 1 à 2 jours maximum. Congélateur (-18 °C) : 3 à 6 mois. Au climat sénégalais, vendre le jour même.",
+      "RÉFRIGÉRATEUR (0–4 °C) dans un récipient couvert, sur lit de glaçons si possible : 1 à 2 jours maximum. Congélateur (-18 °C) : 3 à 6 mois. Au climat tchadais, vendre le jour même.",
     allergens: ["Poisson"],
     icon: "🐟",
   },

@@ -27,7 +27,7 @@ export default function MentionsLegalesPage() {
   return (
     <LegalLayout
       title="Mentions légales"
-      description="Conformément aux dispositions légales en vigueur, notamment la loi sénégalaise n° 2008-12 du 25 janvier 2008 sur la confiance dans l'économie numérique, les présentes mentions légales informent les utilisateurs de la plateforme Prodtrust sur son éditeur, son hébergeur et les conditions d'utilisation."
+      description="Conformément aux dispositions légales en vigueur, notamment la loi tchadaise n° 2008-12 du 25 janvier 2008 sur la confiance dans l'économie numérique, les présentes mentions légales informent les utilisateurs de la plateforme Prodtrust sur son éditeur, son hébergeur et les conditions d'utilisation."
       updatedAt="Dernière mise à jour : 1 janvier 2026"
       sections={SECTIONS}
     >
@@ -44,9 +44,9 @@ export default function MentionsLegalesPage() {
         </p>
         <ul className="ml-5 list-disc space-y-2">
           <li>
-            <strong>Prodtrust</strong>, société de droit sénégalais ;
+            <strong>Prodtrust</strong>, société de droit tchadais ;
           </li>
-          <li>Siège social : Dakar, Sénégal ;</li>
+          <li>Siège social : N'Djaména, Tchad ;</li>
           <li>
             Email :{" "}
             <a
@@ -182,7 +182,7 @@ export default function MentionsLegalesPage() {
           consultées).
         </p>
         <p>
-          Conformément à la loi sénégalaise n° 2008-12 et aux principes
+          Conformément à la loi tchadaise n° 2008-12 et aux principes
           directeurs en matière de protection des données personnelles,
           l&apos;Utilisateur dispose d&apos;un droit d&apos;accès, de
           rectification, d&apos;effacement et d&apos;opposition au
@@ -252,7 +252,7 @@ export default function MentionsLegalesPage() {
               +221 77 382 18 22
             </a>
           </li>
-          <li>Par courrier : Dakar, Sénégal</li>
+          <li>Par courrier : N'Djaména, Tchad</li>
         </ul>
       </LegalArticle>
     </LegalLayout>

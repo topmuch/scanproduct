@@ -3,7 +3,7 @@ import { buildAlternates } from "@/lib/seo";
 
 /**
  * Metadata de la page d'accueil — canonical absolu + hreflang multi-pays
- * (fr-FR, fr-BE, fr-CH, fr-CA, fr-SN) pour le référencement francophone.
+ * (fr-FR, fr-BE, fr-CH, fr-CA, fr-TD) pour le référencement francophone.
  * Le titre/description héritent du layout (pilotés par les settings SEO).
  */
 export async function generateMetadata(): Promise<Metadata> {

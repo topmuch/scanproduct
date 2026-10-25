@@ -97,13 +97,13 @@ export const CERTIFICATIONS: Record<string, CertificationDef> = {
     validFor: ["all"],
     accent: "emerald",
   },
-  bio_senegal: {
-    id: "bio_senegal",
-    name: "Bio Sénégal",
+  bio_tchad: {
+    id: "bio_tchad",
+    name: "Bio Tchad",
     emoji: "🇸🇳",
-    description: "Certification biologique locale sénégalaise",
+    description: "Certification biologique locale tchadaise",
     category: "bio",
-    issuingBody: "Institut Sénégalais de Normalisation (ASN)",
+    issuingBody: "Institut Tchadais de Normalisation (ATD)",
     validFor: ["all"],
     accent: "emerald",
   },
@@ -326,34 +326,34 @@ export const CERTIFICATIONS: Record<string, CertificationDef> = {
     accent: "violet",
   },
 
-  // ── CERTIFICATIONS LOCALES (SÉNÉGAL / AFRIQUE DE L'OUEST) ──────────────
-  made_in_senegal: {
-    id: "made_in_senegal",
-    name: "Made in Senegal",
+  // ── CERTIFICATIONS LOCALES (TCHAD / AFRIQUE DE L'OUEST) ──────────────
+  made_in_tchad: {
+    id: "made_in_tchad",
+    name: "Made in Tchad",
     emoji: "🇸🇳",
-    description: "Fabriqué au Sénégal — label de production locale",
+    description: "Fabriqué au Tchad — label de production locale",
     category: "local",
-    issuingBody: "APIX Sénégal",
+    issuingBody: "APIX Tchad",
     validFor: ["all"],
     accent: "orange",
   },
-  normes_senegalaises: {
-    id: "normes_senegalaises",
-    name: "Normes Sénégalaises (ASN)",
+  normes_tchadaises: {
+    id: "normes_tchadaises",
+    name: "Normes Tchadaises (ATD)",
     emoji: "📋",
-    description: "Conformité aux normes de l'Association Sénégalaise de Normalisation",
+    description: "Conformité aux normes de l'Association Tchadaise de Normalisation",
     category: "local",
-    issuingBody: "ASN",
+    issuingBody: "ATD",
     validFor: ["all"],
     accent: "orange",
   },
   cedao: {
     id: "cedao",
-    name: "CEDEAO / ECOWAS",
+    name: "CEMAC / ECOWAS",
     emoji: "🌍",
     description: "Conformité aux normes de la Communauté Économique des États de l'Afrique de l'Ouest",
     category: "local",
-    issuingBody: "CEDEAO (ECOWAS)",
+    issuingBody: "CEMAC (ECOWAS)",
     validFor: ["all"],
     accent: "orange",
   },
@@ -400,7 +400,7 @@ export const CATEGORY_LABELS: Record<
   local: {
     label: "Certifications Locales",
     emoji: "🇸🇳",
-    description: "Labels sénégalais et ouest-africains",
+    description: "Labels tchadais et ouest-africains",
     accent: "orange",
   },
 };

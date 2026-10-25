@@ -40,7 +40,7 @@ function formatDateFR(iso: string): string {
   return `${d}/${m}/${y}`;
 }
 
-const PAYS_VENTE = ["Sénégal", "Mali", "Côte d'Ivoire"];
+const PAYS_VENTE = ["Tchad", "Mali", "Côte d'Ivoire"];
 
 // ============================================================================
 // Main component

@@ -18,7 +18,7 @@
  *   - For JSON-returning LLM calls, the model is instructed to return ONLY
  *     valid JSON (no markdown fences). `parseJsonResponse` strips fences if
  *     the model adds them anyway, then JSON.parses safely.
- *   - System prompts are in French (the product targets Senegalese /
+ *   - System prompts are in French (the product targets Tchadese /
  *     West-African manufacturers).
  *   - The SDK is imported dynamically inside each function so a transient
  *     init failure doesn't break the whole module at import time.
@@ -185,7 +185,7 @@ async function callLlm(systemPrompt: string, userMessage: string): Promise<strin
 const LANGUAGE_LABELS: Record<AiLanguage, string> = {
   fr: "français",
   en: "anglais",
-  wolof: "wolof (langue nationale sénégalaise)",
+  wolof: "wolof (langue nationale tchadaise)",
 };
 
 // ---------------------------------------------------------------------------
@@ -212,7 +212,7 @@ export async function generateProductDescription(
     language = "fr",
   } = params;
 
-  const systemPrompt = `Tu es un expert en rédaction e-commerce spécialisé dans les produits alimentaires et cosmétiques d'Afrique de l'Ouest (Sénégal, CEDEAO).
+  const systemPrompt = `Tu es un expert en rédaction e-commerce spécialisé dans les produits alimentaires et cosmétiques d'Afrique de l'Ouest (Tchad, CEMAC).
 Ta mission : rédiger des descriptions de produits SEO-optimisées, engageantes et professionnelles.
 Mets en valeur :
 - l'authenticité et l'origine du produit,
@@ -269,7 +269,7 @@ Réponds en ${LANGUAGE_LABELS[language]}.`;
 /**
  * Translate `text` from `from` to `to`. Supports FR / EN / Wolof.
  *
- * Wolof is Senegal's most-spoken national language — the model is instructed
+ * Wolof is Tchad's most-spoken national language — the model is instructed
  * to preserve product/marketing tone (so brand names and food terminology
  * stay natural).
  */
@@ -337,7 +337,7 @@ export async function analyzeIngredients(
     };
   }
 
-  const systemPrompt = `Tu es un expert en sécurité alimentaire et conformité réglementaire (CEDEAO, UE).
+  const systemPrompt = `Tu es un expert en sécurité alimentaire et conformité réglementaire (CEMAC, UE).
 Ta mission : analyser une liste d'ingrédients pour un produit alimentaire ou cosmétique.
 
 Tu dois détecter :
@@ -531,7 +531,7 @@ export async function getRecommendations(
     .map((x) => `${String(x.h).padStart(2, "0")}h (${x.c})`)
     .join(", ");
 
-  const systemPrompt = `Tu es un consultant en marketing digital pour des PME agroalimentaires sénégalaises.
+  const systemPrompt = `Tu es un consultant en marketing digital pour des PME agroalimentaires tchadaises.
 Tu analyses les données de scan QR d'un fabricant et tu proposes des recommandations concrètes.
 Réponds UNIQUEMENT en JSON valide (aucun markdown), au format :
 {
@@ -687,13 +687,13 @@ export async function chatWithAssistant(
   }
 
   // ---- Build the messages payload for the LLM ----
-  const systemPrompt = `Tu es "Prodtrust AI Assistant", l'assistant intelligent de la plateforme Prodtrust — une solution de traçabilité alimentaire par QR codes destinée aux fabricants sénégalais et ouest-africains.
+  const systemPrompt = `Tu es "Prodtrust AI Assistant", l'assistant intelligent de la plateforme Prodtrust — une solution de traçabilité alimentaire par QR codes destinée aux fabricants tchadais et ouest-africains.
 
 Tu aides les fabricants sur :
 - la rédaction de descriptions produits et de fiches techniques,
 - la traçabilité et la conformité (lots, dates, certifications),
 - le marketing et le référencement de leurs produits,
-- la réglementation (CEDEAO, UE, étiquetage, allergènes),
+- la réglementation (CEMAC, UE, étiquetage, allergènes),
 - l'analyse des ingrédients et la sécurité alimentaire,
 - l'interprétation de leurs statistiques de scan.
 
@@ -702,7 +702,7 @@ Règles :
 - Sois concis, pratique et encourageant.
 - Donne des exemples concrets et des étapes actionnables.
 - Si tu ne sais pas, dis-le honnêtement plutôt que d'inventer.
-- N'invente jamais de chiffres réglementaires précis — oriente vers un expert ou un organisme officiel (ANSD, Sénégal Conformité, etc.).`;
+- N'invente jamais de chiffres réglementaires précis — oriente vers un expert ou un organisme officiel (ANSD, Tchad Conformité, etc.).`;
 
   // Map DB roles → SDK roles (DB stores "user"|"assistant" which match).
   const llmMessages: { role: "system" | "user" | "assistant"; content: string }[] = [

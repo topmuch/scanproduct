@@ -113,7 +113,7 @@ export async function POST(req: NextRequest) {
         companyName,
         phone: phone || null,
         city: city || null,
-        country: "Sénégal",
+        country: "Tchad",
         points: 10, // Welcome bonus
       },
     });

@@ -13,7 +13,7 @@
  *      « destinataire introuvable », l'artisan sait immédiatement que le
  *      numéro à corriger est celui de SA ligne WhatsApp ;
  *   3. un avertissement si le format ne ressemble pas à un mobile
- *      sénégalais (9 chiffres après +221, commençant par 7).
+ *      tchadais (9 chiffres après +221, commençant par 7).
  */
 
 import {
@@ -59,7 +59,7 @@ export function WhatsAppFieldHint({ phone }: { phone: string }) {
       </a>
       {suspicious && (
         <p className="mt-1.5 rounded-lg bg-amber-50 px-2 py-1.5 text-[11px] font-medium leading-snug text-amber-800">
-          ⚠️ Ce numéro ne ressemble pas à un mobile sénégalais (format attendu :
+          ⚠️ Ce numéro ne ressemble pas à un mobile tchadais (format attendu :
           9 chiffres commençant par 7, ex. 77 123 45 67). S'il est correct,
           ignorez ce message.
         </p>

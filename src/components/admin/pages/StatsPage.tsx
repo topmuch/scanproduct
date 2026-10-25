@@ -51,7 +51,7 @@ function buildKpiCards(GLOBAL_KPI: {
   ];
 }
 
-// Top 5 cities rendered as dots on the stylized Senegal map.
+// Top 5 cities rendered as dots on the stylized Tchad map.
 // Coordinates are stylized positions on the placeholder map; values are
 // derived from real scan aggregates (topCities[0..4]).
 const CITY_DOTS_TEMPLATE = [
@@ -297,18 +297,18 @@ export function StatsPage() {
 
       {/* ── Section 4 — Géographie ─────────────────────────────────────── */}
       <section>
-        <SectionHeading title="Géographie" subtitle="Répartition géographique des scans au Sénégal" />
+        <SectionHeading title="Géographie" subtitle="Répartition géographique des scans au Tchad" />
         <Card>
           <CardHeader title="Géographie" subtitle="Répartition des scans par ville" />
           <div className="grid grid-cols-1 gap-6 p-5 lg:grid-cols-2">
-            {/* Stylized Senegal map placeholder */}
+            {/* Stylized Tchad map placeholder */}
             <div className="relative flex min-h-[420px] items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed border-[#E5E7EB] bg-gradient-to-br from-[#F9FAFB] via-white to-[#F0F4F9]">
               <div className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-[0.07]">
                 <span className="text-[200px] leading-none">🗺️</span>
               </div>
               <div className="relative z-10 mb-4 text-center">
                 <p className="font-display text-[22px] font-bold text-[#111827]">
-                  Sénégal <span className="text-[26px]">🇸🇳</span>
+                  Tchad <span className="text-[26px]">🇸🇳</span>
                 </p>
                 <p className="mt-1 text-[13px] text-[#6B7280]">
                   Survolez les points pour voir le détail

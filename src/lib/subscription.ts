@@ -333,7 +333,7 @@ function subEmailShell(title: string, accentColor: string, bodyHtml: string): st
           <div style="font-size:11px;color:#9CA3AF;line-height:1.5;">
             Vous recevez cet email selon vos pr&eacute;f&eacute;rences de notification Prodtrust.
             G&eacute;rez-les depuis votre tableau de bord &rarr; Param&egrave;tres &rarr; Notifications.<br />
-            &copy; ${new Date().getFullYear()} Prodtrust &mdash; Dakar, S&eacute;n&eacute;gal
+            &copy; ${new Date().getFullYear()} Prodtrust &mdash; N'Djaména, S&eacute;n&eacute;gal
           </div>
         </td></tr>
       </table>

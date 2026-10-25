@@ -198,21 +198,21 @@ function AppareilTooltip({
 }
 
 // ============================================================================
-// Sénégal — stylized geographic visualization.
+// Tchad — stylized geographic visualization.
 // Each bubble is positioned roughly according to its geographic location
-// (peninsula Dakar NW, Saint-Louis N, Touba center, Ziguinchor SW Casamance…).
+// (peninsula N'Djaména NW, Saint-Louis N, Touba center, Ziguinchor SW Casamance…).
 // Real scan counts are joined from `stats.topVilles` at render time.
 // ============================================================================
-type SenegalBubble = {
+type TchadBubble = {
   ville: string;
   scans: number;
   left: string;
   top: string;
 };
 
-const SENEGAL_BUBBLE_POSITIONS: Record<string, { left: string; top: string }> = {
+const TCHAD_BUBBLE_POSITIONS: Record<string, { left: string; top: string }> = {
   "Saint-Louis": { left: "26%", top: "12%" },
-  "Dakar": { left: "14%", top: "42%" },
+  "N'Djaména": { left: "14%", top: "42%" },
   "Rufisque": { left: "23%", top: "48%" },
   "Thiès": { left: "32%", top: "40%" },
   "Mbour": { left: "30%", top: "65%" },
@@ -340,17 +340,17 @@ export function StatistiquesPage() {
   const TYPE_APPAREIL = stats.typeAppareil;
   const TOTAL_SCANS = REPARTITION_PRODUITS.reduce((s, p) => s + p.scans, 0);
 
-  // Build the Senegal bubbles from real topVilles + known positions.
+  // Build the Tchad bubbles from real topVilles + known positions.
   const allScans = TOP_VILLES.map((v) => v.scans);
   const minScans = allScans.length > 0 ? Math.min(...allScans) : 0;
   const maxScans = allScans.length > 0 ? Math.max(...allScans) : 1;
-  const SENEGAL_BUBBLES: SenegalBubble[] = TOP_VILLES
+  const TCHAD_BUBBLES: TchadBubble[] = TOP_VILLES
     .map((v) => {
-      const pos = SENEGAL_BUBBLE_POSITIONS[v.ville];
+      const pos = TCHAD_BUBBLE_POSITIONS[v.ville];
       if (!pos) return null;
       return { ville: v.ville, scans: v.scans, left: pos.left, top: pos.top };
     })
-    .filter((b): b is SenegalBubble => b !== null);
+    .filter((b): b is TchadBubble => b !== null);
 
   // Donut chart center label overlay
   const totalScansDisplay = formatNombre(TOTAL_SCANS);
@@ -737,7 +737,7 @@ export function StatistiquesPage() {
       {/* ============================================================ */}
       <div className="grid gap-4 lg:grid-cols-5">
         {/* Stylized geographic visualization */}
-        <SectionCard title="Carte des scans" subtitle="Répartition géographique au Sénégal" className="lg:col-span-3">
+        <SectionCard title="Carte des scans" subtitle="Répartition géographique au Tchad" className="lg:col-span-3">
           <div
             className="relative overflow-hidden rounded-lg border border-[#E5E7EB]"
             style={{
@@ -751,11 +751,11 @@ export function StatistiquesPage() {
               aria-hidden
             />
             <span className="absolute left-3 top-2 text-[11px] font-medium uppercase tracking-wider text-[#9CA3AF]">
-              Sénégal
+              Tchad
             </span>
 
             {/* Bubbles */}
-            {SENEGAL_BUBBLES.map((b) => {
+            {TCHAD_BUBBLES.map((b) => {
               const size = bubbleSize(b.scans, minScans, maxScans);
               const color = bubbleColor(b.scans);
               return (
@@ -855,7 +855,7 @@ export function StatistiquesPage() {
           </div>
 
           <div className="mt-4">
-            <InsightBox color="#00296F">60% de vos scans viennent de Dakar</InsightBox>
+            <InsightBox color="#00296F">60% de vos scans viennent de N'Djaména</InsightBox>
           </div>
         </SectionCard>
       </div>

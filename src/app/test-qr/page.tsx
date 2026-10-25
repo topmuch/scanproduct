@@ -45,7 +45,7 @@ async function chargerFixtures(): Promise<FixtureTestQr[]> {
         produitId: produitGtin.id,
         barcode: produitGtin.barcode,
         lot: lot.lotNumber ?? lot.reference,
-        serie: "SN-DEMO-001",
+        serie: "TD-DEMO-001",
       });
     }
   } catch (e) {

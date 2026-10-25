@@ -77,7 +77,7 @@ export function PublicFooter() {
               </li>
               <li className="flex items-center gap-2">
                 <MapPin className="h-4 w-4 text-white/50" />
-                Lot n°13, Ouest Foire — Dakar
+                Lot n°13, Ouest Foire — N'Djaména
               </li>
               <li>
                 <Link href="/contact" className="inline-flex items-center gap-1.5 font-medium text-[#34D399] hover:text-white">

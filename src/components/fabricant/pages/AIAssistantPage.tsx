@@ -811,7 +811,7 @@ function DescriptionGeneratorTool() {
               <Input
                 value={form.brand}
                 onChange={(e) => setForm({ ...form, brand: e.target.value })}
-                placeholder="Ex: Baobab Sénégal"
+                placeholder="Ex: Baobab Tchad"
                 className={fieldInputClass}
               />
             </div>

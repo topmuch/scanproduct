@@ -78,8 +78,8 @@ const NAV_ITEMS: {
 ];
 
 const SECTEURS = ["Agroalimentaire", "Boissons", "Boulangerie", "Cosmétiques", "Autre"];
-const REGIONS = ["Dakar", "Thiès", "Saint-Louis", "Kaolack", "Ziguinchor", "Diourbel", "Tambacounda", "Matam", "Kolda", "Sédhiou", "Kaffrine", "Louga", "Fatick"];
-const PAYS = ["Sénégal", "Mali", "Côte d'Ivoire", "Gambie", "Mauritanie", "Burkina Faso", "Guinée", "Bénin", "Togo"];
+const REGIONS = ["N'Djaména", "Thiès", "Saint-Louis", "Kaolack", "Ziguinchor", "Diourbel", "Tambacounda", "Matam", "Kolda", "Sédhiou", "Kaffrine", "Louga", "Fatick"];
+const PAYS = ["Tchad", "Mali", "Côte d'Ivoire", "Gambie", "Mauritanie", "Burkina Faso", "Guinée", "Bénin", "Togo"];
 
 const inputClass =
   "w-full rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-sm text-[#111827] placeholder:text-[#9CA3AF] focus:border-[#00296F] focus:outline-none focus:ring-2 focus:ring-[#00296F]/10 transition-colors";
@@ -527,7 +527,7 @@ function EntrepriseSection() {
           </Field>
 
           <Field label="Numéro d'identification fiscale">
-            <input className={inputClass} placeholder="SN123456789" defaultValue={profile.taxId ?? ""} />
+            <input className={inputClass} placeholder="TD123456789" defaultValue={profile.taxId ?? ""} />
           </Field>
         </div>
       </SectionCard>
@@ -949,17 +949,17 @@ function ContactSection() {
                 <input className={inputClass} placeholder="Avenue Cheikh Anta Diop" />
               </Field>
               <Field label="Ville">
-                <input className={inputClass} placeholder="Dakar" />
+                <input className={inputClass} placeholder="N'Djaména" />
               </Field>
               <Field label="Région">
-                <SelectInput defaultValue="Dakar">
+                <SelectInput defaultValue="N'Djaména">
                   {REGIONS.map((r) => (
                     <option key={r}>{r}</option>
                   ))}
                 </SelectInput>
               </Field>
               <Field label="Pays">
-                <SelectInput defaultValue="Sénégal">
+                <SelectInput defaultValue="Tchad">
                   {PAYS.map((p) => (
                     <option key={p}>{p}</option>
                   ))}

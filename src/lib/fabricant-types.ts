@@ -263,13 +263,13 @@ export const CATEGORIES = [
   { id: "c10", nom: "Plats", icon: "🍜" },
 ];
 
-export const PAYS_CEDEAO = [
-  "Sénégal", "Mali", "Côte d'Ivoire", "Gambie", "Mauritanie",
+export const PAYS_CEMAC = [
+  "Tchad", "Mali", "Côte d'Ivoire", "Gambie", "Mauritanie",
   "Burkina Faso", "Niger", "Guinée", "Guinée-Bissau", "Bénin",
   "Togo", "Sierra Leone", "Liberia", "Cap-Vert", "Ghana",
 ];
 
-// Régions internationales disponibles à la vente (en plus de la CEDEAO).
+// Régions internationales disponibles à la vente (en plus de la CEMAC).
 // Stockées telles quelles dans Lot.salesCountries — pas de validation stricte
 // côté API, ce qui permet d'étendre la liste sans modifier le schéma.
 export const PAYS_INTERNATIONAUX = [
@@ -279,7 +279,7 @@ export const PAYS_INTERNATIONAUX = [
 
 // Liste combinée utilisée par le formulaire de création de LOT pour le
 // sélecteur « Tout sélectionner » et le compteur global.
-export const PAYS_VENTE = [...PAYS_CEDEAO, ...PAYS_INTERNATIONAUX];
+export const PAYS_VENTE = [...PAYS_CEMAC, ...PAYS_INTERNATIONAUX];
 
 export const PLANS = [
   { id: "starter", nom: "Starter", prixMensuel: 10000, prixAnnuel: 100000, produits: "5", qrCodes: "500/mois", statistiques: "Basiques", support: "Email", fonctionnalites: [] as string[], actuel: false },

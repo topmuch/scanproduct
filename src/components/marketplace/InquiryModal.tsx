@@ -46,7 +46,7 @@ import {
 } from "@/components/ui/select";
 
 const COUNTRY_OPTIONS = [
-  { value: "Sénégal", label: "Sénégal" },
+  { value: "Tchad", label: "Tchad" },
   { value: "Côte d'Ivoire", label: "Côte d'Ivoire" },
   { value: "Mali", label: "Mali" },
   { value: "Burkina Faso", label: "Burkina Faso" },
@@ -329,7 +329,7 @@ export function InquiryModal({
                     id="inq-city"
                     value={city}
                     onChange={(e) => setCity(e.target.value)}
-                    placeholder="Ex : Dakar"
+                    placeholder="Ex : N'Djaména"
                     className={INPUT_CLASS}
                     maxLength={80}
                   />

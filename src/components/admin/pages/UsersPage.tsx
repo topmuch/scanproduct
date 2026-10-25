@@ -672,7 +672,7 @@ function AddMakerModal({
   const [contactName, setContactName] = useState(editUser?.contactName ?? "");
   const [email, setEmail] = useState(editUser?.email ?? "");
   const [phone, setPhone] = useState(editUser ? (editUser.phone === "—" ? "" : editUser.phone) : "+221 ");
-  const [address, setAddress] = useState(editUser?.address === "—" ? "" : (editUser?.address ?? "Dakar, Sénégal"));
+  const [address, setAddress] = useState(editUser?.address === "—" ? "" : (editUser?.address ?? "N'Djaména, Tchad"));
   const [saving, setSaving] = useState(false);
   const [plan, setPlan] = useState<Plan>("Starter");
   const [status, setStatus] = useState<UserStatus>("Actif");
@@ -928,7 +928,7 @@ function AddMakerModal({
                 type="text"
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
-                placeholder="Dakar, Sénégal"
+                placeholder="N'Djaména, Tchad"
                 className={inputCls}
               />
             </div>

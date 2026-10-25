@@ -126,7 +126,7 @@ const CONTENT: Record<FeatureKey, FeatureContent> = {
       {
         icon: <ShieldCheck className="h-5 w-5" />,
         title: "Certifications & conformité",
-        text: "Logos et références des certifications (bio, halal, CEDEAO, ISO, etc.) vérifiables.",
+        text: "Logos et références des certifications (bio, halal, CEMAC, ISO, etc.) vérifiables.",
       },
       {
         icon: <Clock className="h-5 w-5" />,
@@ -168,7 +168,7 @@ const CONTENT: Record<FeatureKey, FeatureContent> = {
       {
         icon: <FileCheck2 className="h-5 w-5" />,
         title: "2. Sélection du marché cible",
-        text: "Choisissez le marché de destination (CEDEAO, Union Européenne, USA, etc.) et Prodtrust sélectionne automatiquement les documents requis.",
+        text: "Choisissez le marché de destination (CEMAC, Union Européenne, USA, etc.) et Prodtrust sélectionne automatiquement les documents requis.",
       },
       {
         icon: <Download className="h-5 w-5" />,
@@ -186,7 +186,7 @@ const CONTENT: Record<FeatureKey, FeatureContent> = {
       {
         icon: <Landmark className="h-5 w-5" />,
         title: "Certificat d'origine",
-        text: "Attestation officielle de l'origine du produit, requise pour les accords préférentiels CEDEAO et hors-CEDEAO.",
+        text: "Attestation officielle de l'origine du produit, requise pour les accords préférentiels CEMAC et hors-CEMAC.",
       },
       {
         icon: <FileText className="h-5 w-5" />,
@@ -206,7 +206,7 @@ const CONTENT: Record<FeatureKey, FeatureContent> = {
     ],
     benefits: [
       "Jusqu'à 80 % de temps en moins sur la préparation de chaque dossier d'export",
-      "Documents conformes aux exigences CEDEAO, UE et USA mis à jour automatiquement",
+      "Documents conformes aux exigences CEMAC, UE et USA mis à jour automatiquement",
       "Zéro risque d'erreur de saisie : les données viennent directement de vos lots",
       "Historique complet de vos dossiers pour vos audits et vos relances douanières",
     ],

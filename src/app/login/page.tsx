@@ -64,7 +64,7 @@ export default function LoginPage() {
               gagnez la confiance.
             </h2>
             <p className="mt-4 max-w-md text-[#DCE7F2]">
-              La plateforme sénégalaise de traçabilité par QR codes pour les
+              La plateforme tchadaise de traçabilité par QR codes pour les
               fabricants engagés dans la transparence.
             </p>
 
@@ -83,7 +83,7 @@ export default function LoginPage() {
           </div>
 
           <p className="text-xs text-[#DCE7F2]/70">
-            © {new Date().getFullYear()} Prodtrust — Dakar, Sénégal 🇸🇳
+            © {new Date().getFullYear()} Prodtrust — N'Djaména, Tchad 🇸🇳
           </p>
         </div>
       </div>

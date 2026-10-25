@@ -335,8 +335,8 @@ function whyCards(category: ProductCategory | undefined) {
       bg: "bg-amber-100 text-amber-600",
       title: "Fait main",
       text: isFood
-        ? "Préparé avec soin, à l'atelier, au Sénégal."
-        : "Fabriqué avec soin, pièce par pièce, au Sénégal.",
+        ? "Préparé avec soin, à l'atelier, au Tchad."
+        : "Fabriqué avec soin, pièce par pièce, au Tchad.",
     },
     {
       icon: ShieldCheck,
@@ -1052,7 +1052,7 @@ export function ArtisanProductView({
 
   const bio =
     lot.artisanBio?.trim() ||
-    `${lot.artisanName} fabrique des produits naturels avec passion depuis plusieurs années. Chaque produit est fait main avec des ingrédients soigneusement sélectionnés pour vous offrir le meilleur de la nature sénégalaise.`;
+    `${lot.artisanName} fabrique des produits naturels avec passion depuis plusieurs années. Chaque produit est fait main avec des ingrédients soigneusement sélectionnés pour vous offrir le meilleur de la nature tchadaise.`;
 
   return (
     <main className="relative min-h-screen overflow-x-clip bg-[#FAF6F0] text-stone-900">
@@ -2005,7 +2005,7 @@ export function ArtisanProductView({
               </h3>
               <p className="mx-auto mt-2 max-w-xs text-sm leading-relaxed text-stone-300">
                 Ce produit est authentique et traçable — chaque scan soutient{" "}
-                {lot.artisanName} et l&rsquo;artisanat sénégalais.
+                {lot.artisanName} et l&rsquo;artisanat tchadais.
               </p>
               <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
                 <span className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/10 px-3.5 py-1.5 text-xs font-semibold text-stone-200 backdrop-blur">

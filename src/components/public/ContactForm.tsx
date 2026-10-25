@@ -30,7 +30,7 @@ const CONTACT_INFO = [
   {
     icon: MapPin,
     label: "Adresse",
-    value: "Lot n°13, Ouest Foire — Dakar, Sénégal",
+    value: "Lot n°13, Ouest Foire — N'Djaména, Tchad",
     href: VERIFSCAN_DIRECTIONS_URL,
     color: "#F59E0B",
     bg: "#FFFBEB",

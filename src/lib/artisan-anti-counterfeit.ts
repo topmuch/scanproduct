@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 /**
  * Détection de CONTREFAÇON par analyse géographique des scans.
  *
- * Signal utilisé : le fuseau horaire IANA du visiteur (ex. "Africa/Dakar"),
+ * Signal utilisé : le fuseau horaire IANA du visiteur (ex. "Africa/N'Djaména"),
  * collecté côté client (Intl) — gratuit, fiable, sans API externe ni IP.
  *
  * Règle : si le MÊME QR code est scanné depuis 2 régions distinctes
@@ -21,7 +21,7 @@ import { db } from "@/lib/db";
 const WINDOW_MS = 48 * 60 * 60 * 1000; // comparaison avec les scans < 48 h
 const COOLDOWN_MS = 6 * 60 * 60 * 1000; // pas plus d'une alerte / 6 h
 
-/** Région d'un fuseau IANA : "Africa/Dakar" → "africa". */
+/** Région d'un fuseau IANA : "Africa/N'Djaména" → "africa". */
 export function regionOf(timezone: string): string {
   return (timezone.split("/")[0] || timezone).toLowerCase();
 }

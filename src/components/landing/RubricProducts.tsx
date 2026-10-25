@@ -11,7 +11,7 @@ import { PopularProductsGrid, type PopularProductItem } from "./PopularProductsG
  *
  * Rubric types:
  *   - "authentiques" : products with transparencyScore >= 71 (levels or+)
- *   - "local"        : products from manufacturers based in Sénégal
+ *   - "local"        : products from manufacturers based in Tchad
  *   - "export"       : products marked isExport = true
  *
  * Each rubric has its own title/subtitle/sectionId so the grid header is
@@ -37,10 +37,10 @@ const RUBRIC_META: Record<RubricType, RubricMeta> = {
   },
   local: {
     title: "Soutenez nos produits",
-    subtitle: "Fabriqués par nos producteurs locaux au Sénégal — savoir-faire d'ici",
+    subtitle: "Fabriqués par nos producteurs locaux au Tchad — savoir-faire d'ici",
     sectionId: "produits-locaux",
     emptyMessage:
-      "Aucun produit local pour le moment. Les produits de nos fabricants sénégalais apparaîtront ici.",
+      "Aucun produit local pour le moment. Les produits de nos fabricants tchadais apparaîtront ici.",
   },
   export: {
     title: "Certifié pour l'export",
@@ -113,8 +113,8 @@ async function fetchAuthentiques(): Promise<PopularProductItem[]> {
 }
 
 async function fetchLocal(): Promise<PopularProductItem[]> {
-  // Products from manufacturers based in Sénégal.
-  // We query products whose fabricant.country contains "Sénégal" or "Senegal".
+  // Products from manufacturers based in Tchad.
+  // We query products whose fabricant.country contains "Tchad" or "Tchad".
   const products = await db.product.findMany({
     where: {
       isPublic: true,

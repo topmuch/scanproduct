@@ -332,7 +332,7 @@ export const INDUSTRIES: Industry[] = [
     gradient: "from-[#FBBF24] to-[#CA8A04]",
     accent: "#CA8A04",
     accentSoft: "rgba(202,138,4,0.08)",
-    features: ["Contrôle qualité", "Mycotoxines", "Export CEDEAO"],
+    features: ["Contrôle qualité", "Mycotoxines", "Export CEMAC"],
     challenges: [
       {
         emoji: "🍄",
@@ -346,7 +346,7 @@ export const INDUSTRIES: Industry[] = [
       },
       {
         emoji: "🌍",
-        title: "Conformité CEDEAO & UE",
+        title: "Conformité CEMAC & UE",
         text: "Documents phytosanitaires et certificats d'origine requis.",
       },
     ],

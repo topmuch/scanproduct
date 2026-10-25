@@ -21,7 +21,7 @@ const SECTIONS = [
   { id: "destinataires", title: "Destinataires des données" },
   { id: "duree", title: "Durée de conservation" },
   { id: "securite", title: "Sécurité des données" },
-  { id: "transfert", title: "Transferts hors Sénégal" },
+  { id: "transfert", title: "Transferts hors Tchad" },
   { id: "droits", title: "Vos droits" },
   { id: "cookies", title: "Cookies" },
   { id: "mineurs", title: "Mineurs" },
@@ -47,9 +47,9 @@ export default function PolitiqueConfidentialitePage() {
         </p>
         <ul className="ml-5 list-disc space-y-2">
           <li>
-            <strong>Prodtrust</strong>, société de droit sénégalais ;
+            <strong>Prodtrust</strong>, société de droit tchadais ;
           </li>
-          <li>Siège social : Dakar, Sénégal ;</li>
+          <li>Siège social : N'Djaména, Tchad ;</li>
           <li>
             Email :{" "}
             <a
@@ -167,7 +167,7 @@ export default function PolitiqueConfidentialitePage() {
       <LegalArticle id="base-legale" index={4} title="Base légale">
         <p>
           Le traitement des données personnelles repose sur les bases
-          légales suivantes, conformément à la loi sénégalaise n° 2008-12
+          légales suivantes, conformément à la loi tchadaise n° 2008-12
           du 25 janvier 2008 et aux principes directeurs inspirés du
           RGPD européen :
         </p>
@@ -283,7 +283,7 @@ export default function PolitiqueConfidentialitePage() {
       <LegalArticle
         id="transfert"
         index={8}
-        title="Transferts hors Sénégal"
+        title="Transferts hors Tchad"
       >
         <p>
           Les données personnelles collectées par Prodtrust sont
@@ -349,7 +349,7 @@ export default function PolitiqueConfidentialitePage() {
         <p>
           Vous pouvez également introduire une réclamation auprès de
           l&apos;autorité de protection des données compétente au
-          Sénégal.
+          Tchad.
         </p>
       </LegalArticle>
 
@@ -412,7 +412,7 @@ export default function PolitiqueConfidentialitePage() {
               +221 77 382 18 22
             </a>
           </li>
-          <li>Par courrier : Dakar, Sénégal</li>
+          <li>Par courrier : N'Djaména, Tchad</li>
         </ul>
       </LegalArticle>
     </LegalLayout>

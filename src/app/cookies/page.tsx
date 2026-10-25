@@ -315,7 +315,7 @@ export default function CookiesPage() {
               +221 77 382 18 22
             </a>
           </li>
-          <li>Par courrier : Dakar, Sénégal</li>
+          <li>Par courrier : N'Djaména, Tchad</li>
         </ul>
       </LegalArticle>
     </LegalLayout>

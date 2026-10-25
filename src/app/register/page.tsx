@@ -147,7 +147,7 @@ export default function RegisterPage() {
               {[
                 "Essai gratuit de 14 jours — sans carte bancaire",
                 "Génération illimitée de QR codes sur le plan Pro",
-                "Support local à Dakar, en français",
+                "Support local à N'Djaména, en français",
               ].map((feat) => (
                 <li key={feat} className="flex items-center gap-3 text-sm">
                   <CheckCircle2 className="h-5 w-5 text-white" />
@@ -158,7 +158,7 @@ export default function RegisterPage() {
           </div>
 
           <p className="text-xs text-[#D1FAE5]/70">
-            © {new Date().getFullYear()} Prodtrust — Dakar, Sénégal 🇸🇳
+            © {new Date().getFullYear()} Prodtrust — N'Djaména, Tchad 🇸🇳
           </p>
         </div>
       </div>
@@ -231,7 +231,7 @@ export default function RegisterPage() {
                   label="Ville"
                   value={form.city}
                   onChange={(v) => update("city", v)}
-                  placeholder="Dakar"
+                  placeholder="N'Djaména"
                 />
               </div>
 

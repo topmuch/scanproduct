@@ -3,14 +3,14 @@
  *
  * ⚠️ Contexte bug production (newvisioncargo.pro) : le bouton « Commander sur
  * WhatsApp » affichait « Ce destinataire n'est pas sur WhatsApp » alors que
- * le numéro était « bien renseigné ». Cause : un numéro sénégalais saisi au
+ * le numéro était « bien renseigné ». Cause : un numéro tchadais saisi au
  * format local (ex. « 78 135 13 94 ») ou avec des zéros parasites après
  * l'indicatif (ex. « +221 0 78 ... ») finit dans le lien wa.me sous une
  * forme que WhatsApp ne reconnaît pas. Ces helpers garantissent un numéro
  * ALWAYS en format international complet : 221 + 9 chiffres, sans 0.
  */
 
-/** Indicatif par défaut (marché : Sénégal). */
+/** Indicatif par défaut (marché : Tchad). */
 export const DEFAULT_CC = "221";
 
 /**
@@ -39,7 +39,7 @@ export function toWhatsAppDigits(phone: string, cc: string = DEFAULT_CC): string
     return cc + digits.slice(cc.length).replace(/^0+/, "");
   }
 
-  // Format local « 0 » + 9 chiffres (marché sénégalais, ex. « 0781351394 »)
+  // Format local « 0 » + 9 chiffres (marché tchadais, ex. « 0781351394 »)
   // — testé AVANT la branche « numéro long = autre indicatif » car un
   // numéro de 10 chiffres commençant par 0 serait sinon laissé tel quel.
   if (digits.startsWith("0") && digits.length === 10) {
@@ -50,13 +50,13 @@ export function toWhatsAppDigits(phone: string, cc: string = DEFAULT_CC): string
   // un autre pays (ex. +33 / +224) → respecté tel quel.
   if (digits.length > 9) return digits;
 
-  // Format local sénégalais : « 0 » optionnel + 9 chiffres.
+  // Format local tchadais : « 0 » optionnel + 9 chiffres.
   if (digits.startsWith("0")) digits = digits.slice(1);
   return cc + digits;
 }
 
 /**
- * Vérification de vraisemblance Sénégal : 12 chiffres, indicatif 221,
+ * Vérification de vraisemblance Tchad : 12 chiffres, indicatif 221,
  * mobile commençant par 7 (70/75/76/77/78). Non bloquant — sert uniquement
  * à afficher un avertissement à l'artisan.
  */
@@ -67,7 +67,7 @@ export function isLikelyLocalMobile(intl: string, cc: string = DEFAULT_CC): bool
 
 /**
  * Formatage lisible : "221781351394" → "+221 78 135 13 94".
- * Groupes Sénégal (2-3-2-2) ; repli générique en tranches de 3.
+ * Groupes Tchad (2-3-2-2) ; repli générique en tranches de 3.
  */
 export function displayIntlPhone(intl: string): string {
   if (!intl) return "";

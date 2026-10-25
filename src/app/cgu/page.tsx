@@ -323,7 +323,7 @@ export default function CGUPage() {
         title="Droit applicable et litiges"
       >
         <p>
-          Les présentes CGU sont régies par le droit sénégalais. En cas
+          Les présentes CGU sont régies par le droit tchadais. En cas
           de litige relatif à leur interprétation ou à leur exécution,
           les parties s&apos;efforceront de résoudre le différend à
           l&apos;amiable.
@@ -331,7 +331,7 @@ export default function CGUPage() {
         <p>
           À défaut d&apos;accord amiable dans un délai de 30 jours, le
           litige sera soumis à la compétence exclusive des tribunaux de
-          Dakar (Sénégal).
+          N'Djaména (Tchad).
         </p>
       </LegalArticle>
 
@@ -359,7 +359,7 @@ export default function CGUPage() {
               +221 77 382 18 22
             </a>
           </li>
-          <li>Par courrier : Dakar, Sénégal</li>
+          <li>Par courrier : N'Djaména, Tchad</li>
         </ul>
       </LegalArticle>
     </LegalLayout>

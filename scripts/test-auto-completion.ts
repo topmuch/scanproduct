@@ -262,8 +262,8 @@ async function main() {
       expiryDate: "2027-03-01",
       ingredients: "Karité test",
       weight: "100g",
-      manufacturingLocation: "Dakar",
-      salesCountries: ["Sénégal"],
+      manufacturingLocation: "N'Djaména",
+      salesCountries: ["Tchad"],
       quantity: 1,
     }),
   });

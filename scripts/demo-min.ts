@@ -61,7 +61,7 @@ async function main() {
           productData: {
             productName: "Beurre de karité pur",
             contenance: "150 g",
-            ingredients: "100 % beurre de karité brut du Sénégal",
+            ingredients: "100 % beurre de karité brut du Tchad",
             manufacturingDate: "2026-09-01",
             expirationDate: "2027-09-01",
             productPrice: "2 500 FCFA",

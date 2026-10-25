@@ -37,7 +37,7 @@ export async function getSiteUrl(): Promise<string> {
 
 /**
  * hreflang target locales — French-speaking markets:
- * France, Belgique, Suisse, Canada (+ Sénégal, marchés d'Afrique de l'Ouest).
+ * France, Belgique, Suisse, Canada (+ Tchad, marchés d'Afrique de l'Ouest).
  *
  * The site is a single French version, so every locale points to the SAME
  * URL (self-referencing hreflang — the standard pattern for one-language
@@ -51,7 +51,7 @@ export const SEO_LOCALES = [
   "fr-BE",
   "fr-CH",
   "fr-CA",
-  "fr-SN",
+  "fr-TD",
 ] as const;
 
 /**

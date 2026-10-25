@@ -96,7 +96,7 @@ export const SITE_URL = DEFAULT_SITE_URL;
 const ICON_V = "?v=7";
 
 /**
- * Mots-clés SEO — ciblage francophone : Sénégal / Afrique de l'Ouest,
+ * Mots-clés SEO — ciblage francophone : Tchad / Afrique de l'Ouest,
  * Europe francophone (France, Belgique, Suisse) et Canada/Québec.
  * Meta `keywords` (poids faible chez Google, utile Bing/autres) + reprise
  * dans les descriptions et JSON-LD (poids fort).
@@ -155,10 +155,10 @@ export const SITE_KEYWORDS = [
   "produits bio",
   "nutrition",
   // Marchés cibles
-  "Sénégal",
-  "Dakar",
+  "Tchad",
+  "N'Djaména",
   "Afrique de l'Ouest",
-  "CEDEAO",
+  "CEMAC",
   "Afrique francophone",
   "France",
   "Belgique",
@@ -210,7 +210,7 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     description:
       seoDescription ||
-      "Prodtrust est le passeport numérique de vos produits alimentaires et cosmétiques : un QR code unique qui garantit l'authenticité, assure la traçabilité du lot et protège votre marque contre la contrefaçon et la fraude. Sénégal, Afrique de l'Ouest, Europe francophone et Canada.",
+      "Prodtrust est le passeport numérique de vos produits alimentaires et cosmétiques : un QR code unique qui garantit l'authenticité, assure la traçabilité du lot et protège votre marque contre la contrefaçon et la fraude. Tchad, Afrique de l'Ouest, Europe francophone et Canada.",
     keywords: seoKeywords.length > 0 ? seoKeywords : SITE_KEYWORDS,
     authors: [{ name: "Prodtrust" }],
     creator: "Prodtrust",
@@ -255,7 +255,7 @@ export async function generateMetadata(): Promise<Metadata> {
       siteName,
       type: "website",
       locale: "fr_FR",
-      alternateLocale: ["fr_SN", "fr_BE", "fr_CH", "fr_CA"],
+      alternateLocale: ["fr_TD", "fr_BE", "fr_CH", "fr_CA"],
       images: [
         {
           url: ogImageUrl,
@@ -301,7 +301,7 @@ async function JsonLd() {
   const phone =
     contact[SETTING_KEYS.contactPhone]?.trim() || DEFAULT_CONTACT_PHONE;
   const address = contact[SETTING_KEYS.siteAddress]?.trim() ||
-    "Lot n°13, Ouest Foire, Dakar, Sénégal";
+    "Lot n°13, Ouest Foire, N'Djaména, Tchad";
 
   const organization = {
     "@context": "https://schema.org",
@@ -317,8 +317,8 @@ async function JsonLd() {
     address: {
       "@type": "PostalAddress",
       streetAddress: address,
-      addressLocality: "Dakar",
-      addressCountry: "SN",
+      addressLocality: "N'Djaména",
+      addressCountry: "TD",
     },
     contactPoint: [
       {
@@ -330,7 +330,7 @@ async function JsonLd() {
       },
     ],
     areaServed: [
-      { "@type": "Country", name: "Sénégal" },
+      { "@type": "Country", name: "Tchad" },
       { "@type": "Country", name: "Afrique de l'Ouest" },
       { "@type": "Country", name: "France" },
       { "@type": "Country", name: "Belgique" },

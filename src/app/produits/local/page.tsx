@@ -9,11 +9,11 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Soutenez nos produits — Prodtrust",
   description:
-    "Découvrez les produits fabriqués par nos producteurs locaux au Sénégal. Soutenez le savoir-faire d'ici et la traçabilité locale.",
+    "Découvrez les produits fabriqués par nos producteurs locaux au Tchad. Soutenez le savoir-faire d'ici et la traçabilité locale.",
   openGraph: {
     title: "Soutenez nos produits — Prodtrust",
     description:
-      "Producteurs locaux & savoir-faire d'ici. Soutenez nos fabricants sénégalais.",
+      "Producteurs locaux & savoir-faire d'ici. Soutenez nos fabricants tchadais.",
     type: "website",
   },
 };
@@ -21,7 +21,7 @@ export const metadata: Metadata = {
 const HERO_CONFIG: RubricConfig = {
   title: "Soutenez nos produits",
   subtitle:
-    "Producteurs locaux & savoir-faire d'ici. Ces produits sont fabriqués par nos fabricants basés au Sénégal — soutenez l'économie locale et la traçabilité de proximité.",
+    "Producteurs locaux & savoir-faire d'ici. Ces produits sont fabriqués par nos fabricants basés au Tchad — soutenez l'économie locale et la traçabilité de proximité.",
   emoji: "🤝",
   gradient: "bg-gradient-to-br from-[#FCE4EC] via-[#F8BBD0] to-[#F48FB1]",
   accentText: "text-[#880E4F]",

@@ -5,7 +5,7 @@ import Link from "next/link";
  *
  * Each banner links to a dedicated rubric page:
  *   - Authentique → /produits/authentiques  (high transparency products)
- *   - Local       → /produits/local         (Senegalese/local manufacturers)
+ *   - Local       → /produits/local         (Tchadese/local manufacturers)
  *   - Export      → /produits/export         (export-ready products)
  *
  * Style: Nest grocery 3-banner row — soft pastel background + emoji + CTA.

@@ -40,7 +40,7 @@ const ARTICLES: SeedPost[] = [
       "Guide pratique d'export vers l'UE : réglementation sanitaire, certificats phytosanitaires, étiquetage, TRACES, TVA. Comment Prodtrust facilite la conformité et la traçabilité de vos lots.",
     seoKeywords:
       "export union européenne, réglementation UE, certificat phytosanitaire, Global GAP, traçabilité alimentaire, export Afrique vers Europe, étiquetage UE, TRACES",
-    content: `L'Union européenne est le premier marché d'importation de produits alimentaires et cosmétiques en provenance d'Afrique de l'Ouest. Mangues du Sénégal, beurre de karité du Burkina Faso, cacao de Côte d'Ivoire, jus de bissap : chaque année, des milliers de conteneurs franchissent les ports de Rotterdam, Anvers ou Marseille. Mais l'UE est aussi l'un des marchés les plus réglementés au monde. Ce guide détaille les étapes concrètes pour exporter vos produits vers l'Union européenne, sans mauvaise surprise.
+    content: `L'Union européenne est le premier marché d'importation de produits alimentaires et cosmétiques en provenance d'Afrique de l'Ouest. Mangues du Tchad, beurre de karité du Burkina Faso, cacao de Côte d'Ivoire, jus de bissap : chaque année, des milliers de conteneurs franchissent les ports de Rotterdam, Anvers ou Marseille. Mais l'UE est aussi l'un des marchés les plus réglementés au monde. Ce guide détaille les étapes concrètes pour exporter vos produits vers l'Union européenne, sans mauvaise surprise.
 
 ## 1. Comprendre le cadre réglementaire de l'UE
 

@@ -101,7 +101,7 @@ export function PhoneMockup() {
             {/* Info rows */}
             <div className="mx-4 mt-3 space-y-2">
               {[
-                { label: "Origine", value: "Mbour, Sénégal 🇸🇳" },
+                { label: "Origine", value: "Mbour, Tchad 🇸🇳" },
                 { label: "Fabrication", value: "12 fév. 2026" },
                 { label: "À consommer avant", value: "12 août 2026" },
               ].map((row) => (
@@ -124,7 +124,7 @@ export function PhoneMockup() {
                 <span className="ml-1 text-[10px] font-semibold text-[#6B7280]">4.9</span>
               </div>
               <span className="flex items-center gap-1 text-[10px] text-[#6B7280]">
-                <MapPin className="h-3 w-3" /> Dakar
+                <MapPin className="h-3 w-3" /> N'Djaména
               </span>
             </div>
 

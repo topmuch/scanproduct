@@ -142,7 +142,7 @@ async function main() {
   console.log("3. PUT général + SEO → persistance réelle");
   const SEO_TITLE = "VerifScan — Passeport numérique produit | Traçabilité & anti-contrefaçon QR";
   const SEO_DESC =
-    "Le passeport numérique de vos produits : QR code unique, authenticité garantie, traçabilité complète. France, Belgique, Suisse, Canada, Sénégal.";
+    "Le passeport numérique de vos produits : QR code unique, authenticité garantie, traçabilité complète. France, Belgique, Suisse, Canada, Tchad.";
   const SEO_KEYWORDS =
     "passeport numérique produit, QR code traçabilité, anti-contrefaçon France, traçabilité Belgique, cosmétique authentique Suisse, produit local Canada";
   const GSC_TOKEN = "test-gsc-token-12345";
@@ -153,9 +153,9 @@ async function main() {
       siteUrl: "https://verifscan.com",
       contactEmail: "contact@verifscan.com",
       contactPhone: "+221 78 382 18 22",
-      timezone: "Africa/Dakar",
+      timezone: "Africa/N'Djaména",
       defaultLanguage: "fr",
-      siteAddress: "Lot n°13, Ouest Foire, Dakar, Sénégal",
+      siteAddress: "Lot n°13, Ouest Foire, N'Djaména, Tchad",
       seoTitle: SEO_TITLE,
       seoDescription: SEO_DESC,
       seoKeywords: SEO_KEYWORDS,

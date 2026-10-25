@@ -495,7 +495,7 @@ function CreateTicketModal({
                 type="text"
                 value={company}
                 onChange={(e) => setCompany(e.target.value)}
-                placeholder="Ex : Jus de Bissap Sénégal"
+                placeholder="Ex : Jus de Bissap Tchad"
                 className={inputClass}
               />
             </div>

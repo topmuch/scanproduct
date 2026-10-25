@@ -87,7 +87,7 @@ export default async function MetierPage({ params }: Props) {
           name: "Prodtrust",
           url: SITE_URL,
         },
-        areaServed: ["SN", "FR", "BE", "CH", "CA", "CI", "ML", "BF"],
+        areaServed: ["TD", "FR", "BE", "CH", "CA", "CI", "ML", "BF"],
       },
     ],
   };
@@ -231,7 +231,7 @@ export default async function MetierPage({ params }: Props) {
               Prêt à digitaliser votre métier ?
             </h2>
             <p className="max-w-md text-sm text-[#6B7280]">
-              Rejoignez les fabricants sénégalais qui font confiance à
+              Rejoignez les fabricants tchadais qui font confiance à
               Prodtrust pour la traçabilité de leurs produits.
             </p>
             <a

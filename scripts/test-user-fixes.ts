@@ -145,7 +145,7 @@ const htmlA = await pageA.text();
 check("page /a/ 200", pageA.status === 200);
 check("photoUrl présent dans le HTML", htmlA.includes(photoUrl));
 check("section « Autres produits » ABSENTE (un seul produit)", !htmlA.includes("Autres produits de"));
-check("nouveau design : hero plein écran présent", htmlA.includes("Création artisanale du Sénégal"));
+check("nouveau design : hero plein écran présent", htmlA.includes("Création artisanale du Tchad"));
 check("nouveau design : carte artisan vérifié", htmlA.includes("Artisan vérifié par VerifScan"));
 
 console.log("\n═══ TEST 2 : 2 produits différents → section présente, dédoublonnée ═══");

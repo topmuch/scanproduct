@@ -31,7 +31,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  PAYS_CEDEAO,
+  PAYS_CEMAC,
   PAYS_INTERNATIONAUX,
   PAYS_VENTE,
   formatNombre,
@@ -61,7 +61,7 @@ const STEPS: { id: StepId; label: string; shortLabel: string }[] = [
   { id: "qr", label: "QR codes", shortLabel: "QR Codes" },
 ];
 
-const ALL_PAYS = new Set<string>([...PAYS_CEDEAO, ...PAYS_INTERNATIONAUX]);
+const ALL_PAYS = new Set<string>([...PAYS_CEMAC, ...PAYS_INTERNATIONAUX]);
 
 // Direction-aware transition (same feel as the product wizard)
 const stepVariants = {
@@ -110,7 +110,7 @@ export function LotCreatePage() {
   const [lieuTrans, setLieuTrans] = useState("");
   const [lieuIdentique, setLieuIdentique] = useState(false);
   const [paysVente, setPaysVente] = useState<Set<string>>(
-    new Set(["Sénégal", "Mali", "Côte d'Ivoire"])
+    new Set(["Tchad", "Mali", "Côte d'Ivoire"])
   );
   const [notes, setNotes] = useState("");
   const [prefilledKeys, setPrefilledKeys] = useState<string[]>([]);
@@ -229,7 +229,7 @@ export function LotCreatePage() {
     setLieuFab("");
     setLieuTrans("");
     setLieuIdentique(false);
-    setPaysVente(new Set(["Sénégal", "Mali", "Côte d'Ivoire"]));
+    setPaysVente(new Set(["Tchad", "Mali", "Côte d'Ivoire"]));
     setNotes("");
     setPrefilledKeys([]);
     setQrCount(100);
@@ -572,7 +572,7 @@ export function LotCreatePage() {
                     <input
                       value={lieuFab}
                       onChange={(e) => setLieuFab(e.target.value)}
-                      placeholder="Dakar, Sénégal"
+                      placeholder="N'Djaména, Tchad"
                       className="h-10 w-full rounded-lg border border-[#E5E7EB] bg-white px-3 text-[14px] focus:border-[#00296F] focus:outline-none"
                     />
                   </Field>
@@ -581,7 +581,7 @@ export function LotCreatePage() {
                       value={lieuIdentique ? lieuFab : lieuTrans}
                       onChange={(e) => setLieuTrans(e.target.value)}
                       disabled={lieuIdentique}
-                      placeholder="Dakar, Sénégal"
+                      placeholder="N'Djaména, Tchad"
                       className="h-10 w-full rounded-lg border border-[#E5E7EB] bg-white px-3 text-[14px] focus:border-[#00296F] focus:outline-none disabled:bg-[#F9FAFB] disabled:text-[#9CA3AF]"
                     />
                   </Field>
@@ -621,7 +621,7 @@ export function LotCreatePage() {
                   </div>
                   <div className="space-y-3">
                     {[
-                      { label: "CEDEAO (Afrique de l'Ouest)", pays: PAYS_CEDEAO },
+                      { label: "CEMAC (Afrique de l'Ouest)", pays: PAYS_CEMAC },
                       { label: "International", pays: PAYS_INTERNATIONAUX },
                     ].map((group) => (
                       <div key={group.label}>

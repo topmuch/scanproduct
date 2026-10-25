@@ -119,7 +119,7 @@ export default function ArtisanLoginPage() {
               </div>
 
               <p className="text-xs text-[#DCE7F2]/70">
-                © {new Date().getFullYear()} Prodtrust — Dakar, Sénégal
+                © {new Date().getFullYear()} Prodtrust — N'Djaména, Tchad
               </p>
             </div>
           </div>

@@ -120,7 +120,7 @@ export function requireArtisanAuth(request: Request): ArtisanTokenPayload {
 }
 
 /**
- * Normalise un numéro de téléphone sénégalais / international pour en faire
+ * Normalise un numéro de téléphone tchadais / international pour en faire
  * un identifiant STABLE : supprime espaces, tirets, parenthèses et points.
  * Les opérateurs du spec (« 77 123 45 67 », « +221771234567 », « 771234567 »)
  * doivent matcher le MÊME compte — on garde les chiffres et un éventuel
@@ -131,7 +131,7 @@ export function normalizePhone(raw: string): string {
   const trimmed = (raw || "").trim();
   const plus = trimmed.startsWith("+");
   let digits = trimmed.replace(/[\s.\-()+]/g, "");
-  // Indicatif Sénégal retiré pour la comparaison d'identité
+  // Indicatif Tchad retiré pour la comparaison d'identité
   if (digits.startsWith("00221")) digits = digits.slice(5);
   else if (digits.startsWith("221") && digits.length > 9) digits = digits.slice(3);
   return (plus ? "+" : "") + digits;

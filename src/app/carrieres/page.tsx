@@ -45,7 +45,7 @@ const VALUES = [
   {
     icon: Globe2,
     title: "Ancrage local",
-    text: "Basés à Dakar, nous concevons un produit pensé pour les réalités de la CEDEAO, avec une vraie obsession : l'impact terrain.",
+    text: "Basés à N'Djaména, nous concevons un produit pensé pour les réalités de la CEMAC, avec une vraie obsession : l'impact terrain.",
   },
   {
     icon: Sprout,
@@ -72,8 +72,8 @@ const BENEFITS = [
   },
   {
     icon: MapPin,
-    title: "Ancrage à Dakar",
-    text: "Bureau à Dakar, à proximité des fabricants partenaires, avec des déplacements terrain réguliers en CEDEAO.",
+    title: "Ancrage à N'Djaména",
+    text: "Bureau à N'Djaména, à proximité des fabricants partenaires, avec des déplacements terrain réguliers en CEMAC.",
   },
 ];
 
@@ -81,7 +81,7 @@ const POSITIONS = [
   {
     team: "Engineering",
     title: "Développeur(se) Full-Stack Next.js",
-    location: "Dakar, Sénégal",
+    location: "N'Djaména, Tchad",
     type: "CDI",
     summary:
       "Construire les nouvelles fonctionnalités de la plateforme Prodtrust, en lien direct avec les retours terrain des fabricants.",
@@ -89,7 +89,7 @@ const POSITIONS = [
   {
     team: "Product",
     title: "Product Manager — Agro-industrie",
-    location: "Dakar, Sénégal",
+    location: "N'Djaména, Tchad",
     type: "CDI",
     summary:
       "Piloter la roadmap produit, prioriser les chantiers et transformer les besoins du terrain en spécifications claires.",
@@ -97,7 +97,7 @@ const POSITIONS = [
   {
     team: "Field",
     title: "Chargé(e) de partenariats fabricants",
-    location: "Dakar + déplacements CEDEAO",
+    location: "N'Djaména + déplacements CEMAC",
     type: "CDI",
     summary:
       "Identifier, convaincre et accompagner les transformateurs agro-alimentaires dans leur adoption de Prodtrust.",

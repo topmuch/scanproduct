@@ -18,7 +18,7 @@ const TESTIMONIALS: Testimonial[] = [
     initials: "MD",
     avatarBg: "bg-[#00296F]",
     name: "Marième Diop",
-    title: "Fondatrice — Jus de Bissap Sénégal",
+    title: "Fondatrice — Jus de Bissap Tchad",
     quote:
       "Grâce à Prodtrust, nos ventes ont augmenté de 35% en 3 mois ! Nos clients scannent le QR code et ont immédiatement confiance. C'est un vrai game-changer pour les petits producteurs comme nous.",
   },
@@ -28,7 +28,7 @@ const TESTIMONIALS: Testimonial[] = [
     name: "Ibrahima Ndiaye",
     title: "Directeur Général — Térange Foods",
     quote:
-      "Nous exportons maintenant vers 4 pays de la CEDEAO sans aucune difficulté douanière. Les documents générés par Prodtrust sont acceptés partout. Un outil indispensable pour tout agro-industriel sérieux.",
+      "Nous exportons maintenant vers 4 pays de la CEMAC sans aucune difficulté douanière. Les documents générés par Prodtrust sont acceptés partout. Un outil indispensable pour tout agro-industriel sérieux.",
   },
   {
     initials: "AS",
@@ -44,7 +44,7 @@ const FOOTER_STATS = [
   { value: 250, suffix: "+", label: "Fabricants actifs" },
   { value: 4.9, decimals: 1, suffix: "/5", label: "Note moyenne" },
   { value: 12458, label: "Scans / semaine" },
-  { value: 4, label: "pays CEDEAO couverts", prefix: "" },
+  { value: 4, label: "pays CEMAC couverts", prefix: "" },
 ];
 
 export function Testimonials() {

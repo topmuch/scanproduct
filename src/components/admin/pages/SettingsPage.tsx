@@ -716,14 +716,14 @@ function GeneralSection() {
           </Field>
           <Field label="Fuseau horaire">
             <Select
-              value={values.timezone || "Africa/Dakar"}
+              value={values.timezone || "Africa/N'Djaména"}
               onValueChange={(v) => setField("timezone", v)}
             >
               <SelectTrigger className={selectTriggerClass}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Africa/Dakar">Africa/Dakar (GMT)</SelectItem>
+                <SelectItem value="Africa/N'Djaména">Africa/N'Djaména (GMT)</SelectItem>
                 <SelectItem value="Europe/Paris">Europe/Paris (CET)</SelectItem>
                 <SelectItem value="Europe/Brussels">Europe/Brussels (CET)</SelectItem>
                 <SelectItem value="Europe/Zurich">Europe/Zurich (CET)</SelectItem>
@@ -977,7 +977,7 @@ function SeoSection() {
 
         <Field
           label="Mots-clés"
-          hint="Séparés par des virgules. Marchés visés : Sénégal, France, Belgique, Suisse, Canada (ex : traçabilité QR code, anti-contrefaçon France)."
+          hint="Séparés par des virgules. Marchés visés : Tchad, France, Belgique, Suisse, Canada (ex : traçabilité QR code, anti-contrefaçon France)."
         >
           <textarea
             className={textareaClass}
@@ -1079,9 +1079,9 @@ function SeoSection() {
               </p>
               <p className="mt-1 text-[#3B82F6]">
                 Prodtrust déclare automatiquement les balises hreflang
-                (fr-FR, fr-BE, fr-CH, fr-CA, fr-SN) et les données structurées
+                (fr-FR, fr-BE, fr-CH, fr-CA, fr-TD) et les données structurées
                 zoneServed pour la France, la Belgique, la Suisse, le Canada et
-                le Sénégal. Déclarez le domaine dans la Google Search Console et
+                le Tchad. Déclarez le domaine dans la Google Search Console et
                 soumettez https://{siteUrl.replace(/^https?:\/\//, "")}
                 /sitemap.xml pour démarrer l'indexation.
               </p>

@@ -23,7 +23,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
   title: "À propos — Prodtrust",
   description:
-    "Prodtrust est né au Sénégal pour offrir aux fabricants ouest-africains un passeport numérique qui garantit l'authenticité, la traçabilité et la transparence de leurs produits.",
+    "Prodtrust est né au Tchad pour offrir aux fabricants ouest-africains un passeport numérique qui garantit l'authenticité, la traçabilité et la transparence de leurs produits.",
   alternates: await buildAlternates("/a-propos"),
   openGraph: {
     title: "À propos — Prodtrust",
@@ -56,7 +56,7 @@ const VALUES = [
   {
     icon: Heart,
     title: "Proximité",
-    text: "Conçu à Dakar pour les réalités ouest-africaines : nous parlons la langue des fabricants, des distributeurs et des consommateurs de la région.",
+    text: "Conçu à N'Djaména pour les réalités ouest-africaines : nous parlons la langue des fabricants, des distributeurs et des consommateurs de la région.",
     color: "#F59E0B",
   },
   {
@@ -68,14 +68,14 @@ const VALUES = [
   {
     icon: Sprout,
     title: "Impact",
-    text: "Nous voulons que chaque scan renforce le revenu du producteur, la confiance du consommateur et la souveraineté alimentaire de la CEDEAO.",
+    text: "Nous voulons que chaque scan renforce le revenu du producteur, la confiance du consommateur et la souveraineté alimentaire de la CEMAC.",
     color: "#10B981",
   },
 ];
 
 const STATS = [
-  { value: "2024", label: "Fondée à Dakar", icon: MapPin },
-  { value: "CEDEAO", label: "Zone d'action prioritaire", icon: Globe2 },
+  { value: "2024", label: "Fondée à N'Djaména", icon: MapPin },
+  { value: "CEMAC", label: "Zone d'action prioritaire", icon: Globe2 },
   { value: "100%", label: "Passeports vérifiables", icon: ShieldCheck },
   { value: "1 scan", label: "Pour révéler toute l'histoire", icon: QrCode },
 ];
@@ -84,7 +84,7 @@ const TIMELINE = [
   {
     year: "2024",
     title: "L'idée",
-    text: "Plusieurs producteurs sénégalais de jus locaux et de céréales transformées témoignent d'un fléau : la contrefaçon détruit leurs marges et la confiance des consommateurs. L'idée d'un passeport numérique QR naît d'une discussion à Dakar.",
+    text: "Plusieurs producteurs tchadais de jus locaux et de céréales transformées témoignent d'un fléau : la contrefaçon détruit leurs marges et la confiance des consommateurs. L'idée d'un passeport numérique QR naît d'une discussion à N'Djaména.",
   },
   {
     year: "2024",
@@ -94,12 +94,12 @@ const TIMELINE = [
   {
     year: "2025",
     title: "Premiers partenaires",
-    text: "Plusieurs transformateurs agro-alimentaires du Sénégal adoptent Prodtrust. Le catalogue public commence à croître et les premiers scans consommateurs sont enregistrés.",
+    text: "Plusieurs transformateurs agro-alimentaires du Tchad adoptent Prodtrust. Le catalogue public commence à croître et les premiers scans consommateurs sont enregistrés.",
   },
   {
     year: "2026",
     title: "L'expansion",
-    text: "Extension vers les marchés de la CEDEAO. Prodtrust devient une référence de transparence pour l'agro-industrie ouest-africaine.",
+    text: "Extension vers les marchés de la CEMAC. Prodtrust devient une référence de transparence pour l'agro-industrie ouest-africaine.",
   },
 ];
 
@@ -122,12 +122,12 @@ export default function AboutPage() {
           <div className="relative mx-auto max-w-[1400px] px-4 py-20 sm:px-6 sm:py-24 lg:px-8 lg:py-28">
             <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-xs font-medium text-white/80 backdrop-blur">
               <MapPin className="h-3.5 w-3.5 text-[#10B981]" />
-              Conçu à Dakar · Pour l&apos;Afrique de l&apos;Ouest
+              Conçu à N'Djaména · Pour l&apos;Afrique de l&apos;Ouest
             </span>
             <h1 className="mt-6 max-w-3xl font-display text-4xl font-bold leading-tight tracking-tight sm:text-5xl lg:text-6xl">
               La vérité au bout du scan.
               <span className="block bg-gradient-to-r from-[#4E74A8] via-[#34D399] to-[#FBBF24] bg-clip-text text-transparent">
-                Née au Sénégal, pour l&apos;agro-industrie ouest-africaine.
+                Née au Tchad, pour l&apos;agro-industrie ouest-africaine.
               </span>
             </h1>
             <p className="mt-6 max-w-2xl text-base leading-relaxed text-white/75 sm:text-lg">
@@ -264,7 +264,7 @@ export default function AboutPage() {
                 Notre histoire
               </span>
               <h2 className="mt-4 font-display text-3xl font-bold sm:text-4xl">
-                De Dakar à toute la CEDEAO
+                De N'Djaména à toute la CEMAC
               </h2>
               <p className="mt-4 text-[15px] leading-relaxed text-white/70">
                 Prodtrust n&apos;est pas né dans une salle de réunion
@@ -307,7 +307,7 @@ export default function AboutPage() {
               <p className="mt-4 text-[15px] leading-relaxed text-[#374151]">
                 Prodtrust réunit des ingénieurs, des experts en
                 agro-industrie et des passionnés de la souveraineté
-                alimentaire. Nous travaillons à Dakar, en lien direct avec
+                alimentaire. Nous travaillons à N'Djaména, en lien direct avec
                 les transformateurs, pour construire un outil qui sert
                 réellement le terrain.
               </p>

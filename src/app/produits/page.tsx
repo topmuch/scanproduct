@@ -21,7 +21,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
   title: "Catalogue produits authentifiés — Prodtrust | Traçabilité & passeport numérique",
   description:
-    "Parcourez le catalogue des produits authentifiés Prodtrust : alimentaire, cosmétique, agro-industrie. Chaque produit possède son passeport numérique QR code — authenticité vérifiée, traçabilité complète du lot, lutte anti-contrefaçon. Sénégal, Afrique de l'Ouest.",
+    "Parcourez le catalogue des produits authentifiés Prodtrust : alimentaire, cosmétique, agro-industrie. Chaque produit possède son passeport numérique QR code — authenticité vérifiée, traçabilité complète du lot, lutte anti-contrefaçon. Tchad, Afrique de l'Ouest.",
   alternates: await buildAlternates("/produits"),
   openGraph: {
     title: "Catalogue produits authentifiés — Prodtrust",

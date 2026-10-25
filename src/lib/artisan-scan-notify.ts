@@ -29,7 +29,7 @@ const DEVICE_LABELS: Record<string, string> = {
   tablet: "Tablette",
 };
 
-/** Nom de région lisible à partir d'un fuseau IANA (Africa/Dakar → Dakar). */
+/** Nom de région lisible à partir d'un fuseau IANA (Africa/N'Djaména → N'Djaména). */
 function tzCityLabel(tz: string | null | undefined): string | null {
   if (!tz) return null;
   const city = tz.split("/").pop()?.replace(/_/g, " ");
@@ -67,7 +67,7 @@ export async function notifyArtisanScan(params: {
   try {
     const { sendEmail } = await import("@/lib/email");
     const when = new Date().toLocaleString("fr-FR", {
-      timeZone: "Africa/Dakar",
+      timeZone: "Africa/N'Djaména",
       day: "numeric",
       month: "long",
       hour: "2-digit",

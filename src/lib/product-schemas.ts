@@ -82,7 +82,7 @@ export interface ProductSchema {
 // ---------------------------------------------------------------------------
 
 const ORIGIN_COUNTRY_OPTIONS: FieldOption[] = [
-  { value: "senegal", label: "Sénégal" },
+  { value: "tchad", label: "Tchad" },
   { value: "mali", label: "Mali" },
   { value: "cote-divoire", label: "Côte d'Ivoire" },
   { value: "burkina-faso", label: "Burkina Faso" },

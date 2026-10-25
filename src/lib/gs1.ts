@@ -394,10 +394,10 @@ function decouperChemin(chemin: string): string[] {
  * GTIN (AI 01), numéro de lot (AI 10) et numéro de série (AI 21).
  *
  * Formes supportées (URL absolue ou chemin seul) :
- *   /01/0360002914520/10/LOT-2026-A/21/SN-000001     ← forme numérique canonique
+ *   /01/0360002914520/10/LOT-2026-A/21/TD-000001     ← forme numérique canonique
  *   /01/0360002914520/10/LOT-2026-A                  ← GTIN + lot (série absente)
- *   /gtin/0360002914520/lot/LOT-2026-A/ser/SN-000001 ← forme mots-clés GS1
- *   /quelconque?01=0360002914520&10=LOT-A&21=SN-1    ← forme query params
+ *   /gtin/0360002914520/lot/LOT-2026-A/ser/TD-000001 ← forme mots-clés GS1
+ *   /quelconque?01=0360002914520&10=LOT-A&21=TD-1    ← forme query params
  *
  * @param entree  URL absolue, chemin, ou tableau de segments (Next.js params).
  * @returns Gs1Decodage (gtin normalisé 14 chiffres + lot + serie), ou `null`

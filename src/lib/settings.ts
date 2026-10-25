@@ -114,7 +114,7 @@ export const SETTING_KEYS = {
   contactEmail: "contactEmail",
   /** Public contact phone (defaults to "+221773821822"). */
   contactPhone: "contactPhone",
-  /** IANA timezone of the platform (defaults to "Africa/Dakar"). */
+  /** IANA timezone of the platform (defaults to "Africa/N'Djaména"). */
   timezone: "timezone",
   /** Default UI language code (defaults to "fr"). */
   defaultLanguage: "defaultLanguage",

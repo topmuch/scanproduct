@@ -13,14 +13,14 @@ import { MessageCircle, Navigation, MapPin, Clock } from "lucide-react";
 export async function generateMetadata(): Promise<Metadata> {
   return {
   title:
-    "Contact & Itinéraire — Prodtrust Dakar (Ouest Foire) | Email, Téléphone, Carte",
+    "Contact & Itinéraire — Prodtrust N'Djaména (Ouest Foire) | Email, Téléphone, Carte",
   description:
-    "Contactez Prodtrust : contact@newvisioncargo.pro · +221 77 382 18 22 · Lot n°13, Ouest Foire, Dakar, Sénégal. Carte Google Maps, itinéraire, horaires et formulaire — réponse sous 24h.",
+    "Contactez Prodtrust : contact@newvisioncargo.pro · +221 77 382 18 22 · Lot n°13, Ouest Foire, N'Djaména, Tchad. Carte Google Maps, itinéraire, horaires et formulaire — réponse sous 24h.",
   alternates: await buildAlternates("/contact"),
   openGraph: {
-    title: "Contact & Itinéraire — Prodtrust Dakar (Ouest Foire)",
+    title: "Contact & Itinéraire — Prodtrust N'Djaména (Ouest Foire)",
     description:
-      "Email, téléphone, carte et itinéraire : notre équipe vous répond sous 24 heures. Lot n°13, Ouest Foire, Dakar, Sénégal.",
+      "Email, téléphone, carte et itinéraire : notre équipe vous répond sous 24 heures. Lot n°13, Ouest Foire, N'Djaména, Tchad.",
     url: "/contact",
     type: "website",
     images: ["/og-image.png?v=6"],
@@ -30,7 +30,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 /**
  * JSON-LD — LocalBusiness avec adresse postale complète, géolocalisation
- * Ouest Foire (Dakar) et horaires : éligible au panneau « Infos lieu » Google.
+ * Ouest Foire (N'Djaména) et horaires : éligible au panneau « Infos lieu » Google.
  */
 function LocalBusinessJsonLd() {
   const data = {
@@ -48,9 +48,9 @@ function LocalBusinessJsonLd() {
     address: {
       "@type": "PostalAddress",
       streetAddress: "Lot n°13, Ouest Foire",
-      addressLocality: "Dakar",
-      addressRegion: "Dakar",
-      addressCountry: "SN",
+      addressLocality: "N'Djaména",
+      addressRegion: "N'Djaména",
+      addressCountry: "TD",
     },
     geo: {
       "@type": "GeoCoordinates",
@@ -77,7 +77,7 @@ function LocalBusinessJsonLd() {
         telephone: "+221773821822",
         email: "contact@newvisioncargo.pro",
         contactType: "customer service",
-        areaServed: ["SN", "FR", "BE", "CH", "CA"],
+        areaServed: ["TD", "FR", "BE", "CH", "CA"],
         availableLanguage: ["fr"],
       },
     ],
@@ -107,7 +107,7 @@ const CONTACT_CHANNELS = [
   {
     icon: MapPin,
     label: "Adresse",
-    value: "Lot n°13, Ouest Foire — Dakar",
+    value: "Lot n°13, Ouest Foire — N'Djaména",
     href: VERIFSCAN_DIRECTIONS_URL,
   },
 ];
@@ -188,7 +188,7 @@ export default function ContactPage() {
                 <MapPin className="h-3.5 w-3.5" /> Nous trouver
               </span>
               <h2 className="mt-4 font-display text-2xl font-bold text-[#111827] sm:text-3xl">
-                Rendez-nous visite à Ouest Foire, Dakar
+                Rendez-nous visite à Ouest Foire, N'Djaména
               </h2>
               <p className="mt-3 text-[15px] leading-relaxed text-[#6B7280]">
                 {VERIFSCAN_ADDRESS} — ouvrez l&apos;itinéraire depuis votre
@@ -208,7 +208,7 @@ export default function ContactPage() {
                   allowFullScreen
                   loading="lazy"
                   referrerPolicy="no-referrer-when-downgrade"
-                  title="Carte — Prodtrust, Ouest Foire, Dakar, Sénégal"
+                  title="Carte — Prodtrust, Ouest Foire, N'Djaména, Tchad"
                 />
               </div>
 
@@ -226,7 +226,7 @@ export default function ContactPage() {
                       <p className="mt-0.5 text-[15px] font-semibold leading-relaxed text-[#111827]">
                         Lot n°13, Ouest Foire
                         <br />
-                        Dakar, Sénégal
+                        N'Djaména, Tchad
                       </p>
                     </div>
                   </div>

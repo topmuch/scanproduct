@@ -84,10 +84,10 @@ async function main() {
       whatsapp: "+221 77 123 45 67",
       website: "https://sarine-bio.sn",
       description:
-        "Sarine Bio Cosmétiques fabrique des produits cosmétiques naturels à base d'ingrédients biologiques sénégalais depuis 2018.",
-      city: "Dakar",
-      country: "Sénégal",
-      address: "Almadies, Dakar, Sénégal",
+        "Sarine Bio Cosmétiques fabrique des produits cosmétiques naturels à base d'ingrédients biologiques tchadais depuis 2018.",
+      city: "N'Djaména",
+      country: "Tchad",
+      address: "Almadies, N'Djaména, Tchad",
       points: 1250,
       isVerified: true,
       verifiedAt: daysAgo(120),
@@ -108,10 +108,10 @@ async function main() {
       whatsapp: "+221 77 123 45 67",
       website: "https://sarine-bio.sn",
       description:
-        "Sarine Bio Cosmétiques fabrique des produits cosmétiques naturels à base d'ingrédients biologiques sénégalais depuis 2018.",
-      city: "Dakar",
-      country: "Sénégal",
-      address: "Almadies, Dakar, Sénégal",
+        "Sarine Bio Cosmétiques fabrique des produits cosmétiques naturels à base d'ingrédients biologiques tchadais depuis 2018.",
+      city: "N'Djaména",
+      country: "Tchad",
+      address: "Almadies, N'Djaména, Tchad",
       points: 1250,
       isVerified: true,
       verifiedAt: daysAgo(120),
@@ -139,8 +139,8 @@ async function main() {
       description:
         "Teranga Foods est une entreprise agro-alimentaire spécialisée dans la transformation de céréales locales.",
       city: "Thiès",
-      country: "Sénégal",
-      address: "Zone Industrielle, Thiès, Sénégal",
+      country: "Tchad",
+      address: "Zone Industrielle, Thiès, Tchad",
       points: 980,
       isVerified: true,
       verifiedAt: daysAgo(200),
@@ -161,8 +161,8 @@ async function main() {
       description:
         "Teranga Foods est une entreprise agro-alimentaire spécialisée dans la transformation de céréales locales.",
       city: "Thiès",
-      country: "Sénégal",
-      address: "Zone Industrielle, Thiès, Sénégal",
+      country: "Tchad",
+      address: "Zone Industrielle, Thiès, Tchad",
       points: 980,
       isVerified: true,
       verifiedAt: daysAgo(200),
@@ -198,7 +198,7 @@ async function main() {
   const certsData = [
     { fabricantId: sarine.id, name: "Bio Ecocert", issuer: "Ecocert", certificateNumber: "BIO-2024-0142", issueDate: daysAgo(300), expirationDate: daysFromNow(65), isActive: true },
     { fabricantId: sarine.id, name: "Halal", issuer: "ISI Halal", certificateNumber: "HL-2023-8891", issueDate: daysAgo(400), expirationDate: daysFromNow(30), isActive: true },
-    { fabricantId: sarine.id, name: "Made in Senegal", issuer: "APIX", certificateNumber: "MIS-2022-554", issueDate: daysAgo(500), isActive: true },
+    { fabricantId: sarine.id, name: "Made in Tchad", issuer: "APIX", certificateNumber: "MIS-2022-554", issueDate: daysAgo(500), isActive: true },
     { fabricantId: teranga.id, name: "ISO 22000", issuer: "Bureau Veritas", certificateNumber: "ISO22-2024-771", issueDate: daysAgo(250), expirationDate: daysFromNow(115), isActive: true },
     { fabricantId: teranga.id, name: "HACCP", issuer: "SGS", certificateNumber: "HAC-2023-3340", issueDate: daysAgo(350), expirationDate: daysFromNow(15), isActive: true },
   ];
@@ -252,7 +252,7 @@ async function main() {
       name: "Huile de Baobab Bio 250ml",
       brand: "Sarine Bio",
       description:
-        "Huile végétale pure de baobab, pressée à froid à partir de graines récoltées au Sénégal. Riche en vitamines A, D, E et F, elle nourrit et régénère la peau en profondeur. Idéale pour les soins des cheveux, du visage et du corps.",
+        "Huile végétale pure de baobab, pressée à froid à partir de graines récoltées au Tchad. Riche en vitamines A, D, E et F, elle nourrit et régénère la peau en profondeur. Idéale pour les soins des cheveux, du visage et du corps.",
       category: "Cosmétiques",
       categoryId: categories["cosmetiques"].id,
       weight: "250 ml",
@@ -267,9 +267,9 @@ async function main() {
         expiryDate: daysFromNow(335),
         ingredients:
           "100% huile de baobab (Adansonia digitata) pressée à froid. Sans additifs, sans conservateurs, sans parfum de synthèse.",
-        manufacturingLocation: "Atelier Sarine Bio, Almadies, Dakar, Sénégal",
-        transformationLocation: "Atelier Sarine Bio, Almadies, Dakar, Sénégal",
-        salesCountries: '["Sénégal", "Côte d\'Ivoire", "Mali", "France"]',
+        manufacturingLocation: "Atelier Sarine Bio, Almadies, N'Djaména, Tchad",
+        transformationLocation: "Atelier Sarine Bio, Almadies, N'Djaména, Tchad",
+        salesCountries: '["Tchad", "Côte d\'Ivoire", "Mali", "France"]',
         allergens: "[]",
         nutritionalInfo:
           '{"calories":"900 kcal/100ml","proteins":"0g","carbs":"0g","fats":"100g","saturatedFats":"25g","omega3":"0.2g","omega6":"30g","omega9":"35g","vitaminE":"150mg"}',
@@ -281,12 +281,12 @@ async function main() {
         transparencyScore: 92,
       },
       history: [
-        { type: "fabrication", title: "Récolte des graines de baobab", description: "Récolte manuelle dans la région de Tambacounda par 12 producteurs partenaires.", location: "Tambacounda, Sénégal", date: daysAgo(45), time: "08:00" },
-        { type: "fabrication", title: "Pressage à froid", description: "Extraction de l'huile par pressage mécanique à froid (T<40°C) pour préserver les nutriments.", location: "Atelier Sarine Bio, Dakar", date: daysAgo(30), time: "10:00" },
-        { type: "controle", title: "Contrôle qualité en laboratoire", description: "Analyse microbiologique et chromatographique. Conformité aux normes ISO 22000 vérifiée.", location: "Laboratoire LNSE, Dakar", date: daysAgo(29), time: "14:00" },
-        { type: "controle", title: "Mise en bouteille et étiquetage", description: "Conditionnement en flacons verre de 250ml avec étiquetage individuel des lots.", location: "Atelier Sarine Bio, Dakar", date: daysAgo(28), time: "09:00" },
-        { type: "marche", title: "Mise sur le marché", description: "Distribution auprès de 45 points de vente au Sénégal et export vers 3 pays CEDEAO.", location: "Dakar, Sénégal", date: daysAgo(25), time: "11:00" },
-        { type: "actif", title: "Lot actif et commercialisé", description: "Produit en vente. Aucun incident signalé.", location: "Sénégal & CEDEAO", date: daysAgo(25), time: "11:00" },
+        { type: "fabrication", title: "Récolte des graines de baobab", description: "Récolte manuelle dans la région de Tambacounda par 12 producteurs partenaires.", location: "Tambacounda, Tchad", date: daysAgo(45), time: "08:00" },
+        { type: "fabrication", title: "Pressage à froid", description: "Extraction de l'huile par pressage mécanique à froid (T<40°C) pour préserver les nutriments.", location: "Atelier Sarine Bio, N'Djaména", date: daysAgo(30), time: "10:00" },
+        { type: "controle", title: "Contrôle qualité en laboratoire", description: "Analyse microbiologique et chromatographique. Conformité aux normes ISO 22000 vérifiée.", location: "Laboratoire LNSE, N'Djaména", date: daysAgo(29), time: "14:00" },
+        { type: "controle", title: "Mise en bouteille et étiquetage", description: "Conditionnement en flacons verre de 250ml avec étiquetage individuel des lots.", location: "Atelier Sarine Bio, N'Djaména", date: daysAgo(28), time: "09:00" },
+        { type: "marche", title: "Mise sur le marché", description: "Distribution auprès de 45 points de vente au Tchad et export vers 3 pays CEDEAO.", location: "N'Djaména, Tchad", date: daysAgo(25), time: "11:00" },
+        { type: "actif", title: "Lot actif et commercialisé", description: "Produit en vente. Aucun incident signalé.", location: "Tchad & CEDEAO", date: daysAgo(25), time: "11:00" },
       ],
       lotCerts: [
         { name: "Bio Ecocert", issuer: "Ecocert" },
@@ -302,7 +302,7 @@ async function main() {
       name: "Beurre de Karité Brut 200g",
       brand: "Sarine Bio",
       description:
-        "Beurre de karité brut non raffiné, 100% pur et naturel. Récolté et transformé par une coopérative de femmes au Sénégal. Idéal pour hydrater, nourrir et protéger la peau et les cheveux.",
+        "Beurre de karité brut non raffiné, 100% pur et naturel. Récolté et transformé par une coopérative de femmes au Tchad. Idéal pour hydrater, nourrir et protéger la peau et les cheveux.",
       category: "Cosmétiques",
       categoryId: categories["cosmetiques"].id,
       weight: "200 g",
@@ -316,10 +316,10 @@ async function main() {
         manufactureDate: daysAgo(20),
         expiryDate: daysFromNow(345),
         ingredients:
-          "100% beurre de karité (Butyrospermum parkii) brut non raffiné. Origine Sénégal. Sans additifs.",
-        manufacturingLocation: "Coopérative de Kolobane, Sénégal",
-        transformationLocation: "Atelier Sarine Bio, Almadies, Dakar",
-        salesCountries: '["Sénégal", "Mali", "Burkina Faso"]',
+          "100% beurre de karité (Butyrospermum parkii) brut non raffiné. Origine Tchad. Sans additifs.",
+        manufacturingLocation: "Coopérative de Kolobane, Tchad",
+        transformationLocation: "Atelier Sarine Bio, Almadies, N'Djaména",
+        salesCountries: '["Tchad", "Mali", "Burkina Faso"]',
         allergens: "[]",
         nutritionalInfo: '{"calories":"N/A","fats":"100g","saturatedFats":"45g","unsaponifiables":"8%"}',
         warnings: '["Usage externe", "Peut se solidifier sous 25°C", "Conserver à l\'abri de la lumière"]',
@@ -330,11 +330,11 @@ async function main() {
         transparencyScore: 85,
       },
       history: [
-        { type: "fabrication", title: "Récolte des noix de karité", description: "Récolte par la coopérative féminine de Kolobane (45 membres).", location: "Kolobane, Sénégal", date: daysAgo(60), time: "07:00" },
-        { type: "fabrication", title: "Transformation traditionnelle", description: "Broyage, torréfaction et barattage selon la méthode traditionnelle.", location: "Kolobane, Sénégal", date: daysAgo(25), time: "09:00" },
-        { type: "controle", title: "Contrôle qualité", description: "Test de pureté et d'hydratation. Taux d'insaponifiables: 8%.", location: "Laboratoire LNSE, Dakar", date: daysAgo(21), time: "13:00" },
-        { type: "marche", title: "Conditionnement", description: "Mise en pots de 200g avec étiquetage du lot.", location: "Atelier Sarine Bio, Dakar", date: daysAgo(20), time: "10:00" },
-        { type: "actif", title: "Lot actif", description: "En vente dans 30 points de vente.", location: "Sénégal", date: daysAgo(18), time: "10:00" },
+        { type: "fabrication", title: "Récolte des noix de karité", description: "Récolte par la coopérative féminine de Kolobane (45 membres).", location: "Kolobane, Tchad", date: daysAgo(60), time: "07:00" },
+        { type: "fabrication", title: "Transformation traditionnelle", description: "Broyage, torréfaction et barattage selon la méthode traditionnelle.", location: "Kolobane, Tchad", date: daysAgo(25), time: "09:00" },
+        { type: "controle", title: "Contrôle qualité", description: "Test de pureté et d'hydratation. Taux d'insaponifiables: 8%.", location: "Laboratoire LNSE, N'Djaména", date: daysAgo(21), time: "13:00" },
+        { type: "marche", title: "Conditionnement", description: "Mise en pots de 200g avec étiquetage du lot.", location: "Atelier Sarine Bio, N'Djaména", date: daysAgo(20), time: "10:00" },
+        { type: "actif", title: "Lot actif", description: "En vente dans 30 points de vente.", location: "Tchad", date: daysAgo(18), time: "10:00" },
       ],
       lotCerts: [
         { name: "Commerce équitable", issuer: "Fair Trade Africa" },
@@ -364,9 +364,9 @@ async function main() {
         expiryDate: daysFromNow(700),
         ingredients:
           "Beurre de karité (Butyrospermum parkii), huile de palme (Elaeis guineensis), huile de coco (Cocos nucifera), cendre de cacao (Theobroma cacao), hydroxyde de sodium. Sans parfum de synthèse.",
-        manufacturingLocation: "Atelier Sarine Bio, Almadies, Dakar",
-        transformationLocation: "Atelier Sarine Bio, Almadies, Dakar",
-        salesCountries: '["Sénégal"]',
+        manufacturingLocation: "Atelier Sarine Bio, Almadies, N'Djaména",
+        transformationLocation: "Atelier Sarine Bio, Almadies, N'Djaména",
+        salesCountries: '["Tchad"]',
         allergens: "[]",
         nutritionalInfo: "{}",
         warnings: '["Usage externe uniquement", "Éviter le contact avec les yeux", "Conserver au sec"]',
@@ -377,11 +377,11 @@ async function main() {
         transparencyScore: 78,
       },
       history: [
-        { type: "fabrication", title: "Préparation de la pâte", description: "Mélange des huiles et de la cendre selon la recette traditionnelle.", location: "Atelier Sarine Bio, Dakar", date: daysAgo(18), time: "08:00" },
-        { type: "fabrication", title: "Saponification à froid", description: "Cuisson lente et moulage manuel.", location: "Atelier Sarine Bio, Dakar", date: daysAgo(16), time: "10:00" },
-        { type: "controle", title: "Test de pH et dureté", description: "pH: 9.5 — conforme. Séchage de 4 semaines.", location: "Atelier Sarine Bio, Dakar", date: daysAgo(15), time: "14:00" },
-        { type: "marche", title: "Mise en vente", description: "Distribution dans 50 boutiques.", location: "Dakar, Sénégal", date: daysAgo(13), time: "09:00" },
-        { type: "actif", title: "Lot actif", description: "En vente active.", location: "Sénégal", date: daysAgo(13), time: "09:00" },
+        { type: "fabrication", title: "Préparation de la pâte", description: "Mélange des huiles et de la cendre selon la recette traditionnelle.", location: "Atelier Sarine Bio, N'Djaména", date: daysAgo(18), time: "08:00" },
+        { type: "fabrication", title: "Saponification à froid", description: "Cuisson lente et moulage manuel.", location: "Atelier Sarine Bio, N'Djaména", date: daysAgo(16), time: "10:00" },
+        { type: "controle", title: "Test de pH et dureté", description: "pH: 9.5 — conforme. Séchage de 4 semaines.", location: "Atelier Sarine Bio, N'Djaména", date: daysAgo(15), time: "14:00" },
+        { type: "marche", title: "Mise en vente", description: "Distribution dans 50 boutiques.", location: "N'Djaména, Tchad", date: daysAgo(13), time: "09:00" },
+        { type: "actif", title: "Lot actif", description: "En vente active.", location: "Tchad", date: daysAgo(13), time: "09:00" },
       ],
       lotCerts: [{ name: "Vegan", issuer: "Vegan Society" }],
       reviews: [
@@ -392,7 +392,7 @@ async function main() {
       name: "Couscous de Mil Bio 1kg",
       brand: "Teranga Foods",
       description:
-        "Couscous de mil biologique, roulé à la main selon la tradition sénégalaise. Riche en fibres et en nutriments, sans gluten. Idéal pour les plats traditionnels ou une alimentation saine.",
+        "Couscous de mil biologique, roulé à la main selon la tradition tchadaise. Riche en fibres et en nutriments, sans gluten. Idéal pour les plats traditionnels ou une alimentation saine.",
       category: "Agro-alimentaire",
       categoryId: categories["agro-alimentaire"].id,
       weight: "1 kg",
@@ -406,10 +406,10 @@ async function main() {
         manufactureDate: daysAgo(10),
         expiryDate: daysFromNow(355),
         ingredients:
-          "100% semoule de mil (Pennisetum glaucum) biologique. Origine Sénégal. Sans additifs, sans conservateurs.",
-        manufacturingLocation: "Zone Industrielle, Thiès, Sénégal",
-        transformationLocation: "Zone Industrielle, Thiès, Sénégal",
-        salesCountries: '["Sénégal", "France", "États-Unis", "Canada"]',
+          "100% semoule de mil (Pennisetum glaucum) biologique. Origine Tchad. Sans additifs, sans conservateurs.",
+        manufacturingLocation: "Zone Industrielle, Thiès, Tchad",
+        transformationLocation: "Zone Industrielle, Thiès, Tchad",
+        salesCountries: '["Tchad", "France", "États-Unis", "Canada"]',
         allergens: '["Peut contenir des traces de gluten"]',
         nutritionalInfo:
           '{"calories":"378 kcal/100g","proteins":"11g","carbs":"73g","fats":"4g","fibers":"8g","iron":"3mg","magnesium":"114mg"}',
@@ -421,12 +421,12 @@ async function main() {
         transparencyScore: 95,
       },
       history: [
-        { type: "fabrication", title: "Récolte du mil", description: "Récolte biologique certifiée dans la région de Kaolack.", location: "Kaolack, Sénégal", date: daysAgo(90), time: "06:00" },
+        { type: "fabrication", title: "Récolte du mil", description: "Récolte biologique certifiée dans la région de Kaolack.", location: "Kaolack, Tchad", date: daysAgo(90), time: "06:00" },
         { type: "fabrication", title: "Nettoyage et décorticage", description: "Nettoyage mécanique et décorticage du mil.", location: "Zone Industrielle, Thiès", date: daysAgo(15), time: "08:00" },
         { type: "fabrication", title: "Roulage et cuisson", description: "Roulage à la main et cuisson vapeur selon la tradition.", location: "Zone Industrielle, Thiès", date: daysAgo(11), time: "09:00" },
-        { type: "controle", title: "Contrôle qualité et certifs", description: "Analyse microbiologique conforme. Certification Bio vérifiée.", location: "Laboratoire SGS, Dakar", date: daysAgo(9), time: "11:00" },
+        { type: "controle", title: "Contrôle qualité et certifs", description: "Analyse microbiologique conforme. Certification Bio vérifiée.", location: "Laboratoire SGS, N'Djaména", date: daysAgo(9), time: "11:00" },
         { type: "marche", title: "Conditionnement 1kg", description: "Emballage sous vide en sachets de 1kg avec QR code.", location: "Zone Industrielle, Thiès", date: daysAgo(10), time: "14:00" },
-        { type: "marche", title: "Export France & USA", description: "Expédition de 200 cartons vers la France et les États-Unis.", location: "Port de Dakar", date: daysAgo(7), time: "16:00" },
+        { type: "marche", title: "Export France & USA", description: "Expédition de 200 cartons vers la France et les États-Unis.", location: "Port de N'Djaména", date: daysAgo(7), time: "16:00" },
         { type: "actif", title: "Lot actif", description: "En vente locale et export.", location: "International", date: daysAgo(8), time: "14:00" },
       ],
       lotCerts: [
@@ -436,7 +436,7 @@ async function main() {
       ],
       reviews: [
         { authorName: "Cheikh Mbacké", rating: 5, comment: "Le meilleur couscous de mil du marché ! Texture parfaite et goût authentique.", isApproved: true, isVerified: true, createdAt: daysAgo(4) },
-        { authorName: "Sophie Martin", rating: 5, comment: "Enfin du vrai couscous de mil bio en France. Livraison rapide depuis le Sénégal.", isApproved: true, isVerified: true, createdAt: daysAgo(2) },
+        { authorName: "Sophie Martin", rating: 5, comment: "Enfin du vrai couscous de mil bio en France. Livraison rapide depuis le Tchad.", isApproved: true, isVerified: true, createdAt: daysAgo(2) },
         { authorName: "Ibrahima Sow", rating: 4, comment: "Très bon produit, emballage de qualité.", isApproved: true, isVerified: false, createdAt: daysAgo(6) },
       ],
     },
@@ -444,7 +444,7 @@ async function main() {
       name: "Jus de Bissap Bio 1L",
       brand: "Teranga Foods",
       description:
-        "Jus de bissap (hibiscus) biologique, sans sucre ajouté. Boisson traditionnelle sénégalaise riche en antioxydants et vitamine C. Pasteurisé pour une conservation optimale.",
+        "Jus de bissap (hibiscus) biologique, sans sucre ajouté. Boisson traditionnelle tchadaise riche en antioxydants et vitamine C. Pasteurisé pour une conservation optimale.",
       category: "Boissons",
       categoryId: categories["boissons"].id,
       weight: "1 L",
@@ -459,9 +459,9 @@ async function main() {
         expiryDate: daysFromNow(83),
         ingredients:
           "Eau, fleurs d'hibiscus (Hibiscus sabdariffa) biologiques 15%, sucre de canne biologique 5%, jus de citron naturel. Sans conservateurs, sans colorants.",
-        manufacturingLocation: "Zone Industrielle, Thiès, Sénégal",
-        transformationLocation: "Zone Industrielle, Thiès, Sénégal",
-        salesCountries: '["Sénégal", "Côte d\'Ivoire"]',
+        manufacturingLocation: "Zone Industrielle, Thiès, Tchad",
+        transformationLocation: "Zone Industrielle, Thiès, Tchad",
+        salesCountries: '["Tchad", "Côte d\'Ivoire"]',
         allergens: "[]",
         nutritionalInfo:
           '{"calories":"42 kcal/100ml","proteins":"0.3g","carbs":"10g","sugars":"8g","fats":"0g","vitaminC":"12mg"}',
@@ -473,12 +473,12 @@ async function main() {
         transparencyScore: 88,
       },
       history: [
-        { type: "fabrication", title: "Récolte des fleurs d'hibiscus", description: "Récolte biologique dans la région de Touba.", location: "Touba, Sénégal", date: daysAgo(30), time: "07:00" },
+        { type: "fabrication", title: "Récolte des fleurs d'hibiscus", description: "Récolte biologique dans la région de Touba.", location: "Touba, Tchad", date: daysAgo(30), time: "07:00" },
         { type: "fabrication", title: "Infusion et pressage", description: "Infusion à chaud des fleurs, filtration et ajout de sucre de canne.", location: "Zone Industrielle, Thiès", date: daysAgo(8), time: "10:00" },
         { type: "controle", title: "Pasteurisation", description: "Pasteurisation à 85°C pendant 15 minutes.", location: "Zone Industrielle, Thiès", date: daysAgo(7), time: "13:00" },
-        { type: "controle", title: "Contrôle qualité", description: "Test microbiologique et pH. Conforme aux normes.", location: "Laboratoire SGS, Dakar", date: daysAgo(6), time: "15:00" },
+        { type: "controle", title: "Contrôle qualité", description: "Test microbiologique et pH. Conforme aux normes.", location: "Laboratoire SGS, N'Djaména", date: daysAgo(6), time: "15:00" },
         { type: "marche", title: "Conditionnement", description: "Emballage en bouteilles PET de 1L.", location: "Zone Industrielle, Thiès", date: daysAgo(7), time: "16:00" },
-        { type: "actif", title: "Lot actif", description: "En vente dans 60 boutiques.", location: "Sénégal & CEDEAO", date: daysAgo(5), time: "09:00" },
+        { type: "actif", title: "Lot actif", description: "En vente dans 60 boutiques.", location: "Tchad & CEDEAO", date: daysAgo(5), time: "09:00" },
       ],
       lotCerts: [{ name: "Bio Ecocert", issuer: "Ecocert" }],
       reviews: [
@@ -504,10 +504,10 @@ async function main() {
         manufactureDate: daysAgo(12),
         expiryDate: daysFromNow(548),
         ingredients:
-          "100% poudre de feuilles de moringa (Moringa oleifera) biologique. Origine Sénégal. Sans additifs.",
-        manufacturingLocation: "Atelier Sarine Bio, Almadies, Dakar",
-        transformationLocation: "Coopérative de Mboro, Sénégal",
-        salesCountries: '["Sénégal", "France", "Belgique"]',
+          "100% poudre de feuilles de moringa (Moringa oleifera) biologique. Origine Tchad. Sans additifs.",
+        manufacturingLocation: "Atelier Sarine Bio, Almadies, N'Djaména",
+        transformationLocation: "Coopérative de Mboro, Tchad",
+        salesCountries: '["Tchad", "France", "Belgique"]',
         allergens: "[]",
         nutritionalInfo:
           '{"calories":"205 kcal/100g","proteins":"27g","carbs":"38g","fats":"2g","iron":"28mg","calcium":"2003mg","vitaminA":"18mg","vitaminC":"17mg"}',
@@ -519,12 +519,12 @@ async function main() {
         transparencyScore: 90,
       },
       history: [
-        { type: "fabrication", title: "Culture du moringa", description: "Culture biologique sans pesticides.", location: "Mboro, Sénégal", date: daysAgo(120), time: "06:00" },
-        { type: "fabrication", title: "Récolte et séchage", description: "Récolte manuelle, séchage à l'ombre pour préserver les nutriments.", location: "Mboro, Sénégal", date: daysAgo(20), time: "08:00" },
-        { type: "fabrication", title: "Mouture et tamisage", description: "Broyage fin et tamisage à 0.5mm.", location: "Atelier Sarine Bio, Dakar", date: daysAgo(13), time: "10:00" },
-        { type: "controle", title: "Analyse nutritionnelle", description: "Vérification de la teneur en protéines et fer. Conforme.", location: "Laboratoire LNSE, Dakar", date: daysAgo(11), time: "14:00" },
-        { type: "marche", title: "Conditionnement 100g", description: "Mise en sachets kraft scellés de 100g.", location: "Atelier Sarine Bio, Dakar", date: daysAgo(12), time: "15:00" },
-        { type: "actif", title: "Lot actif", description: "En vente locale et export.", location: "Sénégal & Europe", date: daysAgo(10), time: "09:00" },
+        { type: "fabrication", title: "Culture du moringa", description: "Culture biologique sans pesticides.", location: "Mboro, Tchad", date: daysAgo(120), time: "06:00" },
+        { type: "fabrication", title: "Récolte et séchage", description: "Récolte manuelle, séchage à l'ombre pour préserver les nutriments.", location: "Mboro, Tchad", date: daysAgo(20), time: "08:00" },
+        { type: "fabrication", title: "Mouture et tamisage", description: "Broyage fin et tamisage à 0.5mm.", location: "Atelier Sarine Bio, N'Djaména", date: daysAgo(13), time: "10:00" },
+        { type: "controle", title: "Analyse nutritionnelle", description: "Vérification de la teneur en protéines et fer. Conforme.", location: "Laboratoire LNSE, N'Djaména", date: daysAgo(11), time: "14:00" },
+        { type: "marche", title: "Conditionnement 100g", description: "Mise en sachets kraft scellés de 100g.", location: "Atelier Sarine Bio, N'Djaména", date: daysAgo(12), time: "15:00" },
+        { type: "actif", title: "Lot actif", description: "En vente locale et export.", location: "Tchad & Europe", date: daysAgo(10), time: "09:00" },
       ],
       lotCerts: [
         { name: "Bio Ecocert", issuer: "Ecocert" },
@@ -642,11 +642,11 @@ async function main() {
     const existingScans = await db.scan.count({ where: { lotId: lot.id } });
     if (existingScans === 0) {
       const cities = [
-        { city: "Dakar", country: "Sénégal", deviceType: "mobile", os: "Android" },
+        { city: "N'Djaména", country: "Tchad", deviceType: "mobile", os: "Android" },
         { city: "Abidjan", country: "Côte d'Ivoire", deviceType: "mobile", os: "iOS" },
         { city: "Bamako", country: "Mali", deviceType: "desktop", os: "Windows" },
         { city: "Paris", country: "France", deviceType: "mobile", os: "iOS" },
-        { city: "Thiès", country: "Sénégal", deviceType: "tablet", os: "Android" },
+        { city: "Thiès", country: "Tchad", deviceType: "tablet", os: "Android" },
       ];
       for (let i = 0; i < 8; i++) {
         const c = cities[i % cities.length];

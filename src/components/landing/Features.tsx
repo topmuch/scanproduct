@@ -78,7 +78,7 @@ const FEATURES: Feature[] = [
     accentSoft: "bg-[#10B981]",
     bulletColor: "text-[#10B981]",
     bullets: [
-      "Documents conformes CEDEAO, UE et USA prêts à l'emploi",
+      "Documents conformes CEMAC, UE et USA prêts à l'emploi",
       "Génération automatique depuis les données de vos lots",
       "Gain de temps sur chaque dossier d'export",
     ],
