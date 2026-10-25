@@ -120,7 +120,7 @@ export function CatalogSliderClient({ items }: Props) {
   return (
     <section
       id="catalogue-slider"
-      className="relative bg-gradient-to-b from-white via-[#F9FAFB] to-white py-16 sm:py-20 lg:py-24"
+      className="relative bg-gradient-to-b from-[#00296F] via-[#F9FAFB] to-white py-16 sm:py-20 lg:py-24"
       aria-labelledby="catalog-slider-title"
     >
       <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">

@@ -15,12 +15,12 @@ export async function generateMetadata(): Promise<Metadata> {
   title:
     "Contact & Itinéraire — Prodtrust N'Djaména (Avenue Charles de Gaulle) | Email, Téléphone, Carte",
   description:
-    "Contactez Prodtrust : contact@newvisioncargo.pro · +235 66 35 25 05 · +235 95 72 99 99 · Avenue Charles de Gaulle, N'Djaména, Tchad. Carte Google Maps, itinéraire, horaires et formulaire — réponse sous 24h.",
+    "Contactez Prodtrust : contact@newvisioncargo.pro · +235 66 35 25 05 · +235 95 72 99 99 · N'Djamena, Avenue Charles de Gaulle Tchad. Carte Google Maps, itinéraire, horaires et formulaire — réponse sous 24h.",
   alternates: await buildAlternates("/contact"),
   openGraph: {
     title: "Contact & Itinéraire — Prodtrust N'Djaména (Avenue Charles de Gaulle)",
     description:
-      "Email, téléphone, carte et itinéraire : notre équipe vous répond sous 24 heures. Avenue Charles de Gaulle, N'Djaména, Tchad.",
+      "Email, téléphone, carte et itinéraire : notre équipe vous répond sous 24 heures. N'Djamena, Avenue Charles de Gaulle Tchad.",
     url: "/contact",
     type: "website",
     images: ["/og-image.png?v=6"],
@@ -208,7 +208,7 @@ export default function ContactPage() {
                   allowFullScreen
                   loading="lazy"
                   referrerPolicy="no-referrer-when-downgrade"
-                  title="Carte — Prodtrust, Avenue Charles de Gaulle, N'Djaména, Tchad"
+                  title="Carte — Prodtrust, N'Djamena, Avenue Charles de Gaulle Tchad"
                 />
               </div>
 
