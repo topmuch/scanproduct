@@ -301,7 +301,7 @@ async function JsonLd() {
   const phone =
     contact[SETTING_KEYS.contactPhone]?.trim() || DEFAULT_CONTACT_PHONE;
   const address = contact[SETTING_KEYS.siteAddress]?.trim() ||
-    "Lot n°13, Ouest Foire, N'Djaména, Tchad";
+    "N'Djamena, Avenue Charles de Gaulle Tchad";
 
   const organization = {
     "@context": "https://schema.org",
@@ -319,6 +319,7 @@ async function JsonLd() {
       streetAddress: address,
       addressLocality: "N'Djaména",
       addressCountry: "TD",
+      geo: { "@type": "GeoCoordinates", latitude: 12.1348, longitude: 15.0557 },
     },
     contactPoint: [
       {
@@ -370,6 +371,17 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fr" suppressHydrationWarning>
+      <head>
+        {/* SEO Géographique — Ciblage Tchad pour Google */}
+        <meta name="geo.region" content="TD" />
+        <meta name="geo.placename" content="N'Djamena, Tchad" />
+        <meta name="geo.position" content="12.1348;15.0557" />
+        <meta name="ICBM" content="12.1348, 15.0557" />
+        <meta name="coverage" content="Worldwide, Tchad, Chad, Africa" />
+        <meta name="revisit-after" content="7 days" />
+        <meta name="distribution" content="global" />
+        <meta name="rating" content="general" />
+      </head>
       <body
         className={`${poppins.variable} ${inter.variable} font-sans antialiased bg-white text-[#111827]`}
       >
