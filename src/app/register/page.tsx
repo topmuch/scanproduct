@@ -124,7 +124,7 @@ export default function RegisterPage() {
         <div className="relative z-10 flex flex-col justify-between p-12 text-white">
           <Link href="/" className="flex items-center">
             <img
-              src="/prodtrust-logo-white.webp?v=1"
+              src="/brand/prodtrust-logo-white.png?v=1"
               alt="Prodtrust"
               className="h-14 w-auto shrink-0"
               width={720}

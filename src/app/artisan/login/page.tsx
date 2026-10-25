@@ -82,7 +82,7 @@ export default function ArtisanLoginPage() {
               {/* Logo officiel (contient déjà le wordmark) */}
               <Link href="/" className="flex items-center" aria-label="Prodtrust accueil">
                 <img
-                  src="/prodtrust-logo-white.webp?v=1"
+                  src="/brand/prodtrust-logo-white.png?v=1"
                   alt="Prodtrust"
                   className="h-14 w-auto shrink-0"
                   width={720}

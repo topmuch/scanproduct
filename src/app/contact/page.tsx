@@ -13,14 +13,14 @@ import { MessageCircle, Navigation, MapPin, Clock } from "lucide-react";
 export async function generateMetadata(): Promise<Metadata> {
   return {
   title:
-    "Contact & Itinéraire — Prodtrust N'Djaména (Ouest Foire) | Email, Téléphone, Carte",
+    "Contact & Itinéraire — Prodtrust N'Djaména (Avenue Charles de Gaulle) | Email, Téléphone, Carte",
   description:
-    "Contactez Prodtrust : contact@newvisioncargo.pro · +221 77 382 18 22 · Lot n°13, Ouest Foire, N'Djaména, Tchad. Carte Google Maps, itinéraire, horaires et formulaire — réponse sous 24h.",
+    "Contactez Prodtrust : contact@newvisioncargo.pro · +235 66 35 25 05 · +235 95 72 99 99 · Avenue Charles de Gaulle, N'Djaména, Tchad. Carte Google Maps, itinéraire, horaires et formulaire — réponse sous 24h.",
   alternates: await buildAlternates("/contact"),
   openGraph: {
-    title: "Contact & Itinéraire — Prodtrust N'Djaména (Ouest Foire)",
+    title: "Contact & Itinéraire — Prodtrust N'Djaména (Avenue Charles de Gaulle)",
     description:
-      "Email, téléphone, carte et itinéraire : notre équipe vous répond sous 24 heures. Lot n°13, Ouest Foire, N'Djaména, Tchad.",
+      "Email, téléphone, carte et itinéraire : notre équipe vous répond sous 24 heures. Avenue Charles de Gaulle, N'Djaména, Tchad.",
     url: "/contact",
     type: "website",
     images: ["/og-image.png?v=6"],
@@ -30,7 +30,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 /**
  * JSON-LD — LocalBusiness avec adresse postale complète, géolocalisation
- * Ouest Foire (N'Djaména) et horaires : éligible au panneau « Infos lieu » Google.
+ * Avenue Charles de Gaulle (N'Djaména) et horaires : éligible au panneau « Infos lieu » Google.
  */
 function LocalBusinessJsonLd() {
   const data = {
@@ -41,13 +41,13 @@ function LocalBusinessJsonLd() {
     description:
       "Passeport numérique produit : traçabilité alimentaire et cosmétique, authentification QR code, lutte contre la contrefaçon.",
     url: "https://newvisioncargo.pro/contact",
-    telephone: "+221773821822",
+    telephone: "+23566352505",
     email: "contact@newvisioncargo.pro",
     image: "https://newvisioncargo.pro/og-image.png",
     priceRange: "$$",
     address: {
       "@type": "PostalAddress",
-      streetAddress: "Lot n°13, Ouest Foire",
+      streetAddress: "Avenue Charles de Gaulle",
       addressLocality: "N'Djaména",
       addressRegion: "N'Djaména",
       addressCountry: "TD",
@@ -74,7 +74,7 @@ function LocalBusinessJsonLd() {
     contactPoint: [
       {
         "@type": "ContactPoint",
-        telephone: "+221773821822",
+        telephone: "+23566352505",
         email: "contact@newvisioncargo.pro",
         contactType: "customer service",
         areaServed: ["TD", "FR", "BE", "CH", "CA"],
@@ -101,13 +101,13 @@ const CONTACT_CHANNELS = [
   {
     icon: Clock,
     label: "Téléphone / WhatsApp",
-    value: "+221 77 382 18 22",
-    href: "tel:+221773821822",
+    value: "+235 66 35 25 05 · +235 95 72 99 99",
+    href: "tel:+23566352505",
   },
   {
     icon: MapPin,
     label: "Adresse",
-    value: "Lot n°13, Ouest Foire — N'Djaména",
+    value: "Avenue Charles de Gaulle — N'Djaména",
     href: VERIFSCAN_DIRECTIONS_URL,
   },
 ];
@@ -188,7 +188,7 @@ export default function ContactPage() {
                 <MapPin className="h-3.5 w-3.5" /> Nous trouver
               </span>
               <h2 className="mt-4 font-display text-2xl font-bold text-[#111827] sm:text-3xl">
-                Rendez-nous visite à Ouest Foire, N'Djaména
+                Rendez-nous visite à Avenue Charles de Gaulle, N'Djaména
               </h2>
               <p className="mt-3 text-[15px] leading-relaxed text-[#6B7280]">
                 {VERIFSCAN_ADDRESS} — ouvrez l&apos;itinéraire depuis votre
@@ -208,7 +208,7 @@ export default function ContactPage() {
                   allowFullScreen
                   loading="lazy"
                   referrerPolicy="no-referrer-when-downgrade"
-                  title="Carte — Prodtrust, Ouest Foire, N'Djaména, Tchad"
+                  title="Carte — Prodtrust, Avenue Charles de Gaulle, N'Djaména, Tchad"
                 />
               </div>
 
@@ -224,7 +224,7 @@ export default function ContactPage() {
                         Adresse
                       </p>
                       <p className="mt-0.5 text-[15px] font-semibold leading-relaxed text-[#111827]">
-                        Lot n°13, Ouest Foire
+                        Avenue Charles de Gaulle
                         <br />
                         N'Djaména, Tchad
                       </p>
@@ -258,10 +258,10 @@ export default function ContactPage() {
                   Obtenir l&apos;itinéraire
                 </a>
                 <a
-                  href="tel:+221773821822"
+                  href="tel:+23566352505"
                   className="inline-flex items-center justify-center gap-2 rounded-xl border-2 border-[#00296F] px-6 py-3.5 text-[15px] font-semibold text-[#00296F] transition-colors hover:bg-[#F0F4F9]"
                 >
-                  Appeler le +221 77 382 18 22
+                  Appeler le +235 66 35 25 05 · +235 95 72 99 99
                 </a>
               </div>
             </div>

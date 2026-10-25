@@ -33,7 +33,7 @@ export default function ForgotPasswordPage() {
       <Link href="/" className="relative z-10 mb-8 flex items-center">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/prodtrust-logo-white.webp?v=1"
+          src="/brand/prodtrust-logo-white.png?v=1"
           alt="Prodtrust"
           className="h-12 w-auto shrink-0"
           width={720}

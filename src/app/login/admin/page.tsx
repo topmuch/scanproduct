@@ -27,7 +27,7 @@ export default function AdminLoginPage() {
       {/* Logo */}
       <Link href="/" className="relative z-10 mb-8 flex items-center">
         <img
-          src="/prodtrust-logo-white.webp?v=1"
+          src="/brand/prodtrust-logo-white.png?v=1"
           alt="Prodtrust"
           className="h-12 w-auto shrink-0"
           width={720}
