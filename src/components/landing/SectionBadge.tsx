@@ -7,7 +7,7 @@ type SectionBadgeProps = {
   className?: string;
   /** tailwind bg class for the badge, e.g. bg-[#F0F4F9] */
   bg?: string;
-  /** tailwind text class, e.g. text-[#022150] */
+  /** tailwind text class, e.g. text-[#00296F] */
   color?: string;
 };
 

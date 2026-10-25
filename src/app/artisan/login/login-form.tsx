@@ -12,7 +12,7 @@
 // défaut « 0000 » communiqué par WhatsApp à la vente du pack).
 //
 // Présentation alignée sur le formulaire fabricant (components/auth/
-// LoginForm.tsx) : mêmes bordures, mêmes focus rings #022150, même carte
+// LoginForm.tsx) : mêmes bordures, mêmes focus rings #00296F, même carte
 // ombrée — seule la couleur d'accent (amber #F59E0B, identité artisan)
 // et l'identifiant (téléphone au lieu d'email) changent.
 // ============================================================================
@@ -121,7 +121,7 @@ export function ArtisanLoginForm() {
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="77 123 45 67"
-                className="h-11 w-full rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] pl-10 pr-3 text-sm text-[#111827] outline-none transition-all focus:border-[#022150] focus:bg-white focus:ring-2 focus:ring-[#022150]/20"
+                className="h-11 w-full rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] pl-10 pr-3 text-sm text-[#111827] outline-none transition-all focus:border-[#00296F] focus:bg-white focus:ring-2 focus:ring-[#00296F]/20"
               />
             </div>
           </div>
@@ -144,7 +144,7 @@ export function ArtisanLoginForm() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="h-11 w-full rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] pl-10 pr-10 text-sm text-[#111827] outline-none transition-all focus:border-[#022150] focus:bg-white focus:ring-2 focus:ring-[#022150]/20"
+                className="h-11 w-full rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] pl-10 pr-10 text-sm text-[#111827] outline-none transition-all focus:border-[#00296F] focus:bg-white focus:ring-2 focus:ring-[#00296F]/20"
               />
               <button
                 type="button"
@@ -166,7 +166,7 @@ export function ArtisanLoginForm() {
           <div className="flex justify-end">
             <Link
               href="/mot-de-passe-oublie"
-              className="text-[13px] font-medium text-[#022150] transition-colors hover:underline"
+              className="text-[13px] font-medium text-[#00296F] transition-colors hover:underline"
             >
               Mot de passe oublié ?
             </Link>
@@ -176,7 +176,7 @@ export function ArtisanLoginForm() {
             type="submit"
             data-testid="login-submit"
             disabled={loading}
-            className="group inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-[#022150] to-[#10B981] text-sm font-semibold text-white shadow-md shadow-[#022150]/25 transition-all hover:shadow-lg hover:shadow-[#022150]/40 disabled:cursor-not-allowed disabled:opacity-70"
+            className="group inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-[#00296F] to-[#10B981] text-sm font-semibold text-white shadow-md shadow-[#00296F]/25 transition-all hover:shadow-lg hover:shadow-[#00296F]/40 disabled:cursor-not-allowed disabled:opacity-70"
           >
             {loading ? (
               <>
@@ -206,7 +206,7 @@ export function ArtisanLoginForm() {
         <div className="mt-5 border-t border-[#F3F4F6] pt-4 text-center text-[13px]">
           <Link
             href="/login"
-            className="text-[#9CA3AF] transition-colors hover:text-[#022150]"
+            className="text-[#9CA3AF] transition-colors hover:text-[#00296F]"
           >
             Vous êtes fabricant ?{" "}
             <span className="font-medium underline">Espace Fabricant</span>

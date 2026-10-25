@@ -143,7 +143,7 @@ export async function getFabricantProfile(userId: string): Promise<FabricantProf
     facebook: u.facebook ?? null,
     instagram: u.instagram ?? null,
     linkedin: u.linkedin ?? null,
-    brandColor: u.brandColor || "#022150",
+    brandColor: u.brandColor || "#00296F",
     isVerified: u.isVerified,
     createdAt: toISODate(u.createdAt),
   };
@@ -284,7 +284,7 @@ export async function getFabricantQRCodes(userId: string): Promise<QRCode[]> {
 // Stats
 // ---------------------------------------------------------------------------
 
-const CHART_COLORS = ["#022150", "#10B981", "#F59E0B", "#8B5CF6", "#EC4899", "#06B6D4", "#84CC16", "#9CA3AF"];
+const CHART_COLORS = ["#00296F", "#10B981", "#F59E0B", "#8B5CF6", "#EC4899", "#06B6D4", "#84CC16", "#9CA3AF"];
 
 /** Scans grouped by day for the last `days` days. */
 async function getScansByDay(userId: string, days = 30) {
@@ -474,7 +474,7 @@ async function getTypeAppareil(userId: string) {
   }
   const total = counts.mobile + counts.desktop + counts.tablet + counts.other || 1;
   return [
-    { nom: "Mobile", valeur: Math.round((counts.mobile / total) * 100), couleur: "#022150" },
+    { nom: "Mobile", valeur: Math.round((counts.mobile / total) * 100), couleur: "#00296F" },
     { nom: "Desktop", valeur: Math.round((counts.desktop / total) * 100), couleur: "#10B981" },
     { nom: "Tablette", valeur: Math.round((counts.tablet / total) * 100), couleur: "#F59E0B" },
   ];
@@ -520,7 +520,7 @@ async function getRecentActivity(userId: string): Promise<Activity[]> {
       icon: "📱",
       text: `QR codes générés pour ${q.lot?.lotNumber || q.lot?.reference || ""}`,
       time: relativeTime(q.createdAt),
-      color: "#022150",
+      color: "#00296F",
     });
   }
   for (const a of auditLogs) {

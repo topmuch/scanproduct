@@ -14,7 +14,7 @@ const BENEFITS = [
 export function FinalCTA() {
   return (
     <section className="relative overflow-hidden bg-gradient-to-b from-[#F9FAFB] to-[#F0F4F9] py-16 sm:py-20 lg:py-24">
-      <div className="pointer-events-none absolute -left-20 top-10 h-72 w-72 rounded-full bg-[#022150]/10 blur-3xl" />
+      <div className="pointer-events-none absolute -left-20 top-10 h-72 w-72 rounded-full bg-[#00296F]/10 blur-3xl" />
       <div className="pointer-events-none absolute -right-16 bottom-0 h-72 w-72 rounded-full bg-[#10B981]/10 blur-3xl" />
 
       <AnimatedSection className="relative mx-auto max-w-3xl px-4 text-center sm:px-6 lg:px-8">
@@ -28,14 +28,14 @@ export function FinalCTA() {
         <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <Link
             href="/register"
-            className="group inline-flex w-full items-center justify-center gap-2 rounded-[10px] bg-gradient-to-r from-[#022150] to-[#10B981] px-7 py-3.5 text-base font-semibold text-white shadow-lg shadow-[#022150]/25 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-[#022150]/40 sm:w-auto"
+            className="group inline-flex w-full items-center justify-center gap-2 rounded-[10px] bg-gradient-to-r from-[#00296F] to-[#10B981] px-7 py-3.5 text-base font-semibold text-white shadow-lg shadow-[#00296F]/25 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-[#00296F]/40 sm:w-auto"
           >
             Créer votre compte gratuit
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
           </Link>
           <a
             href="#contact"
-            className="inline-flex w-full items-center justify-center gap-2 rounded-[10px] border border-[#022150] bg-white px-7 py-3.5 text-base font-semibold text-[#022150] transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#F0F4F9] sm:w-auto"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-[10px] border border-[#00296F] bg-white px-7 py-3.5 text-base font-semibold text-[#00296F] transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#F0F4F9] sm:w-auto"
           >
             <Phone className="h-4 w-4" />
             Voir une démo en direct

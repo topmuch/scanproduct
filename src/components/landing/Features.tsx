@@ -56,9 +56,9 @@ const FEATURES: Feature[] = [
       "Chaque lot dispose d'un QR code unique lié à une fiche produit complète. Vos clients accèdent à la vérité en un scan, où qu'ils soient.",
     illustration: "/features/feature-tracabilite.webp",
     cardGradient: "from-[#F0F4F9] via-[#F0FDF4] to-white",
-    accent: "text-[#022150]",
-    accentSoft: "bg-[#022150]",
-    bulletColor: "text-[#022150]",
+    accent: "text-[#00296F]",
+    accentSoft: "bg-[#00296F]",
+    bulletColor: "text-[#00296F]",
     bullets: [
       "Ingrédients, origine et certifications visibles en 1 scan",
       "Historique complet de fabrication et de péremption",
@@ -117,7 +117,7 @@ export function Features() {
     >
       {/* soft multi-color blobs to reinforce the "multicolor" backdrop */}
       <div
-        className="pointer-events-none absolute -left-32 top-10 h-80 w-80 rounded-full bg-[#022150]/10 blur-3xl"
+        className="pointer-events-none absolute -left-32 top-10 h-80 w-80 rounded-full bg-[#00296F]/10 blur-3xl"
         aria-hidden
       />
       <div

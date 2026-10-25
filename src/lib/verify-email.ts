@@ -164,7 +164,7 @@ function renderVerificationEmail(vars: {
       <td align="center" style="padding:24px 12px;">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background-color:#FFFFFF;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.08);">
           <tr>
-            <td style="background-color:#022150;padding:20px 24px;">
+            <td style="background-color:#00296F;padding:20px 24px;">
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                 <tr>
                   <td style="font-size:20px;font-weight:700;color:#FFFFFF;letter-spacing:-0.01em;">Prodtrust</td>
@@ -195,7 +195,7 @@ function renderVerificationEmail(vars: {
           <tr>
             <td style="padding:16px 24px 8px 24px;">
               <a href="${url}"
-                 style="display:inline-block;background-color:#022150;color:#FFFFFF;text-decoration:none;font-size:15px;font-weight:600;padding:12px 28px;border-radius:8px;">
+                 style="display:inline-block;background-color:#00296F;color:#FFFFFF;text-decoration:none;font-size:15px;font-weight:600;padding:12px 28px;border-radius:8px;">
                 Valider mon adresse email
               </a>
             </td>
@@ -204,7 +204,7 @@ function renderVerificationEmail(vars: {
             <td style="padding:12px 24px 24px 24px;">
               <p style="margin:0;font-size:13px;line-height:1.6;color:#6B7280;">
                 Si le bouton ne fonctionne pas, copiez-collez ce lien dans votre navigateur :<br>
-                <a href="${url}" style="color:#022150;word-break:break-all;">${url}</a>
+                <a href="${url}" style="color:#00296F;word-break:break-all;">${url}</a>
               </p>
               <p style="margin:12px 0 0 0;font-size:12px;line-height:1.6;color:#9CA3AF;">
                 Ce lien expire dans 48 heures. Si vous n'êtes pas à l'origine de ce compte, ignorez simplement cet email.

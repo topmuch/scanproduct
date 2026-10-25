@@ -38,7 +38,7 @@ export function CatalogHero({
   }
 
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-[#0A2B5F] via-[#022150] to-[#0D3068]">
+    <section className="relative overflow-hidden bg-gradient-to-br from-[#0A2B5F] via-[#00296F] to-[#0D3068]">
       {/* Decorative blobs */}
       <div aria-hidden className="pointer-events-none absolute inset-0">
         <div className="absolute -left-32 -top-32 h-96 w-96 rounded-full bg-white/10 blur-3xl" />
@@ -116,7 +116,7 @@ export function CatalogHero({
               )}
               <button
                 type="submit"
-                className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-[#022150] px-5 text-sm font-semibold text-white shadow-lg shadow-[#022150]/30 transition-all hover:bg-[#011D46] hover:shadow-xl"
+                className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-[#00296F] px-5 text-sm font-semibold text-white shadow-lg shadow-[#00296F]/30 transition-all hover:bg-[#011D46] hover:shadow-xl"
               >
                 <Search className="h-4 w-4" />
                 <span className="hidden sm:inline">Rechercher</span>

@@ -17,7 +17,7 @@ import { ArtisanLoginForm } from "./login-form";
  * Refonte (demande utilisateur) : la page était un îlot amber isolé, sans
  * menu ni footer. Elle utilise désormais la coquille standard du site public
  * (PublicHeader avec menu + PublicFooter) et la charte Prodtrust
- * (#022150 marine / #10B981 émeraude / blanc), sur le même schéma
+ * (#00296F marine / #10B981 émeraude / blanc), sur le même schéma
  * split-screen que /login (Espace Fabricant). L'amber (#F59E0B) reste
  * présent en touche discrète : c'est LA couleur identitaire de l'espace
  * artisan (dashboard, badges) et elle fait partie de la palette du site.
@@ -71,7 +71,7 @@ export default function ArtisanLoginPage() {
       >
         <div className="flex flex-1 flex-col lg:flex-row">
           {/* ── Panneau de marque (desktop) — même famille que /login ── */}
-          <div className="relative hidden w-1/2 overflow-hidden bg-gradient-to-br from-[#022150] via-[#0A2B5F] to-[#10B981] lg:flex">
+          <div className="relative hidden w-1/2 overflow-hidden bg-gradient-to-br from-[#00296F] via-[#0A2B5F] to-[#10B981] lg:flex">
             <div className="absolute inset-0 opacity-30">
               <div className="absolute -left-20 top-20 h-72 w-72 rounded-full bg-white/20 blur-3xl" />
               <div className="absolute right-10 top-1/3 h-96 w-96 rounded-full bg-[#10B981]/30 blur-3xl" />

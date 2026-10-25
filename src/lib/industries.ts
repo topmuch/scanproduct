@@ -235,8 +235,8 @@ export const INDUSTRIES: Industry[] = [
     subtitle: "Traçabilité océan-assiette",
     description:
       "Conformité UE et lutte contre la pêche illégale. Zone de pêche, méthode de capture, date de transformation.",
-    gradient: "from-[#22D3EE] to-[#022150]",
-    accent: "#022150",
+    gradient: "from-[#22D3EE] to-[#00296F]",
+    accent: "#00296F",
     accentSoft: "rgba(2, 33, 80,0.08)",
     features: ["Conformité UE", "Catch Certificate", "MSC / ASC"],
     challenges: [

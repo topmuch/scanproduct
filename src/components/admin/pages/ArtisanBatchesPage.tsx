@@ -456,7 +456,7 @@ export function ArtisanBatchesPage() {
         <CardHeader
           title="Nouvelle production"
           subtitle="Les codes sont générés immédiatement et restent inactifs jusqu'à l'activation par l'artisan."
-          action={<QrCode className="h-5 w-5 text-[#022150]" />}
+          action={<QrCode className="h-5 w-5 text-[#00296F]" />}
         />
         <div className="grid grid-cols-1 gap-4 p-5 md:grid-cols-4">
           <div>
@@ -469,7 +469,7 @@ export function ArtisanBatchesPage() {
               max={5000}
               value={totalQuantity}
               onChange={(e) => setTotalQuantity(parseInt(e.target.value) || 0)}
-              className="w-full rounded-lg border border-[#E5E7EB] px-3 py-2 text-sm outline-none focus:border-[#022150]"
+              className="w-full rounded-lg border border-[#E5E7EB] px-3 py-2 text-sm outline-none focus:border-[#00296F]"
             />
           </div>
           <div>
@@ -482,7 +482,7 @@ export function ArtisanBatchesPage() {
               max={500}
               value={packSize}
               onChange={(e) => setPackSize(parseInt(e.target.value) || 0)}
-              className="w-full rounded-lg border border-[#E5E7EB] px-3 py-2 text-sm outline-none focus:border-[#022150]"
+              className="w-full rounded-lg border border-[#E5E7EB] px-3 py-2 text-sm outline-none focus:border-[#00296F]"
             />
           </div>
           <div>
@@ -495,7 +495,7 @@ export function ArtisanBatchesPage() {
               step={500}
               value={pricePerPack}
               onChange={(e) => setPricePerPack(parseInt(e.target.value) || 0)}
-              className="w-full rounded-lg border border-[#E5E7EB] px-3 py-2 text-sm outline-none focus:border-[#022150]"
+              className="w-full rounded-lg border border-[#E5E7EB] px-3 py-2 text-sm outline-none focus:border-[#00296F]"
             />
           </div>
           <div className="flex items-end gap-2">
@@ -663,12 +663,12 @@ export function ArtisanBatchesPage() {
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center justify-between">
                             <span className="inline-flex items-center gap-1.5 text-[14px] font-semibold text-[#111827]">
-                              <Package className="h-4 w-4 text-[#022150]" />
+                              <Package className="h-4 w-4 text-[#00296F]" />
                               Pack {pack.packNumber}
                             </span>
                             {packBadge(pack.status)}
                           </div>
-                          <div className="mt-2 font-mono text-[12px] font-bold text-[#022150]">
+                          <div className="mt-2 font-mono text-[12px] font-bold text-[#00296F]">
                             {pack.masterQrCode}
                           </div>
                           <div className="mt-1 text-[12px] text-[#6B7280]">
@@ -717,7 +717,7 @@ export function ArtisanBatchesPage() {
                             href={`/a/${pack.masterQrCode}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="mt-2 inline-block text-[12px] font-medium text-[#022150] underline-offset-2 hover:underline"
+                            className="mt-2 inline-block text-[12px] font-medium text-[#00296F] underline-offset-2 hover:underline"
                           >
                             Voir la page du maître →
                           </a>

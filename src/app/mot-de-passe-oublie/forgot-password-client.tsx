@@ -112,7 +112,7 @@ function ForgotPasswordForm() {
   }
 
   const inputCls =
-    "h-11 w-full rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] pl-10 pr-3 text-sm text-[#111827] outline-none transition-all focus:border-[#022150] focus:bg-white focus:ring-2 focus:ring-[#022150]/20";
+    "h-11 w-full rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] pl-10 pr-3 text-sm text-[#111827] outline-none transition-all focus:border-[#00296F] focus:bg-white focus:ring-2 focus:ring-[#00296F]/20";
 
   return (
     <motion.div
@@ -126,7 +126,7 @@ function ForgotPasswordForm() {
         {mode === "request" && (
           <>
             <div className="mb-6 flex flex-col items-center text-center">
-              <div className="mb-3 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-[#022150] to-[#0A2B5F] text-white shadow-md">
+              <div className="mb-3 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-[#00296F] to-[#0A2B5F] text-white shadow-md">
                 <KeyRound className="h-6 w-6" />
               </div>
               <h1 className="font-display text-2xl font-bold text-[#111827]">
@@ -178,7 +178,7 @@ function ForgotPasswordForm() {
               <button
                 type="submit"
                 disabled={loading}
-                className="group inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#022150] text-sm font-semibold text-white shadow-md shadow-[#022150]/30 transition-all hover:bg-[#011D46] hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-70"
+                className="group inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#00296F] text-sm font-semibold text-white shadow-md shadow-[#00296F]/30 transition-all hover:bg-[#011D46] hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-70"
               >
                 {loading ? (
                   <>
@@ -197,7 +197,7 @@ function ForgotPasswordForm() {
             <div className="mt-6 text-center text-sm text-[#6B7280]">
               <Link
                 href="/login"
-                className="font-semibold text-[#022150] hover:underline"
+                className="font-semibold text-[#00296F] hover:underline"
               >
                 ← Retour à la connexion
               </Link>
@@ -246,7 +246,7 @@ function ForgotPasswordForm() {
             <div className="space-y-3">
               <Link
                 href="/login"
-                className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#022150] text-sm font-semibold text-white shadow-md transition-all hover:bg-[#011D46]"
+                className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#00296F] text-sm font-semibold text-white shadow-md transition-all hover:bg-[#011D46]"
               >
                 Retour à la connexion
               </Link>
@@ -268,7 +268,7 @@ function ForgotPasswordForm() {
         {mode === "reset" && (
           <>
             <div className="mb-6 flex flex-col items-center text-center">
-              <div className="mb-3 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-[#022150] to-[#0A2B5F] text-white shadow-md">
+              <div className="mb-3 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-[#00296F] to-[#0A2B5F] text-white shadow-md">
                 <Lock className="h-6 w-6" />
               </div>
               <h1 className="font-display text-2xl font-bold text-[#111827]">
@@ -341,7 +341,7 @@ function ForgotPasswordForm() {
               <button
                 type="submit"
                 disabled={loading || !passwordOk}
-                className="group inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#022150] text-sm font-semibold text-white shadow-md shadow-[#022150]/30 transition-all hover:bg-[#011D46] hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-70"
+                className="group inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#00296F] text-sm font-semibold text-white shadow-md shadow-[#00296F]/30 transition-all hover:bg-[#011D46] hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-70"
               >
                 {loading ? (
                   <>
@@ -376,7 +376,7 @@ function ForgotPasswordForm() {
             </div>
             <Link
               href="/login"
-              className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#022150] text-sm font-semibold text-white shadow-md transition-all hover:bg-[#011D46]"
+              className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#00296F] text-sm font-semibold text-white shadow-md transition-all hover:bg-[#011D46]"
             >
               Se connecter
               <ArrowRight className="h-4 w-4" />

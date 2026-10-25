@@ -51,7 +51,7 @@ export function CategoryFilters({ categories, activeCategory }: Props) {
           <button
             type="button"
             onClick={() => updateUrl({ category: null })}
-            className="text-sm font-semibold text-[#022150] hover:text-[#011D46]"
+            className="text-sm font-semibold text-[#00296F] hover:text-[#011D46]"
           >
             Tout afficher
           </button>
@@ -73,7 +73,7 @@ export function CategoryFilters({ categories, activeCategory }: Props) {
               className={[
                 "group relative flex flex-col items-center rounded-xl border-2 p-4 text-center transition-all duration-300",
                 isActive
-                  ? "scale-[1.03] border-[#022150] bg-[#F0F4F9] shadow-md shadow-[#DCE7F2]"
+                  ? "scale-[1.03] border-[#00296F] bg-[#F0F4F9] shadow-md shadow-[#DCE7F2]"
                   : "border-gray-200 bg-white hover:-translate-y-0.5 hover:border-[#C3D2E5] hover:shadow-md",
               ].join(" ")}
             >
@@ -101,7 +101,7 @@ export function CategoryFilters({ categories, activeCategory }: Props) {
               <div
                 className={[
                   "mt-0.5 text-xs",
-                  isActive ? "text-[#022150]" : "text-gray-500",
+                  isActive ? "text-[#00296F]" : "text-gray-500",
                 ].join(" ")}
               >
                 {cat.productCount} {cat.productCount > 1 ? "produits" : "produit"}
@@ -109,7 +109,7 @@ export function CategoryFilters({ categories, activeCategory }: Props) {
 
               {/* Active check badge */}
               {isActive && (
-                <div className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-[#022150] shadow-lg ring-2 ring-white">
+                <div className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-[#00296F] shadow-lg ring-2 ring-white">
                   <Check className="h-3.5 w-3.5 text-white" strokeWidth={4} />
                 </div>
               )}

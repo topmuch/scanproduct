@@ -41,7 +41,7 @@ export default function CookiesPage() {
           politique complète la{" "}
           <a
             href="/politique-confidentialite"
-            className="font-medium text-[#022150] underline-offset-2 hover:underline"
+            className="font-medium text-[#00296F] underline-offset-2 hover:underline"
           >
             Politique de confidentialité
           </a>{" "}
@@ -110,11 +110,11 @@ export default function CookiesPage() {
             supprimé à la fermeture du navigateur ;
           </li>
           <li>
-            <strong>verifscan_csrf</strong> : jeton de protection contre
+            <strong>prodtrust_csrf</strong> : jeton de protection contre
             les attaques CSRF, supprimé à la fermeture du navigateur ;
           </li>
           <li>
-            <strong>verifscan_consent</strong> : mémorise vos choix en
+            <strong>prodtrust_consent</strong> : mémorise vos choix en
             matière de cookies, valable 6 mois.
           </li>
         </ul>
@@ -133,11 +133,11 @@ export default function CookiesPage() {
         </p>
         <ul className="ml-5 list-disc space-y-2">
           <li>
-            <strong>verifscan_stats</strong> : identifiant aléatoire
+            <strong>prodtrust_stats</strong> : identifiant aléatoire
             anonyme, valable 13 mois ;
           </li>
           <li>
-            <strong>verifscan_referrer</strong> : page d&apos;origine de
+            <strong>prodtrust_referrer</strong> : page d&apos;origine de
             votre visite, supprimé à la fermeture du navigateur.
           </li>
         </ul>
@@ -248,7 +248,7 @@ export default function CookiesPage() {
               href="https://support.google.com/chrome/answer/95647"
               target="_blank"
               rel="noopener noreferrer"
-              className="font-medium text-[#022150] underline-offset-2 hover:underline"
+              className="font-medium text-[#00296F] underline-offset-2 hover:underline"
             >
               Google Chrome
             </a>
@@ -258,7 +258,7 @@ export default function CookiesPage() {
               href="https://support.mozilla.org/fr/kb/protection-renforcee-contre-pistage-firefox-ordinateur"
               target="_blank"
               rel="noopener noreferrer"
-              className="font-medium text-[#022150] underline-offset-2 hover:underline"
+              className="font-medium text-[#00296F] underline-offset-2 hover:underline"
             >
               Mozilla Firefox
             </a>
@@ -268,7 +268,7 @@ export default function CookiesPage() {
               href="https://support.apple.com/fr-fr/guide/safari/sfri11471/mac"
               target="_blank"
               rel="noopener noreferrer"
-              className="font-medium text-[#022150] underline-offset-2 hover:underline"
+              className="font-medium text-[#00296F] underline-offset-2 hover:underline"
             >
               Safari
             </a>
@@ -278,7 +278,7 @@ export default function CookiesPage() {
               href="https://support.microsoft.com/fr-fr/microsoft-edge/supprimer-les-cookies-dans-microsoft-edge-63947406-40ac-c3b8-57b9-2a946a29ae09"
               target="_blank"
               rel="noopener noreferrer"
-              className="font-medium text-[#022150] underline-offset-2 hover:underline"
+              className="font-medium text-[#00296F] underline-offset-2 hover:underline"
             >
               Microsoft Edge
             </a>
@@ -301,7 +301,7 @@ export default function CookiesPage() {
             Par email :{" "}
             <a
               href="mailto:contact@newvisioncargo.pro"
-              className="font-medium text-[#022150] underline-offset-2 hover:underline"
+              className="font-medium text-[#00296F] underline-offset-2 hover:underline"
             >
               contact@newvisioncargo.pro
             </a>
@@ -310,7 +310,7 @@ export default function CookiesPage() {
             Par téléphone :{" "}
             <a
               href="tel:+221773821822"
-              className="font-medium text-[#022150] underline-offset-2 hover:underline"
+              className="font-medium text-[#00296F] underline-offset-2 hover:underline"
             >
               +221 77 382 18 22
             </a>

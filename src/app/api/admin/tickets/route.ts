@@ -124,7 +124,7 @@ export async function POST(request: NextRequest) {
       subject: ticket.subject,
       requester: ticket.requesterName ?? "Anonyme",
       company: ticket.requesterCompany ?? "—",
-      avatarColor: "#022150",
+      avatarColor: "#00296F",
       priority: ticket.priority as Ticket["priority"],
       status: ticket.status as Ticket["status"],
       assignedTo: ticket.assignedTo,

@@ -154,7 +154,7 @@ export async function POST(req: NextRequest) {
     .join("");
   const html = `
 <div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto">
-  <div style="background:#022150;color:#fff;padding:18px 24px;border-radius:10px 10px 0 0">
+  <div style="background:#00296F;color:#fff;padding:18px 24px;border-radius:10px 10px 0 0">
     <h2 style="margin:0;font-size:18px">Nouveau message — formulaire de contact</h2>
   </div>
   <table style="border:1px solid #E5E7EB;border-top:none;border-radius:0 0 10px 10px;width:100%;border-collapse:collapse;background:#fff">

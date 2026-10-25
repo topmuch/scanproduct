@@ -141,7 +141,7 @@ export default function CarrieresPage() {
             <div className="mt-8 flex flex-wrap gap-3">
               <a
                 href="#postes"
-                className="inline-flex items-center gap-2 rounded-lg bg-[#022150] px-6 py-3 text-sm font-semibold text-white shadow-lg transition-colors hover:bg-[#011D46]"
+                className="inline-flex items-center gap-2 rounded-lg bg-[#00296F] px-6 py-3 text-sm font-semibold text-white shadow-lg transition-colors hover:bg-[#011D46]"
               >
                 Voir les postes à venir
                 <ArrowRight className="h-4 w-4" />
@@ -161,7 +161,7 @@ export default function CarrieresPage() {
           <div className="mx-auto max-w-[1400px] px-4 py-6 sm:px-6 lg:px-8">
             <div className="flex flex-col items-start justify-between gap-4 rounded-xl bg-[#F0F4F9] px-6 py-4 sm:flex-row sm:items-center">
               <div className="flex items-center gap-3">
-                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#022150]/10 text-[#022150]">
+                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#00296F]/10 text-[#00296F]">
                   <Sparkles className="h-5 w-5" />
                 </span>
                 <div>
@@ -174,7 +174,7 @@ export default function CarrieresPage() {
                   </p>
                 </div>
               </div>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-[#022150] px-3 py-1.5 text-xs font-medium text-white">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-[#00296F] px-3 py-1.5 text-xs font-medium text-white">
                 <Clock className="h-3 w-3" />
                 Postes à pourvoir bientôt
               </span>
@@ -185,7 +185,7 @@ export default function CarrieresPage() {
         {/* VALUES */}
         <section className="mx-auto max-w-[1400px] px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
           <div className="mx-auto max-w-2xl text-center">
-            <span className="inline-flex items-center gap-2 rounded-full bg-[#F0F4F9] px-3 py-1 text-xs font-semibold text-[#022150]">
+            <span className="inline-flex items-center gap-2 rounded-full bg-[#F0F4F9] px-3 py-1 text-xs font-semibold text-[#00296F]">
               Nos valeurs
             </span>
             <h2 className="mt-4 font-display text-3xl font-bold text-[#111827] sm:text-4xl">
@@ -203,7 +203,7 @@ export default function CarrieresPage() {
                 key={v.title}
                 className="rounded-2xl border border-[#E5E7EB] bg-white p-6 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md"
               >
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#F0F4F9] text-[#022150]">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#F0F4F9] text-[#00296F]">
                   <v.icon className="h-6 w-6" />
                 </div>
                 <h3 className="mt-5 font-display text-base font-semibold text-[#111827]">
@@ -262,7 +262,7 @@ export default function CarrieresPage() {
         >
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <span className="inline-flex items-center gap-2 rounded-full bg-[#F0F4F9] px-3 py-1 text-xs font-semibold text-[#022150]">
+              <span className="inline-flex items-center gap-2 rounded-full bg-[#F0F4F9] px-3 py-1 text-xs font-semibold text-[#00296F]">
                 Postes à pourvoir
               </span>
               <h2 className="mt-4 font-display text-3xl font-bold text-[#111827] sm:text-4xl">
@@ -283,10 +283,10 @@ export default function CarrieresPage() {
             {POSITIONS.map((p) => (
               <div
                 key={p.title}
-                className="group flex flex-col gap-4 rounded-2xl border border-[#E5E7EB] bg-white p-6 shadow-sm transition-all hover:border-[#022150]/30 hover:shadow-md sm:flex-row sm:items-center sm:justify-between"
+                className="group flex flex-col gap-4 rounded-2xl border border-[#E5E7EB] bg-white p-6 shadow-sm transition-all hover:border-[#00296F]/30 hover:shadow-md sm:flex-row sm:items-center sm:justify-between"
               >
                 <div className="flex items-start gap-4">
-                  <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-[#F0F4F9] text-[#022150]">
+                  <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-[#F0F4F9] text-[#00296F]">
                     <Briefcase className="h-6 w-6" />
                   </div>
                   <div>
@@ -332,7 +332,7 @@ export default function CarrieresPage() {
           id="alertes"
           className="mx-auto max-w-[1400px] px-4 pb-20 sm:px-6 lg:px-8"
         >
-          <div className="overflow-hidden rounded-3xl bg-gradient-to-br from-[#0F172A] via-[#0D3068] to-[#022150] p-10 text-white shadow-xl sm:p-14">
+          <div className="overflow-hidden rounded-3xl bg-gradient-to-br from-[#0F172A] via-[#0D3068] to-[#00296F] p-10 text-white shadow-xl sm:p-14">
             <div className="grid items-center gap-8 lg:grid-cols-2">
               <div>
                 <h2 className="font-display text-2xl font-bold sm:text-3xl">
@@ -346,7 +346,7 @@ export default function CarrieresPage() {
                 <div className="mt-6 flex flex-wrap gap-3">
                   <Link
                     href="/a-propos"
-                    className="inline-flex items-center gap-2 rounded-lg bg-white px-5 py-3 text-sm font-semibold text-[#022150] shadow-md transition-colors hover:bg-white/90"
+                    className="inline-flex items-center gap-2 rounded-lg bg-white px-5 py-3 text-sm font-semibold text-[#00296F] shadow-md transition-colors hover:bg-white/90"
                   >
                     Découvrir Prodtrust
                     <ArrowRight className="h-4 w-4" />

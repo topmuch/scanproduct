@@ -164,7 +164,7 @@ function ProductCardGrid({ product, index }: { product: ProductWithRelations; in
           </span>
           <span
             aria-hidden
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-gray-700 shadow-lg backdrop-blur-sm transition-colors group-hover:text-[#022150]"
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-gray-700 shadow-lg backdrop-blur-sm transition-colors group-hover:text-[#00296F]"
           >
             <Share2 className="h-4 w-4" />
           </span>
@@ -175,7 +175,7 @@ function ProductCardGrid({ product, index }: { product: ProductWithRelations; in
       <div className="flex flex-1 flex-col gap-2 p-5">
         {/* Category + weight */}
         <div className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-1 rounded-md bg-[#F0F4F9] px-2 py-0.5 text-[11px] font-semibold text-[#022150]">
+          <span className="inline-flex items-center gap-1 rounded-md bg-[#F0F4F9] px-2 py-0.5 text-[11px] font-semibold text-[#00296F]">
             <span aria-hidden>{emoji}</span>
             {product.category ?? "Produit"}
           </span>
@@ -185,7 +185,7 @@ function ProductCardGrid({ product, index }: { product: ProductWithRelations; in
         </div>
 
         {/* Name */}
-        <h3 className="line-clamp-2 text-base font-bold leading-snug text-gray-900 transition-colors group-hover:text-[#022150]">
+        <h3 className="line-clamp-2 text-base font-bold leading-snug text-gray-900 transition-colors group-hover:text-[#00296F]">
           {product.name}
         </h3>
 
@@ -200,7 +200,7 @@ function ProductCardGrid({ product, index }: { product: ProductWithRelations; in
             {product.fabricant?.logoUrl ? (
               <img src={product.fabricant.logoUrl} alt="" className="h-full w-full object-contain" />
             ) : (
-              <span className="text-xs font-bold text-[#022150]">
+              <span className="text-xs font-bold text-[#00296F]">
                 {(fabricantName ?? "?").charAt(0).toUpperCase()}
               </span>
             )}
@@ -239,7 +239,7 @@ function ProductCardGrid({ product, index }: { product: ProductWithRelations; in
           </div>
           <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-gray-100">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-[#022150] via-[#8b5cf6] to-[#ec4899] transition-all duration-1000"
+              className="h-full rounded-full bg-gradient-to-r from-[#00296F] via-[#8b5cf6] to-[#ec4899] transition-all duration-1000"
               style={{ width: `${Math.min(100, Math.max(0, score))}%` }}
             />
           </div>
@@ -312,7 +312,7 @@ function ProductCardList({ product, index }: { product: ProductWithRelations; in
         {/* Top row: category + transparency badge */}
         <div className="flex items-start justify-between gap-3">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center gap-1 rounded-md bg-[#F0F4F9] px-2 py-0.5 text-[11px] font-semibold text-[#022150]">
+            <span className="inline-flex items-center gap-1 rounded-md bg-[#F0F4F9] px-2 py-0.5 text-[11px] font-semibold text-[#00296F]">
               <span aria-hidden>{emoji}</span>
               {product.category ?? "Produit"}
             </span>
@@ -333,7 +333,7 @@ function ProductCardList({ product, index }: { product: ProductWithRelations; in
         </div>
 
         {/* Name + brand */}
-        <h3 className="text-lg font-bold leading-snug text-gray-900 transition-colors group-hover:text-[#022150]">
+        <h3 className="text-lg font-bold leading-snug text-gray-900 transition-colors group-hover:text-[#00296F]">
           {product.name}
         </h3>
         {product.brand && (
@@ -352,7 +352,7 @@ function ProductCardList({ product, index }: { product: ProductWithRelations; in
               {product.fabricant?.logoUrl ? (
                 <img src={product.fabricant.logoUrl} alt="" className="h-full w-full object-contain" />
               ) : (
-                <span className="text-sm font-bold text-[#022150]">
+                <span className="text-sm font-bold text-[#00296F]">
                   {(fabricantName ?? "?").charAt(0).toUpperCase()}
                 </span>
               )}

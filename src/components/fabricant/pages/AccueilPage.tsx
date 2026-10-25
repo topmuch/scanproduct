@@ -30,7 +30,7 @@ import { ProductImage } from "@/components/fabricant/ProductImage";
 type PeriodKey = "7j" | "30j" | "90j" | "12m";
 
 // Rank colors for the Top 5 Produits list
-const RANK_COLORS = ["#022150", "#10B981", "#F59E0B", "#8B5CF6", "#EC4899"];
+const RANK_COLORS = ["#00296F", "#10B981", "#F59E0B", "#8B5CF6", "#EC4899"];
 
 // ----------------------------------------------------------------------------
 // Custom tooltip for the scans AreaChart
@@ -134,12 +134,12 @@ export function AccueilPage() {
           <p className="mb-2 text-[13px] font-medium text-[#374151] dark:text-[#E5E7EB]">
             Complétez votre profil à 75%
           </p>
-          <ProgressBar value={75} gradient="from-[#022150] to-[#10B981]" height="h-2" />
+          <ProgressBar value={75} gradient="from-[#00296F] to-[#10B981]" height="h-2" />
         </div>
         <button
           type="button"
           onClick={() => setPage("parametres")}
-          className="self-start text-[13px] font-semibold text-[#022150] hover:underline sm:self-auto dark:text-[#4E74A8]"
+          className="self-start text-[13px] font-semibold text-[#00296F] hover:underline sm:self-auto dark:text-[#4E74A8]"
         >
           Voir les détails
         </button>
@@ -157,7 +157,7 @@ export function AccueilPage() {
           tendance={stats.kpis.produits.tendance}
           subText={`${stats.kpis.produits.actifs} actifs · ${stats.kpis.produits.brouillons} brouillons`}
           onClick={() => setPage("produits")}
-          gradient="from-[#022150] to-[#2E5383]"
+          gradient="from-[#00296F] to-[#2E5383]"
         />
         <KpiCard
           icon="🏷️"
@@ -211,7 +211,7 @@ export function AccueilPage() {
             <button
               type="button"
               onClick={() => setPage("statistiques")}
-              className="text-[14px] font-semibold text-[#022150] hover:underline"
+              className="text-[14px] font-semibold text-[#00296F] hover:underline"
             >
               Voir les détails
             </button>
@@ -223,8 +223,8 @@ export function AccueilPage() {
             <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
               <defs>
                 <linearGradient id="scanGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#022150" stopOpacity={0.2} />
-                  <stop offset="100%" stopColor="#022150" stopOpacity={0} />
+                  <stop offset="0%" stopColor="#00296F" stopOpacity={0.2} />
+                  <stop offset="100%" stopColor="#00296F" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid stroke="#F3F4F6" vertical={false} />
@@ -246,11 +246,11 @@ export function AccueilPage() {
               <Area
                 type="monotone"
                 dataKey="scans"
-                stroke="#022150"
+                stroke="#00296F"
                 strokeWidth={3}
                 fill="url(#scanGradient)"
                 dot={false}
-                activeDot={{ r: 5, fill: "#022150", strokeWidth: 2, stroke: "#fff" }}
+                activeDot={{ r: 5, fill: "#00296F", strokeWidth: 2, stroke: "#fff" }}
               />
             </AreaChart>
           </ResponsiveContainer>
@@ -294,7 +294,7 @@ export function AccueilPage() {
             <button
               type="button"
               onClick={() => setPage("statistiques")}
-              className="text-[14px] font-semibold text-[#022150] hover:underline"
+              className="text-[14px] font-semibold text-[#00296F] hover:underline"
             >
               Voir tout l&apos;historique
             </button>
@@ -335,7 +335,7 @@ export function AccueilPage() {
                   </div>
                   <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-[#F3F4F6] pl-7">
                     <div
-                      className="h-full rounded-full bg-[#022150]"
+                      className="h-full rounded-full bg-[#00296F]"
                       style={{ width: `${(prod.scans / maxScans) * 100}%` }}
                     />
                   </div>
@@ -347,7 +347,7 @@ export function AccueilPage() {
             <button
               type="button"
               onClick={() => setPage("produits")}
-              className="text-[14px] font-semibold text-[#022150] hover:underline"
+              className="text-[14px] font-semibold text-[#00296F] hover:underline"
             >
               Voir tous les produits
             </button>
@@ -393,7 +393,7 @@ export function AccueilPage() {
           <div className="flex flex-col justify-center gap-4">
             <ProgressBar
               value={score.global}
-              gradient="from-[#8B5CF6] to-[#022150]"
+              gradient="from-[#8B5CF6] to-[#00296F]"
               height="h-3"
             />
             {/* 4 mini detail chips */}
@@ -507,7 +507,7 @@ export function AccueilPage() {
                   <div className="mt-2 w-full">
                     <ProgressBar
                       value={badge.progression ?? 0}
-                      gradient="from-[#022150] to-[#10B981]"
+                      gradient="from-[#00296F] to-[#10B981]"
                       height="h-1.5"
                     />
                     <p className="mt-1 text-[12px] font-medium text-[#6B7280]">

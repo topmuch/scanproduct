@@ -1,7 +1,7 @@
 {
   "id": "/",
-  "name": "VerifScan — Passeport numérique & traçabilité produit",
-  "short_name": "VerifScan",
+  "name": "Prodtrust — Passeport numérique & traçabilité produit",
+  "short_name": "Prodtrust",
   "description": "Passeport numérique pour vos produits alimentaires et cosmétiques. Scannez le QR code pour vérifier l'authenticité, la traçabilité et l'origine — et luttez contre la contrefaçon.",
   "categories": ["shopping", "business", "utilities"],
   "lang": "fr",
@@ -38,7 +38,7 @@
       "sizes": "1956x804",
       "type": "image/webp",
       "form_factor": "wide",
-      "label": "Scan d'un produit VerifScan"
+      "label": "Scan d'un produit Prodtrust"
     }
   ],
   "shortcuts": [

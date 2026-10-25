@@ -63,7 +63,7 @@ export function DashboardLoadError() {
               type="button"
               onClick={handleRetry}
               disabled={retrying}
-              className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-[#022150] to-[#10B981] px-5 text-sm font-semibold text-white shadow-md shadow-[#022150]/25 transition-all hover:shadow-lg hover:shadow-[#022150]/40 disabled:cursor-not-allowed disabled:opacity-70"
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-[#00296F] to-[#10B981] px-5 text-sm font-semibold text-white shadow-md shadow-[#00296F]/25 transition-all hover:shadow-lg hover:shadow-[#00296F]/40 disabled:cursor-not-allowed disabled:opacity-70"
             >
               <RefreshCw className={`h-4 w-4 ${retrying ? "animate-spin" : ""}`} />
               {retrying ? "Rechargement…" : "Réessayer"}

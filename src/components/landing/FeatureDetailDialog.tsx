@@ -89,9 +89,9 @@ const CONTENT: Record<FeatureKey, FeatureContent> = {
     subtitle:
       "Chaque lot dispose d'un QR code unique lié à une fiche produit complète, infalsifiable et accessible en un scan.",
     illustration: "/features/feature-tracabilite.webp",
-    accent: "text-[#022150]",
+    accent: "text-[#00296F]",
     accentBg: "bg-[#F0F4F9]",
-    accentSoft: "bg-[#022150]",
+    accentSoft: "bg-[#00296F]",
     intro:
       "La traçabilité Prodtrust relie chaque produit physique à son passeport numérique. Dès la création d'un lot, un QR code unique est généré et lié définitivement à votre compte fabricant. Vos clients, distributeurs et partenaires peuvent scanner ce code à n'importe quel moment pour accéder à la vérité sur le produit : origine, ingrédients, certifications, historique de fabrication et dates de péremption.",
     howItWorks: [

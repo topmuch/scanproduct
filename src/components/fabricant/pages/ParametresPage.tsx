@@ -82,7 +82,7 @@ const REGIONS = ["Dakar", "Thiès", "Saint-Louis", "Kaolack", "Ziguinchor", "Dio
 const PAYS = ["Sénégal", "Mali", "Côte d'Ivoire", "Gambie", "Mauritanie", "Burkina Faso", "Guinée", "Bénin", "Togo"];
 
 const inputClass =
-  "w-full rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-sm text-[#111827] placeholder:text-[#9CA3AF] focus:border-[#022150] focus:outline-none focus:ring-2 focus:ring-[#022150]/10 transition-colors";
+  "w-full rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-sm text-[#111827] placeholder:text-[#9CA3AF] focus:border-[#00296F] focus:outline-none focus:ring-2 focus:ring-[#00296F]/10 transition-colors";
 
 // ============================================================================
 // Reusable field primitives
@@ -139,8 +139,8 @@ function Toggle({
       aria-checked={checked}
       onClick={() => onChange(!checked)}
       className={cn(
-        "relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[#022150]/30",
-        checked ? "bg-[#022150]" : "bg-[#D1D5DB]"
+        "relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[#00296F]/30",
+        checked ? "bg-[#00296F]" : "bg-[#D1D5DB]"
       )}
     >
       <span
@@ -284,7 +284,7 @@ function UploadZone({
           </div>
           {uploading && (
             <div className="absolute inset-0 flex items-center justify-center bg-white/70">
-              <Loader2 className="h-6 w-6 animate-spin text-[#022150]" />
+              <Loader2 className="h-6 w-6 animate-spin text-[#00296F]" />
             </div>
           )}
         </div>
@@ -298,18 +298,18 @@ function UploadZone({
           disabled={uploading}
           className={`flex w-full flex-col items-center justify-center rounded-xl border-2 border-dashed p-8 text-center transition-colors disabled:cursor-not-allowed ${
             dragActive
-              ? "border-[#022150] bg-[#F0F4F9]"
-              : "border-[#D1D5DB] bg-[#F9FAFB] hover:border-[#022150] hover:bg-[#F0F4F9]/50"
+              ? "border-[#00296F] bg-[#F0F4F9]"
+              : "border-[#D1D5DB] bg-[#F9FAFB] hover:border-[#00296F] hover:bg-[#F0F4F9]/50"
           }`}
         >
           {uploading ? (
             <>
-              <Loader2 className="mb-3 h-8 w-8 animate-spin text-[#022150]" />
-              <p className="text-[14px] font-medium text-[#022150]">Upload en cours…</p>
+              <Loader2 className="mb-3 h-8 w-8 animate-spin text-[#00296F]" />
+              <p className="text-[14px] font-medium text-[#00296F]">Upload en cours…</p>
             </>
           ) : (
             <>
-              <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-white text-[#022150] shadow-sm">
+              <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-white text-[#00296F] shadow-sm">
                 <Upload className="h-5 w-5" />
               </div>
               <p className="text-[14px] font-medium text-[#374151]">
@@ -334,7 +334,7 @@ function UploadZone({
 function LogoPreview({ initials }: { initials: string }) {
   return (
     <div className="flex flex-col items-center gap-2">
-      <div className="flex h-[120px] w-[120px] items-center justify-center rounded-full border-2 border-[#E5E7EB] bg-gradient-to-br from-[#022150] to-[#10B981] font-display text-[36px] font-bold text-white">
+      <div className="flex h-[120px] w-[120px] items-center justify-center rounded-full border-2 border-[#E5E7EB] bg-gradient-to-br from-[#00296F] to-[#10B981] font-display text-[36px] font-bold text-white">
         {initials}
       </div>
       <p className="text-[12px] text-[#6B7280]">Logo actuel</p>
@@ -363,7 +363,7 @@ function ColorField({
         <input
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-28 rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 font-mono text-sm text-[#111827] focus:border-[#022150] focus:outline-none"
+          className="w-28 rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 font-mono text-sm text-[#111827] focus:border-[#00296F] focus:outline-none"
         />
         <div
           className="h-8 w-16 rounded-lg border border-[#E5E7EB]"
@@ -706,7 +706,7 @@ function BadgeDesignSection() {
               </div>
               {uploading && (
                 <div className="absolute inset-0 flex items-center justify-center bg-white/70">
-                  <Loader2 className="h-6 w-6 animate-spin text-[#022150]" />
+                  <Loader2 className="h-6 w-6 animate-spin text-[#00296F]" />
                 </div>
               )}
             </div>
@@ -723,12 +723,12 @@ function BadgeDesignSection() {
               disabled={uploading}
               className={`flex w-full flex-col items-center justify-center rounded-xl border-2 border-dashed p-8 text-center transition-colors disabled:cursor-not-allowed ${
                 dragActive
-                  ? "border-[#022150] bg-[#F0F4F9]"
-                  : "border-[#D1D5DB] bg-[#F9FAFB] hover:border-[#022150] hover:bg-[#F0F4F9]/50"
+                  ? "border-[#00296F] bg-[#F0F4F9]"
+                  : "border-[#D1D5DB] bg-[#F9FAFB] hover:border-[#00296F] hover:bg-[#F0F4F9]/50"
               }`}
             >
               {uploading ? (
-                <Loader2 className="h-6 w-6 animate-spin text-[#022150]" />
+                <Loader2 className="h-6 w-6 animate-spin text-[#00296F]" />
               ) : (
                 <Upload className="h-6 w-6 text-[#9CA3AF]" />
               )}
@@ -1013,7 +1013,7 @@ function PasswordInput({
       <button
         type="button"
         onClick={() => setShow((s) => !s)}
-        className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B7280] hover:text-[#022150]"
+        className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B7280] hover:text-[#00296F]"
         aria-label={show ? "Masquer" : "Afficher"}
       >
         {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -1139,7 +1139,7 @@ function SecuriteSection() {
               className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#E5E7EB] p-4"
             >
               <div className="flex items-start gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#F0F4F9] text-[#022150]">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#F0F4F9] text-[#00296F]">
                   <Smartphone className="h-5 w-5" />
                 </div>
                 <div>
@@ -1413,7 +1413,7 @@ function NotificationsSection() {
         <SectionTitle>Notifications</SectionTitle>
         <SectionCard title="Préférences de notification" subtitle="Choisissez comment vous souhaitez être informé">
           <div className="flex items-center justify-center py-10">
-            <Loader2 className="h-6 w-6 animate-spin text-[#022150]" />
+            <Loader2 className="h-6 w-6 animate-spin text-[#00296F]" />
           </div>
         </SectionCard>
       </div>
@@ -1441,7 +1441,7 @@ function NotificationsSection() {
           <div className="grid gap-3 sm:grid-cols-3">
             <GlobalToggleCard
               icon={<Globe className="h-4 w-4" />}
-              iconColor="#022150"
+              iconColor="#00296F"
               iconBg="#F0F4F9"
               label="Notifications in-app"
               description="Afficher les notifications dans la barre de navigation."
@@ -1883,7 +1883,7 @@ export function ParametresPage() {
                   className={cn(
                     "flex h-11 shrink-0 items-center gap-2.5 rounded-lg border-l-[3px] px-4 text-[14px] font-medium transition-colors",
                     active
-                      ? "border-l-[#022150] bg-[#F0F4F9] text-[#022150]"
+                      ? "border-l-[#00296F] bg-[#F0F4F9] text-[#00296F]"
                       : "border-l-transparent text-[#6B7280] hover:bg-[#F9FAFB]"
                   )}
                 >

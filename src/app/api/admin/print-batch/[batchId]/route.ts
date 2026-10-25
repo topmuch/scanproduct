@@ -17,7 +17,7 @@ import { renderQRBuffer, resolveLogoPath } from "@/lib/qr-server";
  * labels-pdf, export-zip). Si le SuperAdmin a importé un design
  * officiel (Setting qrBadgeTemplateUrl), CE design est utilisé —
  * sinon repli sur le badge jaune (cercle #F8E805, textes en arc).
- * Historique : ce PDF utilisait un QR brut bleu (#022150) généré par
+ * Historique : ce PDF utilisait un QR brut bleu (#00296F) généré par
  * qrcode.toDataURL — « l'ancien design » signalé par le client.
  *
  * Chaque QR encode l'URL PUBLIQUE {origin}/a/<code> (et non le code brut) :
@@ -118,7 +118,7 @@ export async function GET(
     doc
       .fontSize(13)
       .font("Helvetica-Bold")
-      .fillColor("#022150")
+      .fillColor("#00296F")
       .text(
         `Pack ${pack.packNumber}/${batch.numberOfPacks} — ${pack.quantity} étiquettes — ${pack.price.toLocaleString("fr-FR")} FCFA`,
         LEFT,

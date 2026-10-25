@@ -16,7 +16,7 @@ type Testimonial = {
 const TESTIMONIALS: Testimonial[] = [
   {
     initials: "MD",
-    avatarBg: "bg-[#022150]",
+    avatarBg: "bg-[#00296F]",
     name: "Marième Diop",
     title: "Fondatrice — Jus de Bissap Sénégal",
     quote:
@@ -70,7 +70,7 @@ export function Testimonials() {
             <AnimatedSection
               key={t.name}
               index={i}
-              className="flex flex-col rounded-xl border-l-4 border-[#022150] bg-white p-6 shadow-[0_2px_10px_rgba(0,0,0,0.05)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_16px_30px_rgba(0,0,0,0.08)]"
+              className="flex flex-col rounded-xl border-l-4 border-[#00296F] bg-white p-6 shadow-[0_2px_10px_rgba(0,0,0,0.05)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_16px_30px_rgba(0,0,0,0.08)]"
             >
               <div className="flex items-center justify-between">
                 <div className="flex gap-0.5">

@@ -618,7 +618,7 @@ export async function deleteNotification(notificationId: string, userId: string)
  * Render a simple HTML wrapper for a notification email.
  *
  * Layout (all inline styles for email client compatibility):
- *   - Top blue band (#022150) with "Prodtrust" wordmark
+ *   - Top blue band (#00296F) with "Prodtrust" wordmark
  *   - Severity-tinted content card (warning=amber, critical=red,
  *     success=green, info=gray)
  *   - Title + message body
@@ -640,7 +640,7 @@ export function renderNotificationEmail(
         ? "#F59E0B"
         : sev === "success"
           ? "#10B981"
-          : "#022150";
+          : "#00296F";
 
   const accentBg =
     sev === "critical"
@@ -678,7 +678,7 @@ export function renderNotificationEmail(
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background-color:#FFFFFF;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.08);">
           <!-- Header band -->
           <tr>
-            <td style="background-color:#022150;padding:20px 24px;">
+            <td style="background-color:#00296F;padding:20px 24px;">
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                 <tr>
                   <td style="font-size:20px;font-weight:700;color:#FFFFFF;letter-spacing:-0.01em;">

@@ -59,12 +59,12 @@ export async function LatestArticles() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <AnimatedSection className="mb-12 text-center">
-          <SectionBadge bg="bg-[#F0F4F9]" color="text-[#022150]">
+          <SectionBadge bg="bg-[#F0F4F9]" color="text-[#00296F]">
             <Newspaper className="mr-1 h-3.5 w-3.5" /> Blog
           </SectionBadge>
           <h2 className="mt-4 font-display text-3xl font-bold leading-tight text-[#111827] sm:text-4xl">
             Les derniers{" "}
-            <span className="bg-gradient-to-r from-[#022150] to-[#10B981] bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-[#00296F] to-[#10B981] bg-clip-text text-transparent">
               articles du blog
             </span>
           </h2>
@@ -83,10 +83,10 @@ export async function LatestArticles() {
                 href={`/blog/${post.slug}`}
                 className="group flex h-full flex-col overflow-hidden rounded-2xl border border-[#E5E7EB] bg-white shadow-sm transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_20px_50px_rgba(0,0,0,0.10)]"
               >
-                <div className="h-1.5 w-full bg-gradient-to-r from-[#022150] to-[#10B981]" aria-hidden />
+                <div className="h-1.5 w-full bg-gradient-to-r from-[#00296F] to-[#10B981]" aria-hidden />
                 <div className="flex flex-1 flex-col p-6">
                   <div className="flex items-center justify-between">
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-[#F0F4F9] px-2.5 py-1 text-[11px] font-semibold text-[#022150]">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-[#F0F4F9] px-2.5 py-1 text-[11px] font-semibold text-[#00296F]">
                       <Tag className="h-3 w-3" />
                       {post.category}
                     </span>
@@ -96,7 +96,7 @@ export async function LatestArticles() {
                     </span>
                   </div>
 
-                  <h3 className="mt-4 font-display text-lg font-bold leading-snug text-[#111827] transition-colors group-hover:text-[#022150]">
+                  <h3 className="mt-4 font-display text-lg font-bold leading-snug text-[#111827] transition-colors group-hover:text-[#00296F]">
                     {post.title}
                   </h3>
                   <p className="mt-2 line-clamp-3 flex-1 text-sm leading-relaxed text-[#6B7280]">
@@ -107,7 +107,7 @@ export async function LatestArticles() {
                     <span className="text-xs text-[#9CA3AF]">
                       {fmtDate(post.publishedAt)}
                     </span>
-                    <span className="inline-flex items-center gap-1 text-sm font-semibold text-[#022150] transition-all group-hover:gap-2">
+                    <span className="inline-flex items-center gap-1 text-sm font-semibold text-[#00296F] transition-all group-hover:gap-2">
                       Lire
                       <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                     </span>
@@ -122,7 +122,7 @@ export async function LatestArticles() {
         <div className="mt-10 text-center">
           <Link
             href="/blog"
-            className="inline-flex h-12 items-center gap-2 rounded-xl bg-[#022150] px-7 text-sm font-semibold text-white shadow-md transition-all hover:gap-3 hover:bg-[#011D46]"
+            className="inline-flex h-12 items-center gap-2 rounded-xl bg-[#00296F] px-7 text-sm font-semibold text-white shadow-md transition-all hover:gap-3 hover:bg-[#011D46]"
           >
             Voir tous les articles
             <ArrowRight className="h-4 w-4" />

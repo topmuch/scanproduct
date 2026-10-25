@@ -96,13 +96,13 @@ const SECTION_TITLES: Record<SectionKey, string> = {
  * ========================================================== */
 
 const inputClass =
-  "h-10 w-full rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] px-3 text-[14px] text-[#111827] placeholder:text-[#9CA3AF] transition-colors focus:border-[#022150] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#022150]/10";
+  "h-10 w-full rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] px-3 text-[14px] text-[#111827] placeholder:text-[#9CA3AF] transition-colors focus:border-[#00296F] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#00296F]/10";
 
 const textareaClass =
-  "min-h-[88px] w-full rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] px-3 py-2 text-[14px] text-[#111827] placeholder:text-[#9CA3AF] transition-colors focus:border-[#022150] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#022150]/10";
+  "min-h-[88px] w-full rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] px-3 py-2 text-[14px] text-[#111827] placeholder:text-[#9CA3AF] transition-colors focus:border-[#00296F] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#00296F]/10";
 
 const selectTriggerClass =
-  "h-10 w-full rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] px-3 text-[14px] font-normal text-[#111827] shadow-none transition-colors focus:border-[#022150] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#022150]/10 data-[size=default]:h-10";
+  "h-10 w-full rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] px-3 text-[14px] font-normal text-[#111827] shadow-none transition-colors focus:border-[#00296F] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#00296F]/10 data-[size=default]:h-10";
 
 function Field({
   label,
@@ -247,7 +247,7 @@ function CardFooter({
   );
 }
 
-const switchClass = "data-[state=checked]:bg-[#022150]";
+const switchClass = "data-[state=checked]:bg-[#00296F]";
 
 /* ============================================================
  * Settings sub-menu
@@ -277,7 +277,7 @@ function SettingsNav({
             className={cn(
               "inline-flex h-11 shrink-0 items-center gap-2.5 rounded-lg border-l-[3px] px-4 text-[14px] font-medium transition-colors lg:w-full",
               isActive
-                ? "border-[#022150] bg-[#F0F4F9] text-[#022150]"
+                ? "border-[#00296F] bg-[#F0F4F9] text-[#00296F]"
                 : "border-transparent text-[#374151] hover:bg-[#F9FAFB]"
             )}
           >
@@ -568,7 +568,7 @@ function GeneralSection() {
                   }}
                 />
               ) : (
-                <span className="font-display text-[18px] font-bold text-[#022150]">
+                <span className="font-display text-[18px] font-bold text-[#00296F]">
                   V
                 </span>
               )}
@@ -629,7 +629,7 @@ function GeneralSection() {
                   className="h-full w-full object-contain"
                 />
               ) : (
-                <span className="font-display text-[11px] font-bold text-[#022150]">
+                <span className="font-display text-[11px] font-bold text-[#00296F]">
                   QR
                 </span>
               )}
@@ -907,7 +907,7 @@ function SeoSection() {
           <div className="rounded-xl border border-[#E5E7EB] bg-white p-4">
             <div className="flex items-center gap-2">
               <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[#F0F4F9]">
-                <span className="text-[11px] font-bold text-[#022150]">V</span>
+                <span className="text-[11px] font-bold text-[#00296F]">V</span>
               </div>
               <div className="leading-tight">
                 <p className="text-[12px] text-[#202124]">
@@ -1407,7 +1407,7 @@ function EmailSection() {
               </span>
             )}
             {testState.kind === "loading" && (
-              <span className="inline-flex items-center gap-2 text-[#022150]">
+              <span className="inline-flex items-center gap-2 text-[#00296F]">
                 <Loader2 className="h-4 w-4 animate-spin" /> Test en cours…
               </span>
             )}
@@ -1635,7 +1635,7 @@ function PaymentSection() {
                     <Badge color="gray">❌ Non configuré</Badge>
                   )}
                   <label className="flex items-center gap-2 text-[13px] font-medium text-[#374151]">
-                    <span className={p.enabled ? "text-[#022150]" : "text-[#9CA3AF]"}>
+                    <span className={p.enabled ? "text-[#00296F]" : "text-[#9CA3AF]"}>
                       {p.enabled ? "Activé" : "Désactivé"}
                     </span>
                     <Switch
@@ -1797,7 +1797,7 @@ function SecuritySection() {
                         [c.k]: v === true,
                       }))
                     }
-                    className="data-[state=checked]:bg-[#022150] data-[state=checked]:border-[#022150]"
+                    className="data-[state=checked]:bg-[#00296F] data-[state=checked]:border-[#00296F]"
                   />
                   <span className="text-[13px] font-medium text-[#374151]">
                     {c.l}
@@ -1858,7 +1858,7 @@ function SecuritySection() {
                     onCheckedChange={(v) =>
                       setMethods((prev) => ({ ...prev, [m]: v === true }))
                     }
-                    className="data-[state=checked]:bg-[#022150] data-[state=checked]:border-[#022150]"
+                    className="data-[state=checked]:bg-[#00296F] data-[state=checked]:border-[#00296F]"
                   />
                   <span className="font-mono text-[13px] font-semibold text-[#374151]">
                     {m}
@@ -2511,7 +2511,7 @@ function ApiSection() {
                             type="button"
                             onClick={() => testWebhook(w.id)}
                             data-testid={`webhook-test-${w.id}`}
-                            className="flex h-8 items-center gap-1 rounded-md px-2 text-[12px] font-semibold text-[#022150] hover:bg-[#F0F4F9]"
+                            className="flex h-8 items-center gap-1 rounded-md px-2 text-[12px] font-semibold text-[#00296F] hover:bg-[#F0F4F9]"
                           >
                             <ExternalLink className="h-3.5 w-3.5" /> Tester
                           </button>
@@ -2524,7 +2524,7 @@ function ApiSection() {
                                 ""
                               )
                             }
-                            className="flex h-8 w-8 items-center justify-center rounded-md text-[#6B7280] hover:bg-[#F0F4F9] hover:text-[#022150]"
+                            className="flex h-8 w-8 items-center justify-center rounded-md text-[#6B7280] hover:bg-[#F0F4F9] hover:text-[#00296F]"
                             aria-label="Régénérer le secret"
                             title="Régénérer le secret"
                           >
@@ -2576,7 +2576,7 @@ function ApiSection() {
             <CopyButton value={curlExample} label="Copier l'exemple" />
           </div>
           <pre
-            className="overflow-x-auto rounded-md bg-[#022150] px-4 py-3 font-mono text-[12px] leading-relaxed text-[#E5E7EB]"
+            className="overflow-x-auto rounded-md bg-[#00296F] px-4 py-3 font-mono text-[12px] leading-relaxed text-[#E5E7EB]"
             data-testid="api-curl-example"
           >
             {curlExample}
@@ -2592,7 +2592,7 @@ function ApiSection() {
  * ========================================================== */
 
 const COLOR_SWATCHES = [
-  "#022150",
+  "#00296F",
   "#10B981",
   "#F59E0B",
   "#8B5CF6",
@@ -2601,7 +2601,7 @@ const COLOR_SWATCHES = [
 
 function AppearanceSection() {
   const [theme, setTheme] = useState("light");
-  const [primary, setPrimary] = useState("#022150");
+  const [primary, setPrimary] = useState("#00296F");
 
   return (
     <Card>
@@ -2626,7 +2626,7 @@ function AppearanceSection() {
                 className={cn(
                   "inline-flex cursor-pointer items-center gap-2 rounded-lg border px-4 py-2.5 text-[14px] font-medium transition-colors",
                   theme === o.v
-                    ? "border-[#022150] bg-[#F0F4F9] text-[#022150]"
+                    ? "border-[#00296F] bg-[#F0F4F9] text-[#00296F]"
                     : "border-[#E5E7EB] bg-[#F9FAFB] text-[#374151] hover:bg-white"
                 )}
               >
@@ -2648,7 +2648,7 @@ function AppearanceSection() {
                 className={cn(
                   "relative h-9 w-9 rounded-full transition-transform hover:scale-110",
                   primary === c
-                    ? "ring-2 ring-offset-2 ring-[#022150] ring-offset-white"
+                    ? "ring-2 ring-offset-2 ring-[#00296F] ring-offset-white"
                     : "ring-1 ring-black/5"
                 )}
                 style={{ backgroundColor: c }}
@@ -2718,7 +2718,7 @@ function MaintenanceSection() {
           subtitle="Affiche une page de maintenance aux visiteurs"
           action={
             <label className="flex items-center gap-2 text-[13px] font-medium text-[#374151]">
-              <span className={maintenance ? "text-[#022150]" : "text-[#9CA3AF]"}>
+              <span className={maintenance ? "text-[#00296F]" : "text-[#9CA3AF]"}>
                 {maintenance ? "Activé" : "Désactivé"}
               </span>
               <Switch
@@ -2778,7 +2778,7 @@ function MaintenanceSection() {
           </Field>
 
           <div className="flex flex-wrap items-center gap-4 rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] px-4 py-3">
-            <Database className="h-5 w-5 text-[#022150]" />
+            <Database className="h-5 w-5 text-[#00296F]" />
             <div className="flex-1">
               <p className="text-[14px] font-medium text-[#111827]">
                 Dernière sauvegarde — 26 juillet 2026 à 02:00

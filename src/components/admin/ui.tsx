@@ -71,12 +71,12 @@ export function Button({
   size?: "sm" | "md" | "lg";
 }) {
   const variants = {
-    primary: "bg-[#022150] text-white hover:bg-[#011D46] shadow-sm",
-    outline: "border border-[#E5E7EB] bg-white text-[#374151] hover:bg-[#F9FAFB] hover:border-[#022150] hover:text-[#022150]",
+    primary: "bg-[#00296F] text-white hover:bg-[#011D46] shadow-sm",
+    outline: "border border-[#E5E7EB] bg-white text-[#374151] hover:bg-[#F9FAFB] hover:border-[#00296F] hover:text-[#00296F]",
     ghost: "text-[#374151] hover:bg-[#F3F4F6]",
     danger: "bg-[#EF4444] text-white hover:bg-[#DC2626] shadow-sm",
     success: "bg-[#10B981] text-white hover:bg-[#059669] shadow-sm",
-    gradient: "bg-gradient-to-r from-[#022150] to-[#10B981] text-white hover:shadow-lg hover:shadow-[#022150]/25",
+    gradient: "bg-gradient-to-r from-[#00296F] to-[#10B981] text-white hover:shadow-lg hover:shadow-[#00296F]/25",
   };
   const sizes = {
     sm: "h-8 px-3 text-[13px]",

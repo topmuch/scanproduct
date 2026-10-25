@@ -345,7 +345,7 @@ export default function CGUPage() {
             Par email :{" "}
             <a
               href="mailto:contact@newvisioncargo.pro"
-              className="font-medium text-[#022150] underline-offset-2 hover:underline"
+              className="font-medium text-[#00296F] underline-offset-2 hover:underline"
             >
               contact@newvisioncargo.pro
             </a>
@@ -354,7 +354,7 @@ export default function CGUPage() {
             Par téléphone :{" "}
             <a
               href="tel:+221773821822"
-              className="font-medium text-[#022150] underline-offset-2 hover:underline"
+              className="font-medium text-[#00296F] underline-offset-2 hover:underline"
             >
               +221 77 382 18 22
             </a>

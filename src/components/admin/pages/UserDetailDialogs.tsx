@@ -63,7 +63,7 @@ function DialogShell({
       >
         <div className="flex items-start justify-between border-b border-[#F3F4F6] px-6 py-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#022150] text-white">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#00296F] text-white">
               {icon}
             </div>
             <div>
@@ -166,7 +166,7 @@ export function ChangePlanDialog({
             className={cn(
               "flex w-full items-center justify-between rounded-xl border-2 px-4 py-3 text-left transition-all",
               selected === p.id
-                ? "border-[#022150] bg-[#F0F4F9]"
+                ? "border-[#00296F] bg-[#F0F4F9]"
                 : "border-[#E5E7EB] bg-white hover:bg-[#F9FAFB]",
             )}
           >
@@ -177,7 +177,7 @@ export function ChangePlanDialog({
               <span className="block text-[12px] text-[#6B7280]">{p.perks}</span>
             </span>
             <span className="flex items-center gap-2">
-              <span className="text-[14px] font-bold text-[#022150]">
+              <span className="text-[14px] font-bold text-[#00296F]">
                 {formatFCFA(p.mrr)}
                 <span className="text-[11px] font-medium text-[#6B7280]"> /mois</span>
               </span>
@@ -353,7 +353,7 @@ export function CreateTicketDialog({
   }
 
   const inputCls =
-    "w-full rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-[14px] text-[#111827] placeholder:text-[#9CA3AF] focus:border-[#022150] focus:outline-none focus:ring-2 focus:ring-[#022150]/20";
+    "w-full rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-[14px] text-[#111827] placeholder:text-[#9CA3AF] focus:border-[#00296F] focus:outline-none focus:ring-2 focus:ring-[#00296F]/20";
 
   return (
     <DialogShell
@@ -482,7 +482,7 @@ export function ResetPasswordDialog({
   }
 
   const inputCls =
-    "h-10 w-full rounded-lg border border-[#E5E7EB] bg-white px-3 text-[14px] text-[#111827] focus:border-[#022150] focus:outline-none focus:ring-2 focus:ring-[#022150]/20";
+    "h-10 w-full rounded-lg border border-[#E5E7EB] bg-white px-3 text-[14px] text-[#111827] focus:border-[#00296F] focus:outline-none focus:ring-2 focus:ring-[#00296F]/20";
 
   return (
     <DialogShell
@@ -501,7 +501,7 @@ export function ResetPasswordDialog({
                 className={cn(
                   "rounded-xl border-2 px-3 py-3 text-left transition-all",
                   mode === "auto"
-                    ? "border-[#022150] bg-[#F0F4F9]"
+                    ? "border-[#00296F] bg-[#F0F4F9]"
                     : "border-[#E5E7EB] bg-white hover:bg-[#F9FAFB]",
                 )}
               >
@@ -518,7 +518,7 @@ export function ResetPasswordDialog({
                 className={cn(
                   "rounded-xl border-2 px-3 py-3 text-left transition-all",
                   mode === "manual"
-                    ? "border-[#022150] bg-[#F0F4F9]"
+                    ? "border-[#00296F] bg-[#F0F4F9]"
                     : "border-[#E5E7EB] bg-white hover:bg-[#F9FAFB]",
                 )}
               >
@@ -590,7 +590,7 @@ export function ResetPasswordDialog({
                   Mot de passe temporaire généré :
                 </p>
                 <div className="flex items-center gap-2">
-                  <code className="flex-1 rounded-lg border border-dashed border-[#022150] bg-[#F0F4F9] px-4 py-3 text-center font-mono text-[18px] font-bold tracking-wider text-[#022150]">
+                  <code className="flex-1 rounded-lg border border-dashed border-[#00296F] bg-[#F0F4F9] px-4 py-3 text-center font-mono text-[18px] font-bold tracking-wider text-[#00296F]">
                     {result.tempPassword}
                   </code>
                   <Button
@@ -675,7 +675,7 @@ export function HistoryDialog({
                   aria-hidden="true"
                 />
               )}
-              <span className="z-10 mt-1 h-[11px] w-[11px] shrink-0 rounded-full border-2 border-white bg-[#022150] shadow" />
+              <span className="z-10 mt-1 h-[11px] w-[11px] shrink-0 rounded-full border-2 border-white bg-[#00296F] shadow" />
               <div className="min-w-0">
                 <div className="text-[11px] text-[#6B7280]">{a.date}</div>
                 <div className="text-[13px] font-medium text-[#111827]">{a.label}</div>

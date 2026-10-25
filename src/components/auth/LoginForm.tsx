@@ -78,14 +78,14 @@ const SPACE_CONFIG: Record<LoginSpace, SpaceConfig> = {
     icon: Factory,
     badge: "bg-gradient-to-br from-[#10B981] to-[#047857]",
     button:
-      "bg-gradient-to-r from-[#022150] to-[#10B981] shadow-[#022150]/25 hover:shadow-[#022150]/40",
+      "bg-gradient-to-r from-[#00296F] to-[#10B981] shadow-[#00296F]/25 hover:shadow-[#00296F]/40",
   },
   admin: {
     title: "Espace SuperAdmin",
     subtitle: "Console d'administration Prodtrust — accès réservé.",
     icon: ShieldCheck,
-    badge: "bg-gradient-to-br from-[#022150] to-[#0A2B5F]",
-    button: "bg-[#022150] shadow-[#022150]/30 hover:bg-[#011D46]",
+    badge: "bg-gradient-to-br from-[#00296F] to-[#0A2B5F]",
+    button: "bg-[#00296F] shadow-[#00296F]/30 hover:bg-[#011D46]",
   },
 };
 
@@ -207,7 +207,7 @@ export function LoginForm({ space }: { space: LoginSpace }) {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="vous@entreprise.sn"
-                className="h-11 w-full rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] pl-10 pr-3 text-sm text-[#111827] outline-none transition-all focus:border-[#022150] focus:bg-white focus:ring-2 focus:ring-[#022150]/20"
+                className="h-11 w-full rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] pl-10 pr-3 text-sm text-[#111827] outline-none transition-all focus:border-[#00296F] focus:bg-white focus:ring-2 focus:ring-[#00296F]/20"
               />
             </div>
           </div>
@@ -229,7 +229,7 @@ export function LoginForm({ space }: { space: LoginSpace }) {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="h-11 w-full rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] pl-10 pr-10 text-sm text-[#111827] outline-none transition-all focus:border-[#022150] focus:bg-white focus:ring-2 focus:ring-[#022150]/20"
+                className="h-11 w-full rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] pl-10 pr-10 text-sm text-[#111827] outline-none transition-all focus:border-[#00296F] focus:bg-white focus:ring-2 focus:ring-[#00296F]/20"
               />
               <button
                 type="button"
@@ -249,7 +249,7 @@ export function LoginForm({ space }: { space: LoginSpace }) {
           <div className="flex justify-end">
             <Link
               href="/mot-de-passe-oublie"
-              className="text-[13px] font-medium text-[#022150] transition-colors hover:underline"
+              className="text-[13px] font-medium text-[#00296F] transition-colors hover:underline"
             >
               Mot de passe oublié ?
             </Link>
@@ -279,7 +279,7 @@ export function LoginForm({ space }: { space: LoginSpace }) {
             Pas encore partenaire ?{" "}
             <Link
               href="/register"
-              className="font-semibold text-[#022150] hover:underline"
+              className="font-semibold text-[#00296F] hover:underline"
             >
               Créer un compte
             </Link>
@@ -291,7 +291,7 @@ export function LoginForm({ space }: { space: LoginSpace }) {
           {space === "fabricant" ? (
             <Link
               href="/login/admin"
-              className="text-[#9CA3AF] transition-colors hover:text-[#022150]"
+              className="text-[#9CA3AF] transition-colors hover:text-[#00296F]"
             >
               Vous êtes administrateur ?{" "}
               <span className="font-medium underline">Espace SuperAdmin</span>
@@ -299,7 +299,7 @@ export function LoginForm({ space }: { space: LoginSpace }) {
           ) : (
             <Link
               href="/login"
-              className="text-[#9CA3AF] transition-colors hover:text-[#022150]"
+              className="text-[#9CA3AF] transition-colors hover:text-[#00296F]"
             >
               Vous êtes fabricant ?{" "}
               <span className="font-medium underline">Espace Fabricant</span>

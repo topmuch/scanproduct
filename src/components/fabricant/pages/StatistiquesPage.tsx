@@ -106,7 +106,7 @@ function ChartTooltip({
   label,
   suffix = "",
   unit = "",
-  color = "#022150",
+  color = "#00296F",
   labelFormatter,
 }: {
   active?: boolean;
@@ -387,7 +387,7 @@ export function StatistiquesPage() {
                 onClick={() => handleExport("scans")}
                 className="flex w-full items-center gap-3 px-3 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50"
               >
-                <Download className="h-4 w-4 text-[#022150]" />
+                <Download className="h-4 w-4 text-[#00296F]" />
                 <div className="text-left">
                   <p className="font-medium">Scans (CSV)</p>
                   <p className="text-[10px] text-gray-400">Historique des scans</p>
@@ -462,8 +462,8 @@ export function StatistiquesPage() {
               <AreaChart data={SCANS_30J} margin={{ top: 10, right: 12, left: -8, bottom: 0 }}>
                 <defs>
                   <linearGradient id="scansGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#022150" stopOpacity={0.35} />
-                    <stop offset="100%" stopColor="#022150" stopOpacity={0} />
+                    <stop offset="0%" stopColor="#00296F" stopOpacity={0.35} />
+                    <stop offset="100%" stopColor="#00296F" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" vertical={false} />
@@ -481,17 +481,17 @@ export function StatistiquesPage() {
                   width={40}
                 />
                 <Tooltip
-                  content={<ChartTooltip suffix=" scans" color="#022150" labelFormatter={(l) => `Date : ${l}`} />}
-                  cursor={{ stroke: "#022150", strokeWidth: 1, strokeDasharray: "3 3" }}
+                  content={<ChartTooltip suffix=" scans" color="#00296F" labelFormatter={(l) => `Date : ${l}`} />}
+                  cursor={{ stroke: "#00296F", strokeWidth: 1, strokeDasharray: "3 3" }}
                 />
                 <Area
                   type="monotone"
                   dataKey="scans"
-                  stroke="#022150"
+                  stroke="#00296F"
                   strokeWidth={3}
                   fill="url(#scansGradient)"
                   dot={false}
-                  activeDot={{ r: 5, fill: "#022150", stroke: "#fff", strokeWidth: 2 }}
+                  activeDot={{ r: 5, fill: "#00296F", stroke: "#fff", strokeWidth: 2 }}
                 />
               </AreaChart>
             </ResponsiveContainer>
@@ -708,7 +708,7 @@ export function StatistiquesPage() {
                       <td className="py-3 text-right">
                         <button
                           type="button"
-                          className="inline-flex items-center gap-1 text-[12px] font-medium text-[#022150] hover:underline"
+                          className="inline-flex items-center gap-1 text-[12px] font-medium text-[#00296F] hover:underline"
                         >
                           Voir détails
                           <ArrowRight className="h-3 w-3" />
@@ -855,7 +855,7 @@ export function StatistiquesPage() {
           </div>
 
           <div className="mt-4">
-            <InsightBox color="#022150">60% de vos scans viennent de Dakar</InsightBox>
+            <InsightBox color="#00296F">60% de vos scans viennent de Dakar</InsightBox>
           </div>
         </SectionCard>
       </div>
@@ -937,7 +937,7 @@ export function StatistiquesPage() {
             ))}
           </ul>
           <div className="mt-3">
-            <InsightBox color="#022150">85% des scans viennent de mobile</InsightBox>
+            <InsightBox color="#00296F">85% des scans viennent de mobile</InsightBox>
           </div>
         </SectionCard>
 

@@ -127,7 +127,7 @@ const MD_COMPONENTS = {
   em: (p: React.HTMLAttributes<HTMLElement>) => <em className="italic" {...p} />,
   a: (p: React.AnchorHTMLAttributes<HTMLAnchorElement>) => (
     <a
-      className="font-semibold text-[#022150] underline decoration-[#10B981]/60 underline-offset-2 hover:decoration-[#10B981]"
+      className="font-semibold text-[#00296F] underline decoration-[#10B981]/60 underline-offset-2 hover:decoration-[#10B981]"
       target="_blank"
       rel="noopener noreferrer"
       {...p}
@@ -135,13 +135,13 @@ const MD_COMPONENTS = {
   ),
   blockquote: (p: React.HTMLAttributes<HTMLQuoteElement>) => (
     <blockquote
-      className="my-6 rounded-r-xl border-l-4 border-[#10B981] bg-[#F0F4F9] px-5 py-4 text-[15px] italic leading-7 text-[#022150]"
+      className="my-6 rounded-r-xl border-l-4 border-[#10B981] bg-[#F0F4F9] px-5 py-4 text-[15px] italic leading-7 text-[#00296F]"
       {...p}
     />
   ),
   hr: () => <hr className="my-8 border-[#E5E7EB]" />,
   code: (p: React.HTMLAttributes<HTMLElement>) => (
-    <code className="rounded bg-[#F0F4F9] px-1.5 py-0.5 font-mono text-[13px] text-[#022150]" {...p} />
+    <code className="rounded bg-[#F0F4F9] px-1.5 py-0.5 font-mono text-[13px] text-[#00296F]" {...p} />
   ),
 };
 
@@ -277,7 +277,7 @@ export default async function BlogPostPage({ params }: Props) {
 
         {/* CONTENU */}
         <article className="mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
-          <p className="mb-8 border-l-4 border-[#10B981] bg-[#F0F4F9] px-5 py-4 text-[15px] font-medium leading-7 text-[#022150] sm:text-base">
+          <p className="mb-8 border-l-4 border-[#10B981] bg-[#F0F4F9] px-5 py-4 text-[15px] font-medium leading-7 text-[#00296F] sm:text-base">
             {post.excerpt}
           </p>
 
@@ -286,7 +286,7 @@ export default async function BlogPostPage({ params }: Props) {
           </div>
 
           {/* CTA article */}
-          <div className="mt-14 overflow-hidden rounded-3xl bg-gradient-to-br from-[#0F172A] via-[#0D3068] to-[#022150] p-8 text-white shadow-xl sm:p-10">
+          <div className="mt-14 overflow-hidden rounded-3xl bg-gradient-to-br from-[#0F172A] via-[#0D3068] to-[#00296F] p-8 text-white shadow-xl sm:p-10">
             <div className="flex flex-col items-start gap-6 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-start gap-4">
                 <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white/10 backdrop-blur">
@@ -316,7 +316,7 @@ export default async function BlogPostPage({ params }: Props) {
           <div className="mt-10">
             <Link
               href="/blog"
-              className="inline-flex items-center gap-2 text-sm font-semibold text-[#022150] transition-all hover:gap-3"
+              className="inline-flex items-center gap-2 text-sm font-semibold text-[#00296F] transition-all hover:gap-3"
             >
               <ArrowLeft className="h-4 w-4" />
               Retour au blog
@@ -338,17 +338,17 @@ export default async function BlogPostPage({ params }: Props) {
                     href={`/blog/${r.slug}`}
                     className="group flex flex-col rounded-2xl border border-[#E5E7EB] bg-white p-6 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md"
                   >
-                    <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-[#F0F4F9] px-2.5 py-1 text-[11px] font-semibold text-[#022150]">
+                    <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-[#F0F4F9] px-2.5 py-1 text-[11px] font-semibold text-[#00296F]">
                       <Tag className="h-3 w-3" />
                       {r.category}
                     </span>
-                    <h3 className="mt-3 font-display text-base font-semibold leading-snug text-[#111827] group-hover:text-[#022150]">
+                    <h3 className="mt-3 font-display text-base font-semibold leading-snug text-[#111827] group-hover:text-[#00296F]">
                       {r.title}
                     </h3>
                     <p className="mt-2 line-clamp-2 flex-1 text-sm leading-relaxed text-[#6B7280]">
                       {r.excerpt}
                     </p>
-                    <span className="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-[#022150] transition-all group-hover:gap-2">
+                    <span className="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-[#00296F] transition-all group-hover:gap-2">
                       Lire l&apos;article
                       <ArrowRight className="h-3.5 w-3.5" />
                     </span>

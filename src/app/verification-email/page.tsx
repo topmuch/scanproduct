@@ -72,7 +72,7 @@ export default async function VerifyEmailPage({
     >
       <div className="w-full max-w-md overflow-hidden rounded-2xl border border-[#E5E7EB] bg-white shadow-lg">
         {/* Brand band */}
-        <div className="bg-[#022150] px-8 py-6 text-center">
+        <div className="bg-[#00296F] px-8 py-6 text-center">
           <p className="font-display text-[22px] font-bold text-white">
             Verif<span className="text-[#10B981]">Scan</span>
           </p>
@@ -176,7 +176,7 @@ export default async function VerifyEmailPage({
           <div className="mt-8 flex flex-col gap-3">
             <Link
               href="/login"
-              className="inline-flex h-11 items-center justify-center rounded-lg bg-[#022150] px-6 text-[14px] font-semibold text-white transition-colors hover:bg-[#022150]/90"
+              className="inline-flex h-11 items-center justify-center rounded-lg bg-[#00296F] px-6 text-[14px] font-semibold text-white transition-colors hover:bg-[#00296F]/90"
             >
               Me connecter
             </Link>

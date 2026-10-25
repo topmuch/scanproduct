@@ -56,7 +56,7 @@ const EMPTY_FORM: ProductFormData = {
 };
 
 const inputCls =
-  "w-full rounded-lg border border-[#E5E7EB] px-3 py-2 text-sm outline-none focus:border-[#022150]";
+  "w-full rounded-lg border border-[#E5E7EB] px-3 py-2 text-sm outline-none focus:border-[#00296F]";
 const labelCls = "mb-1.5 block text-[13px] font-medium text-[#374151]";
 
 type ModifyPackModalProps = {

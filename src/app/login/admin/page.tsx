@@ -16,7 +16,7 @@ import { LoginForm } from "@/components/auth/LoginForm";
 
 export default function AdminLoginPage() {
   return (
-    <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-[#022150] px-6 py-12">
+    <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-[#00296F] px-6 py-12">
       {/* Décor */}
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute -left-24 top-16 h-80 w-80 rounded-full bg-white/5 blur-3xl" />

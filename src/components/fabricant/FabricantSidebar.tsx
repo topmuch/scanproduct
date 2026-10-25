@@ -208,7 +208,7 @@ export function FabricantSidebar() {
       {/* Profile */}
       <div className="border-t border-white/10 p-4">
         <div className="flex items-center gap-3 rounded-lg p-2 hover:bg-white/10">
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-[#022150] to-[#10B981] font-display text-sm font-bold text-white">
+          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-[#00296F] to-[#10B981] font-display text-sm font-bold text-white">
             {logoInitial}
           </span>
           <div className="min-w-0 flex-1 leading-tight">

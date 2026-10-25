@@ -58,8 +58,8 @@ export function PublicHeader() {
             <Link
               href="/"
               className={cn(
-                "rounded-md px-3 py-2 text-[15px] font-medium transition-colors hover:text-[#022150]",
-                pathname === "/" ? "text-[#022150]" : "text-[#374151]"
+                "rounded-md px-3 py-2 text-[15px] font-medium transition-colors hover:text-[#00296F]",
+                pathname === "/" ? "text-[#00296F]" : "text-[#374151]"
               )}
             >
               Accueil
@@ -69,15 +69,15 @@ export function PublicHeader() {
               className={cn(
                 "rounded-md px-3 py-2 text-[15px] font-semibold transition-colors",
                 pathname === "/produits"
-                  ? "text-[#022150]"
-                  : "text-[#374151] hover:text-[#022150]"
+                  ? "text-[#00296F]"
+                  : "text-[#374151] hover:text-[#00296F]"
               )}
             >
               Catalogue
             </Link>
             <a
               href="/#fonctionnalites"
-              className="rounded-md px-3 py-2 text-[15px] font-medium text-[#374151] transition-colors hover:text-[#022150]"
+              className="rounded-md px-3 py-2 text-[15px] font-medium text-[#374151] transition-colors hover:text-[#00296F]"
             >
               Fonctionnalités
             </a>
@@ -86,15 +86,15 @@ export function PublicHeader() {
               className={cn(
                 "rounded-md px-3 py-2 text-[15px] font-medium transition-colors",
                 pathname.startsWith("/blog")
-                  ? "text-[#022150] font-semibold"
-                  : "text-[#374151] hover:text-[#022150]"
+                  ? "text-[#00296F] font-semibold"
+                  : "text-[#374151] hover:text-[#00296F]"
               )}
             >
               Blog
             </a>
             <a
               href="/contact"
-              className="rounded-md px-3 py-2 text-[15px] font-medium text-[#374151] transition-colors hover:text-[#022150]"
+              className="rounded-md px-3 py-2 text-[15px] font-medium text-[#374151] transition-colors hover:text-[#00296F]"
             >
               Contact
             </a>
@@ -110,7 +110,7 @@ export function PublicHeader() {
             </Link>
             <Link
               href="/register"
-              className="inline-flex items-center gap-1.5 rounded-md bg-[#022150] px-3 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#011D46]"
+              className="inline-flex items-center gap-1.5 rounded-md bg-[#00296F] px-3 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#011D46]"
             >
               <ShieldCheck className="h-4 w-4" />
               <span className="hidden sm:inline">Devenir partenaire</span>
@@ -174,7 +174,7 @@ export function PublicHeader() {
                       className={cn(
                         "flex items-center gap-3 rounded-lg px-4 py-3 text-base font-medium transition-colors",
                         active
-                          ? "bg-[#F0F4F9] text-[#022150]"
+                          ? "bg-[#F0F4F9] text-[#00296F]"
                           : "text-[#374151] hover:bg-[#F9FAFB]"
                       )}
                     >
@@ -189,7 +189,7 @@ export function PublicHeader() {
                 <Link
                   href="/login"
                   onClick={() => setMobileOpen(false)}
-                  className="inline-flex items-center justify-center gap-2 rounded-lg border border-[#022150] px-5 py-3 text-[15px] font-semibold text-[#022150] transition-colors hover:bg-[#F0F4F9]"
+                  className="inline-flex items-center justify-center gap-2 rounded-lg border border-[#00296F] px-5 py-3 text-[15px] font-semibold text-[#00296F] transition-colors hover:bg-[#F0F4F9]"
                 >
                   <LogIn className="h-4 w-4" />
                   Connexion
@@ -197,7 +197,7 @@ export function PublicHeader() {
                 <Link
                   href="/register"
                   onClick={() => setMobileOpen(false)}
-                  className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-gradient-to-r from-[#022150] to-[#10B981] px-5 py-3 text-[15px] font-semibold text-white shadow-md"
+                  className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-gradient-to-r from-[#00296F] to-[#10B981] px-5 py-3 text-[15px] font-semibold text-white shadow-md"
                 >
                   Devenir partenaire
                   <ShieldCheck className="h-4 w-4" />

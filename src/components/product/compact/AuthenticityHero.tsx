@@ -161,7 +161,7 @@ export function AuthenticityHero({
 
             {/* Manufacturer */}
             <div className="mt-2 flex items-center gap-2 text-xs">
-              <div className="flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-[#4E74A8] to-[#022150] text-[10px] font-bold text-white">
+              <div className="flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-[#4E74A8] to-[#00296F] text-[10px] font-bold text-white">
                 {(fabricant.companyName ?? fabricant.name ?? "F")
                   .charAt(0)
                   .toUpperCase()}

@@ -58,7 +58,7 @@ export function ContactOrb({ fabricant }: Props) {
       Icon: Phone,
       label: "Téléphone",
       href: `tel:${normalizePhone(phone)}`,
-      gradient: "from-[#2E5383] via-[#022150] to-cyan-500",
+      gradient: "from-[#2E5383] via-[#00296F] to-cyan-500",
       glow: "wow-shadow-glow-blue",
       external: false,
     });

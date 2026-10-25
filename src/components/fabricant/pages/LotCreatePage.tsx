@@ -327,7 +327,7 @@ export function LotCreatePage() {
       <div>
         <button
           onClick={() => setPage("lots")}
-          className="mb-4 inline-flex items-center gap-1.5 text-[13px] font-medium text-[#6B7280] transition-colors hover:text-[#022150]"
+          className="mb-4 inline-flex items-center gap-1.5 text-[13px] font-medium text-[#6B7280] transition-colors hover:text-[#00296F]"
         >
           <ArrowLeft className="h-4 w-4" />
           Retour aux lots
@@ -374,7 +374,7 @@ export function LotCreatePage() {
           <div className="mx-auto mt-6 max-w-md rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] p-4 text-left">
             <div className="grid grid-cols-2 gap-y-2 text-[13px]">
               <span className="text-[#6B7280]">Numéro de lot</span>
-              <span className="text-right font-mono font-medium text-[#022150]">
+              <span className="text-right font-mono font-medium text-[#00296F]">
                 {numero}
               </span>
               <span className="text-[#6B7280]">Produit</span>
@@ -414,7 +414,7 @@ export function LotCreatePage() {
     <div className="pb-2">
       <button
         onClick={() => setPage("lots")}
-        className="mb-3 inline-flex items-center gap-1.5 text-[13px] font-medium text-[#6B7280] transition-colors hover:text-[#022150]"
+        className="mb-3 inline-flex items-center gap-1.5 text-[13px] font-medium text-[#6B7280] transition-colors hover:text-[#00296F]"
       >
         <ArrowLeft className="h-4 w-4" />
         Retour aux lots
@@ -451,7 +451,7 @@ export function LotCreatePage() {
                   placeholder="Rechercher un produit par nom ou marque…"
                   value={productSearch}
                   onChange={(e) => setProductSearch(e.target.value)}
-                  className="h-11 w-full rounded-lg border border-[#E5E7EB] bg-white pl-9 pr-3 text-[14px] text-[#111827] placeholder:text-[#9CA3AF] focus:border-[#022150] focus:outline-none focus:ring-2 focus:ring-[#022150]/10"
+                  className="h-11 w-full rounded-lg border border-[#E5E7EB] bg-white pl-9 pr-3 text-[14px] text-[#111827] placeholder:text-[#9CA3AF] focus:border-[#00296F] focus:outline-none focus:ring-2 focus:ring-[#00296F]/10"
                 />
               </div>
               {filteredProducts.length === 0 ? (
@@ -500,7 +500,7 @@ export function LotCreatePage() {
                       <input
                         value={numero}
                         onChange={(e) => setNumero(e.target.value)}
-                        className="h-10 flex-1 rounded-lg border border-[#E5E7EB] bg-white px-3 font-mono text-[14px] focus:border-[#022150] focus:outline-none"
+                        className="h-10 flex-1 rounded-lg border border-[#E5E7EB] bg-white px-3 font-mono text-[14px] focus:border-[#00296F] focus:outline-none"
                       />
                       <button
                         type="button"
@@ -520,7 +520,7 @@ export function LotCreatePage() {
                       value={poids}
                       onChange={(e) => setPoids(e.target.value)}
                       placeholder="ex. 500ml, 250g…"
-                      className="h-10 w-full rounded-lg border border-[#E5E7EB] bg-white px-3 text-[14px] focus:border-[#022150] focus:outline-none"
+                      className="h-10 w-full rounded-lg border border-[#E5E7EB] bg-white px-3 text-[14px] focus:border-[#00296F] focus:outline-none"
                     />
                   </Field>
                   <Field label="Date de fabrication" required>
@@ -528,7 +528,7 @@ export function LotCreatePage() {
                       type="date"
                       value={dateFab}
                       onChange={(e) => setDateFab(e.target.value)}
-                      className="h-10 w-full rounded-lg border border-[#E5E7EB] bg-white px-3 text-[14px] focus:border-[#022150] focus:outline-none"
+                      className="h-10 w-full rounded-lg border border-[#E5E7EB] bg-white px-3 text-[14px] focus:border-[#00296F] focus:outline-none"
                     />
                   </Field>
                   <Field
@@ -547,7 +547,7 @@ export function LotCreatePage() {
                       className={
                         productTemplate
                           ? "h-10 w-full rounded-lg border border-emerald-300 bg-emerald-50 px-3 text-[14px] focus:border-emerald-500 focus:outline-none"
-                          : "h-10 w-full rounded-lg border border-[#E5E7EB] bg-white px-3 text-[14px] focus:border-[#022150] focus:outline-none"
+                          : "h-10 w-full rounded-lg border border-[#E5E7EB] bg-white px-3 text-[14px] focus:border-[#00296F] focus:outline-none"
                       }
                     />
                   </Field>
@@ -563,7 +563,7 @@ export function LotCreatePage() {
                     onChange={(e) => setIngredients(e.target.value)}
                     placeholder="Eau, sucre, bissap, citron..."
                     rows={3}
-                    className="w-full rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-[14px] focus:border-[#022150] focus:outline-none"
+                    className="w-full rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-[14px] focus:border-[#00296F] focus:outline-none"
                   />
                 </Field>
 
@@ -573,7 +573,7 @@ export function LotCreatePage() {
                       value={lieuFab}
                       onChange={(e) => setLieuFab(e.target.value)}
                       placeholder="Dakar, Sénégal"
-                      className="h-10 w-full rounded-lg border border-[#E5E7EB] bg-white px-3 text-[14px] focus:border-[#022150] focus:outline-none"
+                      className="h-10 w-full rounded-lg border border-[#E5E7EB] bg-white px-3 text-[14px] focus:border-[#00296F] focus:outline-none"
                     />
                   </Field>
                   <Field label="Lieu de transformation">
@@ -582,7 +582,7 @@ export function LotCreatePage() {
                       onChange={(e) => setLieuTrans(e.target.value)}
                       disabled={lieuIdentique}
                       placeholder="Dakar, Sénégal"
-                      className="h-10 w-full rounded-lg border border-[#E5E7EB] bg-white px-3 text-[14px] focus:border-[#022150] focus:outline-none disabled:bg-[#F9FAFB] disabled:text-[#9CA3AF]"
+                      className="h-10 w-full rounded-lg border border-[#E5E7EB] bg-white px-3 text-[14px] focus:border-[#00296F] focus:outline-none disabled:bg-[#F9FAFB] disabled:text-[#9CA3AF]"
                     />
                   </Field>
                 </div>
@@ -594,7 +594,7 @@ export function LotCreatePage() {
                       setLieuIdentique(e.target.checked);
                       if (e.target.checked) setLieuTrans(lieuFab);
                     }}
-                    className="h-4 w-4 rounded border-[#D1D5DB] text-[#022150] focus:ring-[#022150]"
+                    className="h-4 w-4 rounded border-[#D1D5DB] text-[#00296F] focus:ring-[#00296F]"
                   />
                   Identique au lieu de fabrication
                 </label>
@@ -604,7 +604,7 @@ export function LotCreatePage() {
                     <button
                       type="button"
                       onClick={() => setPaysVente(new Set(PAYS_VENTE))}
-                      className="text-[12px] font-medium text-[#022150] hover:underline"
+                      className="text-[12px] font-medium text-[#00296F] hover:underline"
                     >
                       Tout sélectionner
                     </button>
@@ -638,7 +638,7 @@ export function LotCreatePage() {
                                 type="checkbox"
                                 checked={paysVente.has(p)}
                                 onChange={() => togglePays(p)}
-                                className="h-4 w-4 rounded border-[#D1D5DB] text-[#022150] focus:ring-[#022150]"
+                                className="h-4 w-4 rounded border-[#D1D5DB] text-[#00296F] focus:ring-[#00296F]"
                               />
                               {p}
                             </label>
@@ -655,7 +655,7 @@ export function LotCreatePage() {
                     onChange={(e) => setNotes(e.target.value)}
                     placeholder="Notes internes (non visibles par les consommateurs)…"
                     rows={2}
-                    className="w-full rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-[14px] focus:border-[#022150] focus:outline-none"
+                    className="w-full rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-[14px] focus:border-[#00296F] focus:outline-none"
                   />
                 </Field>
               </div>
@@ -683,7 +683,7 @@ export function LotCreatePage() {
                     onChange={(e) =>
                       setQrCount(Math.max(1, parseInt(e.target.value, 10) || 0))
                     }
-                    className="h-10 w-full rounded-lg border border-[#E5E7EB] bg-white px-3 text-[14px] focus:border-[#022150] focus:outline-none"
+                    className="h-10 w-full rounded-lg border border-[#E5E7EB] bg-white px-3 text-[14px] focus:border-[#00296F] focus:outline-none"
                   />
                 </Field>
 
@@ -707,7 +707,7 @@ export function LotCreatePage() {
                             }
                             className={`flex-1 rounded-lg border px-2 py-2 text-[12px] font-medium transition-colors ${
                               qrTaille === o.v
-                                ? "border-[#022150] bg-[#F0F4F9] text-[#022150]"
+                                ? "border-[#00296F] bg-[#F0F4F9] text-[#00296F]"
                                 : "border-[#E5E7EB] bg-white text-[#374151] hover:bg-[#F9FAFB]"
                             }`}
                           >
@@ -729,7 +729,7 @@ export function LotCreatePage() {
                               key={f}
                               className={`flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg border px-2 py-2 text-[12px] font-medium uppercase transition-colors ${
                                 checked
-                                  ? "border-[#022150] bg-[#F0F4F9] text-[#022150]"
+                                  ? "border-[#00296F] bg-[#F0F4F9] text-[#00296F]"
                                   : "border-[#E5E7EB] bg-white text-[#374151] hover:bg-[#F9FAFB]"
                               }`}
                             >
@@ -737,7 +737,7 @@ export function LotCreatePage() {
                                 type="checkbox"
                                 checked={checked}
                                 onChange={() => toggleFormat(f)}
-                                className="h-3.5 w-3.5 rounded border-[#D1D5DB] text-[#022150] focus:ring-[#022150]"
+                                className="h-3.5 w-3.5 rounded border-[#D1D5DB] text-[#00296F] focus:ring-[#00296F]"
                               />
                               {f}
                             </label>
@@ -764,7 +764,7 @@ export function LotCreatePage() {
                             onChange={(e) =>
                               setEtiquettesPage(parseInt(e.target.value, 10))
                             }
-                            className="h-8 rounded-md border border-[#E5E7EB] bg-white px-2 text-[13px] focus:border-[#022150] focus:outline-none"
+                            className="h-8 rounded-md border border-[#E5E7EB] bg-white px-2 text-[13px] focus:border-[#00296F] focus:outline-none"
                           >
                             {[10, 20, 30, 40].map((n) => (
                               <option key={n} value={n}>
@@ -902,7 +902,7 @@ function SectionTitle({
 }) {
   return (
     <div className="mb-5 flex items-start gap-3">
-      <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#022150] text-[13px] font-bold text-white">
+      <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#00296F] text-[13px] font-bold text-white">
         {step}
       </span>
       <div>
@@ -942,7 +942,7 @@ function Stepper({
                     isDone
                       ? "bg-[#10B981] text-white"
                       : isActive
-                        ? "bg-[#022150] text-white ring-4 ring-[#022150]/10"
+                        ? "bg-[#00296F] text-white ring-4 ring-[#00296F]/10"
                         : "bg-[#E5E7EB] text-[#6B7280]"
                   }`}
                 >
@@ -978,7 +978,7 @@ function Stepper({
         </p>
         <div className="mt-2.5 h-1.5 w-full overflow-hidden rounded-full bg-[#E5E7EB]">
           <div
-            className="h-full rounded-full bg-gradient-to-r from-[#022150] to-[#10B981] transition-all duration-300"
+            className="h-full rounded-full bg-gradient-to-r from-[#00296F] to-[#10B981] transition-all duration-300"
             style={{ width: `${((current + 1) / STEPS.length) * 100}%` }}
           />
         </div>
@@ -1002,7 +1002,7 @@ function ProductCard({
       onClick={onSelect}
       className={`flex items-center gap-3 rounded-xl border p-3.5 text-left transition-all ${
         selected
-          ? "border-[#022150] bg-[#F0F4F9] ring-2 ring-[#022150]/20"
+          ? "border-[#00296F] bg-[#F0F4F9] ring-2 ring-[#00296F]/20"
           : "border-[#E5E7EB] bg-white hover:border-[#C7D2E3] hover:bg-[#F9FAFB]"
       }`}
     >
@@ -1022,7 +1022,7 @@ function ProductCard({
         </span>
       </span>
       {selected && (
-        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#022150]">
+        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#00296F]">
           <Check className="h-3.5 w-3.5 text-white" />
         </span>
       )}
@@ -1070,7 +1070,7 @@ function CheckOption({
         type="checkbox"
         checked={checked}
         onChange={(e) => onChange(e.target.checked)}
-        className="h-4 w-4 rounded border-[#D1D5DB] text-[#022150] focus:ring-[#022150]"
+        className="h-4 w-4 rounded border-[#D1D5DB] text-[#00296F] focus:ring-[#00296F]"
       />
       {label}
     </label>

@@ -106,7 +106,7 @@ export async function POST(request: NextRequest) {
         address: data.address || null,
         role: data.role,
         status: dbStatus,
-        brandColor: data.logoColor ?? "#022150",
+        brandColor: data.logoColor ?? "#00296F",
         password: hashed,
       },
     });

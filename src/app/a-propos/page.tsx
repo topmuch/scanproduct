@@ -39,7 +39,7 @@ const VALUES = [
     icon: ShieldCheck,
     title: "Authenticité",
     text: "Chaque produit vérifié par Prodtrust porte un QR code unique, infalsifiable et lié à un lot précis. La confiance redevient la norme.",
-    color: "#022150",
+    color: "#00296F",
   },
   {
     icon: Leaf,
@@ -63,7 +63,7 @@ const VALUES = [
     icon: Globe2,
     title: "Inclusion",
     text: "Prodtrust accompagne aussi bien les grandes coopératives que les petits transformateurs, sans frais cachés ni barrières techniques.",
-    color: "#022150",
+    color: "#00296F",
   },
   {
     icon: Sprout,
@@ -139,7 +139,7 @@ export default function AboutPage() {
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
                 href="/produits"
-                className="inline-flex items-center gap-2 rounded-lg bg-[#022150] px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-[#0D3068]/20 transition-colors hover:bg-[#011D46]"
+                className="inline-flex items-center gap-2 rounded-lg bg-[#00296F] px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-[#0D3068]/20 transition-colors hover:bg-[#011D46]"
               >
                 Explorer le catalogue
                 <ArrowRight className="h-4 w-4" />
@@ -158,7 +158,7 @@ export default function AboutPage() {
         <section className="mx-auto max-w-[1400px] px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
           <div className="grid gap-6 lg:grid-cols-2">
             <div className="rounded-2xl border border-[#E5E7EB] bg-white p-8 shadow-sm sm:p-10">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#F0F4F9] text-[#022150]">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#F0F4F9] text-[#00296F]">
                 <Target className="h-6 w-6" />
               </div>
               <h2 className="mt-6 font-display text-2xl font-bold text-[#111827] sm:text-3xl">
@@ -203,7 +203,7 @@ export default function AboutPage() {
                   key={stat.label}
                   className="rounded-2xl border border-[#F3F4F6] bg-white p-6 text-center shadow-sm"
                 >
-                  <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-[#F0F4F9] text-[#022150]">
+                  <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-[#F0F4F9] text-[#00296F]">
                     <stat.icon className="h-5 w-5" />
                   </div>
                   <div className="mt-4 font-display text-2xl font-bold text-[#111827] sm:text-3xl">
@@ -221,7 +221,7 @@ export default function AboutPage() {
         {/* VALUES */}
         <section className="mx-auto max-w-[1400px] px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
           <div className="mx-auto max-w-2xl text-center">
-            <span className="inline-flex items-center gap-2 rounded-full bg-[#F0F4F9] px-3 py-1 text-xs font-semibold text-[#022150]">
+            <span className="inline-flex items-center gap-2 rounded-full bg-[#F0F4F9] px-3 py-1 text-xs font-semibold text-[#00296F]">
               Nos valeurs
             </span>
             <h2 className="mt-4 font-display text-3xl font-bold text-[#111827] sm:text-4xl">
@@ -332,7 +332,7 @@ export default function AboutPage() {
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
-              <div className="rounded-2xl border border-[#E5E7EB] bg-gradient-to-br from-[#022150] to-[#011D46] p-6 text-white shadow-sm">
+              <div className="rounded-2xl border border-[#E5E7EB] bg-gradient-to-br from-[#00296F] to-[#011D46] p-6 text-white shadow-sm">
                 <TrendingUp className="h-8 w-8 text-white/90" />
                 <div className="mt-4 font-display text-3xl font-bold">
                   +
@@ -353,7 +353,7 @@ export default function AboutPage() {
                 </p>
               </div>
               <div className="rounded-2xl border border-[#E5E7EB] bg-white p-6 shadow-sm sm:col-span-2">
-                <ShieldCheck className="h-8 w-8 text-[#022150]" />
+                <ShieldCheck className="h-8 w-8 text-[#00296F]" />
                 <h3 className="mt-4 font-display text-lg font-semibold text-[#111827]">
                   Sécurité de bout en bout
                 </h3>
@@ -369,7 +369,7 @@ export default function AboutPage() {
 
         {/* CTA */}
         <section className="mx-auto max-w-[1400px] px-4 pb-20 sm:px-6 lg:px-8">
-          <div className="overflow-hidden rounded-3xl bg-gradient-to-br from-[#022150] via-[#011D46] to-[#0F172A] p-10 text-white shadow-xl sm:p-14">
+          <div className="overflow-hidden rounded-3xl bg-gradient-to-br from-[#00296F] via-[#011D46] to-[#0F172A] p-10 text-white shadow-xl sm:p-14">
             <div className="mx-auto max-w-2xl text-center">
               <h2 className="font-display text-3xl font-bold sm:text-4xl">
                 Prêt à protéger votre marque&nbsp;?
@@ -382,7 +382,7 @@ export default function AboutPage() {
               <div className="mt-8 flex flex-wrap justify-center gap-3">
                 <Link
                   href="/register"
-                  className="inline-flex items-center gap-2 rounded-lg bg-white px-6 py-3 text-sm font-semibold text-[#022150] shadow-md transition-colors hover:bg-white/90"
+                  className="inline-flex items-center gap-2 rounded-lg bg-white px-6 py-3 text-sm font-semibold text-[#00296F] shadow-md transition-colors hover:bg-white/90"
                 >
                   Devenir partenaire
                   <ArrowRight className="h-4 w-4" />

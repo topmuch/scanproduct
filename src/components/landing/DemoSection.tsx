@@ -73,7 +73,7 @@ export function DemoSection() {
     <section id="demo" className="bg-white py-16 sm:py-20 lg:py-24">
       <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
         <AnimatedSection className="mx-auto max-w-2xl text-center">
-          <SectionBadge bg="bg-[#DCE7F2]" color="text-[#022150]">
+          <SectionBadge bg="bg-[#DCE7F2]" color="text-[#00296F]">
             Démo interactive
           </SectionBadge>
           <h2 className="mt-4 font-display text-[28px] font-semibold leading-tight text-[#111827] sm:text-[36px] lg:text-[40px]">
@@ -108,7 +108,7 @@ export function DemoSection() {
                 </div>
                 <div className="flex-1">
                   <h3 className="font-display text-xl font-bold text-[#111827]">{product.nom}</h3>
-                  <p className="mt-1 font-mono text-sm text-[#022150]">{product.lot}</p>
+                  <p className="mt-1 font-mono text-sm text-[#00296F]">{product.lot}</p>
                   <div className="mt-3 flex flex-wrap gap-1.5">
                     {product.certifications.map((c) => (
                       <span key={c} className="rounded-full bg-[#D1FAE5] px-2 py-0.5 text-xs font-medium text-[#065F46]">{c}</span>
@@ -126,7 +126,7 @@ export function DemoSection() {
                   <p className="text-xs font-medium text-[#9CA3AF]">Scannez ce QR code</p>
                   <p className="text-sm font-semibold text-[#111827]">pour voir le catalogue Prodtrust</p>
                 </div>
-                <div className="rounded-lg border-2 border-[#022150]/20 bg-white p-2">
+                <div className="rounded-lg border-2 border-[#00296F]/20 bg-white p-2">
                   <BadgeQRPreview value={`${getScanOrigin()}/produits`} size={72} />
                 </div>
               </div>
@@ -139,7 +139,7 @@ export function DemoSection() {
               {/* Timer */}
               <div className="rounded-2xl border border-[#E5E7EB] bg-gradient-to-br from-[#F0F4F9] to-[#F0FDF4] p-6">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#022150] text-white">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#00296F] text-white">
                     <RefreshCw className={`h-5 w-5 ${resetting ? "animate-spin" : ""}`} />
                   </div>
                   <div>
@@ -159,7 +159,7 @@ export function DemoSection() {
                 </h3>
                 {[
                   { icon: ShieldCheck, color: "#10B981", title: "Authenticité prouvée", desc: "Bannière verte instantanée qui rassure le client" },
-                  { icon: QrCode, color: "#022150", title: "Passeport numérique", desc: "Toutes les infos produit accessibles en 1 scan" },
+                  { icon: QrCode, color: "#00296F", title: "Passeport numérique", desc: "Toutes les infos produit accessibles en 1 scan" },
                   { icon: Eye, color: "#F59E0B", title: "Transparence totale", desc: "Score de transparence, certifications, lot, dates" },
                 ].map((item) => (
                   <div key={item.title} className="flex items-start gap-3 rounded-xl border border-[#E5E7EB] bg-white p-4">
@@ -177,7 +177,7 @@ export function DemoSection() {
               {/* CTA */}
               <button
                 onClick={() => setProductIndex((i) => (i + 1) % DEMO_PRODUCTS.length)}
-                className="inline-flex items-center gap-2 rounded-lg border border-[#022150] bg-white px-5 py-3 text-sm font-semibold text-[#022150] transition-colors hover:bg-[#F0F4F9]"
+                className="inline-flex items-center gap-2 rounded-lg border border-[#00296F] bg-white px-5 py-3 text-sm font-semibold text-[#00296F] transition-colors hover:bg-[#F0F4F9]"
               >
                 <Eye className="h-4 w-4" />
                 Voir un autre produit

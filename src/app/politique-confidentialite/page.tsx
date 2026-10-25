@@ -54,7 +54,7 @@ export default function PolitiqueConfidentialitePage() {
             Email :{" "}
             <a
               href="mailto:contact@newvisioncargo.pro"
-              className="font-medium text-[#022150] underline-offset-2 hover:underline"
+              className="font-medium text-[#00296F] underline-offset-2 hover:underline"
             >
               contact@newvisioncargo.pro
             </a>
@@ -63,7 +63,7 @@ export default function PolitiqueConfidentialitePage() {
             Téléphone :{" "}
             <a
               href="tel:+221773821822"
-              className="font-medium text-[#022150] underline-offset-2 hover:underline"
+              className="font-medium text-[#00296F] underline-offset-2 hover:underline"
             >
               +221 77 382 18 22
             </a>
@@ -339,7 +339,7 @@ export default function PolitiqueConfidentialitePage() {
           Pour exercer ces droits, contactez Prodtrust à l&apos;adresse{" "}
           <a
             href="mailto:contact@newvisioncargo.pro"
-            className="font-medium text-[#022150] underline-offset-2 hover:underline"
+            className="font-medium text-[#00296F] underline-offset-2 hover:underline"
           >
             contact@newvisioncargo.pro
           </a>{" "}
@@ -359,7 +359,7 @@ export default function PolitiqueConfidentialitePage() {
           détail de leur usage et de leur gestion est décrit dans la{" "}
           <a
             href="/cookies"
-            className="font-medium text-[#022150] underline-offset-2 hover:underline"
+            className="font-medium text-[#00296F] underline-offset-2 hover:underline"
           >
             Politique de cookies
           </a>
@@ -379,7 +379,7 @@ export default function PolitiqueConfidentialitePage() {
           Prodtrust sans autorisation, merci de nous le signaler à{" "}
           <a
             href="mailto:contact@newvisioncargo.pro"
-            className="font-medium text-[#022150] underline-offset-2 hover:underline"
+            className="font-medium text-[#00296F] underline-offset-2 hover:underline"
           >
             contact@newvisioncargo.pro
           </a>{" "}
@@ -398,7 +398,7 @@ export default function PolitiqueConfidentialitePage() {
             Par email :{" "}
             <a
               href="mailto:contact@newvisioncargo.pro"
-              className="font-medium text-[#022150] underline-offset-2 hover:underline"
+              className="font-medium text-[#00296F] underline-offset-2 hover:underline"
             >
               contact@newvisioncargo.pro
             </a>
@@ -407,7 +407,7 @@ export default function PolitiqueConfidentialitePage() {
             Par téléphone :{" "}
             <a
               href="tel:+221773821822"
-              className="font-medium text-[#022150] underline-offset-2 hover:underline"
+              className="font-medium text-[#00296F] underline-offset-2 hover:underline"
             >
               +221 77 382 18 22
             </a>

@@ -53,7 +53,7 @@ export default function ProductPageError({
           <button
             type="button"
             onClick={reset}
-            className="inline-flex items-center gap-2 rounded-lg bg-[#022150] px-5 py-3 text-[14px] font-semibold text-white shadow-sm transition-colors hover:bg-[#011D46]"
+            className="inline-flex items-center gap-2 rounded-lg bg-[#00296F] px-5 py-3 text-[14px] font-semibold text-white shadow-sm transition-colors hover:bg-[#011D46]"
           >
             <RefreshCw className="h-4 w-4" />
             Réessayer

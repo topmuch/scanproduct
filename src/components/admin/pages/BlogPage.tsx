@@ -273,7 +273,7 @@ export function BlogPage() {
   }
 
   const inputCls =
-    "w-full rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-sm text-[#111827] outline-none transition-colors focus:border-[#022150] focus:ring-2 focus:ring-[#022150]/10";
+    "w-full rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-sm text-[#111827] outline-none transition-colors focus:border-[#00296F] focus:ring-2 focus:ring-[#00296F]/10";
   const labelCls = "mb-1.5 block text-xs font-semibold text-[#374151]";
 
   return (
@@ -293,7 +293,7 @@ export function BlogPage() {
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex gap-3">
           <div className="rounded-xl border border-[#F3F4F6] bg-white px-4 py-3">
-            <p className="text-2xl font-bold text-[#022150]">{posts.length}</p>
+            <p className="text-2xl font-bold text-[#00296F]">{posts.length}</p>
             <p className="text-xs text-[#6B7280]">Articles au total</p>
           </div>
           <div className="rounded-xl border border-[#F3F4F6] bg-white px-4 py-3">
@@ -313,7 +313,7 @@ export function BlogPage() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Rechercher un article…"
-            className="w-full rounded-lg border border-[#E5E7EB] bg-white py-2 pl-9 pr-3 text-sm outline-none focus:border-[#022150]"
+            className="w-full rounded-lg border border-[#E5E7EB] bg-white py-2 pl-9 pr-3 text-sm outline-none focus:border-[#00296F]"
           />
         </div>
       </div>
@@ -380,7 +380,7 @@ export function BlogPage() {
                           type="button"
                           onClick={() => togglePublished(post)}
                           title={post.published ? "Dépublier" : "Publier"}
-                          className="flex h-8 w-8 items-center justify-center rounded-md text-[#6B7280] hover:bg-[#F3F4F6] hover:text-[#022150]"
+                          className="flex h-8 w-8 items-center justify-center rounded-md text-[#6B7280] hover:bg-[#F3F4F6] hover:text-[#00296F]"
                         >
                           {post.published ? (
                             <EyeOff className="h-4 w-4" />
@@ -393,7 +393,7 @@ export function BlogPage() {
                           target="_blank"
                           rel="noreferrer"
                           title="Voir la page publique"
-                          className="flex h-8 w-8 items-center justify-center rounded-md text-[#6B7280] hover:bg-[#F3F4F6] hover:text-[#022150]"
+                          className="flex h-8 w-8 items-center justify-center rounded-md text-[#6B7280] hover:bg-[#F3F4F6] hover:text-[#00296F]"
                         >
                           <ExternalLink className="h-4 w-4" />
                         </a>
@@ -401,7 +401,7 @@ export function BlogPage() {
                           type="button"
                           onClick={() => openEdit(post)}
                           title="Modifier"
-                          className="flex h-8 w-8 items-center justify-center rounded-md text-[#6B7280] hover:bg-[#F3F4F6] hover:text-[#022150]"
+                          className="flex h-8 w-8 items-center justify-center rounded-md text-[#6B7280] hover:bg-[#F3F4F6] hover:text-[#00296F]"
                         >
                           <Pencil className="h-4 w-4" />
                         </button>
@@ -500,13 +500,13 @@ export function BlogPage() {
                   <button
                     type="button"
                     onClick={() => setPreview((p) => !p)}
-                    className="rounded-md bg-[#F0F4F9] px-3 py-1 text-xs font-semibold text-[#022150] hover:bg-[#DCE7F2]"
+                    className="rounded-md bg-[#F0F4F9] px-3 py-1 text-xs font-semibold text-[#00296F] hover:bg-[#DCE7F2]"
                   >
                     {preview ? "Éditer" : "Aperçu"}
                   </button>
                 </div>
                 {preview ? (
-                  <div className="max-h-[420px] min-h-[300px] overflow-y-auto rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] p-4 text-sm leading-relaxed text-[#374151] [&_h2]:mt-4 [&_h2]:mb-2 [&_h2]:text-lg [&_h2]:font-bold [&_h2]:text-[#111827] [&_h3]:mt-3 [&_h3]:mb-2 [&_h3]:font-bold [&_h3]:text-[#111827] [&_li]:ml-4 [&_li]:list-disc [&_p]:my-2 [&_a]:text-[#022150] [&_a]:underline">
+                  <div className="max-h-[420px] min-h-[300px] overflow-y-auto rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] p-4 text-sm leading-relaxed text-[#374151] [&_h2]:mt-4 [&_h2]:mb-2 [&_h2]:text-lg [&_h2]:font-bold [&_h2]:text-[#111827] [&_h3]:mt-3 [&_h3]:mb-2 [&_h3]:font-bold [&_h3]:text-[#111827] [&_li]:ml-4 [&_li]:list-disc [&_p]:my-2 [&_a]:text-[#00296F] [&_a]:underline">
                     {/* Aperçu markdown léger (le rendu réel utilise react-markdown côté public) */}
                     <MarkdownPreview content={form.content} />
                   </div>
@@ -573,7 +573,7 @@ export function BlogPage() {
 
               {/* SEO */}
               <div className="rounded-xl border border-[#DCE7F2] bg-[#F0F4F9] p-4">
-                <p className="mb-3 text-sm font-bold text-[#022150]">
+                <p className="mb-3 text-sm font-bold text-[#00296F]">
                   Référencement Google (SEO)
                 </p>
                 <div className="space-y-3">
@@ -672,7 +672,7 @@ function MarkdownPreview({ content }: { content: string }) {
         .replace(/\*(.+?)\*/g, "<em>$1</em>")
         .replace(
           /\[(.+?)\]\((.+?)\)/g,
-          '<a href="$2" target="_blank" rel="noreferrer" class="text-[#022150] underline">$1</a>'
+          '<a href="$2" target="_blank" rel="noreferrer" class="text-[#00296F] underline">$1</a>'
         );
     }
     return out.join("\n");

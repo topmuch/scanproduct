@@ -55,7 +55,7 @@ function IndustryCard({
 
         {/* Content */}
         <div className="flex flex-1 flex-col p-5">
-          <h3 className="font-display text-lg font-bold leading-tight text-[#111827] transition-colors group-hover:text-[#022150]">
+          <h3 className="font-display text-lg font-bold leading-tight text-[#111827] transition-colors group-hover:text-[#00296F]">
             {industry.title}
           </h3>
 
@@ -83,7 +83,7 @@ function IndustryCard({
           </div>
 
           {/* CTA */}
-          <div className="mt-4 flex items-center gap-1 text-sm font-semibold text-[#022150] transition-all group-hover:gap-2">
+          <div className="mt-4 flex items-center gap-1 text-sm font-semibold text-[#00296F] transition-all group-hover:gap-2">
             En savoir plus
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
           </div>
@@ -99,12 +99,12 @@ export function IndustryCards() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <AnimatedSection className="mb-12 text-center">
-          <SectionBadge bg="bg-[#F0F4F9]" color="text-[#022150]">
+          <SectionBadge bg="bg-[#F0F4F9]" color="text-[#00296F]">
             🎯 Par métier
           </SectionBadge>
           <h2 className="mt-4 font-display text-3xl font-bold leading-tight text-[#111827] sm:text-4xl">
             Un passeport numérique pour{" "}
-            <span className="bg-gradient-to-r from-[#022150] to-[#10B981] bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-[#00296F] to-[#10B981] bg-clip-text text-transparent">
               chaque métier
             </span>
           </h2>

@@ -120,7 +120,7 @@ export default function ContactPage() {
 
       <main className="flex-1">
         {/* Hero */}
-        <section className="relative overflow-hidden bg-gradient-to-br from-[#022150] via-[#0A2B5F] to-[#0F172A] py-16 text-white sm:py-20">
+        <section className="relative overflow-hidden bg-gradient-to-br from-[#00296F] via-[#0A2B5F] to-[#0F172A] py-16 text-white sm:py-20">
           {/* Decorative gradient orbs */}
           <div className="pointer-events-none absolute -left-20 top-0 h-72 w-72 rounded-full bg-[#10B981]/20 blur-3xl" />
           <div className="pointer-events-none absolute -right-20 bottom-0 h-72 w-72 rounded-full bg-[#F59E0B]/20 blur-3xl" />
@@ -155,14 +155,14 @@ export default function ContactPage() {
                 rel={item.href.startsWith("http") ? "noopener noreferrer" : undefined}
                 className="group flex items-center gap-4"
               >
-                <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-[#F0F4F9] transition-colors group-hover:bg-[#022150]">
-                  <item.icon className="h-5 w-5 text-[#022150] transition-colors group-hover:text-white" />
+                <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-[#F0F4F9] transition-colors group-hover:bg-[#00296F]">
+                  <item.icon className="h-5 w-5 text-[#00296F] transition-colors group-hover:text-white" />
                 </div>
                 <div className="min-w-0">
                   <p className="text-xs font-semibold uppercase tracking-wide text-[#9CA3AF]">
                     {item.label}
                   </p>
-                  <p className="truncate text-[15px] font-bold text-[#111827] transition-colors group-hover:text-[#022150]">
+                  <p className="truncate text-[15px] font-bold text-[#111827] transition-colors group-hover:text-[#00296F]">
                     {item.value}
                   </p>
                 </div>
@@ -184,7 +184,7 @@ export default function ContactPage() {
         >
           <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
             <div className="mx-auto mb-8 max-w-2xl text-center">
-              <span className="inline-flex items-center gap-2 rounded-full bg-[#F0F4F9] px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-[#022150]">
+              <span className="inline-flex items-center gap-2 rounded-full bg-[#F0F4F9] px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-[#00296F]">
                 <MapPin className="h-3.5 w-3.5" /> Nous trouver
               </span>
               <h2 className="mt-4 font-display text-2xl font-bold text-[#111827] sm:text-3xl">
@@ -252,14 +252,14 @@ export default function ContactPage() {
                   href={VERIFSCAN_DIRECTIONS_URL}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#022150] to-[#10B981] px-6 py-4 text-[15px] font-semibold text-white shadow-md shadow-[#022150]/25 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#00296F] to-[#10B981] px-6 py-4 text-[15px] font-semibold text-white shadow-md shadow-[#00296F]/25 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg"
                 >
                   <Navigation className="h-5 w-5" />
                   Obtenir l&apos;itinéraire
                 </a>
                 <a
                   href="tel:+221773821822"
-                  className="inline-flex items-center justify-center gap-2 rounded-xl border-2 border-[#022150] px-6 py-3.5 text-[15px] font-semibold text-[#022150] transition-colors hover:bg-[#F0F4F9]"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl border-2 border-[#00296F] px-6 py-3.5 text-[15px] font-semibold text-[#00296F] transition-colors hover:bg-[#F0F4F9]"
                 >
                   Appeler le +221 77 382 18 22
                 </a>
@@ -281,7 +281,7 @@ export default function ContactPage() {
             <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <a
                 href="/register"
-                className="inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-[#022150] to-[#10B981] px-6 py-3 text-[15px] font-semibold text-white shadow-md shadow-[#022150]/25 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg"
+                className="inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-[#00296F] to-[#10B981] px-6 py-3 text-[15px] font-semibold text-white shadow-md shadow-[#00296F]/25 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg"
               >
                 Devenir partenaire
               </a>

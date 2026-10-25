@@ -52,7 +52,7 @@ export function FreshnessBar({ expiryDate, manufactureDate }: Props) {
     icon = "🟢";
   } else if (daysLeft > 30) {
     color = "text-[#011D46]";
-    gradient = "from-[#4E74A8] to-[#022150]";
+    gradient = "from-[#4E74A8] to-[#00296F]";
     message = "Bon à consommer";
     icon = "✅";
   } else if (daysLeft > 7) {

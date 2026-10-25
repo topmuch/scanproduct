@@ -1,4 +1,4 @@
-# VerifScan — robots.txt
+# Prodtrust — robots.txt
 # Sitemap référencé pour l'exploration Google/Bing.
 
 User-agent: Googlebot
@@ -26,4 +26,4 @@ Disallow: /login/admin
 Disallow: /a/
 Disallow: /activer-pack
 
-Sitemap: https://verifscan.com/sitemap.xml
+Sitemap: https://prodtrust.newvisioncargo.pro/sitemap.xml

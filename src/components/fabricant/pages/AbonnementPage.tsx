@@ -70,7 +70,7 @@ const RANG_PLAN: Record<string, number> = { starter: 0, pro: 1, business: 2 };
 const PAYMENT_METHODS = [
   { id: "orange", nom: "Orange Money", icon: Smartphone, color: "#F59E0B" },
   { id: "wave", nom: "Wave", icon: Wallet, color: "#0EA5E9" },
-  { id: "carte", nom: "Carte bancaire", icon: CreditCard, color: "#022150" },
+  { id: "carte", nom: "Carte bancaire", icon: CreditCard, color: "#00296F" },
   { id: "virement", nom: "Virement", icon: Building2, color: "#10B981" },
 ];
 
@@ -294,7 +294,7 @@ export function AbonnementPage() {
         subtitle="Gérez votre plan et votre facturation"
       >
         <span
-          className="inline-flex items-center rounded-full bg-gradient-to-r from-[#022150] to-[#10B981] px-4 py-2 text-[14px] font-bold text-white shadow-sm"
+          className="inline-flex items-center rounded-full bg-gradient-to-r from-[#00296F] to-[#10B981] px-4 py-2 text-[14px] font-bold text-white shadow-sm"
         >
           ⭐ Plan {ABONNEMENT.plan}
         </span>
@@ -307,7 +307,7 @@ export function AbonnementPage() {
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="rounded-2xl border-2 border-[#022150] p-8"
+        className="rounded-2xl border-2 border-[#00296F] p-8"
         style={{
           background: "linear-gradient(135deg, #F0F4F9 0%, #F0FDF4 100%)",
         }}
@@ -418,7 +418,7 @@ export function AbonnementPage() {
           <button
             type="button"
             onClick={() => scrollTo("paiements")}
-            className="text-[14px] font-medium text-[#022150] underline-offset-4 hover:underline"
+            className="text-[14px] font-medium text-[#00296F] underline-offset-4 hover:underline"
           >
             Gérer la facturation
           </button>
@@ -467,7 +467,7 @@ export function AbonnementPage() {
             <select
               value={period}
               onChange={(e) => setPeriod(e.target.value as PeriodFilter)}
-              className="rounded-lg border border-[#E5E7EB] bg-white px-3 py-1.5 text-[13px] font-medium text-[#374151] focus:border-[#022150] focus:outline-none focus:ring-2 focus:ring-[#022150]/20"
+              className="rounded-lg border border-[#E5E7EB] bg-white px-3 py-1.5 text-[13px] font-medium text-[#374151] focus:border-[#00296F] focus:outline-none focus:ring-2 focus:ring-[#00296F]/20"
             >
               <option value="30j">30 derniers jours</option>
               <option value="90j">90 derniers jours</option>
@@ -520,14 +520,14 @@ export function AbonnementPage() {
                       <button
                         type="button"
                         title="Télécharger la facture"
-                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#E5E7EB] bg-white text-[#6B7280] transition-colors hover:border-[#022150] hover:text-[#022150]"
+                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#E5E7EB] bg-white text-[#6B7280] transition-colors hover:border-[#00296F] hover:text-[#00296F]"
                       >
                         <Download className="h-4 w-4" />
                       </button>
                       <button
                         type="button"
                         title="Voir les détails"
-                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#E5E7EB] bg-white text-[#6B7280] transition-colors hover:border-[#022150] hover:text-[#022150]"
+                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#E5E7EB] bg-white text-[#6B7280] transition-colors hover:border-[#00296F] hover:text-[#00296F]"
                       >
                         <Eye className="h-4 w-4" />
                       </button>
@@ -610,7 +610,7 @@ export function AbonnementPage() {
                   key={m.id}
                   className={`flex items-center gap-2 rounded-lg border px-3 py-2 transition-colors ${
                     isActive
-                      ? "border-[#022150] bg-[#F0F4F9]"
+                      ? "border-[#00296F] bg-[#F0F4F9]"
                       : "border-[#E5E7EB] bg-white"
                   }`}
                 >
@@ -667,7 +667,7 @@ export function AbonnementPage() {
                 style={
                   isCurrent
                     ? {
-                        border: "2px solid #022150",
+                        border: "2px solid #00296F",
                         background:
                           "linear-gradient(135deg, #F0F4F9 0%, #F0FDF4 100%)",
                       }
@@ -675,7 +675,7 @@ export function AbonnementPage() {
                 }
               >
                 {isCurrent && (
-                  <span className="absolute -top-3 left-6 inline-flex items-center rounded-full bg-gradient-to-r from-[#022150] to-[#10B981] px-3 py-1 text-[11px] font-bold text-white shadow-sm">
+                  <span className="absolute -top-3 left-6 inline-flex items-center rounded-full bg-gradient-to-r from-[#00296F] to-[#10B981] px-3 py-1 text-[11px] font-bold text-white shadow-sm">
                     ⭐ Plan actuel
                   </span>
                 )}
@@ -856,7 +856,7 @@ export function AbonnementPage() {
                     Math.max(0, parseInt(e.target.value || "0", 10) || 0),
                   )
                 }
-                className="w-full rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-[14px] font-medium text-[#111827] focus:border-[#022150] focus:outline-none focus:ring-2 focus:ring-[#022150]/20"
+                className="w-full rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-[14px] font-medium text-[#111827] focus:border-[#00296F] focus:outline-none focus:ring-2 focus:ring-[#00296F]/20"
               />
             </label>
             <div className="rounded-lg border border-[#E5E7EB] bg-white px-4 py-2">
@@ -1015,7 +1015,7 @@ export function AbonnementPage() {
           >
             {/* Header */}
             <div className="flex items-center justify-between border-b border-[#F3F4F6] px-6 py-4">
-              <h3 className="text-[15px] font-bold text-[#022150]">
+              <h3 className="text-[15px] font-bold text-[#00296F]">
                 {cmd.titre}
               </h3>
               <button

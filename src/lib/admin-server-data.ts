@@ -285,7 +285,7 @@ function mapStatus(dbStatus: string): UserStatus {
 // Deterministic color derived from the user id, so avatars don't flicker
 // between renders.
 const LOGO_PALETTE = [
-  "#022150",
+  "#00296F",
   "#10B981",
   "#F59E0B",
   "#8B5CF6",
@@ -1023,7 +1023,7 @@ export async function getPlanDistribution(): Promise<PlanDistributionEntry[]> {
   for (const u of fabricants) counts[derivePlan(u.createdAt)] += 1;
   return [
     { name: "Starter", value: counts.Starter, color: "#4E74A8" },
-    { name: "Pro", value: counts.Pro, color: "#022150" },
+    { name: "Pro", value: counts.Pro, color: "#00296F" },
     { name: "Enterprise", value: counts.Enterprise, color: "#F59E0B" },
     { name: "Essai", value: counts.Essai, color: "#A7F3D0" },
   ];

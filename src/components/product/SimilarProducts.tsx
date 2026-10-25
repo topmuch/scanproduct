@@ -45,7 +45,7 @@ export function SimilarProducts({ products }: Props) {
         </h2>
         <Link
           href="/produits"
-          className="inline-flex items-center gap-1 text-xs font-semibold text-[#022150] transition-colors hover:text-[#011D46]"
+          className="inline-flex items-center gap-1 text-xs font-semibold text-[#00296F] transition-colors hover:text-[#011D46]"
         >
           Tout voir <ArrowRight className="h-3.5 w-3.5" />
         </Link>

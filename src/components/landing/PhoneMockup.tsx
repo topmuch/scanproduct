@@ -11,7 +11,7 @@ export function PhoneMockup() {
   return (
     <div className="relative mx-auto w-full max-w-[340px]">
       {/* Decorative blurred circles */}
-      <div className="pointer-events-none absolute -left-16 -top-16 h-64 w-64 rounded-full bg-[#022150]/10 blur-3xl animate-slow-spin" />
+      <div className="pointer-events-none absolute -left-16 -top-16 h-64 w-64 rounded-full bg-[#00296F]/10 blur-3xl animate-slow-spin" />
       <div className="pointer-events-none absolute -bottom-16 -right-12 h-64 w-64 rounded-full bg-[#10B981]/10 blur-3xl animate-slow-spin" style={{ animationDirection: "reverse" }} />
       <div className="pointer-events-none absolute right-1/4 top-1/3 h-40 w-40 rounded-full bg-[#F59E0B]/10 blur-3xl" />
 
@@ -23,7 +23,7 @@ export function PhoneMockup() {
         className="absolute -right-4 top-10 z-20 flex items-center gap-2 rounded-xl border border-[#C3D2E5] bg-white/95 px-3 py-2 shadow-lg backdrop-blur"
       >
         <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#F0F4F9]">
-          <Lock className="h-4 w-4 text-[#022150]" />
+          <Lock className="h-4 w-4 text-[#00296F]" />
         </span>
         <div className="leading-tight">
           <p className="text-[11px] font-semibold text-[#111827]">Sécurisé</p>
@@ -134,13 +134,13 @@ export function PhoneMockup() {
                 <FakeQR />
               </div>
               <div className="leading-tight">
-                <p className="flex items-center gap-1 text-[10px] font-bold text-[#022150]">
+                <p className="flex items-center gap-1 text-[10px] font-bold text-[#00296F]">
                   <QrCode className="h-3 w-3" /> QR Code unique
                 </p>
                 <p className="mt-0.5 text-[9px] text-[#6B7280]">
                   Infalsifiable · lié au fabricant
                 </p>
-                <p className="mt-1 inline-block rounded bg-[#F0F4F9] px-1.5 py-0.5 text-[8px] font-semibold text-[#022150]">
+                <p className="mt-1 inline-block rounded bg-[#F0F4F9] px-1.5 py-0.5 text-[8px] font-semibold text-[#00296F]">
                   Scanné 142×
                 </p>
               </div>

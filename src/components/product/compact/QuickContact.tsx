@@ -49,7 +49,7 @@ export function QuickContact({ fabricant }: Props) {
       icon: <Phone className="h-5 w-5" />,
       label: "Téléphone",
       href: `tel:${normalizePhone(phone)}`,
-      color: "bg-[#2E5383] hover:bg-[#022150]",
+      color: "bg-[#2E5383] hover:bg-[#00296F]",
     });
   }
   if (email) {

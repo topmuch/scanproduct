@@ -216,7 +216,7 @@ export function UsersPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Rechercher par nom, email, entreprise..."
-            className="h-10 w-full rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] pl-10 pr-3 text-[14px] text-[#111827] placeholder:text-[#9CA3AF] focus:border-[#022150] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#022150]/10"
+            className="h-10 w-full rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] pl-10 pr-3 text-[14px] text-[#111827] placeholder:text-[#9CA3AF] focus:border-[#00296F] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#00296F]/10"
           />
         </div>
         <div className="flex flex-wrap gap-2">
@@ -233,7 +233,7 @@ export function UsersPage() {
                 className={cn(
                   "inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[13px] font-semibold transition-colors",
                   statusFilter === f.key
-                    ? "bg-[#022150] text-white"
+                    ? "bg-[#00296F] text-white"
                     : "border border-[#E5E7EB] bg-white text-[#374151] hover:bg-[#F9FAFB]"
                 )}
               >
@@ -258,7 +258,7 @@ export function UsersPage() {
         {selectedCount > 0 && (
           <div className="sticky top-0 z-10 flex flex-wrap items-center justify-between gap-3 border-b border-[#E5E7EB] bg-[#F0F4F9] px-4 py-2.5">
             <div className="flex items-center gap-2 text-[13px] font-semibold text-[#0A2B5F]">
-              <span className="flex h-6 min-w-[24px] items-center justify-center rounded-full bg-[#022150] px-2 text-[12px] text-white">
+              <span className="flex h-6 min-w-[24px] items-center justify-center rounded-full bg-[#00296F] px-2 text-[12px] text-white">
                 {selectedCount}
               </span>
               sélectionné(s)
@@ -302,7 +302,7 @@ export function UsersPage() {
                     type="checkbox"
                     checked={allChecked}
                     onChange={toggleAll}
-                    className="h-4 w-4 rounded border-[#D1D5DB] text-[#022150] focus:ring-[#022150]"
+                    className="h-4 w-4 rounded border-[#D1D5DB] text-[#00296F] focus:ring-[#00296F]"
                   />
                 </th>
                 <th className="px-4 py-3 font-semibold">Entreprise</th>
@@ -334,7 +334,7 @@ export function UsersPage() {
                         type="checkbox"
                         checked={isChecked}
                         onChange={() => toggleOne(m.id)}
-                        className="h-4 w-4 rounded border-[#D1D5DB] text-[#022150] focus:ring-[#022150]"
+                        className="h-4 w-4 rounded border-[#D1D5DB] text-[#00296F] focus:ring-[#00296F]"
                       />
                     </td>
                     <td className="px-4 py-3 align-middle">
@@ -404,7 +404,7 @@ export function UsersPage() {
                               }}
                               className="flex w-full items-center gap-2.5 px-4 py-2 text-[13px] font-medium text-[#374151] hover:bg-[#F9FAFB]"
                             >
-                              <Eye className="h-4 w-4 text-[#022150]" />
+                              <Eye className="h-4 w-4 text-[#00296F]" />
                               Voir détails
                             </button>
                             <button
@@ -517,7 +517,7 @@ export function UsersPage() {
                   onClick={() => setPageSize(size)}
                   className={cn(
                     "font-semibold",
-                    pageSize === size ? "text-[#022150]" : "text-[#374151] hover:text-[#022150]"
+                    pageSize === size ? "text-[#00296F]" : "text-[#374151] hover:text-[#00296F]"
                   )}
                 >
                   {size}
@@ -531,7 +531,7 @@ export function UsersPage() {
             </Button>
             <button
               type="button"
-              className="flex h-8 min-w-[32px] items-center justify-center rounded-lg bg-[#022150] px-2 text-[13px] font-semibold text-white"
+              className="flex h-8 min-w-[32px] items-center justify-center rounded-lg bg-[#00296F] px-2 text-[13px] font-semibold text-white"
             >
               1
             </button>
@@ -642,7 +642,7 @@ export function UsersPage() {
 // AddMakerModal — form to create a new fabricant (or super admin) from the
 // superadmin panel.
 // ============================================================================
-const LOGO_COLORS = ["#022150", "#10B981", "#F59E0B", "#8B5CF6", "#EC4899", "#06B6D4"];
+const LOGO_COLORS = ["#00296F", "#10B981", "#F59E0B", "#8B5CF6", "#EC4899", "#06B6D4"];
 
 function AddMakerModal({
   onClose,
@@ -736,7 +736,7 @@ function AddMakerModal({
   }
 
   const inputCls =
-    "w-full rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-[14px] text-[#111827] placeholder:text-[#9CA3AF] focus:border-[#022150] focus:outline-none focus:ring-2 focus:ring-[#022150]/20 transition";
+    "w-full rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-[14px] text-[#111827] placeholder:text-[#9CA3AF] focus:border-[#00296F] focus:outline-none focus:ring-2 focus:ring-[#00296F]/20 transition";
   const labelCls = "mb-1.5 block text-[13px] font-medium text-[#374151]";
 
   const roleOptions: {
@@ -751,7 +751,7 @@ function AddMakerModal({
       label: "Fabricant",
       description: "Compte entreprise",
       icon: Package,
-      activeCls: "border-[#022150] bg-[#F0F4F9] text-[#0A2B5F]",
+      activeCls: "border-[#00296F] bg-[#F0F4F9] text-[#0A2B5F]",
     },
     {
       value: "SUPERADMIN",
@@ -779,10 +779,10 @@ function AddMakerModal({
               className={cn(
                 "flex h-9 w-9 items-center justify-center rounded-lg text-white",
                 isEdit
-                  ? "bg-gradient-to-br from-[#022150] to-[#10B981]"
+                  ? "bg-gradient-to-br from-[#00296F] to-[#10B981]"
                   : isSuperAdmin
                     ? "bg-gradient-to-br from-[#7C3AED] to-[#A855F7]"
-                    : "bg-gradient-to-br from-[#022150] to-[#10B981]",
+                    : "bg-gradient-to-br from-[#00296F] to-[#10B981]",
               )}
             >
               {isEdit ? <Pencil className="h-5 w-5" /> : isSuperAdmin ? <Shield className="h-5 w-5" /> : <UserPlus className="h-5 w-5" />}
@@ -842,7 +842,7 @@ function AddMakerModal({
                         active
                           ? isSuperAdmin && opt.value === "SUPERADMIN"
                             ? "bg-[#7C3AED] text-white"
-                            : "bg-[#022150] text-white"
+                            : "bg-[#00296F] text-white"
                           : "bg-[#F3F4F6] text-[#6B7280]"
                       )}
                     >
@@ -989,7 +989,7 @@ function AddMakerModal({
                     className={cn(
                       "h-9 w-9 rounded-lg border-2 transition-all",
                       logoColor === c
-                        ? "border-[#111827] ring-2 ring-[#022150]/30"
+                        ? "border-[#111827] ring-2 ring-[#00296F]/30"
                         : "border-transparent hover:scale-110"
                     )}
                     style={{ backgroundColor: c }}

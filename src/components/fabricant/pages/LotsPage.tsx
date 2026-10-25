@@ -481,14 +481,14 @@ export function LotsPage() {
             placeholder="Rechercher par numéro de lot, produit..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="h-10 w-full rounded-lg border border-[#E5E7EB] bg-white pl-9 pr-3 text-[14px] text-[#111827] placeholder:text-[#9CA3AF] focus:border-[#022150] focus:outline-none focus:ring-2 focus:ring-[#022150]/10"
+            className="h-10 w-full rounded-lg border border-[#E5E7EB] bg-white pl-9 pr-3 text-[14px] text-[#111827] placeholder:text-[#9CA3AF] focus:border-[#00296F] focus:outline-none focus:ring-2 focus:ring-[#00296F]/10"
           />
         </div>
 
         <select
           value={productFilter}
           onChange={(e) => setProductFilter(e.target.value)}
-          className="h-10 rounded-lg border border-[#E5E7EB] bg-white px-3 text-[14px] text-[#374151] focus:border-[#022150] focus:outline-none"
+          className="h-10 rounded-lg border border-[#E5E7EB] bg-white px-3 text-[14px] text-[#374151] focus:border-[#00296F] focus:outline-none"
         >
           <option value="tous">Tous les produits</option>
           {produits.map((p) => (
@@ -507,7 +507,7 @@ export function LotsPage() {
         <select
           value={dateFilter}
           onChange={(e) => setDateFilter(e.target.value as DateFilter)}
-          className="h-10 rounded-lg border border-[#E5E7EB] bg-white px-3 text-[14px] text-[#374151] focus:border-[#022150] focus:outline-none"
+          className="h-10 rounded-lg border border-[#E5E7EB] bg-white px-3 text-[14px] text-[#374151] focus:border-[#00296F] focus:outline-none"
         >
           {DATE_OPTIONS.map((o) => (
             <option key={o.value} value={o.value}>
@@ -519,7 +519,7 @@ export function LotsPage() {
         <select
           value={sortFilter}
           onChange={(e) => setSortFilter(e.target.value as SortFilter)}
-          className="h-10 rounded-lg border border-[#E5E7EB] bg-white px-3 text-[14px] text-[#374151] focus:border-[#022150] focus:outline-none"
+          className="h-10 rounded-lg border border-[#E5E7EB] bg-white px-3 text-[14px] text-[#374151] focus:border-[#00296F] focus:outline-none"
         >
           {SORT_OPTIONS.map((o) => (
             <option key={o.value} value={o.value}>
@@ -537,14 +537,14 @@ export function LotsPage() {
             type="date"
             value={dateFrom}
             onChange={(e) => setDateFrom(e.target.value)}
-            className="h-9 rounded-md border border-[#E5E7EB] bg-white px-2 text-[13px] text-[#374151] focus:border-[#022150] focus:outline-none"
+            className="h-9 rounded-md border border-[#E5E7EB] bg-white px-2 text-[13px] text-[#374151] focus:border-[#00296F] focus:outline-none"
           />
           <span className="text-[13px] text-[#9CA3AF]">→</span>
           <input
             type="date"
             value={dateTo}
             onChange={(e) => setDateTo(e.target.value)}
-            className="h-9 rounded-md border border-[#E5E7EB] bg-white px-2 text-[13px] text-[#374151] focus:border-[#022150] focus:outline-none"
+            className="h-9 rounded-md border border-[#E5E7EB] bg-white px-2 text-[13px] text-[#374151] focus:border-[#00296F] focus:outline-none"
           />
         </div>
       )}
@@ -556,10 +556,10 @@ export function LotsPage() {
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
-            className="sticky top-[70px] z-30 mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#022150]/20 bg-[#F0F4F9] px-4 py-3 shadow-sm"
+            className="sticky top-[70px] z-30 mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#00296F]/20 bg-[#F0F4F9] px-4 py-3 shadow-sm"
           >
             <div className="flex items-center gap-3">
-              <span className="rounded-full bg-[#022150] px-2.5 py-1 text-[12px] font-semibold text-white">
+              <span className="rounded-full bg-[#00296F] px-2.5 py-1 text-[12px] font-semibold text-white">
                 {selectedIds.size}
               </span>
               <span className="text-[14px] font-medium text-[#0A2B5F]">
@@ -567,7 +567,7 @@ export function LotsPage() {
               </span>
               <button
                 onClick={clearSelection}
-                className="text-[13px] text-[#022150] hover:underline"
+                className="text-[13px] text-[#00296F] hover:underline"
               >
                 Tout désélectionner
               </button>
@@ -734,8 +734,8 @@ function StyledCheckbox({
       onClick={onChange}
       className="flex h-5 w-5 items-center justify-center rounded border-2 transition-colors"
       style={{
-        borderColor: checked || indeterminate ? "#022150" : "#D1D5DB",
-        backgroundColor: checked || indeterminate ? "#022150" : "white",
+        borderColor: checked || indeterminate ? "#00296F" : "#D1D5DB",
+        backgroundColor: checked || indeterminate ? "#00296F" : "white",
       }}
     >
       {checked && !indeterminate && <Check className="h-3.5 w-3.5 text-white" />}
@@ -787,7 +787,7 @@ function LotRow({
       <td className="px-4 py-3">
         <span
           className="font-mono text-[14px] font-medium"
-          style={{ color: "#022150" }}
+          style={{ color: "#00296F" }}
         >
           {lot.numero}
         </span>
@@ -934,7 +934,7 @@ function PaginationButton({
       onClick={onClick}
       className={`flex h-8 min-w-[32px] items-center justify-center rounded-lg px-2 text-[13px] font-medium transition-colors ${
         active
-          ? "bg-[#022150] text-white"
+          ? "bg-[#00296F] text-white"
           : disabled
           ? "cursor-not-allowed text-[#D1D5DB]"
           : "border border-[#E5E7EB] bg-white text-[#374151] hover:bg-[#F9FAFB]"

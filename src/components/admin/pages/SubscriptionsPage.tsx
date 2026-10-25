@@ -135,7 +135,7 @@ function FilterPills<T extends string>({
             className={cn(
               "inline-flex items-center rounded-full px-3 py-1.5 text-[12px] font-semibold transition-colors",
               isActive
-                ? "bg-[#022150] text-white shadow-sm"
+                ? "bg-[#00296F] text-white shadow-sm"
                 : "border border-[#E5E7EB] bg-white text-[#374151] hover:bg-[#F9FAFB]"
             )}
           >
@@ -161,10 +161,10 @@ const SUMMARY_CARDS_FN = (mrr: number, arr: number, retentionRate: number, churn
     label: "ARR projeté",
     value: `${formatFCFA(arr)} FCFA`,
     trend: "Sur 12 mois",
-    trendClass: "text-[#022150]",
+    trendClass: "text-[#00296F]",
     icon: TrendingUp,
     iconBg: "bg-[#DCE7F2]",
-    iconColor: "text-[#022150]",
+    iconColor: "text-[#00296F]",
   },
   {
     label: "Taux de rétention",
@@ -235,7 +235,7 @@ export function SubscriptionsPage() {
               className={cn(
                 "inline-flex items-center gap-2 rounded-full px-4 py-2 text-[13px] font-semibold transition-colors",
                 isActive
-                  ? "bg-[#022150] text-white shadow-sm"
+                  ? "bg-[#00296F] text-white shadow-sm"
                   : "border border-[#E5E7EB] bg-white text-[#374151] hover:bg-[#F9FAFB]"
               )}
             >
@@ -345,7 +345,7 @@ export function SubscriptionsPage() {
                             type="button"
                             onClick={() => openDetail("user-detail", maker.id)}
                             title="Voir le détail"
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-[#6B7280] transition-colors hover:bg-[#F0F4F9] hover:text-[#022150]"
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-[#6B7280] transition-colors hover:bg-[#F0F4F9] hover:text-[#00296F]"
                           >
                             <Eye className="h-4 w-4" />
                           </button>

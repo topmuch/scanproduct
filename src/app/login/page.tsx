@@ -37,7 +37,7 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen bg-white">
       {/* Left brand panel (hidden on mobile) */}
-      <div className="relative hidden w-1/2 overflow-hidden bg-gradient-to-br from-[#022150] via-[#0A2B5F] to-[#10B981] lg:flex">
+      <div className="relative hidden w-1/2 overflow-hidden bg-gradient-to-br from-[#00296F] via-[#0A2B5F] to-[#10B981] lg:flex">
         <div className="absolute inset-0 opacity-30">
           <div className="absolute -left-20 top-20 h-72 w-72 rounded-full bg-white/20 blur-3xl" />
           <div className="absolute right-10 top-1/3 h-96 w-96 rounded-full bg-[#10B981]/30 blur-3xl" />
@@ -93,7 +93,7 @@ export default function LoginPage() {
         <Suspense
           fallback={
             <div className="flex h-12 w-12 items-center justify-center">
-              <Loader2 className="h-6 w-6 animate-spin text-[#022150]" />
+              <Loader2 className="h-6 w-6 animate-spin text-[#00296F]" />
             </div>
           }
         >

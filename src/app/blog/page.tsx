@@ -55,7 +55,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
-  Traçabilité: "#022150",
+  Traçabilité: "#00296F",
   Export: "#10B981",
   Consommateurs: "#F59E0B",
   "Anti-contrefaçon": "#EF4444",
@@ -64,7 +64,7 @@ const CATEGORY_COLORS: Record<string, string> = {
 };
 
 function categoryColor(cat: string): string {
-  return CATEGORY_COLORS[cat] ?? "#022150";
+  return CATEGORY_COLORS[cat] ?? "#00296F";
 }
 
 const CATEGORY_ICONS = [QrCode, ShieldCheck, Sprout, BarChart3];
@@ -225,7 +225,7 @@ export default async function BlogPage() {
                         <Icon className="h-5 w-5" />
                       </div>
 
-                      <h3 className="mt-4 font-display text-base font-semibold leading-snug text-[#111827] group-hover:text-[#022150]">
+                      <h3 className="mt-4 font-display text-base font-semibold leading-snug text-[#111827] group-hover:text-[#00296F]">
                         <Link href={`/blog/${post.slug}`}>{post.title}</Link>
                       </h3>
                       <p className="mt-2 flex-1 text-sm leading-relaxed text-[#6B7280]">
@@ -238,7 +238,7 @@ export default async function BlogPage() {
                         </span>
                         <Link
                           href={`/blog/${post.slug}`}
-                          className="inline-flex items-center gap-1 text-xs font-semibold text-[#022150] transition-all group-hover:gap-1.5"
+                          className="inline-flex items-center gap-1 text-xs font-semibold text-[#00296F] transition-all group-hover:gap-1.5"
                         >
                           Lire l&apos;article
                           <ArrowRight className="h-3.5 w-3.5" />
@@ -254,7 +254,7 @@ export default async function BlogPage() {
 
         {/* NEWSLETTER + CTA */}
         <section className="mx-auto max-w-[1400px] px-4 pb-20 sm:px-6 lg:px-8">
-          <div className="overflow-hidden rounded-3xl bg-gradient-to-br from-[#0F172A] via-[#0D3068] to-[#022150] p-10 text-white shadow-xl sm:p-14">
+          <div className="overflow-hidden rounded-3xl bg-gradient-to-br from-[#0F172A] via-[#0D3068] to-[#00296F] p-10 text-white shadow-xl sm:p-14">
             <div className="grid items-center gap-8 lg:grid-cols-2">
               <div>
                 <h2 className="font-display text-2xl font-bold sm:text-3xl">
@@ -268,7 +268,7 @@ export default async function BlogPage() {
                 <div className="mt-6 flex flex-wrap gap-3">
                   <Link
                     href="/contact"
-                    className="inline-flex items-center gap-2 rounded-lg bg-white px-5 py-3 text-sm font-semibold text-[#022150] shadow-md transition-colors hover:bg-white/90"
+                    className="inline-flex items-center gap-2 rounded-lg bg-white px-5 py-3 text-sm font-semibold text-[#00296F] shadow-md transition-colors hover:bg-white/90"
                   >
                     Proposer un sujet
                     <ArrowRight className="h-4 w-4" />

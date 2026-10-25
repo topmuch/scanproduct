@@ -16,7 +16,7 @@ const CONTACT_INFO = [
     label: "Email",
     value: VERIFSCAN_EMAIL,
     href: `mailto:${VERIFSCAN_EMAIL}`,
-    color: "#022150",
+    color: "#00296F",
     bg: "#F0F4F9",
   },
   {
@@ -132,7 +132,7 @@ export function ContactForm() {
                     href={info.href}
                     target={info.href?.startsWith("http") ? "_blank" : undefined}
                     rel={info.href?.startsWith("http") ? "noopener noreferrer" : undefined}
-                    className="block text-[15px] font-semibold text-[#111827] transition-colors hover:text-[#022150]"
+                    className="block text-[15px] font-semibold text-[#111827] transition-colors hover:text-[#00296F]"
                   >
                     {info.value}
                   </a>
@@ -152,7 +152,7 @@ export function ContactForm() {
           href={VERIFSCAN_DIRECTIONS_URL}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-6 flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#022150] to-[#10B981] px-5 py-3.5 text-[15px] font-semibold text-white shadow-md shadow-[#022150]/25 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg"
+          className="mt-6 flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#00296F] to-[#10B981] px-5 py-3.5 text-[15px] font-semibold text-white shadow-md shadow-[#00296F]/25 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg"
         >
           <Navigation className="h-4 w-4" />
           Ouvrir l&apos;itinéraire dans Google Maps
@@ -177,7 +177,7 @@ export function ContactForm() {
               <button
                 type="button"
                 onClick={() => setSent(false)}
-                className="mt-6 rounded-lg border border-[#022150] px-5 py-2.5 text-sm font-semibold text-[#022150] transition-colors hover:bg-[#F0F4F9]"
+                className="mt-6 rounded-lg border border-[#00296F] px-5 py-2.5 text-sm font-semibold text-[#00296F] transition-colors hover:bg-[#F0F4F9]"
               >
                 Envoyer un autre message
               </button>
@@ -222,7 +222,7 @@ export function ContactForm() {
                     name="name"
                     required
                     placeholder="Ex: Awa Diop"
-                    className="w-full rounded-lg border border-[#E5E7EB] bg-white px-4 py-2.5 text-[15px] text-[#111827] outline-none transition-all placeholder:text-[#9CA3AF] focus:border-[#022150] focus:ring-2 focus:ring-[#022150]/20"
+                    className="w-full rounded-lg border border-[#E5E7EB] bg-white px-4 py-2.5 text-[15px] text-[#111827] outline-none transition-all placeholder:text-[#9CA3AF] focus:border-[#00296F] focus:ring-2 focus:ring-[#00296F]/20"
                   />
                 </div>
                 <div>
@@ -238,7 +238,7 @@ export function ContactForm() {
                     name="email"
                     required
                     placeholder="vous@exemple.com"
-                    className="w-full rounded-lg border border-[#E5E7EB] bg-white px-4 py-2.5 text-[15px] text-[#111827] outline-none transition-all placeholder:text-[#9CA3AF] focus:border-[#022150] focus:ring-2 focus:ring-[#022150]/20"
+                    className="w-full rounded-lg border border-[#E5E7EB] bg-white px-4 py-2.5 text-[15px] text-[#111827] outline-none transition-all placeholder:text-[#9CA3AF] focus:border-[#00296F] focus:ring-2 focus:ring-[#00296F]/20"
                   />
                 </div>
               </div>
@@ -256,7 +256,7 @@ export function ContactForm() {
                     id="phone"
                     name="phone"
                     placeholder="+221 ..."
-                    className="w-full rounded-lg border border-[#E5E7EB] bg-white px-4 py-2.5 text-[15px] text-[#111827] outline-none transition-all placeholder:text-[#9CA3AF] focus:border-[#022150] focus:ring-2 focus:ring-[#022150]/20"
+                    className="w-full rounded-lg border border-[#E5E7EB] bg-white px-4 py-2.5 text-[15px] text-[#111827] outline-none transition-all placeholder:text-[#9CA3AF] focus:border-[#00296F] focus:ring-2 focus:ring-[#00296F]/20"
                   />
                 </div>
                 <div>
@@ -271,7 +271,7 @@ export function ContactForm() {
                     name="subject"
                     required
                     defaultValue=""
-                    className="w-full rounded-lg border border-[#E5E7EB] bg-white px-4 py-2.5 text-[15px] text-[#111827] outline-none transition-all focus:border-[#022150] focus:ring-2 focus:ring-[#022150]/20"
+                    className="w-full rounded-lg border border-[#E5E7EB] bg-white px-4 py-2.5 text-[15px] text-[#111827] outline-none transition-all focus:border-[#00296F] focus:ring-2 focus:ring-[#00296F]/20"
                   >
                     <option value="" disabled>
                       Choisir un sujet...
@@ -298,14 +298,14 @@ export function ContactForm() {
                   required
                   rows={5}
                   placeholder="Décrivez votre demande en quelques lignes..."
-                  className="w-full resize-none rounded-lg border border-[#E5E7EB] bg-white px-4 py-2.5 text-[15px] text-[#111827] outline-none transition-all placeholder:text-[#9CA3AF] focus:border-[#022150] focus:ring-2 focus:ring-[#022150]/20"
+                  className="w-full resize-none rounded-lg border border-[#E5E7EB] bg-white px-4 py-2.5 text-[15px] text-[#111827] outline-none transition-all placeholder:text-[#9CA3AF] focus:border-[#00296F] focus:ring-2 focus:ring-[#00296F]/20"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={submitting}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-[#022150] to-[#10B981] px-6 py-3 text-[15px] font-semibold text-white shadow-md shadow-[#022150]/25 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-[#022150]/40 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0 sm:w-auto"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-[#00296F] to-[#10B981] px-6 py-3 text-[15px] font-semibold text-white shadow-md shadow-[#00296F]/25 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-[#00296F]/40 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0 sm:w-auto"
               >
                 {submitting ? (
                   <>
