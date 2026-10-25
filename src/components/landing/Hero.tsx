@@ -41,7 +41,7 @@ export function Hero() {
       <div
         className="absolute inset-0 opacity-[0.50]"
         style={{
-          backgroundImage: "url(/hero-main.png)",
+          backgroundImage: "url(/hero-main.jpg)",
           backgroundSize: "cover",
           backgroundPosition: "center",
         }}
