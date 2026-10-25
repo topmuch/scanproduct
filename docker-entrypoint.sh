@@ -1,6 +1,6 @@
 #!/bin/sh
 # =============================================================================
-# VerifScan — Docker Entrypoint (ROBUST MIGRATION)
+# Prodtrust — Docker Entrypoint (ROBUST MIGRATION)
 # =============================================================================
 # Runs at container startup. Responsibilities:
 #   1. Ensure data + upload directories exist
@@ -28,7 +28,7 @@ if [ -z "$DB_FILE" ]; then
   DB_FILE="/app/data/scanproduct.db"
 fi
 
-echo "=== VerifScan container starting ==="
+echo "=== Prodtrust container starting ==="
 echo "  DATABASE_URL: $DATABASE_URL"
 echo "  DB file:      $DB_FILE"
 echo "  UPLOAD_DIR:   $UPLOAD_DIR"
@@ -394,6 +394,12 @@ bun run prisma/seed.ts 2>&1 || echo "WARN: seed script returned non-zero (may be
 #     Sans cela, une DB de production fraîche n'aurait AUCUN article :
 #     la section blog de l'accueil et /blog resteraient vides.
 echo "=== Running blog seed (4 articles fondateurs) ==="
+# 5c. UPDATE existing articles: Prodtrust → Prodtrust (one-time migration)
+echo "=== Updating article text (Prodtrust → Prodtrust) ===" 
+if [ -n "$DB_FILE" ] && [ -f "$DB_FILE" ]; then 
+  sqlite3 "$DB_FILE" "UPDATE Post SET title = REPLACE(title, 'Prodtrust', 'Prodtrust'), excerpt = REPLACE(excerpt, 'Prodtrust', 'Prodtrust'), content = REPLACE(content, 'Prodtrust', 'Prodtrust') WHERE title LIKE '%Prodtrust%' OR excerpt LIKE '%Prodtrust%' OR content LIKE '%Prodtrust%';" 2>/dev/null || true 
+  echo "  Article text updated" 
+fi
 bun run scripts/seed-blog.ts 2>&1 || echo "WARN: blog seed returned non-zero (may be OK if already seeded)"
 
 # ── 5b. BACKUP QUOTIDIEN de la base (boucle de fond) ──────────────────────

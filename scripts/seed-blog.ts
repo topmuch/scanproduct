@@ -28,16 +28,16 @@ const ARTICLES: SeedPost[] = [
     slug: "comment-exporter-des-produits-vers-union-europeenne",
     title: "Comment exporter des produits vers l'Union européenne : le guide complet 2026",
     excerpt:
-      "Normes sanitaires, certificats, étiquetage, TRACES : découvrez les étapes concrètes pour exporter vos produits alimentaires et cosmétiques vers l'Union européenne — et comment VerifScan simplifie chaque étape.",
+      "Normes sanitaires, certificats, étiquetage, TRACES : découvrez les étapes concrètes pour exporter vos produits alimentaires et cosmétiques vers l'Union européenne — et comment Prodtrust simplifie chaque étape.",
     category: "Export",
     readTime: 9,
-    author: "Équipe VerifScan",
+    author: "Équipe Prodtrust",
     coverImage: "/images/industries/fruits-legumes.jpg",
     published: true,
     seoTitle:
       "Exporter vers l'Union européenne : guide complet 2026 (normes, certificats)",
     seoDescription:
-      "Guide pratique d'export vers l'UE : réglementation sanitaire, certificats phytosanitaires, étiquetage, TRACES, TVA. Comment VerifScan facilite la conformité et la traçabilité de vos lots.",
+      "Guide pratique d'export vers l'UE : réglementation sanitaire, certificats phytosanitaires, étiquetage, TRACES, TVA. Comment Prodtrust facilite la conformité et la traçabilité de vos lots.",
     seoKeywords:
       "export union européenne, réglementation UE, certificat phytosanitaire, Global GAP, traçabilité alimentaire, export Afrique vers Europe, étiquetage UE, TRACES",
     content: `L'Union européenne est le premier marché d'importation de produits alimentaires et cosmétiques en provenance d'Afrique de l'Ouest. Mangues du Sénégal, beurre de karité du Burkina Faso, cacao de Côte d'Ivoire, jus de bissap : chaque année, des milliers de conteneurs franchissent les ports de Rotterdam, Anvers ou Marseille. Mais l'UE est aussi l'un des marchés les plus réglementés au monde. Ce guide détaille les étapes concrètes pour exporter vos produits vers l'Union européenne, sans mauvaise surprise.
@@ -108,7 +108,7 @@ Le transport vers l'UE dépend de la nature du produit : conteneur frigorifique 
 
 Depuis quelques années, la traçabilité n'est plus seulement une obligation légale : c'est une **exigence commerciale**. Les acheteurs européens demandent à pouvoir retracer un lot en quelques minutes, du champ ou de l'usine jusqu'au magasin. Un rappel produit mal géré peut coûter des centaines de milliers d'euros — et la réputation d'un fournisseur.
 
-C'est précisément le problème que résout **VerifScan** :
+C'est précisément le problème que résout **Prodtrust** :
 
 - Chaque lot de production reçoit un **QR code unique** collé sur l'emballage,
 - Le QR code ouvre une **page passeport numérique** avec : composition, origine, dates de péremption, certificats, allergènes, valeur nutritionnelle,
@@ -119,7 +119,7 @@ C'est précisément le problème que résout **VerifScan** :
 
 Exporter vers l'Union européenne demande de la rigueur : un code SH correct, des certificats à jour, un étiquetage conforme, une logistique maîtrisée. Mais surtout, cela demande de la **transparence documentaire**. Les exportateurs qui réussissent sont ceux qui peuvent prouver, à tout moment, ce que contient leur produit et d'où il vient.
 
-Avec VerifScan, chaque lot de votre production dispose d'un passeport numérique vérifiable par votre importateur comme par le consommateur final. **Créez votre compte gratuit** et préparez votre prochaine expédition vers l'Europe avec une traçabilité de niveau européen.`,
+Avec Prodtrust, chaque lot de votre production dispose d'un passeport numérique vérifiable par votre importateur comme par le consommateur final. **Créez votre compte gratuit** et préparez votre prochaine expédition vers l'Europe avec une traçabilité de niveau européen.`,
   },
 
   // ═══════════════════════════════════════════════════════════════════
@@ -130,12 +130,12 @@ Avec VerifScan, chaque lot de votre production dispose d'un passeport numérique
       "FDA, FSMA, Prior Notice, Airbill, étiquetage FDA : le marché américain est le plus grand du monde, mais son accès est encadré. Voici le parcours complet pour exporter vos produits vers les USA — et y arriver sereinement.",
     category: "Export",
     readTime: 8,
-    author: "Équipe VerifScan",
+    author: "Équipe Prodtrust",
     coverImage: "/features/feature-export.webp",
     published: true,
     seoTitle: "Exporter aux États-Unis : guide FDA, FSMA et étapes clés 2026",
     seoDescription:
-      "Export vers les USA : inscription FDA, Prior Notice, loi FSMA, étiquetage américain, douanes et logistique. Comment VerifScan sécurise la traçabilité de vos lots vers le marché américain.",
+      "Export vers les USA : inscription FDA, Prior Notice, loi FSMA, étiquetage américain, douanes et logistique. Comment Prodtrust sécurise la traçabilité de vos lots vers le marché américain.",
     seoKeywords:
       "export états-unis, FDA, FSMA, prior notice, export USA Afrique, réglementation américaine, étiquetage FDA, food facility registration",
     content: `Avec plus de 330 millions de consommateurs et un pouvoir d'achat parmi les plus élevés au monde, les États-Unis représentent une opportunité majeure pour les producteurs africains de produits alimentaires, cosmétiques et artisanaux. Mais l'accès au marché américain obéit à des règles strictes, pilotées principalement par la **FDA** (Food and Drug Administration). Ce guide vous accompagne étape par étape.
@@ -199,7 +199,7 @@ Le **HTS code** américain (équivalent du code SH) détermine les droits de dou
 
 Aux États-Unis, la FDA peut exiger un **retrait de produit (recall)** en quelques heures. Le règlement **FSMA 204** (Food Traceability Rule), applicable à partir de 2026, impose en outre un suivi traçable sur la base de **KDE** (Key Data Elements) et **CTE** (Critical Tracking Events) pour une liste de produits à risque. Autrement dit : la traçabilité numérique devient une exigence légale d'entrée sur le marché américain.
 
-C'est exactement ce que fait VerifScan :
+C'est exactement ce que fait Prodtrust :
 
 - **Un QR code unique par lot** de production, collé sur l'emballage ou l'étiquette d'expédition,
 - Un **passeport numérique** consultable en un scan : composition, dates, certificats, analyses,
@@ -212,31 +212,31 @@ Pour un acheteur américain, choisir un fournisseur capable de présenter une tr
 
 Exporter aux États-Unis exige de la préparation : enregistrement FDA, conformité FSMA, Prior Notice, étiquetage adapté, documentation douanière. Rien d'insurmontable — à condition d'y penser **avant** le premier conteneur.
 
-Et pour transformer cette conformité en avantage commercial, équipez vos produits d'un passeport numérique VerifScan. **Créez votre compte gratuit** et donnez à vos clients américains la transparence qu'ils attendent.`,
+Et pour transformer cette conformité en avantage commercial, équipez vos produits d'un passeport numérique Prodtrust. **Créez votre compte gratuit** et donnez à vos clients américains la transparence qu'ils attendent.`,
   },
 
   // ═══════════════════════════════════════════════════════════════════
   {
-    slug: "comment-verifscan-aide-les-exportateurs",
-    title: "Comment VerifScan aide les exportateurs à vendre à l'international",
+    slug: "comment-prodtrust-aide-les-exportateurs",
+    title: "Comment Prodtrust aide les exportateurs à vendre à l'international",
     excerpt:
-      "Certificats centralisés, QR code par lot, historique traçable, page produit vérifiable par l'acheteur : voici concrètement comment VerifScan accompagne les exportateurs africains, de la production locale aux marchés d'Europe et d'Amérique.",
+      "Certificats centralisés, QR code par lot, historique traçable, page produit vérifiable par l'acheteur : voici concrètement comment Prodtrust accompagne les exportateurs africains, de la production locale aux marchés d'Europe et d'Amérique.",
     category: "Traçabilité",
     readTime: 7,
-    author: "Équipe VerifScan",
+    author: "Équipe Prodtrust",
     coverImage: "/images/industries/cafe-cacao.jpg",
     published: true,
     seoTitle:
-      "VerifScan pour les exportateurs : traçabilité QR, certificats et confiance",
+      "Prodtrust pour les exportateurs : traçabilité QR, certificats et confiance",
     seoDescription:
-      "Découvrez comment VerifScan aide les exportateurs : passeport numérique par lot, QR code anti-contrefaçon, certificats digitaux, historique traçable et transparence pour les acheteurs internationaux.",
+      "Découvrez comment Prodtrust aide les exportateurs : passeport numérique par lot, QR code anti-contrefaçon, certificats digitaux, historique traçable et transparence pour les acheteurs internationaux.",
     seoKeywords:
-      "VerifScan exportateurs, traçabilité export, QR code produit, passeport numérique, certificats digitaux, anti-contrefaçon, export Afrique, confiance acheteur",
-    content: `Exporter, c'est convaincre un acheteur situé à des milliers de kilomètres qu'un produit qu'il n'a jamais vu, fabriqué par une entreprise qu'il ne connaît pas, respectera les attentes de ses propres clients. Cette confiance, aujourd'hui, se construit avec des **preuves vérifiables**. VerifScan a été conçu exactement pour cela : donner à chaque produit un passeport numérique que n'importe qui — acheteur, douane, distributeur, consommateur — peut vérifier en un scan.
+      "Prodtrust exportateurs, traçabilité export, QR code produit, passeport numérique, certificats digitaux, anti-contrefaçon, export Afrique, confiance acheteur",
+    content: `Exporter, c'est convaincre un acheteur situé à des milliers de kilomètres qu'un produit qu'il n'a jamais vu, fabriqué par une entreprise qu'il ne connaît pas, respectera les attentes de ses propres clients. Cette confiance, aujourd'hui, se construit avec des **preuves vérifiables**. Prodtrust a été conçu exactement pour cela : donner à chaque produit un passeport numérique que n'importe qui — acheteur, douane, distributeur, consommateur — peut vérifier en un scan.
 
 ## 1. Un passeport numérique complet pour chaque lot
 
-Sur VerifScan, l'unité de traçabilité est le **lot de production**. Pour chaque lot, l'exportateur rassemble en un seul endroit :
+Sur Prodtrust, l'unité de traçabilité est le **lot de production**. Pour chaque lot, l'exportateur rassemble en un seul endroit :
 
 - La **fiche produit** : composition, ingrédients, allergènes, valeurs nutritionnelles,
 - Les **dates clés** : production, durabilité (DLC/DDM), contrôle qualité,
@@ -250,13 +250,13 @@ Ces informations sont regroupées derrière une **page passeport unique**, acces
 
 Chaque lot reçoit un **QR code unique**, imprimable directement sur l'étiquette de vos emballages. Ce QR code a trois fonctions :
 
-1. **Prouver l'authenticité** : un QR VerifScan ne pointe pas vers une page générique, mais vers le passeport du lot précis. Un contrefaçon qui copie le visuel ne peut pas copier la page — et un QR copié devient détectable (le même code scanné à des endroits incohérents déclenche une alerte),
+1. **Prouver l'authenticité** : un QR Prodtrust ne pointe pas vers une page générique, mais vers le passeport du lot précis. Un contrefaçon qui copie le visuel ne peut pas copier la page — et un QR copié devient détectable (le même code scanné à des endroits incohérents déclenche une alerte),
 2. **Informer le consommateur** : dans le magasin, le client scanne et voit l'origine, la composition, les dates — dans sa langue, sur son téléphone,
 3. **Simplifier les contrôles** : douane, autorité sanitaire ou acheteur vérifient le produit en quelques secondes.
 
 ## 3. Des certificats digitaux, toujours à jour
 
-Les exportateurs perdent un temps considérable à retrouver et renvoyer des scans de certificats à chaque prospect. Avec VerifScan :
+Les exportateurs perdent un temps considérable à retrouver et renvoyer des scans de certificats à chaque prospect. Avec Prodtrust :
 
 - Les certificats sont **téléversés une fois** et associés aux lots concernés,
 - Un **lien de vérification** peut être partagé avec un acheteur qui voit le document dans son contexte (produit, dates, périmètre),
@@ -274,7 +274,7 @@ Chaque action enregistrée sur un lot — réception de matière première, prod
 
 ## 5. Des statistiques de scans : savoir qui s'intéresse à vos produits
 
-Chaque scan d'un QR code VerifScan est comptabilisé (de manière anonyme et conforme) : nombre de scans, pays, moments. Pour un exportateur, c'est une mine d'informations :
+Chaque scan d'un QR code Prodtrust est comptabilisé (de manière anonyme et conforme) : nombre de scans, pays, moments. Pour un exportateur, c'est une mine d'informations :
 
 - **Mesurer l'intérêt réel** pour vos produits sur un salon ou un marché,
 - **Détecter une anomalie** : un pic de scans dans un pays où vous n'exportez pas est un signal de contrefaçon,
@@ -282,7 +282,7 @@ Chaque scan d'un QR code VerifScan est comptabilisé (de manière anonyme et con
 
 ## 6. Un impact direct sur les ventes
 
-Les acheteurs internationaux classent leurs fournisseurs selon trois critères : la qualité, la fiabilité documentaire et la réactivité. VerifScan agit sur les deux derniers :
+Les acheteurs internationaux classent leurs fournisseurs selon trois critères : la qualité, la fiabilité documentaire et la réactivité. Prodtrust agit sur les deux derniers :
 
 - **Dossiers de tendance plus complets** : vos fiches produit et certificats sont accessibles immédiatement,
 - **Confiance renforcée** : la transparence affichée réduit les objections et les vérifications fastidieuses,
@@ -291,9 +291,9 @@ Les acheteurs internationaux classent leurs fournisseurs selon trois critères :
 
 ## Conclusion : la traçabilité comme avantage commercial
 
-VerifScan ne remplace pas votre qualité : il la **prouve**. Du lot de production jusqu'au scan du consommateur, chaque étape devient visible, vérifiable et valorisable. Les exportateurs qui l'ont compris transforment une obligation réglementaire en argument de vente.
+Prodtrust ne remplace pas votre qualité : il la **prouve**. Du lot de production jusqu'au scan du consommateur, chaque étape devient visible, vérifiable et valorisable. Les exportateurs qui l'ont compris transforment une obligation réglementaire en argument de vente.
 
-**Créez votre compte gratuit sur VerifScan** et donnez à vos produits le passeport numérique qui leur ouvrira les marchés internationaux.`,
+**Créez votre compte gratuit sur Prodtrust** et donnez à vos produits le passeport numérique qui leur ouvrira les marchés internationaux.`,
   },
 
   // ═══════════════════════════════════════════════════════════════════
@@ -301,19 +301,19 @@ VerifScan ne remplace pas votre qualité : il la **prouve**. Du lot de productio
     slug: "consommateurs-scannez-le-qrcode-de-vos-produits",
     title: "Consommateurs : scannez le QR code de vos produits pour tout savoir",
     excerpt:
-      "Dates de péremption, ingrédients, allergènes, origine, certificats : le QR code VerifScan sur un emballage ouvre le passeport numérique du produit. Voici ce que vous y trouverez — et pourquoi cela change votre façon d'acheter.",
+      "Dates de péremption, ingrédients, allergènes, origine, certificats : le QR code Prodtrust sur un emballage ouvre le passeport numérique du produit. Voici ce que vous y trouverez — et pourquoi cela change votre façon d'acheter.",
     category: "Consommateurs",
     readTime: 6,
-    author: "Équipe VerifScan",
+    author: "Équipe Prodtrust",
     coverImage: "/features/step-generate-qr.webp",
     published: true,
     seoTitle:
-      "Scanner le QR code d'un produit : péremption, ingrédients, origine | VerifScan",
+      "Scanner le QR code d'un produit : péremption, ingrédients, origine | Prodtrust",
     seoDescription:
-      "Que révèle le QR code d'un produit VerifScan ? Dates de péremption, ingrédients, allergènes, certificats, origine : le passeport numérique accessible à tous les consommateurs en un scan.",
+      "Que révèle le QR code d'un produit Prodtrust ? Dates de péremption, ingrédients, allergènes, certificats, origine : le passeport numérique accessible à tous les consommateurs en un scan.",
     seoKeywords:
       "scanner QR code produit, date de péremption produit, ingrédients produit, allergènes, vérifier authenticité produit, contrefaçon, consommateur traçabilité, passeport numérique",
-    content: `Quand vous prenez un produit en main, combien de questions vous viennent ? Est-il encore bon ? Que contient-il vraiment ? D'où vient-il ? Est-il authentique ? Sur l'étiquette, la réponse tient parfois dans une typographie minuscule. Avec VerifScan, la réponse complète tient dans un **QR code** : vous le scannez, et le passeport numérique du produit s'affiche sur votre téléphone. Voici ce que vous y découvrez.
+    content: `Quand vous prenez un produit en main, combien de questions vous viennent ? Est-il encore bon ? Que contient-il vraiment ? D'où vient-il ? Est-il authentique ? Sur l'étiquette, la réponse tient parfois dans une typographie minuscule. Avec Prodtrust, la réponse complète tient dans un **QR code** : vous le scannez, et le passeport numérique du produit s'affiche sur votre téléphone. Voici ce que vous y découvrez.
 
 ## 1. Les dates de péremption, claires et à jour
 
@@ -349,7 +349,7 @@ Pour les produits du terroir et d'export, c'est la garantie d'acheter un vrai pr
 
 ## 4. Vérifier l'authenticité : votre arme contre la contrefaçon
 
-La contrefaçon alimentaire et cosmétique est un fléau : jus faux, huiles diluées, cosmétiques dangereux vendus sous des marques connues. Le QR code VerifScan est un **outil anti-contrefaçon** :
+La contrefaçon alimentaire et cosmétique est un fléau : jus faux, huiles diluées, cosmétiques dangereux vendus sous des marques connues. Le QR code Prodtrust est un **outil anti-contrefaçon** :
 
 - Chaque **lot réel** possède sa page unique, générée par le fabricant,
 - Un produit suspect (QR inexistant, page modifiée, code dupliqué scanné à des centaines de kilomètres d'écart) est **détecté et signalé**,
@@ -377,9 +377,9 @@ Chaque scan anonyme est comptabilisé pour le fabricant : il sait combien de con
 
 ## Conclusion : la transparence est dans votre poche
 
-Scanner le QR code d'un produit VerifScan, c'est passer de « je crois ce que dit l'étiquette » à « je vérifie ce que dit le fabricant ». Dates de péremption fiables, ingrédients clairs, allergènes visibles, origine réelle, authenticité prouvée : toutes ces informations vous suivent désormais dans votre poche.
+Scanner le QR code d'un produit Prodtrust, c'est passer de « je crois ce que dit l'étiquette » à « je vérifie ce que dit le fabricant ». Dates de péremption fiables, ingrédients clairs, allergènes visibles, origine réelle, authenticité prouvée : toutes ces informations vous suivent désormais dans votre poche.
 
-La prochaine fois que vous verrez le QR code VerifScan sur un emballage, **scannez-le** — et découvrez la vérité au bout du scan.`,
+La prochaine fois que vous verrez le QR code Prodtrust sur un emballage, **scannez-le** — et découvrez la vérité au bout du scan.`,
   },
 ];
 
