@@ -39,7 +39,7 @@ export function Hero() {
 
       {/* Subtle slide images as dark texture (opacity 15%) */}
       <div
-        className="absolute inset-0 opacity-[0.15]"
+        className="absolute inset-0 opacity-[0.35]"
         style={{
           backgroundImage: "url(/hero-main.png)",
           backgroundSize: "cover",
@@ -49,7 +49,7 @@ export function Hero() {
       />
 
       {/* Dark overlay to ensure text legibility */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#00296F]/80 via-[#00296F]/70 to-[#001D4F]/90" aria-hidden />
+      <div className="absolute inset-0 bg-gradient-to-b from-[#00296F]/60 via-[#00296F]/50 to-[#001D4F]/90" aria-hidden />
 
       {/* Floating brand-colored orbs */}
       <div className="pointer-events-none absolute inset-0" aria-hidden>
