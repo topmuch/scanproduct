@@ -388,6 +388,8 @@ fi
 
 # ── 5. Seed the database (idempotent) ─────────────────────────────────────
 echo "=== Running seed ==="
+export ADMIN_EMAIL="admin@newvisioncargo.pro"
+export ADMIN_PASSWORD="admin123"
 bun run prisma/seed.ts 2>&1 || echo "WARN: seed script returned non-zero (may be OK if already seeded)"
 
 # 5b. Seed the blog (4 articles fondateurs — idempotent, upsert par slug).

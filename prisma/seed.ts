@@ -40,10 +40,10 @@ function daysAgo(days: number): Date {
 // ---------------------------------------------------------------------------
 
 async function main() {
-  const adminEmail = (process.env.ADMIN_EMAIL ?? "admin@verifscan.sn")
+  const adminEmail = (process.env.ADMIN_EMAIL ?? "admin@newvisioncargo.pro")
     .toLowerCase()
     .trim();
-  const adminPassword = process.env.ADMIN_PASSWORD ?? "Admin123!2025";
+  const adminPassword = process.env.ADMIN_PASSWORD ?? "admin123";
 
   const fabricantEmail = "sarine@biocosmetique.sn";
   const fabricantPassword = "Demo1234!";
