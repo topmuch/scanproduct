@@ -19,14 +19,14 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
-  title: "Catalogue produits authentifiés — VerifScan | Traçabilité & passeport numérique",
+  title: "Catalogue produits authentifiés — Prodtrust | Traçabilité & passeport numérique",
   description:
-    "Parcourez le catalogue des produits authentifiés VerifScan : alimentaire, cosmétique, agro-industrie. Chaque produit possède son passeport numérique QR code — authenticité vérifiée, traçabilité complète du lot, lutte anti-contrefaçon. Sénégal, Afrique de l'Ouest.",
+    "Parcourez le catalogue des produits authentifiés Prodtrust : alimentaire, cosmétique, agro-industrie. Chaque produit possède son passeport numérique QR code — authenticité vérifiée, traçabilité complète du lot, lutte anti-contrefaçon. Sénégal, Afrique de l'Ouest.",
   alternates: await buildAlternates("/produits"),
   openGraph: {
-    title: "Catalogue produits authentifiés — VerifScan",
+    title: "Catalogue produits authentifiés — Prodtrust",
     description:
-      "Découvrez les produits authentiques vérifiés par VerifScan. Scannez le QR code de chaque produit pour accéder à son passeport numérique.",
+      "Découvrez les produits authentiques vérifiés par Prodtrust. Scannez le QR code de chaque produit pour accéder à son passeport numérique.",
     url: "/produits",
     type: "website",
     images: ["/og-image.png?v=6"],

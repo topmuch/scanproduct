@@ -389,8 +389,8 @@ export function BulkQRPage() {
             {/* Toggles */}
             <div className="space-y-2">
               <ToggleRow
-                label="Design VerifScan (jaune)"
-                desc="Badge officiel LABEL VERIFSCAN, QR noir au centre"
+                label="Design Prodtrust (jaune)"
+                desc="Badge officiel LABEL PRODTRUST, QR noir au centre"
                 checked={includeDesign}
                 onChange={setIncludeDesign}
               />

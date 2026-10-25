@@ -63,7 +63,7 @@ export function ProductTabsClient({ tabs }: Props) {
             Parcourir par popularité
           </h2>
           <p className="mt-1 text-sm text-[#7A7A7A]">
-            Quatre façons de découvrir les produits VerifScan
+            Quatre façons de découvrir les produits Prodtrust
           </p>
         </div>
 

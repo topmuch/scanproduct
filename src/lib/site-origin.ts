@@ -1,5 +1,5 @@
 /**
- * VerifScan — Résolution ROBUSTE de l'origine publique du site (serveur).
+ * Prodtrust — Résolution ROBUSTE de l'origine publique du site (serveur).
  *
  * PROBLÈME RÉSOLU : derrière un reverse proxy (Coolify / Traefik / Nginx /
  * Cloudflare), `request.nextUrl.origin` peut renvoyer l'adresse INTERNE du
@@ -133,7 +133,7 @@ export function computeSiteOrigin(inputs: OriginInputs): string {
           "Configurez NEXT_PUBLIC_APP_URL=https://votre-domaine dans Coolify."
       );
     }
-    return localhostify(raw || env || "https://verifscan.com");
+    return localhostify(raw || env || "https://newvisioncargo.pro");
   }
 
   // Développement :

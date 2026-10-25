@@ -9,7 +9,7 @@ import { getScanUrl } from "@/lib/qr-url";
 import { renderBadgeQR } from "@/lib/qr-badge";
 
 /**
- * VerifScan — Server-side QR code rendering utilities.
+ * Prodtrust — Server-side QR code rendering utilities.
  *
  * ── Why this exists ──────────────────────────────────────────────
  * The existing `qrcode.react` library only works in the browser
@@ -54,7 +54,7 @@ export interface QRRenderOptions {
   scanUrl?: string;
   /**
    * Design du rendu :
-   *   - "badge"   → design officiel « LABEL VERIFSCAN » : cercle jaune,
+   *   - "badge"   → design officiel « LABEL PRODTRUST » : cercle jaune,
    *                 textes en arc, QR noir au centre (défaut).
    *                 logoPath / labels / color sont ignorés (le badge a
    *                 son propre design, ECC Q imposé pour des modules
@@ -124,7 +124,7 @@ export async function renderQRBuffer(
 ): Promise<QRRenderResult> {
   const size = Math.max(128, Math.min(2048, options.size || 512));
 
-  // ── Design « LABEL VERIFSCAN » (par défaut) ─────────────────────
+  // ── Design « LABEL PRODTRUST » (par défaut) ─────────────────────
   // Le badge remplace le QR brut : cercle jaune + textes en arc + QR
   // noir au centre. Les options logo/labels/couleur ne s'appliquent pas.
   if ((options.design ?? "badge") === "badge") {

@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
     // `/p/<lotId>` so scanning opens the lot's digital passport page.
     const baseUrl =
       process.env.NEXT_PUBLIC_SCAN_URL?.replace(/\/$/, "") ||
-      "https://verifscan.com";
+      "https://newvisioncargo.pro";
     // Pre-existing TypeScript inference: `const qrCodes = []` is inferred as
     // `never[]`, which then rejects the `.push(...)` below. Annotate the
     // array explicitly so the push type-checks cleanly.
@@ -155,7 +155,7 @@ export async function POST(request: NextRequest) {
           includeProductName: options.includeProductName ?? true,
           includeLogo: options.includeLogo ?? false,
           // Design du PNG (rendu à la demande au téléchargement) :
-          // badge « LABEL VERIFSCAN » par défaut, classic si désactivé.
+          // badge « LABEL PRODTRUST » par défaut, classic si désactivé.
           design: options.includeDesign === false ? "classic" : "badge",
           status: "ACTIVE",
         },
@@ -224,7 +224,7 @@ export async function POST(request: NextRequest) {
                   limit: usage.limit,
                   percent: usage.percent,
                 },
-                emailSubject: "VerifScan — Quota QR dépassé",
+                emailSubject: "Prodtrust — Quota QR dépassé",
               });
             })
             .catch(() => undefined);

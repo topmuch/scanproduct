@@ -13,7 +13,7 @@ import { QRCodeCanvas } from "qrcode.react";
  *      serveur `renderCustomTemplateQR` (qr-badge.ts) :
  *      pad 62 % arrondi 5 % du canvas, QR 50 % centré.
  *   2. Aucun design importé (ou endpoint indisponible) → badge jaune
- *      « LABEL VERIFSCAN » rendu en SVG navigateur (textPath natif),
+ *      « LABEL PRODTRUST » rendu en SVG navigateur (textPath natif),
  *      même géométrie que le module serveur — approximation
  *      typographique (police système) suffisante pour un aperçu.
  *
@@ -119,7 +119,7 @@ export function BadgeQRPreview({
     );
   }
 
-  // ── Repli : badge jaune « LABEL VERIFSCAN » (SVG navigateur) ─────
+  // ── Repli : badge jaune « LABEL PRODTRUST » (SVG navigateur) ─────
   return (
     <div className="relative" style={{ width: size, height: size }}>
       <svg
@@ -140,7 +140,7 @@ export function BadgeQRPreview({
           fill="#000000"
         >
           <textPath href={`#${arcTopId}`} startOffset="50%" textAnchor="middle">
-            LABEL VERIFSCAN
+            LABEL PRODTRUST
           </textPath>
         </text>
         <text

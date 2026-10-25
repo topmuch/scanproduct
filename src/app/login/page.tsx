@@ -46,8 +46,8 @@ export default function LoginPage() {
         <div className="relative z-10 flex flex-col justify-between p-12 text-white">
           <Link href="/" className="flex items-center">
             <img
-              src="/verifscan-logo-white.webp?v=1"
-              alt="VerifScan"
+              src="/prodtrust-logo-white.webp?v=1"
+              alt="Prodtrust"
               className="h-14 w-auto shrink-0"
               width={720}
               height={247}
@@ -83,7 +83,7 @@ export default function LoginPage() {
           </div>
 
           <p className="text-xs text-[#DCE7F2]/70">
-            © {new Date().getFullYear()} VerifScan — Dakar, Sénégal 🇸🇳
+            © {new Date().getFullYear()} Prodtrust — Dakar, Sénégal 🇸🇳
           </p>
         </div>
       </div>

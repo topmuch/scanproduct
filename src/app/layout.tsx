@@ -60,7 +60,7 @@ const inter = localFont({
 
 /**
  * Viewport — sets the browser address bar color on mobile so it matches the
- * VerifScan blue brand. This applies on EVERY page (homepage, /produits and
+ * Prodtrust blue brand. This applies on EVERY page (homepage, /produits and
  * /p/[lotId] reached by scanning a QR code), giving an app-like feel even
  * before the user installs the PWA.
  */
@@ -85,7 +85,7 @@ export const viewport: Viewport = {
  */
 /**
  * Site public — utilisé par metadataBase, OpenGraph et le sitemap.
- * Le domaine verifscan.com est le domaine canonique du site vitrine + scan.
+ * Le domaine newvisioncargo.pro est le domaine canonique du site vitrine + scan.
  * Le SuperAdmin peut le remplacer dans Paramètres → Général (Setting
  * "siteUrl") — voir getSiteUrl() dans lib/seo.ts pour la résolution.
  */
@@ -103,7 +103,7 @@ const ICON_V = "?v=7";
  */
 export const SITE_KEYWORDS = [
   // Solution & concept
-  "VerifScan",
+  "Prodtrust",
   "passeport numérique",
   "passeport numérique produit",
   "passeport produit",
@@ -185,7 +185,7 @@ export async function generateMetadata(): Promise<Metadata> {
   ]);
   const icon = faviconUrl || `/icon.png${ICON_V}`;
 
-  const siteName = settings[SETTING_KEYS.siteName]?.trim() || "VerifScan";
+  const siteName = settings[SETTING_KEYS.siteName]?.trim() || "Prodtrust";
   const siteSlogan =
     settings[SETTING_KEYS.siteSlogan]?.trim() || "La vérité au bout du scan";
   const siteUrl =
@@ -205,18 +205,18 @@ export async function generateMetadata(): Promise<Metadata> {
     title: {
       default:
         seoTitle ||
-        "VerifScan — Passeport numérique produit | Traçabilité alimentaire & cosmétique, anti-contrefaçon par QR code",
+        "Prodtrust — Passeport numérique produit | Traçabilité alimentaire & cosmétique, anti-contrefaçon par QR code",
       template: "%s",
     },
     description:
       seoDescription ||
-      "VerifScan est le passeport numérique de vos produits alimentaires et cosmétiques : un QR code unique qui garantit l'authenticité, assure la traçabilité du lot et protège votre marque contre la contrefaçon et la fraude. Sénégal, Afrique de l'Ouest, Europe francophone et Canada.",
+      "Prodtrust est le passeport numérique de vos produits alimentaires et cosmétiques : un QR code unique qui garantit l'authenticité, assure la traçabilité du lot et protège votre marque contre la contrefaçon et la fraude. Sénégal, Afrique de l'Ouest, Europe francophone et Canada.",
     keywords: seoKeywords.length > 0 ? seoKeywords : SITE_KEYWORDS,
-    authors: [{ name: "VerifScan" }],
-    creator: "VerifScan",
-    publisher: "VerifScan",
+    authors: [{ name: "Prodtrust" }],
+    creator: "Prodtrust",
+    publisher: "Prodtrust",
     category: "technology",
-    applicationName: "VerifScan",
+    applicationName: "Prodtrust",
     // NB : pas de `canonical` ici — il serait hérité par toutes les pages et
     // pointerait tout vers l'accueil. Chaque page publique définit le sien.
     robots: {
@@ -261,7 +261,7 @@ export async function generateMetadata(): Promise<Metadata> {
           url: ogImageUrl,
           width: 1200,
           height: 630,
-          alt: "VerifScan — Passeport numérique produit : traçabilité et authenticité par QR code",
+          alt: "Prodtrust — Passeport numérique produit : traçabilité et authenticité par QR code",
         },
       ],
     },
@@ -307,7 +307,7 @@ async function JsonLd() {
     "@context": "https://schema.org",
     "@type": "Organization",
     "@id": `${url}/#organization`,
-    name: "VerifScan",
+    name: "Prodtrust",
     url,
     logo: `${url}/icon-512.png`,
     description:
@@ -344,7 +344,7 @@ async function JsonLd() {
     "@type": "WebSite",
     "@id": `${url}/#website`,
     url,
-    name: "VerifScan",
+    name: "Prodtrust",
     inLanguage: "fr",
     publisher: { "@id": `${url}/#organization` },
   };

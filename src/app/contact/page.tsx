@@ -13,12 +13,12 @@ import { MessageCircle, Navigation, MapPin, Clock } from "lucide-react";
 export async function generateMetadata(): Promise<Metadata> {
   return {
   title:
-    "Contact & Itinéraire — VerifScan Dakar (Ouest Foire) | Email, Téléphone, Carte",
+    "Contact & Itinéraire — Prodtrust Dakar (Ouest Foire) | Email, Téléphone, Carte",
   description:
-    "Contactez VerifScan : contact@verifscan.com · +221 77 382 18 22 · Lot n°13, Ouest Foire, Dakar, Sénégal. Carte Google Maps, itinéraire, horaires et formulaire — réponse sous 24h.",
+    "Contactez Prodtrust : contact@newvisioncargo.pro · +221 77 382 18 22 · Lot n°13, Ouest Foire, Dakar, Sénégal. Carte Google Maps, itinéraire, horaires et formulaire — réponse sous 24h.",
   alternates: await buildAlternates("/contact"),
   openGraph: {
-    title: "Contact & Itinéraire — VerifScan Dakar (Ouest Foire)",
+    title: "Contact & Itinéraire — Prodtrust Dakar (Ouest Foire)",
     description:
       "Email, téléphone, carte et itinéraire : notre équipe vous répond sous 24 heures. Lot n°13, Ouest Foire, Dakar, Sénégal.",
     url: "/contact",
@@ -36,14 +36,14 @@ function LocalBusinessJsonLd() {
   const data = {
     "@context": "https://schema.org",
     "@type": "LocalBusiness",
-    "@id": "https://verifscan.com/#localbusiness",
-    name: "VerifScan",
+    "@id": "https://newvisioncargo.pro/#localbusiness",
+    name: "Prodtrust",
     description:
       "Passeport numérique produit : traçabilité alimentaire et cosmétique, authentification QR code, lutte contre la contrefaçon.",
-    url: "https://verifscan.com/contact",
+    url: "https://newvisioncargo.pro/contact",
     telephone: "+221773821822",
-    email: "contact@verifscan.com",
-    image: "https://verifscan.com/og-image.png",
+    email: "contact@newvisioncargo.pro",
+    image: "https://newvisioncargo.pro/og-image.png",
     priceRange: "$$",
     address: {
       "@type": "PostalAddress",
@@ -75,7 +75,7 @@ function LocalBusinessJsonLd() {
       {
         "@type": "ContactPoint",
         telephone: "+221773821822",
-        email: "contact@verifscan.com",
+        email: "contact@newvisioncargo.pro",
         contactType: "customer service",
         areaServed: ["SN", "FR", "BE", "CH", "CA"],
         availableLanguage: ["fr"],
@@ -95,8 +95,8 @@ const CONTACT_CHANNELS = [
   {
     icon: MessageCircle,
     label: "Email",
-    value: "contact@verifscan.com",
-    href: "mailto:contact@verifscan.com",
+    value: "contact@newvisioncargo.pro",
+    href: "mailto:contact@newvisioncargo.pro",
   },
   {
     icon: Clock,
@@ -138,7 +138,7 @@ export default function ContactPage() {
               </h1>
               <p className="mx-auto mt-4 max-w-2xl text-lg leading-relaxed text-white/80">
                 Que vous soyez fabricant, distributeur ou simplement curieux de
-                VerifScan, notre équipe est à votre écoute pour vous accompagner.
+                Prodtrust, notre équipe est à votre écoute pour vous accompagner.
               </p>
             </div>
           </div>
@@ -208,7 +208,7 @@ export default function ContactPage() {
                   allowFullScreen
                   loading="lazy"
                   referrerPolicy="no-referrer-when-downgrade"
-                  title="Carte — VerifScan, Ouest Foire, Dakar, Sénégal"
+                  title="Carte — Prodtrust, Ouest Foire, Dakar, Sénégal"
                 />
               </div>
 
@@ -275,7 +275,7 @@ export default function ContactPage() {
               Prêt à digitaliser la traçabilité de vos produits ?
             </h2>
             <p className="mt-3 text-[15px] text-[#6B7280]">
-              Rejoignez les fabricants qui font déjà confiance à VerifScan pour
+              Rejoignez les fabricants qui font déjà confiance à Prodtrust pour
               garantir l&apos;authenticité de leurs produits.
             </p>
             <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">

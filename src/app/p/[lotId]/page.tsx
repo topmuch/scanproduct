@@ -128,7 +128,7 @@ function buildLotMetaDescription(
   if (datePeremption)
     details.push(phrasettePeremption(lot.product.category, datePeremption));
   const partieLot = details.length > 0 ? ` ${details.join(", ")}.` : "";
-  const fin = " Ingrédients, origine et certificats vérifiés sur VerifScan.";
+  const fin = " Ingrédients, origine et certificats vérifiés sur Prodtrust.";
   return `${base}${partieLot}${fin}`.slice(0, 300);
 }
 
@@ -185,14 +185,14 @@ export async function generateMetadata({
   }
   if (!lot) {
     return {
-      title: "Produit introuvable — VerifScan",
+      title: "Produit introuvable — Prodtrust",
       description:
-        "Ce QR code ne correspond à aucun produit enregistré. Vérifiez le catalogue VerifScan.",
+        "Ce QR code ne correspond à aucun produit enregistré. Vérifiez le catalogue Prodtrust.",
       robots: { index: false, follow: true },
       openGraph: {
-        title: "Produit introuvable — VerifScan",
+        title: "Produit introuvable — Prodtrust",
         description:
-          "Ce QR code ne correspond à aucun produit enregistré. Vérifiez le catalogue VerifScan.",
+          "Ce QR code ne correspond à aucun produit enregistré. Vérifiez le catalogue Prodtrust.",
         type: "website",
       },
     };
@@ -210,7 +210,7 @@ export async function generateMetadata({
   const refMeta = lot.lotNumber || lot.reference;
   const titre = `${lot.product.name}${
     lot.product.brand ? ` — ${lot.product.brand}` : ""
-  }${refMeta ? ` · Lot ${refMeta}` : ""} | Passeport numérique VerifScan`;
+  }${refMeta ? ` · Lot ${refMeta}` : ""} | Passeport numérique Prodtrust`;
 
   return {
     title: titre,
@@ -228,7 +228,7 @@ export async function generateMetadata({
       "passeport numérique",
       "traçabilité",
       "authenticité",
-      "VerifScan",
+      "Prodtrust",
     ]
       .filter((k): k is string => !!k)
       .join(", "),
@@ -373,7 +373,7 @@ export default async function ProductPage({
     ? absolutiser(lot.product.imageUrl, siteUrlPage)
     : undefined;
   const marqueNom =
-    lot.product.brand || lot.fabricant.companyName || "VerifScan";
+    lot.product.brand || lot.fabricant.companyName || "Prodtrust";
   const notesApprouvees = (lot.reviews ?? []).map((r) => r.rating);
   // ── Exigence Google « Extraits de produits » ────────────────────────────
   // Un graphe « Product » DOIT contenir au moins UN de : offers / review /
@@ -459,7 +459,7 @@ export default async function ProductPage({
       />
 
       {/* ── HERO IMMERSIF — photo produit PLEIN ÉCRAN, même présentation que
-          la page artisan (/a/[code]) : zoom lent Ken Burns, pilule VerifScan,
+          la page artisan (/a/[code]) : zoom lent Ken Burns, pilule Prodtrust,
           bouton « Découvrir » + badge d'authenticité. La photo occupe tout
           le premier écran au scan (demande utilisateur).
 
@@ -468,7 +468,7 @@ export default async function ProductPage({
           PAR-DESSUS la photo du hero — « le logo se chevauche sur l'image »,
           « le menu ne doit pas s'afficher sur la page produit », web comme
           mobile). Même présentation que la page artisan : la navigation
-          reste assurée par la pilule VerifScan du hero (lien accueil) et le
+          reste assurée par la pilule Prodtrust du hero (lien accueil) et le
           footer (Connexion, Devenir partenaire, plan du site). */}
       <ImmersiveHero
         imageUrl={lot.product.imageUrl}
@@ -625,7 +625,7 @@ export default async function ProductPage({
             color="emerald"
             badge={totalCerts > 0 ? String(totalCerts) : undefined}
           >
-            {/* Section 1: certifications produits (catalogue VerifScan — Bio, Halal, ISO 22000…) */}
+            {/* Section 1: certifications produits (catalogue Prodtrust — Bio, Halal, ISO 22000…) */}
             {lot.productCertifications && lot.productCertifications.length > 0 && (
               <div className="mb-4">
                 <CertificationsSection
@@ -681,7 +681,7 @@ export default async function ProductPage({
             id="explorer-verifscan"
             className="text-[15px] font-bold text-[#111827]"
           >
-            Explorer VerifScan
+            Explorer Prodtrust
           </h2>
           <ul className="mt-3 space-y-2 text-[13px] leading-relaxed text-[#4B5563]">
             <li>

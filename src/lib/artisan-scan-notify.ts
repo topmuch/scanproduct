@@ -87,19 +87,19 @@ export async function notifyArtisanScan(params: {
 
     await sendEmail({
       to,
-      subject: `🛒 Nouveau scan de « ${params.productName} » — VerifScan`,
+      subject: `🛒 Nouveau scan de « ${params.productName} » — Prodtrust`,
       text:
         `Bonjour ${params.artisanName},\n\n` +
         `Bonne nouvelle : votre produit « ${params.productName} » vient d'être scanné !\n\n` +
         detailRows.map(([k, v]) => `${k} : ${v}`).join("\n") +
         `\n\nChaque scan prouve l'authenticité de votre produit et développe ` +
         `votre clientèle. Consultez vos statistiques sur votre tableau de bord.\n\n` +
-        `L'équipe VerifScan`,
+        `L'équipe Prodtrust`,
       html:
         `<!doctype html><html lang="fr"><body style="margin:0;padding:0;background:#f6f4ef;font-family:Arial,Helvetica,sans-serif;">` +
         `<div style="max-width:520px;margin:24px auto;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #eee7da;">` +
         `<div style="background:linear-gradient(135deg,#059669,#0d9488);padding:24px 28px;color:#ffffff;">` +
-        `<p style="margin:0;font-size:13px;opacity:.85;">VerifScan · Alerte scan</p>` +
+        `<p style="margin:0;font-size:13px;opacity:.85;">Prodtrust · Alerte scan</p>` +
         `<h1 style="margin:6px 0 0;font-size:20px;line-height:1.3;">🛒 Votre produit vient d&#39;être scanné !</h1>` +
         `</div>` +
         `<div style="padding:24px 28px;">` +
@@ -114,10 +114,10 @@ export async function notifyArtisanScan(params: {
           .join("") +
         `</table>` +
         `<p style="margin:18px 0 0;font-size:13px;color:#6b7280;line-height:1.5;">Chaque scan prouve l&#39;authenticité de votre produit et développe votre clientèle. Partagez vos étiquettes pour multiplier les scans !</p>` +
-        `<a href="https://verifscan.com/artisan/dashboard" style="display:block;margin:20px 0 4px;background:linear-gradient(90deg,#f59e0b,#f97316);color:#ffffff;text-decoration:none;text-align:center;padding:13px 16px;border-radius:12px;font-weight:bold;font-size:14px;">Voir mon tableau de bord</a>` +
+        `<a href="https://newvisioncargo.pro/artisan/dashboard" style="display:block;margin:20px 0 4px;background:linear-gradient(90deg,#f59e0b,#f97316);color:#ffffff;text-decoration:none;text-align:center;padding:13px 16px;border-radius:12px;font-weight:bold;font-size:14px;">Voir mon tableau de bord</a>` +
         `</div>` +
         `<div style="padding:14px 28px;background:#faf8f3;border-top:1px solid #f0ebe0;font-size:11px;color:#9ca3af;text-align:center;">` +
-        `Vous recevez cet email car vous avez renseigné votre adresse sur VerifScan.<br/>L&#39;équipe VerifScan — La vérité au bout du scan` +
+        `Vous recevez cet email car vous avez renseigné votre adresse sur Prodtrust.<br/>L&#39;équipe Prodtrust — La vérité au bout du scan` +
         `</div>` +
         `</div></body></html>`,
     });

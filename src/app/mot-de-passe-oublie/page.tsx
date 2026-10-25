@@ -13,9 +13,9 @@ import { ForgotPasswordClient } from "./forgot-password-client";
  * noindex : page utilitaire, hors SEO.
  */
 export const metadata: Metadata = {
-  title: "Mot de passe oublié — VerifScan",
+  title: "Mot de passe oublié — Prodtrust",
   description:
-    "Réinitialisez le mot de passe de votre compte VerifScan : recevez un lien sécurisé par email et choisissez un nouveau mot de passe.",
+    "Réinitialisez le mot de passe de votre compte Prodtrust : recevez un lien sécurisé par email et choisissez un nouveau mot de passe.",
   robots: { index: false, follow: false },
 };
 
@@ -33,8 +33,8 @@ export default function ForgotPasswordPage() {
       <Link href="/" className="relative z-10 mb-8 flex items-center">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/verifscan-logo-white.webp?v=1"
-          alt="VerifScan"
+          src="/prodtrust-logo-white.webp?v=1"
+          alt="Prodtrust"
           className="h-12 w-auto shrink-0"
           width={720}
           height={247}

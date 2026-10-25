@@ -50,9 +50,9 @@ export function InactiveMasterView({
     <main className="flex min-h-screen items-center justify-center bg-gradient-to-b from-amber-50 to-orange-50 p-4">
       <div className="w-full max-w-md">
         {/* Logo officiel du site (demande utilisateur : le logo vu au scan
-            doit être LE logo VerifScan) */}
+            doit être LE logo Prodtrust) */}
         <div className="mb-6 flex justify-center">
-          <Link href="/" aria-label="VerifScan accueil">
+          <Link href="/" aria-label="Prodtrust accueil">
             <Logo size="md" />
           </Link>
         </div>
@@ -197,7 +197,7 @@ export function InactiveMasterView({
           <div className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 shadow-sm">
             <ShieldCheck className="h-4 w-4 text-green-600" />
             <span className="text-xs font-medium text-gray-600">
-              Pack officiel VerifScan
+              Pack officiel Prodtrust
             </span>
           </div>
         </div>

@@ -50,7 +50,7 @@ export function PublicHeader() {
       <header className="sticky top-0 z-50 border-b border-[#F3F4F6] bg-white/90 backdrop-blur-xl">
         {/* h-20 harmonisé avec le header de la landing page */}
         <div className="mx-auto flex h-20 max-w-[1400px] items-center justify-between px-4 sm:px-6 lg:px-8">
-          <Link href="/" className="flex items-center" aria-label="VerifScan accueil">
+          <Link href="/" className="flex items-center" aria-label="Prodtrust accueil">
             <Logo />
           </Link>
 

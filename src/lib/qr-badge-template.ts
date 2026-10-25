@@ -8,7 +8,7 @@ import { resolveLogoPath } from "@/lib/qr-server";
  *   1. Design personnel du fabricant (User.badgeTemplateUrl)
  *   2. Design officiel de la plateforme (Setting "qrBadgeTemplateUrl",
  *      importé par le SuperAdmin)
- *   3. null → badge jaune « LABEL VERIFSCAN » par défaut (rendu SVG)
+ *   3. null → badge jaune « LABEL PRODTRUST » par défaut (rendu SVG)
  *
  * @returns Chemin absolu du fichier template (ou null si aucun design
  * importé / fichier introuvable sur disque).

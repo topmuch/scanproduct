@@ -16,7 +16,7 @@ import { Logo } from "@/components/landing/Logo";
  *     fond ambiant = même photo floutée en zoom lent — une photo portrait
  *     en cover sur écran paysage était rognée à ~36 % (produit tronqué) ;
  *   - halos lumineux animés (art-gradient-pan) pour la profondeur ;
- *   - pilule marque VerifScan centrée en haut ;
+ *   - pilule marque Prodtrust centrée en haut ;
  *   - bouton « Découvrir » (scroll fluide vers la carte produit) + badge
  *     d'authenticité émeraude « Produit authentique » (ou rouge
  *     « Produit rappelé » si le lot est inactif) collés en bas.
@@ -162,11 +162,11 @@ export function ImmersiveHero({
           — juste une petite ombre en bas pour asseoir le bouton Découvrir. */}
       <div className="absolute inset-0 bg-gradient-to-t from-stone-950/70 via-stone-950/5 to-transparent" />
 
-      {/* Pilule marque VerifScan (verre dépoli) — identique à la page artisan */}
+      {/* Pilule marque Prodtrust (verre dépoli) — identique à la page artisan */}
       <div className="art-fade-down relative z-10 flex justify-center pt-5">
         <Link
           href="/"
-          aria-label="VerifScan accueil"
+          aria-label="Prodtrust accueil"
           className="inline-flex items-center rounded-full bg-white px-5 py-2.5 shadow-xl ring-1 ring-black/10 transition-transform hover:scale-105 active:scale-95"
         >
           <Logo variant="default" size="sm" />

@@ -29,7 +29,7 @@ export const dynamic = "force-dynamic";
 /** URL absolue pour les meta OG (WhatsApp exige une URL complète). */
 async function absoluteOrigin(): Promise<string> {
   const h = await headers();
-  const host = h.get("x-forwarded-host") ?? h.get("host") ?? "verifscan.com";
+  const host = h.get("x-forwarded-host") ?? h.get("host") ?? "newvisioncargo.pro";
   const proto = h.get("x-forwarded-proto") ?? (host.includes("localhost") ? "http" : "https");
   return `${proto}://${host}`;
 }
@@ -62,21 +62,21 @@ export async function generateMetadata({
     .catch(() => null);
 
   if (!lot) {
-    return { title: "Produit — VerifScan", robots: { index: false } };
+    return { title: "Produit — Prodtrust", robots: { index: false } };
   }
 
   const productName = lot.productName ?? "Produit artisanal";
   const artisanName = lot.artisanName ?? "Artisan";
   const isActive = lot.status === "active"; // pack partiel = produits actifs visibles
   const description = isActive
-    ? `Produit Authentique vérifié par VerifScan — fabriqué à la main par ${artisanName}. Photos, fraîcheur, avis clients et contact direct.`
-    : `Découvrez ${productName} de ${artisanName} sur VerifScan — la traçabilité artisanale.`;
+    ? `Produit Authentique vérifié par Prodtrust — fabriqué à la main par ${artisanName}. Photos, fraîcheur, avis clients et contact direct.`
+    : `Découvrez ${productName} de ${artisanName} sur Prodtrust — la traçabilité artisanale.`;
 
   const origin = await absoluteOrigin();
   const ogImage = lot.photoUrl && lot.photoUrl.startsWith("/") ? `${origin}${lot.photoUrl}` : lot.photoUrl ?? undefined;
 
   return {
-    title: `${productName} — ${artisanName} | Produit Authentique VerifScan`,
+    title: `${productName} — ${artisanName} | Produit Authentique Prodtrust`,
     description,
     robots: { index: false },
     openGraph: {
@@ -349,10 +349,10 @@ export default async function ArtisanCodePage({
       : {}),
     ...(lot.photoUrl ? { image: [lot.photoUrl] } : {}),
     url: `${siteUrl}/a/${code}`,
-    brand: { "@type": "Brand", name: lot.artisanName ?? "Artisan VerifScan" },
+    brand: { "@type": "Brand", name: lot.artisanName ?? "Artisan Prodtrust" },
     manufacturer: {
       "@type": "Organization",
-      name: lot.artisanName ?? "Artisan VerifScan",
+      name: lot.artisanName ?? "Artisan Prodtrust",
     },
     sku: lot.qrCode,
     offers: {

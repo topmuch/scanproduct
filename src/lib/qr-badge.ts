@@ -3,11 +3,11 @@ import sharp from "sharp";
 import { existsSync } from "fs";
 
 /**
- * VerifScan — Rendu du QR code avec le design officiel « LABEL VERIFSCAN ».
+ * Prodtrust — Rendu du QR code avec le design officiel « LABEL PRODTRUST ».
  *
  * ── Modèle (label verif.png, fourni par le client) ───────────────
  *   • Cercle jaune vif (#F8E805) occupant 94,4 % du canvas carré
- *   • « LABEL VERIFSCAN » en arc supérieur, noir, gras, letter-spacing large
+ *   • « LABEL PRODTRUST » en arc supérieur, noir, gras, letter-spacing large
  *   • Deux arcs décoratifs noirs latéraux (extrémités arrondies)
  *   • « SCANNEZ POUR EN SAVOIR PLUS » en arc inférieur, noir, gras
  *   • Le QR code NOIR est composé au CENTRE, directement sur le jaune
@@ -30,7 +30,7 @@ import { existsSync } from "fs";
 // ── Couleurs officielles du modèle ──────────────────────────────────
 export const BADGE_YELLOW = "#F8E805";
 export const BADGE_DARK = "#000000";
-/** Émeraude VerifScan (coche), disponible pour variantes futures. */
+/** Émeraude Prodtrust (coche), disponible pour variantes futures. */
 export const BRAND_EMERALD = "#10B981";
 
 // ── Métriques DejaVu Sans Bold (advance / em) — extraites du TTF réel ──
@@ -54,7 +54,7 @@ const CIRCLE_R = 472;          // cercle jaune (94,4 %)
 const QR_BOX = 500;            // carré QR (50 % du badge)
 const QR_XY = (1000 - QR_BOX) / 2; // 250
 
-const TOP_FONT = 56;           // « LABEL VERIFSCAN »
+const TOP_FONT = 56;           // « LABEL PRODTRUST »
 const TOP_BASE_R = 452;
 const TOP_TRACKING = 27;       // letter-spacing large du modèle
 const TOP_SPAN_DEG = 120;      // amplitude max (centrée sur 0° = vertical haut)
@@ -74,7 +74,7 @@ const FONT_FAMILY = "DejaVu Sans, Arial, Helvetica, sans-serif";
 export interface BadgeDesignOptions {
   /** Taille du PNG final en pixels (défaut 1200 — 1016 DPI à 3 cm). */
   size?: number;
-  /** Texte arc supérieur (défaut « LABEL VERIFSCAN »). */
+  /** Texte arc supérieur (défaut « LABEL PRODTRUST »). */
   topText?: string;
   /** Texte arc inférieur (défaut « SCANNEZ POUR EN SAVOIR PLUS »). */
   bottomText?: string;
@@ -224,7 +224,7 @@ export function badgeSvgString(text: string, options: BadgeDesignOptions = {}): 
   const dark = options.dark || BADGE_DARK;
   const bg = options.background === "transparent" ? null : "#FFFFFF";
 
-  const topText = fitArcText(options.topText ?? "LABEL VERIFSCAN", 18);
+  const topText = fitArcText(options.topText ?? "LABEL PRODTRUST", 18);
   const bottomText = fitArcText(options.bottomText ?? "SCANNEZ POUR EN SAVOIR PLUS", 30);
 
   const k = size / 1000; // échelle viewBox → pixels finaux

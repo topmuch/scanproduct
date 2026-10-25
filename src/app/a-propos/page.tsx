@@ -21,14 +21,14 @@ import { PublicFooter } from "@/components/public/PublicFooter";
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
-  title: "À propos — VerifScan",
+  title: "À propos — Prodtrust",
   description:
-    "VerifScan est né au Sénégal pour offrir aux fabricants ouest-africains un passeport numérique qui garantit l'authenticité, la traçabilité et la transparence de leurs produits.",
+    "Prodtrust est né au Sénégal pour offrir aux fabricants ouest-africains un passeport numérique qui garantit l'authenticité, la traçabilité et la transparence de leurs produits.",
   alternates: await buildAlternates("/a-propos"),
   openGraph: {
-    title: "À propos — VerifScan",
+    title: "À propos — Prodtrust",
     description:
-      "Découvrez la mission, la vision et les valeurs de VerifScan, le passeport numérique pour l'agro-industrie ouest-africaine.",
+      "Découvrez la mission, la vision et les valeurs de Prodtrust, le passeport numérique pour l'agro-industrie ouest-africaine.",
     type: "website",
   },
   };
@@ -38,7 +38,7 @@ const VALUES = [
   {
     icon: ShieldCheck,
     title: "Authenticité",
-    text: "Chaque produit vérifié par VerifScan porte un QR code unique, infalsifiable et lié à un lot précis. La confiance redevient la norme.",
+    text: "Chaque produit vérifié par Prodtrust porte un QR code unique, infalsifiable et lié à un lot précis. La confiance redevient la norme.",
     color: "#022150",
   },
   {
@@ -62,7 +62,7 @@ const VALUES = [
   {
     icon: Globe2,
     title: "Inclusion",
-    text: "VerifScan accompagne aussi bien les grandes coopératives que les petits transformateurs, sans frais cachés ni barrières techniques.",
+    text: "Prodtrust accompagne aussi bien les grandes coopératives que les petits transformateurs, sans frais cachés ni barrières techniques.",
     color: "#022150",
   },
   {
@@ -94,12 +94,12 @@ const TIMELINE = [
   {
     year: "2025",
     title: "Premiers partenaires",
-    text: "Plusieurs transformateurs agro-alimentaires du Sénégal adoptent VerifScan. Le catalogue public commence à croître et les premiers scans consommateurs sont enregistrés.",
+    text: "Plusieurs transformateurs agro-alimentaires du Sénégal adoptent Prodtrust. Le catalogue public commence à croître et les premiers scans consommateurs sont enregistrés.",
   },
   {
     year: "2026",
     title: "L'expansion",
-    text: "Extension vers les marchés de la CEDEAO. VerifScan devient une référence de transparence pour l'agro-industrie ouest-africaine.",
+    text: "Extension vers les marchés de la CEDEAO. Prodtrust devient une référence de transparence pour l'agro-industrie ouest-africaine.",
   },
 ];
 
@@ -131,7 +131,7 @@ export default function AboutPage() {
               </span>
             </h1>
             <p className="mt-6 max-w-2xl text-base leading-relaxed text-white/75 sm:text-lg">
-              VerifScan est un passeport numérique pour les produits
+              Prodtrust est un passeport numérique pour les produits
               transformés. Nous transformons un simple QR code en une
               preuve d&apos;authenticité, un journal de traçabilité complet et
               un pont de confiance entre fabricants et consommateurs.
@@ -267,7 +267,7 @@ export default function AboutPage() {
                 De Dakar à toute la CEDEAO
               </h2>
               <p className="mt-4 text-[15px] leading-relaxed text-white/70">
-                VerifScan n&apos;est pas né dans une salle de réunion
+                Prodtrust n&apos;est pas né dans une salle de réunion
                 occidentale, mais sur le terrain, avec des transformateurs
                 locaux confrontés quotidiennement à la contrefaçon.
               </p>
@@ -305,7 +305,7 @@ export default function AboutPage() {
                 Une équipe locale, obsessionnelle sur l&apos;impact
               </h2>
               <p className="mt-4 text-[15px] leading-relaxed text-[#374151]">
-                VerifScan réunit des ingénieurs, des experts en
+                Prodtrust réunit des ingénieurs, des experts en
                 agro-industrie et des passionnés de la souveraineté
                 alimentaire. Nous travaillons à Dakar, en lien direct avec
                 les transformateurs, pour construire un outil qui sert
@@ -338,7 +338,7 @@ export default function AboutPage() {
                   +
                 </div>
                 <p className="mt-1 text-sm text-white/80">
-                  De nouveaux fabricants rejoignent VerifScan chaque mois
+                  De nouveaux fabricants rejoignent Prodtrust chaque mois
                   pour protéger leur marque.
                 </p>
               </div>
@@ -375,7 +375,7 @@ export default function AboutPage() {
                 Prêt à protéger votre marque&nbsp;?
               </h2>
               <p className="mt-4 text-base text-white/80">
-                Rejoignez les fabricants qui font déjà confiance à VerifScan
+                Rejoignez les fabricants qui font déjà confiance à Prodtrust
                 pour garantir l&apos;authenticité de leurs produits et
                 renforcer la relation avec leurs clients.
               </p>

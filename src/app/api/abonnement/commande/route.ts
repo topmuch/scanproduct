@@ -10,14 +10,14 @@ import { PLANS, QR_PACKS, formatFCFA, formatNombre } from "@/lib/fabricant-types
  * POST /api/abonnement/commande
  *
  * Auth-required (FABRICANT) — enregistre une DEMANDE d'achat / de changement
- * d'abonnement. VerifScan n'a pas (encore) de passerelle de paiement
+ * d'abonnement. Prodtrust n'a pas (encore) de passerelle de paiement
  * automatisée : le parcours réel est
  *
  *   1. Le fabricant clique « Upgrade » / « Acheter » dans Mon Abonnement
  *   2. Cette route crée un TICKET « Facturation » (visible par le SuperAdmin
  *      dans Support) + une NOTIFICATION de confirmation pour le fabricant
  *      + une entrée AuditLog
- *   3. L'équipe VerifScan encaisse le paiement (Orange Money / Wave / Carte /
+ *   3. L'équipe Prodtrust encaisse le paiement (Orange Money / Wave / Carte /
  *      Virement) puis change le plan depuis SuperAdmin → Abonnements
  *
  * Le MONTANT est toujours recalculé côté serveur à partir des catalogues
@@ -161,7 +161,7 @@ export async function POST(request: NextRequest) {
       );
       notifTitre = `Demande envoyée — ${libelle}`;
       notifMessage =
-        `Votre demande (${sujet}) a été transmise à l'équipe VerifScan. ` +
+        `Votre demande (${sujet}) a été transmise à l'équipe Prodtrust. ` +
         `Vous serez contacté sous 24 h pour finaliser le paiement ` +
         `(${formatFCFA(montant)}) et activer votre nouveau plan.`;
     } else if (input.type === "pack") {
@@ -196,7 +196,7 @@ export async function POST(request: NextRequest) {
       details.push(`Plan actuel : ${currentPlanId}`);
       notifTitre = `Demande envoyée — ${libelle}`;
       notifMessage =
-        `Votre commande (${sujet}) a été transmise à l'équipe VerifScan. ` +
+        `Votre commande (${sujet}) a été transmise à l'équipe Prodtrust. ` +
         `Vous serez contacté sous 24 h pour finaliser le paiement ` +
         `(${formatFCFA(montant)}). Vos QR codes seront crédités juste après.`;
     } else if (input.type === "offre") {
@@ -217,7 +217,7 @@ export async function POST(request: NextRequest) {
       notifTitre = `Offre acceptée — ${libelle}`;
       notifMessage =
         `Merci pour votre fidélité ! Votre acceptation (${sujet}) a été ` +
-        `transmise à l'équipe VerifScan qui vous contactera sous 24 h pour ` +
+        `transmise à l'équipe Prodtrust qui vous contactera sous 24 h pour ` +
         `le paiement (${formatFCFA(montant)}).`;
     } else {
       // resiliation
@@ -237,7 +237,7 @@ export async function POST(request: NextRequest) {
       );
       notifTitre = "Demande de résiliation enregistrée";
       notifMessage =
-        "Votre demande a été transmise à l'équipe VerifScan. Votre " +
+        "Votre demande a été transmise à l'équipe Prodtrust. Votre " +
         "abonnement reste actif jusqu'à la fin de la période déjà payée — " +
         "nous vous contacterons pour confirmer.";
     }
@@ -270,7 +270,7 @@ export async function POST(request: NextRequest) {
         userId,
         requesterName: user?.name ?? null,
         requesterCompany: user?.companyName ?? null,
-        assignedTo: "Admin VerifScan",
+        assignedTo: "Admin Prodtrust",
         tags: JSON.stringify([tag]),
         messages: JSON.stringify([
           {

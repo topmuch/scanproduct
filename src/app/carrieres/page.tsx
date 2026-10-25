@@ -20,13 +20,13 @@ import { PublicFooter } from "@/components/public/PublicFooter";
 import { NewsletterSignup } from "@/components/public/NewsletterSignup";
 
 export const metadata: Metadata = {
-  title: "Carrières — VerifScan",
+  title: "Carrières — Prodtrust",
   description:
-    "Rejoignez VerifScan, le passeport numérique de l'agro-industrie ouest-africaine. Découvrez nos valeurs, nos avantages et nos offres à venir.",
+    "Rejoignez Prodtrust, le passeport numérique de l'agro-industrie ouest-africaine. Découvrez nos valeurs, nos avantages et nos offres à venir.",
   openGraph: {
-    title: "Carrières — VerifScan",
+    title: "Carrières — Prodtrust",
     description:
-      "Carrières chez VerifScan : valeurs, avantages et postes à pourvoir bientôt.",
+      "Carrières chez Prodtrust : valeurs, avantages et postes à pourvoir bientôt.",
     type: "website",
   },
 };
@@ -50,7 +50,7 @@ const VALUES = [
   {
     icon: Sprout,
     title: "Croissance maîtrisée",
-    text: "Nous grandissons sans compromis sur la qualité. Rejoindre VerifScan, c'est construire une référence de long terme.",
+    text: "Nous grandissons sans compromis sur la qualité. Rejoindre Prodtrust, c'est construire une référence de long terme.",
   },
 ];
 
@@ -84,7 +84,7 @@ const POSITIONS = [
     location: "Dakar, Sénégal",
     type: "CDI",
     summary:
-      "Construire les nouvelles fonctionnalités de la plateforme VerifScan, en lien direct avec les retours terrain des fabricants.",
+      "Construire les nouvelles fonctionnalités de la plateforme Prodtrust, en lien direct avec les retours terrain des fabricants.",
   },
   {
     team: "Product",
@@ -100,7 +100,7 @@ const POSITIONS = [
     location: "Dakar + déplacements CEDEAO",
     type: "CDI",
     summary:
-      "Identifier, convaincre et accompagner les transformateurs agro-alimentaires dans leur adoption de VerifScan.",
+      "Identifier, convaincre et accompagner les transformateurs agro-alimentaires dans leur adoption de Prodtrust.",
   },
 ];
 
@@ -123,7 +123,7 @@ export default function CarrieresPage() {
           <div className="relative mx-auto max-w-[1400px] px-4 py-16 sm:px-6 sm:py-20 lg:px-8 lg:py-24">
             <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs font-medium text-white/80 backdrop-blur">
               <Briefcase className="h-3.5 w-3.5 text-[#34D399]" />
-              Carrières chez VerifScan
+              Carrières chez Prodtrust
             </span>
             <h1 className="mt-6 max-w-3xl font-display text-4xl font-bold leading-tight tracking-tight sm:text-5xl lg:text-6xl">
               Construisons ensemble la{" "}
@@ -133,7 +133,7 @@ export default function CarrieresPage() {
               en Afrique de l&apos;Ouest.
             </h1>
             <p className="mt-6 max-w-2xl text-base leading-relaxed text-white/75 sm:text-lg">
-              VerifScan est une aventure humaine au service d&apos;une
+              Prodtrust est une aventure humaine au service d&apos;une
               mission concrète : protéger les producteurs locaux contre la
               contrefaçon et donner aux consommateurs accès à la vérité sur
               ce qu&apos;ils achètent. Rejoignez-nous.
@@ -348,11 +348,11 @@ export default function CarrieresPage() {
                     href="/a-propos"
                     className="inline-flex items-center gap-2 rounded-lg bg-white px-5 py-3 text-sm font-semibold text-[#022150] shadow-md transition-colors hover:bg-white/90"
                   >
-                    Découvrir VerifScan
+                    Découvrir Prodtrust
                     <ArrowRight className="h-4 w-4" />
                   </Link>
                   <a
-                    href="mailto:contact@verifscan.com"
+                    href="mailto:contact@newvisioncargo.pro"
                     className="inline-flex items-center gap-2 rounded-lg border border-white/30 bg-white/10 px-5 py-3 text-sm font-semibold text-white backdrop-blur transition-colors hover:bg-white/20"
                   >
                     Candidature spontanée

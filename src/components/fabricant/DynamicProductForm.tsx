@@ -1818,7 +1818,7 @@ export function DynamicProductForm({
             <section className="rounded-xl border border-[#E5E7EB] bg-[#FAFAFA] p-4">
               <p className="mb-3 text-[12px] text-[#6B7280]">
                 Bio, Halal, ISO 22000, HACCP, GlobalGAP, Fairtrade, etc. —
-                sélectionnez vos certifications depuis le catalogue VerifScan.
+                sélectionnez vos certifications depuis le catalogue Prodtrust.
                 Ces informations renforcent la confiance des acheteurs et
                 s&apos;affichent automatiquement sur la page produit scanné.
               </p>

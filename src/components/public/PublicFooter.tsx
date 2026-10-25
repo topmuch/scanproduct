@@ -13,7 +13,7 @@ export function PublicFooter() {
           {/* Brand */}
           <div className="col-span-2 lg:col-span-2">
             <p className="max-w-sm text-sm leading-relaxed text-white/70">
-              La vérité au bout du scan. VerifScan offre aux fabricants un
+              La vérité au bout du scan. Prodtrust offre aux fabricants un
               passeport numérique pour leurs produits, garantissant traçabilité,
               authenticité et transparence pour les consommateurs.
             </p>
@@ -65,8 +65,8 @@ export function PublicFooter() {
             <ul className="mt-3 space-y-2 text-sm text-white/70">
               <li className="flex items-center gap-2">
                 <Mail className="h-4 w-4 text-white/50" />
-                <a href="mailto:contact@verifscan.com" className="hover:text-white">
-                  contact@verifscan.com
+                <a href="mailto:contact@newvisioncargo.pro" className="hover:text-white">
+                  contact@newvisioncargo.pro
                 </a>
               </li>
               <li className="flex items-center gap-2">
@@ -100,7 +100,7 @@ export function PublicFooter() {
 
         <div className="mt-10 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-6 sm:flex-row">
           <p className="text-[13px] text-white/50">
-            © {new Date().getFullYear()} VerifScan. Tous droits réservés.
+            © {new Date().getFullYear()} Prodtrust. Tous droits réservés.
           </p>
           <div className="flex gap-4 text-[13px] text-white/50">
             <Link href="/mentions-legales" className="hover:text-white">Mentions légales</Link>

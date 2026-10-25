@@ -19,7 +19,7 @@ const PostSchema = z.object({
   coverImage: z.string().max(500).optional().nullable(),
   category: z.string().min(2).max(60).default("Traçabilité"),
   readTime: z.number().int().min(1).max(120).default(5),
-  author: z.string().min(2).max(120).default("Équipe VerifScan"),
+  author: z.string().min(2).max(120).default("Équipe Prodtrust"),
   published: z.boolean().default(false),
   seoTitle: z.string().max(200).optional().nullable(),
   seoDescription: z.string().max(320).optional().nullable(),

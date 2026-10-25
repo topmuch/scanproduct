@@ -1,5 +1,5 @@
 // ============================================================================
-// VerifScan — Email verification (token HMAC sans stockage + email dédié)
+// Prodtrust — Email verification (token HMAC sans stockage + email dédié)
 // ============================================================================
 // Pure server-side module. No React, no API routes.
 //
@@ -115,12 +115,12 @@ export async function sendVerificationEmail(user: {
     const html = renderVerificationEmail({ firstName, email: user.email, verifyUrl });
     const result = await sendEmail({
       to: user.email,
-      subject: "Bienvenue sur VerifScan — validez votre email",
+      subject: "Bienvenue sur Prodtrust — validez votre email",
       html,
       text: [
         `Bonjour ${firstName},`,
         "",
-        "Bienvenue sur VerifScan — la plateforme de traçabilité et de lutte contre la contrefaçon.",
+        "Bienvenue sur Prodtrust — la plateforme de traçabilité et de lutte contre la contrefaçon.",
         "Confirmez votre adresse email en ouvrant le lien ci-dessous :",
         verifyUrl,
         "",
@@ -156,7 +156,7 @@ function renderVerificationEmail(vars: {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bienvenue sur VerifScan</title>
+  <title>Bienvenue sur Prodtrust</title>
 </head>
 <body style="margin:0;padding:0;background-color:#F9FAFB;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#111827;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#F9FAFB;min-height:100%;">
@@ -167,7 +167,7 @@ function renderVerificationEmail(vars: {
             <td style="background-color:#022150;padding:20px 24px;">
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                 <tr>
-                  <td style="font-size:20px;font-weight:700;color:#FFFFFF;letter-spacing:-0.01em;">VerifScan</td>
+                  <td style="font-size:20px;font-weight:700;color:#FFFFFF;letter-spacing:-0.01em;">Prodtrust</td>
                   <td align="right" style="font-size:12px;color:#DCE7F2;">La vérité au bout du scan</td>
                 </tr>
               </table>
@@ -186,7 +186,7 @@ function renderVerificationEmail(vars: {
           <tr>
             <td style="padding:0 24px 12px 24px;">
               <p style="margin:0;font-size:15px;line-height:1.6;color:#374151;">
-                Votre compte VerifScan vient d'être créé. Pour activer pleinement votre espace
+                Votre compte Prodtrust vient d'être créé. Pour activer pleinement votre espace
                 fabricant (tableau de bord, QR codes, statistiques de scans), confirmez votre
                 adresse email en cliquant sur le bouton ci-dessous.
               </p>
@@ -214,7 +214,7 @@ function renderVerificationEmail(vars: {
           <tr>
             <td style="background-color:#F9FAFB;padding:20px 24px;border-top:1px solid #E5E7EB;">
               <p style="margin:0;font-size:12px;color:#6B7280;text-align:center;line-height:1.5;">
-                © 2026 VerifScan — La vérité au bout du scan
+                © 2026 Prodtrust — La vérité au bout du scan
               </p>
             </td>
           </tr>

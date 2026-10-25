@@ -5,7 +5,7 @@ import { Download, X, Share, PlusSquare, Smartphone } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 /**
- * InstallPrompt — bannière d'installation de la PWA VerifScan.
+ * InstallPrompt — bannière d'installation de la PWA Prodtrust.
  *
  * Comportement :
  *   - Chrome / Edge / Android : l'événement `beforeinstallprompt` se déclenche ;
@@ -148,12 +148,12 @@ export function InstallPrompt() {
                   id="pwa-install-title"
                   className="text-[15px] font-bold text-[#111827]"
                 >
-                  Installer VerifScan
+                  Installer Prodtrust
                 </h3>
                 <p className="mt-0.5 text-[13px] text-[#4B5563]">
                   {iosInstructions
-                    ? "Ajoutez VerifScan à votre écran d'accueil pour un accès rapide et le mode hors ligne."
-                    : "Accédez à VerifScan en un tap, même hors ligne, directement depuis votre écran d'accueil."}
+                    ? "Ajoutez Prodtrust à votre écran d'accueil pour un accès rapide et le mode hors ligne."
+                    : "Accédez à Prodtrust en un tap, même hors ligne, directement depuis votre écran d'accueil."}
                 </p>
               </div>
             </div>

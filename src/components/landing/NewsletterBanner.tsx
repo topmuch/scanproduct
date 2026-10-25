@@ -51,7 +51,7 @@ export function NewsletterBanner() {
               id="newsletter-title"
               className="mt-4 font-display text-[24px] font-bold leading-tight text-[#1A1A1A] sm:text-[32px]"
             >
-              Recevez les nouveautés VerifScan
+              Recevez les nouveautés Prodtrust
             </h2>
             <p className="mx-auto mt-3 max-w-md text-[14px] text-[#5A5A5A]">
               Nouveaux produits, alertes de rappel, conseils de traçabilité —
@@ -93,7 +93,7 @@ export function NewsletterBanner() {
             </form>
 
             <p className="mt-3 text-[11px] text-[#7A7A7A]">
-              En vous inscrivant, vous acceptez de recevoir des emails de VerifScan.
+              En vous inscrivant, vous acceptez de recevoir des emails de Prodtrust.
               Vous pouvez vous désabonner à tout moment.
             </p>
           </div>

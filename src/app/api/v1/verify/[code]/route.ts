@@ -8,7 +8,7 @@ import {
 } from "@/lib/ensure-artisan-tables";
 
 /**
- * VerifScan API publique v1 — vérification d'un code produit.
+ * Prodtrust API publique v1 — vérification d'un code produit.
  *
  * ── GET /api/v1/verify/[code] ───────────────────────────────────
  * Auth: Authorization: Bearer sk_live_… (ou X-API-Key) — clé générée dans
@@ -95,7 +95,7 @@ export async function GET(
       {
         valid: false,
         status: "unknown_code",
-        error: `Aucun produit VerifScan ne correspond au code « ${code} ». Le code est peut-être contrefait.`,
+        error: `Aucun produit Prodtrust ne correspond au code « ${code} ». Le code est peut-être contrefait.`,
       },
       { status: 404 },
     );

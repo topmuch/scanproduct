@@ -13,7 +13,7 @@ import { buildAlternates } from "@/lib/seo";
  * et JSON-LD BreadcrumbList + Service.
  */
 
-const SITE_URL = "https://verifscan.com";
+const SITE_URL = "https://newvisioncargo.pro";
 
 export function generateStaticParams() {
   return INDUSTRIES.map((i) => ({ slug: i.id }));
@@ -27,10 +27,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const industry = getIndustry(slug);
   if (!industry) {
-    return { title: "Métier introuvable — VerifScan", robots: { index: false, follow: true } };
+    return { title: "Métier introuvable — Prodtrust", robots: { index: false, follow: true } };
   }
-  const title = `Traçabilité ${industry.title} — Passeport numérique QR | VerifScan`;
-  const description = `${industry.description} VerifScan accompagne les fabricants de ${industry.title.toLowerCase()} : QR code anti-contrefaçon, certificats digitaux et traçabilité complète.`;
+  const title = `Traçabilité ${industry.title} — Passeport numérique QR | Prodtrust`;
+  const description = `${industry.description} Prodtrust accompagne les fabricants de ${industry.title.toLowerCase()} : QR code anti-contrefaçon, certificats digitaux et traçabilité complète.`;
   return {
     title,
     description,
@@ -40,7 +40,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       "QR code anti-contrefaçon",
       `export ${industry.title.toLowerCase()}`,
       "traçabilité alimentaire",
-      "VerifScan",
+      "Prodtrust",
     ],
     alternates: await buildAlternates(`/metiers/${industry.id}`),
     openGraph: {
@@ -84,7 +84,7 @@ export default async function MetierPage({ params }: Props) {
         description: industry.description,
         provider: {
           "@type": "Organization",
-          name: "VerifScan",
+          name: "Prodtrust",
           url: SITE_URL,
         },
         areaServed: ["SN", "FR", "BE", "CH", "CA", "CI", "ML", "BF"],
@@ -170,7 +170,7 @@ export default async function MetierPage({ params }: Props) {
           {/* Solutions */}
           <section className="mt-14">
             <h2 className="mb-6 font-display text-2xl font-bold text-[#111827] sm:text-3xl">
-              La solution VerifScan
+              La solution Prodtrust
             </h2>
             <div className="space-y-4">
               {industry.solutions.map((s) => (
@@ -232,7 +232,7 @@ export default async function MetierPage({ params }: Props) {
             </h2>
             <p className="max-w-md text-sm text-[#6B7280]">
               Rejoignez les fabricants sénégalais qui font confiance à
-              VerifScan pour la traçabilité de leurs produits.
+              Prodtrust pour la traçabilité de leurs produits.
             </p>
             <a
               href="/register"

@@ -10,7 +10,7 @@ import { QRCodeCanvas } from "qrcode.react";
 export { getScanOrigin, getScanUrl } from "./qr-url";
 
 /**
- * Télécharge un QR code avec le design officiel « LABEL VERIFSCAN »
+ * Télécharge un QR code avec le design officiel « LABEL PRODTRUST »
  * (cercle jaune, QR noir au centre) via l'API serveur /api/qr-codes/render-badge.
  *
  * @param url      L'URL scannable à encoder (même URL que la génération).
@@ -52,7 +52,7 @@ export function saveBlobAsFile(blob: Blob, filename: string): void {
 
 /**
  * Télécharge le PNG d'un QR :
- *   - design "badge" (défaut) → rendu à la demande « LABEL VERIFSCAN » via
+ *   - design "badge" (défaut) → rendu à la demande « LABEL PRODTRUST » via
  *     /api/qr-codes/render-badge. Les PNG persistés ANCIENS (bulk générés
  *     avant l'introduction du design) ne doivent PAS être servis : ils sont
  *     au design classique — d'où le re-rendu systématique.

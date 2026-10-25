@@ -1,5 +1,5 @@
 /**
- * VerifScan V3 — AI Intelligence service library
+ * Prodtrust V3 — AI Intelligence service library
  * =============================================
  *
  * Server-only module that wraps the `z-ai-web-dev-sdk` LLM and exposes 5
@@ -256,7 +256,7 @@ Réponds en ${LANGUAGE_LABELS[language]}.`;
     return {
       description:
         `${productName}${brand ? ` — ${brand}` : ""}. Produit authentique ` +
-        `d'Afrique de l'Ouest, traçable du producteur au consommateur via VerifScan.`,
+        `d'Afrique de l'Ouest, traçable du producteur au consommateur via Prodtrust.`,
       seoKeywords: [],
     };
   }
@@ -687,7 +687,7 @@ export async function chatWithAssistant(
   }
 
   // ---- Build the messages payload for the LLM ----
-  const systemPrompt = `Tu es "VerifScan AI Assistant", l'assistant intelligent de la plateforme VerifScan — une solution de traçabilité alimentaire par QR codes destinée aux fabricants sénégalais et ouest-africains.
+  const systemPrompt = `Tu es "Prodtrust AI Assistant", l'assistant intelligent de la plateforme Prodtrust — une solution de traçabilité alimentaire par QR codes destinée aux fabricants sénégalais et ouest-africains.
 
 Tu aides les fabricants sur :
 - la rédaction de descriptions produits et de fiches techniques,
@@ -731,7 +731,7 @@ Règles :
     responseText =
       "Désolé, je rencontre un problème technique pour le moment. " +
       "Veuillez réessayer dans quelques instants. Si le problème persiste, " +
-      "contactez le support VerifScan.";
+      "contactez le support Prodtrust.";
   }
 
   // ---- Persist the assistant response ----

@@ -1,5 +1,5 @@
 // ============================================================================
-// VerifScan — Server-side data fetching for the SuperAdmin dashboard.
+// Prodtrust — Server-side data fetching for the SuperAdmin dashboard.
 //
 // This module replaces the previous mock-data layer (`admin-data.ts` and
 // `admin-data-store.ts`) with real Prisma queries. All exported types stay

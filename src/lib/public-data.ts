@@ -1,5 +1,5 @@
 /**
- * VerifScan — Public data layer
+ * Prodtrust — Public data layer
  *
  * Server-side functions that fetch lots and products for the public pages
  * (Product Digital Passport + Catalog).

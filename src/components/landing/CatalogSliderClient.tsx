@@ -137,7 +137,7 @@ export function CatalogSliderClient({ items }: Props) {
             Découvrez des produits authentiques
           </h2>
           <p className="mx-auto mt-4 max-w-[600px] text-base text-[#6B7280]">
-            Chaque produit vérifié par VerifScan possède un passeport numérique
+            Chaque produit vérifié par Prodtrust possède un passeport numérique
             scannable. Parcourez les plus populaires ci-dessous.
           </p>
         </div>

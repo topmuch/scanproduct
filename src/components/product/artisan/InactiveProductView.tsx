@@ -18,9 +18,9 @@ export function InactiveProductView({
     <main className="flex min-h-screen items-center justify-center bg-stone-50 p-4">
       <div className="w-full max-w-md text-center">
         {/* Logo officiel du site (demande utilisateur : le logo vu au scan
-            doit être LE logo VerifScan) */}
+            doit être LE logo Prodtrust) */}
         <div className="mb-6 flex justify-center">
-          <Link href="/" aria-label="VerifScan accueil">
+          <Link href="/" aria-label="Prodtrust accueil">
             <Logo size="md" />
           </Link>
         </div>
@@ -48,7 +48,7 @@ export function InactiveProductView({
           <div className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 shadow-sm">
             <ShieldCheck className="h-4 w-4 text-green-600" />
             <span className="text-xs font-medium text-gray-600">
-              Vérifié par VerifScan
+              Vérifié par Prodtrust
             </span>
           </div>
         </div>

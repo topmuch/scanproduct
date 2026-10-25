@@ -7,11 +7,11 @@ import { RubricProducts } from "@/components/landing/RubricProducts";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Soutenez nos produits — VerifScan",
+  title: "Soutenez nos produits — Prodtrust",
   description:
     "Découvrez les produits fabriqués par nos producteurs locaux au Sénégal. Soutenez le savoir-faire d'ici et la traçabilité locale.",
   openGraph: {
-    title: "Soutenez nos produits — VerifScan",
+    title: "Soutenez nos produits — Prodtrust",
     description:
       "Producteurs locaux & savoir-faire d'ici. Soutenez nos fabricants sénégalais.",
     type: "website",

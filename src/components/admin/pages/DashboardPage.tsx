@@ -157,7 +157,7 @@ export function DashboardPage() {
     <div className="space-y-6">
       <SectionTitle
         title="Tableau de bord"
-        subtitle="Vue d'ensemble de la plateforme VerifScan"
+        subtitle="Vue d'ensemble de la plateforme Prodtrust"
       />
 
       {/* Welcome bar */}

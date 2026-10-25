@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * VerifScan — Marketplace B2B Inquiry Modal
+ * Prodtrust — Marketplace B2B Inquiry Modal
  *
  * Public-facing modal that lets distributors send a quote request to a
  * fabricant from the B2B catalog. No account required (the POST endpoint is

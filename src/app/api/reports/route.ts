@@ -184,7 +184,7 @@ export async function POST(request: NextRequest) {
           message: `${subject} — référencé ${reference}${contactEmail ? ` (contact : ${contactEmail})` : ""}.`,
           severity: priority === "Haute" ? "warning" : "info",
           data: { ticketId: ticket.id, reference, category: "Signalement", reason },
-          emailSubject: `VerifScan — Nouveau ticket ${reference}`,
+          emailSubject: `Prodtrust — Nouveau ticket ${reference}`,
         });
       } catch (err) {
         console.error("[POST /api/reports] SuperAdmin notification failed:", err);

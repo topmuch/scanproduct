@@ -8,7 +8,7 @@ import { downloadBadgeQR } from "@/lib/qr-utils";
 import { getScanOrigin } from "@/lib/qr-url";
 
 /**
- * DesignDownloadButton — télécharge le design officiel « LABEL VERIFSCAN »
+ * DesignDownloadButton — télécharge le design officiel « LABEL PRODTRUST »
  * en PNG haute résolution, à la demande (bouton permanent du dashboard).
  *
  * Le badge est rendu par /api/qr-codes/render-badge — exactement le même
@@ -49,7 +49,7 @@ export function DesignDownloadButton({
         "label-verifscan-design.png",
         1200
       );
-      toast.success("Nouveau design « LABEL VERIFSCAN » téléchargé", {
+      toast.success("Nouveau design « LABEL PRODTRUST » téléchargé", {
         description:
           "PNG 1200 px — imprimable dès 3 cm. Le QR du modèle pointe vers le catalogue public.",
       });

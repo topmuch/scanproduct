@@ -26,7 +26,7 @@ export default function GlobalNotFound() {
         </h1>
         <p className="mt-3 max-w-md text-[15px] leading-relaxed text-[#6B7280]">
           La page que vous cherchez n&apos;existe pas ou a été déplacée.
-          Explorez le catalogue des produits vérifiés VerifScan ou revenez à
+          Explorez le catalogue des produits vérifiés Prodtrust ou revenez à
           l&apos;accueil.
         </p>
         <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row">

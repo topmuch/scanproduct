@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { ShieldCheck, Lock, Smartphone, QrCode, Star, MapPin } from "lucide-react";
 
 /**
- * PhoneMockup — a CSS/JSX 3D-style smartphone showing a VerifScan product page.
+ * PhoneMockup — a CSS/JSX 3D-style smartphone showing a Prodtrust product page.
  * Includes floating badges ("Sécurisé par blockchain", "Scanné en 0.3s").
  */
 export function PhoneMockup() {
@@ -63,7 +63,7 @@ export function PhoneMockup() {
               <span>9:41</span>
               <span className="flex items-center gap-1">
                 <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#10B981]" />
-                VerifScan
+                Prodtrust
               </span>
               <span>●●●●</span>
             </div>

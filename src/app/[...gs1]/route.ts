@@ -1,6 +1,6 @@
 /**
  * ============================================================================
- * VerifScan — Resolver racine conforme GS1 Digital Link : /[[...gs1]]
+ * Prodtrust — Resolver racine conforme GS1 Digital Link : /[[...gs1]]
  * ============================================================================
  *
  * Le standard GS1 Digital Link impose que l'URI soit résolue À LA RACINE du
@@ -34,7 +34,7 @@ export async function GET(
   // ── IndexNow : fichier de clé à la racine /{clé}.txt ──────────────────
   // La spécification IndexNow (api.indexnow.org — Bing/Yandex/Seznam/Naver)
   // exige que la clé soit prouvable en ligne à la racine du domaine :
-  //   GET https://verifscan.com/{indexNowKey}.txt → la clé en texte brut.
+  //   GET https://newvisioncargo.pro/{indexNowKey}.txt → la clé en texte brut.
   // Servie ici (catch-all racine) pour n'ajouter AUCUNE route au routeur :
   // tout autre *.txt ou chemin inconnu suit le flux GS1/404 habituel.
   if (gs1?.length === 1 && gs1[0].endsWith(".txt")) {

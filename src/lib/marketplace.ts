@@ -1,10 +1,10 @@
 // ============================================================================
-// VerifScan — Marketplace B2B service library
+// Prodtrust — Marketplace B2B service library
 // ============================================================================
 // Pure server-side module. No React, no API routes.
 //
 // Responsibilities:
-//   - Browse the public B2B catalog of VerifScan fabricant products.
+//   - Browse the public B2B catalog of Prodtrust fabricant products.
 //   - Create B2B inquiries (lead capture — no account required).
 //   - List / respond to inquiries received by a fabricant.
 //   - Suggest cross-promotion partnerships between fabricants.
@@ -257,7 +257,7 @@ export async function createInquiry(data: CreateInquiryInput) {
     message: `${data.requesterName} demande un devis pour ${product.name}`,
     severity: "info",
     data: { inquiryId: inquiry.id, productId: product.id },
-    emailSubject: `💬 VerifScan — nouvelle demande de devis pour ${product.name}`,
+    emailSubject: `💬 Prodtrust — nouvelle demande de devis pour ${product.name}`,
     emailHtml: renderInquiryEmail({
       inquiryId: inquiry.id,
       productName: product.name,

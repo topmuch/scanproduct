@@ -12,7 +12,7 @@ import {
 /**
  * Features — "Des fonctionnalités conçues pour votre succès"
  *
- * Three detailed explanatory cards for the core pillars of VerifScan:
+ * Three detailed explanatory cards for the core pillars of Prodtrust:
  *   1. Traçabilité totale   (blue)
  *   2. Export simplifié      (green)
  *   3. Statistiques utiles    (amber)
@@ -132,7 +132,7 @@ export function Features() {
       <div className="relative mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <AnimatedSection className="mx-auto max-w-2xl text-center">
-          <SectionBadge>Pourquoi VerifScan ?</SectionBadge>
+          <SectionBadge>Pourquoi Prodtrust ?</SectionBadge>
           <h2 className="mt-4 font-display text-[28px] font-semibold leading-tight text-[#111827] sm:text-[36px] lg:text-[40px]">
             Des fonctionnalités conçues pour votre succès
           </h2>

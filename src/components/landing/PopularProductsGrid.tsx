@@ -99,7 +99,7 @@ function badgeFor(item: PopularProductItem): {
 export function PopularProductsGrid({
   items,
   title = "Produits populaires",
-  subtitle = "Les plus scannés par la communauté VerifScan",
+  subtitle = "Les plus scannés par la communauté Prodtrust",
   sectionId = "produits-populaires",
   showViewAll = true,
   emptyMessage = "Aucun produit dans cette sélection pour le moment.",

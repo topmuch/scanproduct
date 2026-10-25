@@ -12,7 +12,7 @@ import { VERIFSCAN_EMAIL } from "@/lib/contact";
  * 2. Rate-limit mémoire : 5 messages / heure / IP (limite anti-spam douce).
  * 3. Stockage EN BASE (ContactMessage) — aucune perte même si l'email
  *    échoue : l'onglet SuperAdmin « Messages » les affiche tous.
- * 4. Notification email à contact@verifscan.com (sendEmail central :
+ * 4. Notification email à contact@newvisioncargo.pro (sendEmail central :
  *    SMTP configuré dans Paramètres → Email, sinon « skipped » en dev,
  *    EmailLog pour l'audit). Répondre au mail = répondre au visiteur
  *    (header Reply-To = email du visiteur).
@@ -135,7 +135,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // 6) Notification email à contact@verifscan.com — jamais bloquante pour
+  // 6) Notification email à contact@newvisioncargo.pro — jamais bloquante pour
   //    l'utilisateur (le message est déjà en base). Le résultat met à jour
   //    ContactMessage.emailStatus (auditable dans l'onglet Messages).
   const sujetLabel = SUBJECT_LABELS[subject] ?? subject;
@@ -167,7 +167,7 @@ export async function POST(req: NextRequest) {
 
   void sendEmail({
     to: VERIFSCAN_EMAIL,
-    subject: `[VerifScan Contact] ${sujetLabel} — ${name}`,
+    subject: `[Prodtrust Contact] ${sujetLabel} — ${name}`,
     html,
     text: `Nom: ${name}\nEmail: ${email}\nTéléphone: ${phone || "—"}\nSujet: ${sujetLabel}\n\n${message}`,
   })

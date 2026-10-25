@@ -12,7 +12,7 @@ import { getSiteUrl, buildProductPath } from "@/lib/seo";
  *   DB (build sans base, incident), on sert les routes statiques quand même
  *   pour ne jamais renvoyer un sitemap vide ou en erreur.
  * - L'origine canonique est résolue dynamiquement (Setting siteUrl éditée
- *   par le SuperAdmin → fallback verifscan.com) via getSiteUrl().
+ *   par le SuperAdmin → fallback newvisioncargo.pro) via getSiteUrl().
  *
  * Référencé dans public/robots.txt (directive Sitemap).
  */

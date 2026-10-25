@@ -22,7 +22,7 @@ export function FinalCTA() {
           Prêt à renforcer la confiance de vos clients ?
         </h2>
         <p className="mx-auto mt-4 max-w-[600px] text-[18px] leading-relaxed text-[#4B5563]">
-          Commencez gratuitement dès maintenant, sans carte bancaire. Rejoignez les 250+ fabricants qui font déjà confiance à VerifScan.
+          Commencez gratuitement dès maintenant, sans carte bancaire. Rejoignez les 250+ fabricants qui font déjà confiance à Prodtrust.
         </p>
 
         <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">

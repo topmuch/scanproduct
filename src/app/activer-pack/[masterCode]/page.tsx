@@ -168,7 +168,7 @@ export default async function ActivatePackPage({
           <h1 className="mb-2 text-xl font-bold text-gray-900">Code maître inconnu</h1>
           <p className="mb-6 text-sm text-gray-600">
             Ce QR Code Maître n&apos;existe pas (ou le lien est incomplet).
-            Scannez le QR Maître imprimé sur votre pack VerifScan.
+            Scannez le QR Maître imprimé sur votre pack Prodtrust.
           </p>
           <Link
             href="/"

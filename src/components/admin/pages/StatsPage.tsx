@@ -144,7 +144,7 @@ export function StatsPage() {
     <PageContainer>
       <SectionTitle
         title="Statistiques Globales"
-        subtitle="Vue d'ensemble de l'activité de la plateforme VerifScan"
+        subtitle="Vue d'ensemble de l'activité de la plateforme Prodtrust"
         action={periodSelector}
       />
 

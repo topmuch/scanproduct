@@ -4,11 +4,11 @@ import { ExpiringProductsClient, type ExpiringProductItem } from "./ExpiringProd
 /**
  * ExpiringSection — Server Component.
  *
- * VerifScan-specific twist on Nest "Deals Of The Day": instead of discounts,
+ * Prodtrust-specific twist on Nest "Deals Of The Day": instead of discounts,
  * we surface 4 lots whose expiry date is approaching. Each card has a live
  * countdown (days / hours / mins / secs) until the lot expires.
  *
- * This is genuinely useful for VerifScan: a consumer looking at the home page
+ * This is genuinely useful for Prodtrust: a consumer looking at the home page
  * can see which products need to be scanned/consumed soon — a real differentiator
  * vs. a plain e-commerce catalog.
  */

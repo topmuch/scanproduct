@@ -1,5 +1,5 @@
 // ============================================================================
-// VerifScan — Notification dispatch service
+// Prodtrust — Notification dispatch service
 // ============================================================================
 // Pure server-side module. No React, no API routes.
 //
@@ -618,11 +618,11 @@ export async function deleteNotification(notificationId: string, userId: string)
  * Render a simple HTML wrapper for a notification email.
  *
  * Layout (all inline styles for email client compatibility):
- *   - Top blue band (#022150) with "VerifScan" wordmark
+ *   - Top blue band (#022150) with "Prodtrust" wordmark
  *   - Severity-tinted content card (warning=amber, critical=red,
  *     success=green, info=gray)
  *   - Title + message body
- *   - Footer: "© 2026 VerifScan — La vérité au bout du scan"
+ *   - Footer: "© 2026 Prodtrust — La vérité au bout du scan"
  *
  * Responsive: max-width 560px container, viewport meta assumed by client.
  */
@@ -682,7 +682,7 @@ export function renderNotificationEmail(
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                 <tr>
                   <td style="font-size:20px;font-weight:700;color:#FFFFFF;letter-spacing:-0.01em;">
-                    VerifScan
+                    Prodtrust
                   </td>
                   <td align="right" style="font-size:12px;color:#DCE7F2;">
                     La vérité au bout du scan
@@ -727,7 +727,7 @@ export function renderNotificationEmail(
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #E5E7EB;">
                 <tr>
                   <td style="padding-top:16px;font-size:13px;color:#6B7280;">
-                    Connectez-vous à votre tableau de bord VerifScan pour plus de détails.
+                    Connectez-vous à votre tableau de bord Prodtrust pour plus de détails.
                   </td>
                 </tr>
               </table>
@@ -737,7 +737,7 @@ export function renderNotificationEmail(
           <tr>
             <td style="background-color:#F9FAFB;padding:20px 24px;border-top:1px solid #E5E7EB;">
               <p style="margin:0;font-size:12px;color:#6B7280;text-align:center;line-height:1.5;">
-                © 2026 VerifScan — La vérité au bout du scan
+                © 2026 Prodtrust — La vérité au bout du scan
               </p>
             </td>
           </tr>

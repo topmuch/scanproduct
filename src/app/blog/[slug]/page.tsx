@@ -19,7 +19,7 @@ import { db } from "@/lib/db";
 import { buildAlternates } from "@/lib/seo";
 
 /**
- * /blog/[slug] — page article du blog VerifScan.
+ * /blog/[slug] — page article du blog Prodtrust.
  *
  * Référencement Google complet :
  *  - generateMetadata : seoTitle/seoDescription (fallback title/excerpt),
@@ -30,7 +30,7 @@ import { buildAlternates } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
-const SITE_URL = "https://verifscan.com";
+const SITE_URL = "https://newvisioncargo.pro";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -49,7 +49,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (!post || !post.published) {
     return {
-      title: "Article introuvable — VerifScan",
+      title: "Article introuvable — Prodtrust",
       robots: { index: false, follow: true },
     };
   }
@@ -75,7 +75,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       authors: [post.author],
       images: post.coverImage
         ? [{ url: post.coverImage, width: 1200, height: 630, alt: post.title }]
-        : [{ url: "/og-image.png", width: 1200, height: 630, alt: "VerifScan" }],
+        : [{ url: "/og-image.png", width: 1200, height: 630, alt: "Prodtrust" }],
     },
     twitter: {
       card: "summary_large_image",
@@ -179,7 +179,7 @@ export default async function BlogPostPage({ params }: Props) {
     author: { "@type": "Organization", name: post.author, url: SITE_URL },
     publisher: {
       "@type": "Organization",
-      name: "VerifScan",
+      name: "Prodtrust",
       url: SITE_URL,
       logo: { "@type": "ImageObject", url: `${SITE_URL}/icon-512.png` },
     },
@@ -298,7 +298,7 @@ export default async function BlogPostPage({ params }: Props) {
                   </h2>
                   <p className="mt-1 text-sm text-white/75">
                     QR code anti-contrefaçon, certificats digitaux et
-                    traçabilité complète — dès aujourd&apos;hui sur VerifScan.
+                    traçabilité complète — dès aujourd&apos;hui sur Prodtrust.
                   </p>
                 </div>
               </div>

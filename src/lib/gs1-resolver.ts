@@ -1,6 +1,6 @@
 /**
  * ============================================================================
- * VerifScan — RESOLVER GS1 Digital Link (aiguillage des scans entrants)
+ * Prodtrust — RESOLVER GS1 Digital Link (aiguillage des scans entrants)
  * ============================================================================
  *
  * Rôle : intercepter TOUTE URL scannée (QR Code imprimé sur un emballage) et
@@ -80,7 +80,7 @@ function echapperHtml(valeur: string): string {
  *   - les valeurs GS1 sont malformées ;
  *   - le produit existe mais aucun lot n'est publié.
  *
- * C'est une FONCTION DE SÉCURITÉ de VerifScan : un consommateur qui scanne
+ * C'est une FONCTION DE SÉCURITÉ de Prodtrust : un consommateur qui scanne
  * une contrefaçon doit voir un message clair, pas une erreur générique.
  * Page autonome (aucune dépendance) avec en-têtes de sécurité renforcés.
  */
@@ -91,7 +91,7 @@ function pageIntrouvable(origine: string, detail?: string): NextResponse {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<title>Produit introuvable — VerifScan</title>
+<title>Produit introuvable — Prodtrust</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
@@ -123,10 +123,10 @@ function pageIntrouvable(origine: string, detail?: string): NextResponse {
   <main class="carte">
     <div class="badge" aria-hidden="true">⚠️</div>
     <h1>Produit introuvable</h1>
-    <p>Ce code ne correspond à aucun produit enregistré dans VerifScan.
+    <p>Ce code ne correspond à aucun produit enregistré dans Prodtrust.
     Le produit peut être contrefait, retiré du catalogue, ou le code endommagé.</p>
     ${detail ? `<p class="detail">Réf. : ${echapperHtml(detail)}</p>` : ""}
-    <a class="bouton" href="${echapperHtml(origine)}">Aller à l'accueil VerifScan</a>
+    <a class="bouton" href="${echapperHtml(origine)}">Aller à l'accueil Prodtrust</a>
   </main>
 </body>
 </html>`;
@@ -149,13 +149,13 @@ function pageIntrouvable(origine: string, detail?: string): NextResponse {
 const STATUTS_RESOLVABLES = { not: "DRAFT" } as const;
 
 /**
- * Résout une identité GS1 (GTIN [+ lot] [+ série]) vers le lot VerifScan.
+ * Résout une identité GS1 (GTIN [+ lot] [+ série]) vers le lot Prodtrust.
  *
  * @returns { lotId, nomProduit, qrCodeId? } — qrCodeId est fourni quand la
- *          série (AI 21) correspond à un QR Code VerifScan enregistré
+ *          série (AI 21) correspond à un QR Code Prodtrust enregistré
  *          (attribution analytics par unité imprimée), absent sinon
  *          (série tierce ou contrefacte : le scan reste résolu mais non
- *          attribuable à un QR imprimé par VerifScan).
+ *          attribuable à un QR imprimé par Prodtrust).
  */
 async function resoudreGs1(
   gtin: string,
@@ -198,7 +198,7 @@ async function resoudreGs1(
   });
   if (!lotCible) return null;
 
-  // Série (AI 21) → rattachement au QR Code imprimé si VerifScan l'a généré.
+  // Série (AI 21) → rattachement au QR Code imprimé si Prodtrust l'a généré.
   // (QRCode.code est la clé d'impression unique ; on récupère l'id réel pour
   //  la FK Scan.qrCodeId. Si la série est inconnue, on résout quand même —
   //  c'est précisément le signal anti-contrefaçon.)
@@ -246,7 +246,7 @@ async function resoudreStandard(
  *
  * Aiguillage :
  *   [01, <gtin>, …] | [gtin, …]        → GS1 Digital Link
- *   [<idProduit>]                      → QR standard VerifScan
+ *   [<idProduit>]                      → QR standard Prodtrust
  *   tout le reste                      → 404 « produit introuvable »
  */
 export async function gererRequeteResolver(
@@ -306,7 +306,7 @@ export async function gererRequeteResolver(
 
       // Journalisation du scan. Les identifiants GS1 sont stockés dans
       // `metadata` (JSON) ; `qrCodeId` ne reçoit QUE l'id réel d'un QR Code
-      // VerifScan retrouvé via la série (AI 21) — jamais une valeur libre.
+      // Prodtrust retrouvé via la série (AI 21) — jamais une valeur libre.
       if (!estBot) {
         await recordScan(cible.lotId, {
           userAgent,
@@ -347,7 +347,7 @@ export async function gererRequeteResolver(
       return redirigerVersPasseport(origine, cible.lotId);
     }
 
-    // ── CAS C : chemin inconnu → 404 VerifScan (et non une 404 générique).
+    // ── CAS C : chemin inconnu → 404 Prodtrust (et non une 404 générique).
     return pageIntrouvable(origine);
   } catch (erreur) {
     // URI GS1 malformée (ErreurGs1) ou erreur DB → page introuvable sûre.

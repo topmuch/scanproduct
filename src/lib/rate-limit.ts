@@ -9,7 +9,7 @@ import { NextResponse } from "next/server";
  * Map. Lazy cleanup prevents unbounded memory growth.
  *
  * NOTE: This is a per-process limiter. In a multi-instance deployment you
- * would back it with Redis or an external store; for the VerifScan single-node
+ * would back it with Redis or an external store; for the Prodtrust single-node
  * deployment this is sufficient and adds zero latency.
  */
 

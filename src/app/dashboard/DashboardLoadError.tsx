@@ -81,7 +81,7 @@ export function DashboardLoadError() {
           </div>
 
           <p className="mt-6 border-t border-[#F3F4F6] pt-4 text-xs text-[#9CA3AF]">
-            Si le problème persiste, contactez le support VerifScan en
+            Si le problème persiste, contactez le support Prodtrust en
             mentionnant le code <span className="font-mono font-semibold">DASHBOARD_LOAD_FAILED</span>.
           </p>
         </div>

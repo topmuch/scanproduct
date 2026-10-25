@@ -131,7 +131,7 @@ export async function POST(request: NextRequest) {
 
     const qrColor = options.color || fabricant?.brandColor || "#000000";
 
-    // ── Design du rendu (par défaut : badge « LABEL VERIFSCAN ») ────
+    // ── Design du rendu (par défaut : badge « LABEL PRODTRUST ») ────
     // includeDesign === false → QR classique historique (couleur marque
     // + logo + libellés). Sinon badge (jaune par défaut, ou design
     // importé : personnel fabricant → officiel plateforme).
@@ -186,7 +186,7 @@ export async function POST(request: NextRequest) {
             serie,
             fallbackUrl: `${
               process.env.NEXT_PUBLIC_SCAN_URL?.replace(/\/$/, "") ||
-              "https://verifscan.com"
+              "https://newvisioncargo.pro"
             }/p/${lot.id}?code=${uniqueCode}`,
           });
           scanUrl = construit.url;
@@ -200,7 +200,7 @@ export async function POST(request: NextRequest) {
           );
           scanUrl = `${
             process.env.NEXT_PUBLIC_SCAN_URL?.replace(/\/$/, "") ||
-            "https://verifscan.com"
+            "https://newvisioncargo.pro"
           }/p/${lot.id}?code=${uniqueCode}`;
           format = "STANDARD";
           codeImprime = uniqueCode;
@@ -318,7 +318,7 @@ export async function POST(request: NextRequest) {
                   limit: usage.limit,
                   percent: usage.percent,
                 },
-                emailSubject: "VerifScan — Quota QR dépassé",
+                emailSubject: "Prodtrust — Quota QR dépassé",
               });
             })
             .catch(() => undefined);

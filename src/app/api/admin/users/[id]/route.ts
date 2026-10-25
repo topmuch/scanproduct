@@ -190,7 +190,7 @@ export async function PATCH(
             message: `Le compte ${updated.email}${updated.companyName ? ` (${updated.companyName})` : ""} a été suspendu par l'administration.`,
             severity: "warning",
             data: { userId: id, email: updated.email, action: "SUSPEND_USER" },
-            emailSubject: "VerifScan — Alerte sécurité : compte suspendu",
+            emailSubject: "Prodtrust — Alerte sécurité : compte suspendu",
           });
         } catch (err) {
           console.error("[PATCH /api/admin/users/[id]] security notification failed:", err);

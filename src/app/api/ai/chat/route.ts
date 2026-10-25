@@ -8,7 +8,7 @@ export const runtime = "nodejs";
 
 /**
  * POST /api/ai/chat
- * Auth-required — sends a message to the VerifScan AI assistant and persists
+ * Auth-required — sends a message to the Prodtrust AI assistant and persists
  * the exchange in an AiConversation.
  *
  * Body:

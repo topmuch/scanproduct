@@ -93,7 +93,7 @@ const CONTENT: Record<FeatureKey, FeatureContent> = {
     accentBg: "bg-[#F0F4F9]",
     accentSoft: "bg-[#022150]",
     intro:
-      "La traçabilité VerifScan relie chaque produit physique à son passeport numérique. Dès la création d'un lot, un QR code unique est généré et lié définitivement à votre compte fabricant. Vos clients, distributeurs et partenaires peuvent scanner ce code à n'importe quel moment pour accéder à la vérité sur le produit : origine, ingrédients, certifications, historique de fabrication et dates de péremption.",
+      "La traçabilité Prodtrust relie chaque produit physique à son passeport numérique. Dès la création d'un lot, un QR code unique est généré et lié définitivement à votre compte fabricant. Vos clients, distributeurs et partenaires peuvent scanner ce code à n'importe quel moment pour accéder à la vérité sur le produit : origine, ingrédients, certifications, historique de fabrication et dates de péremption.",
     howItWorks: [
       {
         icon: <FileText className="h-5 w-5" />,
@@ -103,7 +103,7 @@ const CONTENT: Record<FeatureKey, FeatureContent> = {
       {
         icon: <QrCode className="h-5 w-5" />,
         title: "2. Génération du QR code unique",
-        text: "Pour chaque lot, VerifScan crée un QR code sécurisé et infalsifiable, prêt à imprimer sur vos étiquettes. Chaque code pointe vers une URL unique.",
+        text: "Pour chaque lot, Prodtrust crée un QR code sécurisé et infalsifiable, prêt à imprimer sur vos étiquettes. Chaque code pointe vers une URL unique.",
       },
       {
         icon: <ScanLine className="h-5 w-5" />,
@@ -158,17 +158,17 @@ const CONTENT: Record<FeatureKey, FeatureContent> = {
     accentBg: "bg-[#F0FDF4]",
     accentSoft: "bg-[#10B981]",
     intro:
-      "L'export de produits agroalimentaires vers les marchés régionaux et internationaux exige une documentation rigoureuse : certificats d'origine, fiches techniques, attestations de conformité, bons de livraison. VerifScan collecte ces données à la source — au moment où vous créez vos lots — et génère automatiquement des documents normalisés prêts à être joints à vos dossiers d'export. Vous gagnez des heures par dossier et évitez les erreurs de saisie.",
+      "L'export de produits agroalimentaires vers les marchés régionaux et internationaux exige une documentation rigoureuse : certificats d'origine, fiches techniques, attestations de conformité, bons de livraison. Prodtrust collecte ces données à la source — au moment où vous créez vos lots — et génère automatiquement des documents normalisés prêts à être joints à vos dossiers d'export. Vous gagnez des heures par dossier et évitez les erreurs de saisie.",
     howItWorks: [
       {
         icon: <FileText className="h-5 w-5" />,
         title: "1. Centralisation des données",
-        text: "Toutes les informations de vos produits et lots sont déjà saisies dans VerifScan : plus besoin de re-saisir quoi que ce soit dans un document Word.",
+        text: "Toutes les informations de vos produits et lots sont déjà saisies dans Prodtrust : plus besoin de re-saisir quoi que ce soit dans un document Word.",
       },
       {
         icon: <FileCheck2 className="h-5 w-5" />,
         title: "2. Sélection du marché cible",
-        text: "Choisissez le marché de destination (CEDEAO, Union Européenne, USA, etc.) et VerifScan sélectionne automatiquement les documents requis.",
+        text: "Choisissez le marché de destination (CEDEAO, Union Européenne, USA, etc.) et Prodtrust sélectionne automatiquement les documents requis.",
       },
       {
         icon: <Download className="h-5 w-5" />,
@@ -223,12 +223,12 @@ const CONTENT: Record<FeatureKey, FeatureContent> = {
     accentBg: "bg-[#FFFBEB]",
     accentSoft: "bg-[#F59E0B]",
     intro:
-      "Chaque scan d'un de vos QR codes est une information précieuse : il vous dit où, quand et par quel produit votre marque est consultée. VerifScan agrège ces données en temps réel et vous présente des tableaux de bord clairs : carte de chaleur des scans par région, classement de vos produits les plus scannés, tendances mensuelles et trimestrielles. Vous pouvez ainsi prendre des décisions d'investissement, de distribution et de marketing fondées sur des faits, pas sur des intuitions.",
+      "Chaque scan d'un de vos QR codes est une information précieuse : il vous dit où, quand et par quel produit votre marque est consultée. Prodtrust agrège ces données en temps réel et vous présente des tableaux de bord clairs : carte de chaleur des scans par région, classement de vos produits les plus scannés, tendances mensuelles et trimestrielles. Vous pouvez ainsi prendre des décisions d'investissement, de distribution et de marketing fondées sur des faits, pas sur des intuitions.",
     howItWorks: [
       {
         icon: <ScanLine className="h-5 w-5" />,
         title: "1. Collecte automatique",
-        text: "À chaque scan d'un de vos QR codes, VerifScan enregistre anonymement la région, le moment et le produit scanné, dans le respect du RGPD.",
+        text: "À chaque scan d'un de vos QR codes, Prodtrust enregistre anonymement la région, le moment et le produit scanné, dans le respect du RGPD.",
       },
       {
         icon: <Activity className="h-5 w-5" />,

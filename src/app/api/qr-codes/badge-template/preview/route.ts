@@ -13,7 +13,7 @@ import { resolveLogoPath } from "@/lib/qr-server";
  *   1. Design personnel de l'utilisateur connecté (User.badgeTemplateUrl)
  *   2. Design officiel de la plateforme (Setting "qrBadgeTemplateUrl",
  *      importé par le SuperAdmin dans Paramètres → Design QR officiel)
- *   3. null → l'aperçu client retombe sur le badge jaune « LABEL VERIFSCAN »
+ *   3. null → l'aperçu client retombe sur le badge jaune « LABEL PRODTRUST »
  *
  * (Le design personnel s'uploade via /api/qr-codes/badge-template —
  * POST/DELETE réservés au fabricant connecté ; ce sous-path LIT seulement.)

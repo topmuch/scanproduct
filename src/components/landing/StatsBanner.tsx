@@ -36,7 +36,7 @@ export function StatsBanner() {
             Des chiffres qui parlent d&apos;eux-mêmes
           </h2>
           <p className="mx-auto mt-3 max-w-[600px] text-base text-white/80">
-            VerifScan génère de la confiance mesurable, semaine après semaine.
+            Prodtrust génère de la confiance mesurable, semaine après semaine.
           </p>
         </AnimatedSection>
 

@@ -68,7 +68,7 @@ export function ContactForm() {
 
     try {
       // POST réel vers /api/contact : stockage en base (onglet SuperAdmin
-      // « Messages ») + notification email à contact@verifscan.com.
+      // « Messages ») + notification email à contact@newvisioncargo.pro.
       const res = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -104,7 +104,7 @@ export function ContactForm() {
           Restons en contact
         </h2>
         <p className="mt-3 text-[15px] leading-relaxed text-[#6B7280]">
-          Une question sur VerifScan ? Vous souhaitez devenir partenaire ou
+          Une question sur Prodtrust ? Vous souhaitez devenir partenaire ou
           demander une démo ? Notre équipe vous répond sous 24 heures.
         </p>
 

@@ -23,7 +23,7 @@ export default function OfflinePage() {
         </h1>
 
         <p className="mt-3 text-[15px] leading-relaxed text-[#4B5563]">
-          VerifScan ne peut pas atteindre internet pour le moment. Vous pouvez
+          Prodtrust ne peut pas atteindre internet pour le moment. Vous pouvez
           continuer à consulter les produits déjà visités, ou réessayer dès
           que votre connexion revient.
         </p>
@@ -45,7 +45,7 @@ export default function OfflinePage() {
         </div>
 
         <p className="mt-8 text-[12px] text-[#9CA3AF]">
-          💡 Astuce : si vous avez déjà installé VerifScan sur votre écran
+          💡 Astuce : si vous avez déjà installé Prodtrust sur votre écran
           d&apos;accueil, les produits scannés récemment restent accessibles
           sans connexion.
         </p>

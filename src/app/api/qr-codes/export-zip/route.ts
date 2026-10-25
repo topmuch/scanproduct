@@ -14,7 +14,7 @@ import { promises as fs } from "fs";
  * POST /api/qr-codes/export-zip
  *
  * Exporte un lot de QR codes en archive ZIP — avec le design officiel
- * « LABEL VERIFSCAN » (cercle jaune, textes en arc, QR noir au centre).
+ * « LABEL PRODTRUST » (cercle jaune, textes en arc, QR noir au centre).
  *
  * ── Pourquoi cette route existe ──────────────────────────────────
  * Le dashboard affichait deux boutons fantômes (« Exporter tout »,
@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
     // ── Origine encodée dans les QR (server-side) ───────────────────
     const origine =
       process.env.NEXT_PUBLIC_SCAN_URL?.replace(/\/$/, "") ||
-      "https://verifscan.com";
+      "https://newvisioncargo.pro";
 
     // ── Résolution du design importé (une seule fois pour tout le ZIP) ─
     // Priorité : design personnel du fabricant → design officiel de la

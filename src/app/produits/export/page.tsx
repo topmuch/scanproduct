@@ -7,11 +7,11 @@ import { RubricProducts } from "@/components/landing/RubricProducts";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Certifié pour l'export — VerifScan",
+  title: "Certifié pour l'export — Prodtrust",
   description:
-    "Découvrez les produits VerifScan certifiés pour l'export. Normes internationales, conformité et traçabilité complète pour les marchés internationaux.",
+    "Découvrez les produits Prodtrust certifiés pour l'export. Normes internationales, conformité et traçabilité complète pour les marchés internationaux.",
   openGraph: {
-    title: "Certifié pour l'export — VerifScan",
+    title: "Certifié pour l'export — Prodtrust",
     description:
       "Normes internationales & traçabilité complète. Produits prêts pour l'export.",
     type: "website",

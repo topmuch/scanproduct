@@ -2,12 +2,12 @@ import type { Metadata } from "next";
 import { LegalLayout, LegalArticle } from "@/components/public/LegalLayout";
 
 export const metadata: Metadata = {
-  title: "Politique de cookies — VerifScan",
+  title: "Politique de cookies — Prodtrust",
   description:
-    "Politique de cookies de VerifScan : types de cookies utilisés, finalité, durée de conservation et modalités de gestion de vos préférences.",
+    "Politique de cookies de Prodtrust : types de cookies utilisés, finalité, durée de conservation et modalités de gestion de vos préférences.",
   openGraph: {
-    title: "Politique de cookies — VerifScan",
-    description: "Comment VerifScan utilise les cookies et traceurs.",
+    title: "Politique de cookies — Prodtrust",
+    description: "Comment Prodtrust utilise les cookies et traceurs.",
     type: "website",
   },
 };
@@ -29,13 +29,13 @@ export default function CookiesPage() {
   return (
     <LegalLayout
       title="Politique de cookies"
-      description="La présente politique décrit la manière dont VerifScan utilise les cookies et traceurs sur sa plateforme, leur finalité, leur durée de vie, et les moyens dont vous disposez pour les gérer."
+      description="La présente politique décrit la manière dont Prodtrust utilise les cookies et traceurs sur sa plateforme, leur finalité, leur durée de vie, et les moyens dont vous disposez pour les gérer."
       updatedAt="Dernière mise à jour : 1 janvier 2026"
       sections={SECTIONS}
     >
       <LegalArticle id="introduction" index={1} title="Introduction">
         <p>
-          VerifScan utilise des cookies et technologies similaires pour
+          Prodtrust utilise des cookies et technologies similaires pour
           assurer le bon fonctionnement de sa plateforme, mesurer son
           audience et améliorer l&apos;expérience utilisateur. La présente
           politique complète la{" "}
@@ -45,10 +45,10 @@ export default function CookiesPage() {
           >
             Politique de confidentialité
           </a>{" "}
-          de VerifScan.
+          de Prodtrust.
         </p>
         <p>
-          En utilisant la plateforme VerifScan, vous consentez à
+          En utilisant la plateforme Prodtrust, vous consentez à
           l&apos;utilisation de cookies conformément à la présente
           politique, à l&apos;exception des cookies pour lesquels un
           consentement explicite est requis.
@@ -72,7 +72,7 @@ export default function CookiesPage() {
       </LegalArticle>
 
       <LegalArticle id="types" index={3} title="Types de cookies utilisés">
-        <p>VerifScan utilise trois grandes catégories de cookies :</p>
+        <p>Prodtrust utilise trois grandes catégories de cookies :</p>
         <ul className="ml-5 list-disc space-y-2">
           <li>
             <strong>Cookies essentiels</strong> : strictement nécessaires
@@ -99,7 +99,7 @@ export default function CookiesPage() {
       >
         <p>
           Ces cookies sont indispensables au fonctionnement technique de
-          la plateforme VerifScan. Sans eux, vous ne pourriez pas vous
+          la plateforme Prodtrust. Sans eux, vous ne pourriez pas vous
           connecter à votre espace fabricant, naviguer de manière
           sécurisée, ni accéder aux services qui nécessitent une
           authentification.
@@ -126,7 +126,7 @@ export default function CookiesPage() {
         title="Cookies de performance"
       >
         <p>
-          Ces cookies permettent à VerifScan de mesurer l&apos;audience
+          Ces cookies permettent à Prodtrust de mesurer l&apos;audience
           de la plateforme (pages consultées, durée de visite, parcours
           utilisateur) de manière agrégée et anonymisée. Les données
           collectées ne permettent pas de vous identifier personnellement.
@@ -149,7 +149,7 @@ export default function CookiesPage() {
 
       <LegalArticle id="cookies-tiers" index={6} title="Cookies tiers">
         <p>
-          La plateforme VerifScan peut intégrer des services externes qui
+          La plateforme Prodtrust peut intégrer des services externes qui
           déposent leurs propres cookies :
         </p>
         <ul className="ml-5 list-disc space-y-2">
@@ -171,7 +171,7 @@ export default function CookiesPage() {
           </li>
         </ul>
         <p>
-          VerifScan vous invite à consulter les politiques de
+          Prodtrust vous invite à consulter les politiques de
           confidentialité de ces services tiers pour plus
           d&apos;informations sur leurs pratiques.
         </p>
@@ -179,7 +179,7 @@ export default function CookiesPage() {
 
       <LegalArticle id="duree" index={7} title="Durée de conservation">
         <p>
-          La durée de vie des cookies déposés par VerifScan est limitée au
+          La durée de vie des cookies déposés par Prodtrust est limitée au
           strict nécessaire :
         </p>
         <ul className="ml-5 list-disc space-y-2">
@@ -207,7 +207,7 @@ export default function CookiesPage() {
         title="Gérer vos préférences"
       >
         <p>
-          Lors de votre première visite sur la plateforme VerifScan, un
+          Lors de votre première visite sur la plateforme Prodtrust, un
           bandeau vous informe de l&apos;utilisation de cookies et vous
           permet de :
         </p>
@@ -294,16 +294,16 @@ export default function CookiesPage() {
       <LegalArticle id="contact" index={10} title="Contact">
         <p>
           Pour toute question relative à la présente Politique de
-          cookies, vous pouvez contacter VerifScan :
+          cookies, vous pouvez contacter Prodtrust :
         </p>
         <ul className="ml-5 list-disc space-y-2">
           <li>
             Par email :{" "}
             <a
-              href="mailto:contact@verifscan.com"
+              href="mailto:contact@newvisioncargo.pro"
               className="font-medium text-[#022150] underline-offset-2 hover:underline"
             >
-              contact@verifscan.com
+              contact@newvisioncargo.pro
             </a>
           </li>
           <li>

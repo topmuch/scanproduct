@@ -1,5 +1,5 @@
 /**
- * VerifScan — Database seed script
+ * Prodtrust — Database seed script
  *
  * Creates:
  *   1. A SUPERADMIN user
@@ -48,7 +48,7 @@ async function main() {
   const fabricantEmail = "sarine@biocosmetique.sn";
   const fabricantPassword = "Demo1234!";
 
-  console.log("🌱 Seeding VerifScan database…");
+  console.log("🌱 Seeding Prodtrust database…");
 
   // ---- 1. SuperAdmin ----
   const adminHash = await bcrypt.hash(adminPassword, 10);
@@ -58,11 +58,11 @@ async function main() {
       password: adminHash,
       role: "SUPERADMIN",
       status: "ACTIVE",
-      name: "Administrateur VerifScan",
+      name: "Administrateur Prodtrust",
     },
     create: {
       email: adminEmail,
-      name: "Administrateur VerifScan",
+      name: "Administrateur Prodtrust",
       password: adminHash,
       role: "SUPERADMIN",
       status: "ACTIVE",

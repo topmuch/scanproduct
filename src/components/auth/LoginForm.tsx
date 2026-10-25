@@ -82,7 +82,7 @@ const SPACE_CONFIG: Record<LoginSpace, SpaceConfig> = {
   },
   admin: {
     title: "Espace SuperAdmin",
-    subtitle: "Console d'administration VerifScan — accès réservé.",
+    subtitle: "Console d'administration Prodtrust — accès réservé.",
     icon: ShieldCheck,
     badge: "bg-gradient-to-br from-[#022150] to-[#0A2B5F]",
     button: "bg-[#022150] shadow-[#022150]/30 hover:bg-[#011D46]",

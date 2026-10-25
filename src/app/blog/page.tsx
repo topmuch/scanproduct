@@ -27,15 +27,15 @@ import { db } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
-const SITE_URL = "https://verifscan.com";
+const SITE_URL = "https://newvisioncargo.pro";
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
-  title: "Blog — Traçabilité, export & anti-contrefaçon | VerifScan",
+  title: "Blog — Traçabilité, export & anti-contrefaçon | Prodtrust",
   description:
-    "Le blog VerifScan : guides pratiques pour exporter vers l'UE et les USA, passeport numérique, traçabilité alimentaire et cosmétique, lutte contre la contrefaçon en Afrique de l'Ouest.",
+    "Le blog Prodtrust : guides pratiques pour exporter vers l'UE et les USA, passeport numérique, traçabilité alimentaire et cosmétique, lutte contre la contrefaçon en Afrique de l'Ouest.",
   keywords: [
-    "blog VerifScan",
+    "blog Prodtrust",
     "export Union européenne",
     "export USA",
     "traçabilité alimentaire",
@@ -45,7 +45,7 @@ export async function generateMetadata(): Promise<Metadata> {
   ],
   alternates: await buildAlternates("/blog"),
   openGraph: {
-    title: "Blog — Traçabilité, export & anti-contrefaçon | VerifScan",
+    title: "Blog — Traçabilité, export & anti-contrefaçon | Prodtrust",
     description:
       "Guides pratiques export UE/USA, passeport numérique et traçabilité produit.",
     url: `${SITE_URL}/blog`,
@@ -112,11 +112,11 @@ export default async function BlogPage() {
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Blog",
-    name: "Blog VerifScan",
+    name: "Blog Prodtrust",
     url: `${SITE_URL}/blog`,
     description:
       "Guides pratiques pour exporter vers l'UE et les USA, passeport numérique produit et traçabilité alimentaire & cosmétique.",
-    publisher: { "@type": "Organization", name: "VerifScan", url: SITE_URL },
+    publisher: { "@type": "Organization", name: "Prodtrust", url: SITE_URL },
     blogPost: posts.map((p) => ({
       "@type": "BlogPosting",
       headline: p.title,
@@ -148,7 +148,7 @@ export default async function BlogPage() {
           <div className="relative mx-auto max-w-[1400px] px-4 py-16 sm:px-6 sm:py-20 lg:px-8 lg:py-24">
             <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs font-medium text-white/80 backdrop-blur">
               <Newspaper className="h-3.5 w-3.5 text-[#34D399]" />
-              Le blog VerifScan
+              Le blog Prodtrust
             </span>
             <h1 className="mt-6 max-w-3xl font-display text-4xl font-bold leading-tight tracking-tight sm:text-5xl lg:text-6xl">
               La vérité sur la{" "}

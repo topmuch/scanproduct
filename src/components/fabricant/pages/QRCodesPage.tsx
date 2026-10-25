@@ -314,7 +314,7 @@ function GenerationModal({
                 { key: "produit", label: "Inclure nom produit" },
                 { key: "logo", label: "Inclure logo" },
                 { key: "marges", label: "Marges découpe" },
-                { key: "design", label: "Design VerifScan (jaune)" },
+                { key: "design", label: "Design Prodtrust (jaune)" },
               ].map((o) => (
                 <label key={o.key} className={labelRow + " cursor-pointer"}>
                   <input
@@ -369,7 +369,7 @@ function GenerationModal({
                 {options.produit && (
                   <p className="mt-0.5 text-[10px] text-[#6B7280]">Jus de Bissap Premium</p>
                 )}
-                <p className="mt-0.5 text-[9px] text-[#9CA3AF]">VerifScan · {tailleLabel}</p>
+                <p className="mt-0.5 text-[9px] text-[#9CA3AF]">Prodtrust · {tailleLabel}</p>
               </div>
             </div>
           </div>
@@ -421,7 +421,7 @@ export function QRCodesPage() {
   const [notice, setNotice] = useState<string | null>(null);
   const [exportingZip, setExportingZip] = useState(false);
 
-  // ── Export ZIP (design officiel « LABEL VERIFSCAN ») ────────────────
+  // ── Export ZIP (design officiel « LABEL PRODTRUST ») ────────────────
   // Re-rendu serveur : chaque QR sort avec le design à jour (badge jaune),
   // indépendamment de la date de génération. Garde-fou serveur : 300 QR.
   const exporterZip = async (ids: string[], label: string) => {
@@ -455,7 +455,7 @@ export function QRCodesPage() {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      toast.success(`✅ ${label} téléchargé (design LABEL VERIFSCAN)`);
+      toast.success(`✅ ${label} téléchargé (design LABEL PRODTRUST)`);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Erreur d'export ZIP");
     } finally {
@@ -816,7 +816,7 @@ export function QRCodesPage() {
                   />
                 </label>
 
-                {/* QR image — design officiel « LABEL VERIFSCAN » (défaut)
+                {/* QR image — design officiel « LABEL PRODTRUST » (défaut)
                     ou QR classique si le design a été désactivé à la génération */}
                 <div className="flex justify-center pt-2">
                   <div className="rounded-md border border-[#F3F4F6] p-2">
@@ -1024,7 +1024,7 @@ export function QRCodesPage() {
         onSuccess={(msg) => setNotice(msg)}
       />
 
-      {/* Preview modal — design officiel « LABEL VERIFSCAN » en grand */}
+      {/* Preview modal — design officiel « LABEL PRODTRUST » en grand */}
       {previewQr && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
@@ -1082,7 +1082,7 @@ export function QRCodesPage() {
               </div>
               {previewQr.design !== "classic" && (
                 <p className="mt-3 text-center text-[11px] leading-relaxed text-[#9CA3AF]">
-                  Design officiel « LABEL VERIFSCAN » — QR noir sur cercle jaune,
+                  Design officiel « LABEL PRODTRUST » — QR noir sur cercle jaune,
                   imprimable dès 3 cm (300 DPI).
                 </p>
               )}

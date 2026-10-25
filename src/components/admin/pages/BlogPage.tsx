@@ -72,7 +72,7 @@ const EMPTY_FORM: FormState = {
   coverImage: "",
   category: "Traçabilité",
   readTime: 5,
-  author: "Équipe VerifScan",
+  author: "Équipe Prodtrust",
   published: false,
   seoTitle: "",
   seoDescription: "",
@@ -203,7 +203,7 @@ export function BlogPage() {
       coverImage: form.coverImage.trim() || null,
       category: form.category.trim() || "Traçabilité",
       readTime: Number(form.readTime) || 5,
-      author: form.author.trim() || "Équipe VerifScan",
+      author: form.author.trim() || "Équipe Prodtrust",
       published,
       seoTitle: form.seoTitle.trim() || null,
       seoDescription: form.seoDescription.trim() || null,
@@ -605,7 +605,7 @@ export function BlogPage() {
                     <input
                       value={form.seoKeywords}
                       onChange={(e) => setForm((f) => ({ ...f, seoKeywords: e.target.value }))}
-                      placeholder="export UE, réglementation, traçabilité, VerifScan"
+                      placeholder="export UE, réglementation, traçabilité, Prodtrust"
                       className={inputCls}
                     />
                   </div>

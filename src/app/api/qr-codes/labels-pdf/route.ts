@@ -27,7 +27,7 @@ import { ErreurGs1 } from "@/lib/gs1";
  *   options        — {
  *     size?,           // QR pixel size (rendering resolution)
  *     color?,          // brand color (classic design only)
- *     design?,         // "badge" (défaut) | "classic" — badge = LABEL VERIFSCAN
+ *     design?,         // "badge" (défaut) | "classic" — badge = LABEL PRODTRUST
  *     includeLogo?,    // classic design only
  *     includeLotNumber?,
  *     includeProductName?,
@@ -98,7 +98,7 @@ export async function POST(request: NextRequest) {
       options.includeLogo !== false ? resolveLogoPath(fabricant?.logoUrl) : null;
     const qrColor = options.color || fabricant?.brandColor || "#000000";
 
-    // ── Design du rendu (badge « LABEL VERIFSCAN » par défaut) ─────
+    // ── Design du rendu (badge « LABEL PRODTRUST » par défaut) ─────
     // Design importé prioritaire : personnel fabricant → officiel
     // plateforme → badge jaune par défaut.
     const design: "badge" | "classic" =
@@ -157,7 +157,7 @@ export async function POST(request: NextRequest) {
     // au standard GS1 Digital Link (l'AI 21 y est optionnel).
     // Produit sans GTIN → comportement historique /p/<lotId>?code=….
     const baseUrl =
-      process.env.NEXT_PUBLIC_SCAN_URL?.replace(/\/$/, "") || "https://verifscan.com";
+      process.env.NEXT_PUBLIC_SCAN_URL?.replace(/\/$/, "") || "https://newvisioncargo.pro";
     const lotParId = new Map(lots.map((l) => [l.id, l]));
     const qrBuffers: Buffer[] = [];
     for (const label of labels) {
@@ -225,7 +225,7 @@ export async function POST(request: NextRequest) {
         const pngDataUrl = `data:image/png;base64,${pageBuffers[i].toString("base64")}`;
 
         if (design === "badge") {
-          // ── Badge « LABEL VERIFSCAN » : carré quasi pleine étiquette,
+          // ── Badge « LABEL PRODTRUST » : carré quasi pleine étiquette,
           //    libellés produit/lot en TEXTE VECTORIEL jsPDF dessous
           //    (nets à toutes les tailles, indépendants des polices du
           //    conteneur). Les autocollants 30×30 mm n'ont pas la place

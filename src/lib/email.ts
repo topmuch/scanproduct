@@ -1,5 +1,5 @@
 // ============================================================================
-// VerifScan — Email service (nodemailer-based, safe fallback)
+// Prodtrust — Email service (nodemailer-based, safe fallback)
 // ============================================================================
 // Pure server-side module. No React, no API routes.
 //
@@ -38,7 +38,7 @@ import { getSettings, SETTING_KEYS } from "@/lib/settings";
 // are all non-empty in whichever source wins (settings take priority as a
 // whole block, so a half-filled settings form falls back to env entirely).
 
-const DEFAULT_FROM = "VerifScan <no-reply@verifscan.com>";
+const DEFAULT_FROM = "Prodtrust <no-reply@newvisioncargo.pro>";
 
 /** Setting keys that make up the SMTP configuration block. */
 export const SMTP_SETTING_KEYS = [
@@ -108,7 +108,7 @@ export function friendlySmtpError(
   const rawShort = msg.slice(0, 140);
 
   if (isTlsMismatchError(msg)) {
-    return `Incompatibilité de chiffrement sur le port ${port ?? "?"} — le serveur n'attend pas du « ${mode} » sur ce port. Changez le commutateur SSL (VerifScan le détecte aussi automatiquement).${hint} (${rawShort})`;
+    return `Incompatibilité de chiffrement sur le port ${port ?? "?"} — le serveur n'attend pas du « ${mode} » sur ce port. Changez le commutateur SSL (Prodtrust le détecte aussi automatiquement).${hint} (${rawShort})`;
   }
   if (
     m.includes("535") ||

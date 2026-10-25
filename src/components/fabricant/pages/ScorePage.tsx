@@ -313,7 +313,7 @@ export function ScorePage() {
               💎 {s.niveau}
             </p>
             <p className="text-[14px] text-[#6B7280]">
-              Vous êtes dans le top {s.topPourcent}% des fabricants VerifScan
+              Vous êtes dans le top {s.topPourcent}% des fabricants Prodtrust
             </p>
           </div>
 

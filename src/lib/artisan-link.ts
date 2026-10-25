@@ -3,7 +3,7 @@ import type { Prisma } from "@prisma/client";
 import { normalizePhone } from "@/lib/artisan-auth";
 
 /**
- * VerifScan — LIAISON CLIENT ↔ NOUVEAU LOT (source de vérité unique).
+ * Prodtrust — LIAISON CLIENT ↔ NOUVEAU LOT (source de vérité unique).
  *
  * ── Le problème ─────────────────────────────────────────────────────────
  * Un client qui a déjà acheté un lot (pack) et créé son tableau de bord

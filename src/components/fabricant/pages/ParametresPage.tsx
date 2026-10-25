@@ -553,7 +553,7 @@ function EntrepriseSection() {
  * le QR est composé au centre sur un fond blanc arrondi (quiet zone) pour
  * garantir la scannabilité. Sans design personnel, le design officiel de la
  * plateforme s'applique (importé par le SuperAdmin), sinon le badge jaune
- * « LABEL VERIFSCAN ».
+ * « LABEL PRODTRUST ».
  */
 function BadgeDesignSection() {
   const [templateUrl, setTemplateUrl] = useState<string | null>(null);
@@ -1794,7 +1794,7 @@ function DonneesSection() {
             {
               key: "shareStats",
               label: "Partager statistiques anonymisées",
-              desc: "Aidez-nous à améliorer VerifScan (aucune donnée personnelle).",
+              desc: "Aidez-nous à améliorer Prodtrust (aucune donnée personnelle).",
             },
             {
               key: "cookies",

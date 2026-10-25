@@ -44,7 +44,7 @@ export function VerificationGlow({ lot }: Props) {
 
         {/* Title */}
         <h2 className="font-display text-xl font-bold text-white drop-shadow-sm sm:text-2xl">
-          Vérifié par VerifScan
+          Vérifié par Prodtrust
         </h2>
 
         {/* Blockchain hash */}
@@ -87,7 +87,7 @@ export function VerificationGlow({ lot }: Props) {
 
         {/* Footer line */}
         <div className="mt-1 border-t border-white/10 pt-3 text-[10px] text-white/50">
-          © 2026 VerifScan — La vérité au bout du scan
+          © 2026 Prodtrust — La vérité au bout du scan
         </div>
       </div>
     </div>

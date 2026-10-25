@@ -429,7 +429,7 @@ export function ProduitDetailPage() {
   });
 
   function handleDownloadQR() {
-    // Design officiel « LABEL VERIFSCAN » (cercle jaune, QR noir au centre)
+    // Design officiel « LABEL PRODTRUST » (cercle jaune, QR noir au centre)
     // rendu par le serveur — 1200 px = 1016 DPI à 3 cm d'impression.
     downloadBadgeQR(
       scanUrl,
@@ -667,7 +667,7 @@ export function ProduitDetailPage() {
             </div>
           </SectionCard>
 
-          {/* QR code — design officiel « LABEL VERIFSCAN » (badge jaune) */}
+          {/* QR code — design officiel « LABEL PRODTRUST » (badge jaune) */}
           <SectionCard title="QR code du produit" subtitle="Scannez pour voir la fiche publique">
             <div className="flex flex-col items-center">
               <div className="rounded-xl border border-[#E5E7EB] bg-white p-3 shadow-sm">

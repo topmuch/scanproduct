@@ -20,7 +20,7 @@ const TESTIMONIALS: Testimonial[] = [
     name: "Marième Diop",
     title: "Fondatrice — Jus de Bissap Sénégal",
     quote:
-      "Grâce à VerifScan, nos ventes ont augmenté de 35% en 3 mois ! Nos clients scannent le QR code et ont immédiatement confiance. C'est un vrai game-changer pour les petits producteurs comme nous.",
+      "Grâce à Prodtrust, nos ventes ont augmenté de 35% en 3 mois ! Nos clients scannent le QR code et ont immédiatement confiance. C'est un vrai game-changer pour les petits producteurs comme nous.",
   },
   {
     initials: "IN",
@@ -28,7 +28,7 @@ const TESTIMONIALS: Testimonial[] = [
     name: "Ibrahima Ndiaye",
     title: "Directeur Général — Térange Foods",
     quote:
-      "Nous exportons maintenant vers 4 pays de la CEDEAO sans aucune difficulté douanière. Les documents générés par VerifScan sont acceptés partout. Un outil indispensable pour tout agro-industriel sérieux.",
+      "Nous exportons maintenant vers 4 pays de la CEDEAO sans aucune difficulté douanière. Les documents générés par Prodtrust sont acceptés partout. Un outil indispensable pour tout agro-industriel sérieux.",
   },
   {
     initials: "AS",
@@ -36,7 +36,7 @@ const TESTIMONIALS: Testimonial[] = [
     name: "Awa Sow",
     title: "Responsable Qualité — BioAfrica Cosmetics",
     quote:
-      "La traçabilité de nos produits cosmétiques était un cauchemar. Avec VerifScan, tout est centralisé et nos clients adorent pouvoir vérifier l'origine des ingrédients. Le support est en plus très réactif.",
+      "La traçabilité de nos produits cosmétiques était un cauchemar. Avec Prodtrust, tout est centralisé et nos clients adorent pouvoir vérifier l'origine des ingrédients. Le support est en plus très réactif.",
   },
 ];
 

@@ -146,11 +146,11 @@ export function UserDetailPage() {
     .replace(/[^\d]/g, "");
   const whatsappHref = whatsappDigits
     ? `https://wa.me/${whatsappDigits}?text=${encodeURIComponent(
-        `Bonjour ${maker.company}, c'est l'équipe VerifScan. Nous vous contactons au sujet de votre compte.`,
+        `Bonjour ${maker.company}, c'est l'équipe Prodtrust. Nous vous contactons au sujet de votre compte.`,
       )}`
     : null;
   const mailtoHref = `mailto:${maker.email}?subject=${encodeURIComponent(
-    "VerifScan — Contact de l'équipe support",
+    "Prodtrust — Contact de l'équipe support",
   )}`;
 
   // Enregistre la note interne (AuditLog côté serveur) puis l'ajoute en tête.

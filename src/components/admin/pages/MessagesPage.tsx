@@ -20,7 +20,7 @@ import { cn } from "@/lib/utils";
 /**
  * MessagesPage — onglet SuperAdmin « Messages » : messages reçus depuis le
  * formulaire de contact public (/contact). Chaque soumission est stockée en
- * base ET notifiée par email à contact@verifscan.com (emailStatus lisible
+ * base ET notifiée par email à contact@newvisioncargo.pro (emailStatus lisible
  * ici). Actions : marquer lu / non lu, archiver / désarchiver, supprimer.
  */
 
@@ -53,7 +53,7 @@ const STATUS_STYLES: Record<string, { label: string; className: string }> = {
 };
 
 const EMAIL_STATUS_STYLES: Record<string, { label: string; className: string; hint: string }> = {
-  SENT: { label: "Email envoyé", className: "bg-[#D1FAE5] text-[#059669]", hint: "Notification envoyée à contact@verifscan.com" },
+  SENT: { label: "Email envoyé", className: "bg-[#D1FAE5] text-[#059669]", hint: "Notification envoyée à contact@newvisioncargo.pro" },
   SKIPPED: { label: "Email non configuré", className: "bg-[#FEF3C7] text-[#92400E]", hint: "SMTP non configuré — configurez Paramètres → Email pour recevoir les notifications" },
   FAILED: { label: "Email échoué", className: "bg-[#FEE2E2] text-[#991B1B]", hint: "L'envoi de la notification a échoué — vérifiez la configuration SMTP" },
   PENDING: { label: "Email en cours", className: "bg-[#DCE7F2] text-[#0A2B5F]", hint: "Notification en cours d'envoi" },
@@ -197,7 +197,7 @@ export function MessagesPage() {
           <h1 className="text-xl font-bold text-[#111827]">Messages de contact</h1>
           <p className="mt-1 text-sm text-[#6B7280]">
             Messages reçus depuis le formulaire public — également notifiés à
-            contact@verifscan.com.
+            contact@newvisioncargo.pro.
           </p>
         </div>
         <button
@@ -264,7 +264,7 @@ export function MessagesPage() {
           </p>
           <p className="mt-1 max-w-sm text-sm text-[#6B7280]">
             Les messages envoyés depuis la page Contact apparaîtront ici et
-            seront notifiés à contact@verifscan.com.
+            seront notifiés à contact@newvisioncargo.pro.
           </p>
         </div>
       ) : (

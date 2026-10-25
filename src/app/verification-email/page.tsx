@@ -7,7 +7,7 @@ import {
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Validation de votre email — VerifScan",
+  title: "Validation de votre email — Prodtrust",
   robots: { index: false, follow: false },
 };
 

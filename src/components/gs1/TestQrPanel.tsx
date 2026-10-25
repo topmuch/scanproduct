@@ -2,7 +2,7 @@
 
 /**
  * ============================================================================
- * VerifScan — Panneau de test GS1 Digital Link (client)
+ * Prodtrust — Panneau de test GS1 Digital Link (client)
  * ============================================================================
  * Affiche des QR Codes scannables AU TÉLÉPHONE pour valider le resolver en
  * conditions réelles. Les URL sont construites côté client à partir de
@@ -54,7 +54,7 @@ function CarteQr({
       </div>
 
       <div className="rounded-xl border border-slate-100 bg-white p-3">
-        {/* Design officiel « LABEL VERIFSCAN » — cercle jaune, QR noir au centre */}
+        {/* Design officiel « LABEL PRODTRUST » — cercle jaune, QR noir au centre */}
         <BadgeQRPreview value={url} size={210} />
       </div>
 
@@ -112,7 +112,7 @@ export function TestQrPanel({ fixtures }: { fixtures: FixtureTestQr[] }) {
       <CarteQr
         key={f.produitId + f.type}
         titre={`QR Standard — ${f.nom}`}
-        sousTitre="Petit producteur local · URL courte VerifScan"
+        sousTitre="Petit producteur local · URL courte Prodtrust"
         url={genererUrlStandard(f.produitId, origine)}
         attendu="302 → page passeport du lot actif du produit"
       />

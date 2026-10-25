@@ -1,5 +1,5 @@
 // ============================================================================
-// VerifScan — Plan quota config + helpers
+// Prodtrust — Plan quota config + helpers
 // ============================================================================
 // Pure server-side module. No React, no API routes.
 //

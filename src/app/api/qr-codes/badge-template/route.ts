@@ -14,7 +14,7 @@ import { db } from "@/lib/db";
  * « badge ») : le QR noir est composé au centre sur un fond blanc arrondi
  * (quiet zone) pour garantir la scannabilité. Quand aucun design personnel
  * n'est défini, le design officiel de la plateforme s'applique (s'il a été
- * importé par le SuperAdmin), sinon le badge jaune « LABEL VERIFSCAN ».
+ * importé par le SuperAdmin), sinon le badge jaune « LABEL PRODTRUST ».
  *
  * ── GET /api/qr-codes/badge-template ─────────────────────────────
  *   { url: string | null } — le design personnel actuel (ou null).

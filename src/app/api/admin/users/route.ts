@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
     // label so the NOT NULL companyName column still gets a sensible value.
     const companyName =
       data.role === "SUPERADMIN" && !data.company?.trim()
-        ? "VerifScan Admin"
+        ? "Prodtrust Admin"
         : data.company;
 
     const user = await db.user.create({

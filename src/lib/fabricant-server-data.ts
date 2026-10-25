@@ -1,5 +1,5 @@
 /**
- * VerifScan — Fabricant dashboard server-side data layer.
+ * Prodtrust — Fabricant dashboard server-side data layer.
  *
  * Every function here runs ONLY on the server (uses `db` from @/lib/db).
  * Returns plain JSON-serializable objects shaped to match the types in

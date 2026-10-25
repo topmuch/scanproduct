@@ -180,16 +180,16 @@ export async function notifyArtisanCounterfeit(params: {
     const regionB = regionLabel(params.alert.regionB);
     await sendEmail({
       to: params.to,
-      subject: `VerifScan — Activité suspecte sur « ${params.productName} »`,
+      subject: `Prodtrust — Activité suspecte sur « ${params.productName} »`,
       text:
         `Bonjour ${params.artisanName},\n\n` +
-        `VerifScan a détecté que votre produit « ${params.productName} » a été scanné ` +
+        `Prodtrust a détecté que votre produit « ${params.productName} » a été scanné ` +
         `depuis ${regionA} puis ${regionB} en moins de 48 heures.\n\n` +
         `Un produit physique ne peut pas se déplacer aussi vite : cela peut ` +
         `signaler une CONTREFAÇON de votre produit.\n\n` +
         `Détail : dernier fuseau ${params.alert.tzB} vs précédent ${params.alert.tzA}, ` +
         `le ${new Date(params.alert.detectedAt).toLocaleString("fr-FR")}.\n\n` +
-        `L'équipe VerifScan`,
+        `L'équipe Prodtrust`,
     });
   } catch (e) {
     console.error("[anti-contrefacon] email artisan échoué (non bloquant):", e);

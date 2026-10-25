@@ -110,7 +110,7 @@ export function IndustryCards() {
           </h2>
           <p className="mx-auto mt-4 max-w-3xl text-base text-[#6B7280] sm:text-lg">
             Que vous soyez producteur de fruits, transformateur de cacao ou
-            fabricant de cosmétiques, VerifScan s&apos;adapte à vos besoins
+            fabricant de cosmétiques, Prodtrust s&apos;adapte à vos besoins
             spécifiques.
           </p>
         </AnimatedSection>

@@ -5,7 +5,7 @@ import { formatDate } from "@/lib/utils";
 
 /**
  * CompactVerificationFooter — compact dark footer showing "Vérifié par
- * VerifScan" + blockchain hash + share buttons.
+ * Prodtrust" + blockchain hash + share buttons.
  *
  * Lighter than the full VerificationFooter: single row, smaller share buttons.
  *
@@ -23,7 +23,7 @@ export function CompactVerificationFooter({ lot }: Props) {
     : null;
   const publicUrl = `${getScanOrigin().replace(/\/$/, "")}/p/${lot.id}`;
   const shareText = encodeURIComponent(
-    `Découvrez le passeport numérique VerifScan de ce produit : ${publicUrl}`,
+    `Découvrez le passeport numérique Prodtrust de ce produit : ${publicUrl}`,
   );
 
   return (
@@ -34,7 +34,7 @@ export function CompactVerificationFooter({ lot }: Props) {
         </div>
         <div className="min-w-0 flex-1">
           <h2 className="text-xs font-bold uppercase tracking-wider text-white">
-            Vérifié par VerifScan
+            Vérifié par Prodtrust
           </h2>
           {shortHash ? (
             <p className="mt-0.5 truncate font-mono text-[10px] text-gray-400">
@@ -104,7 +104,7 @@ export function CompactVerificationFooter({ lot }: Props) {
         <Lock className="h-3 w-3 text-green-400" />
         <span>
           Passeport numérique sécurisé et infalsifiable par la blockchain
-          VerifScan.
+          Prodtrust.
         </span>
       </div>
     </div>

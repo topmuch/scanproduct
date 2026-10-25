@@ -158,7 +158,7 @@ export function AbonnementPage() {
       }
       toast.success(`Demande envoyée — réf. ${json.reference}`, {
         description:
-          "L'équipe VerifScan vous contactera sous 24 h pour finaliser le paiement.",
+          "L'équipe Prodtrust vous contactera sous 24 h pour finaliser le paiement.",
       });
       setCmd(null);
       refresh();
@@ -592,7 +592,7 @@ export function AbonnementPage() {
               onClick={() =>
                 toast.info("Méthode de paiement", {
                   description:
-                    "Le paiement se finalise avec l'équipe VerifScan : Orange Money, Wave, carte bancaire ou virement — à votre convenance.",
+                    "Le paiement se finalise avec l'équipe Prodtrust : Orange Money, Wave, carte bancaire ou virement — à votre convenance.",
                 })
               }
             >
@@ -1087,7 +1087,7 @@ export function AbonnementPage() {
                   )}
                 </p>
                 <p className="mt-2 text-[11px] leading-relaxed text-[#9CA3AF]">
-                  Demande envoyée à l&apos;équipe VerifScan — le paiement
+                  Demande envoyée à l&apos;équipe Prodtrust — le paiement
                   (Orange Money, Wave, carte ou virement) se finalise avec
                   notre équipe sous 24 h, activation immédiate après
                   encaissement.

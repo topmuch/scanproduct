@@ -1,5 +1,5 @@
 /**
- * VerifScan — QR code URL helpers (server-safe).
+ * Prodtrust — QR code URL helpers (server-safe).
  *
  * These functions are pure JS and can be imported from BOTH server and
  * client components. They MUST NOT use `window` directly without a
@@ -32,7 +32,7 @@ export function getScanOrigin(): string {
     // préventif ; le domaine consulté normal est conservé tel quel.
     return localhostify(window.location.origin);
   }
-  return process.env.NEXT_PUBLIC_SCAN_URL || "https://verifscan.com";
+  return process.env.NEXT_PUBLIC_SCAN_URL || "https://newvisioncargo.pro";
 }
 
 /**

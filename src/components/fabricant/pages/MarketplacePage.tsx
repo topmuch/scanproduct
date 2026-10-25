@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * VerifScan — Fabricant dashboard · Marketplace B2B page
+ * Prodtrust — Fabricant dashboard · Marketplace B2B page
  *
  * 3 tabs (state-based switcher with PillFilter-style tab buttons):
  *   1. "Demandes reçues"   — inquiries received by this fabricant, KPIs +
@@ -703,7 +703,7 @@ function ProductsVisibilityTab() {
         </div>
         <div>
           <p className="text-[14px] font-semibold text-[#065F46]">
-            Vos produits publics apparaissent automatiquement dans le catalogue B2B VerifScan.
+            Vos produits publics apparaissent automatiquement dans le catalogue B2B Prodtrust.
           </p>
           <p className="mt-1 text-[13px] text-[#047857]">
             Les distributeurs peuvent vous envoyer des demandes de devis 24/7. Activez la

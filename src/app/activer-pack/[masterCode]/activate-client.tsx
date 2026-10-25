@@ -857,7 +857,7 @@ export default function ActivatePackClient({
         👋 Bon retour{loggedInArtisan.name ? `, ${loggedInArtisan.name}` : ""} !
       </p>
       <p className="mt-0.5">
-        Vous avez déjà un compte VerifScan
+        Vous avez déjà un compte Prodtrust
         {loggedInArtisan.packsCount > 0
           ? ` avec ${loggedInArtisan.packsCount} lot${loggedInArtisan.packsCount > 1 ? "s" : ""}`
           : ""}

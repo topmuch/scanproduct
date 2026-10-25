@@ -16,7 +16,7 @@ import { ArtisanLoginForm } from "./login-form";
  *
  * Refonte (demande utilisateur) : la page était un îlot amber isolé, sans
  * menu ni footer. Elle utilise désormais la coquille standard du site public
- * (PublicHeader avec menu + PublicFooter) et la charte VerifScan
+ * (PublicHeader avec menu + PublicFooter) et la charte Prodtrust
  * (#022150 marine / #10B981 émeraude / blanc), sur le même schéma
  * split-screen que /login (Espace Fabricant). L'amber (#F59E0B) reste
  * présent en touche discrète : c'est LA couleur identitaire de l'espace
@@ -34,9 +34,9 @@ import { ArtisanLoginForm } from "./login-form";
  */
 
 export const metadata: Metadata = {
-  title: "Connexion Artisan — VerifScan",
+  title: "Connexion Artisan — Prodtrust",
   description:
-    "Espace artisan VerifScan : activez vos packs, publiez vos produits et suivez vos scans en temps réel. Connexion par numéro de téléphone.",
+    "Espace artisan Prodtrust : activez vos packs, publiez vos produits et suivez vos scans en temps réel. Connexion par numéro de téléphone.",
   robots: { index: false, follow: false },
 };
 
@@ -80,10 +80,10 @@ export default function ArtisanLoginPage() {
 
             <div className="relative z-10 flex w-full flex-col justify-between p-12 text-white">
               {/* Logo officiel (contient déjà le wordmark) */}
-              <Link href="/" className="flex items-center" aria-label="VerifScan accueil">
+              <Link href="/" className="flex items-center" aria-label="Prodtrust accueil">
                 <img
-                  src="/verifscan-logo-white.webp?v=1"
-                  alt="VerifScan"
+                  src="/prodtrust-logo-white.webp?v=1"
+                  alt="Prodtrust"
                   className="h-14 w-auto shrink-0"
                   width={720}
                   height={247}
@@ -101,7 +101,7 @@ export default function ArtisanLoginPage() {
                   authentifié au scan.
                 </h2>
                 <p className="mt-4 max-w-md text-[#DCE7F2]">
-                  Le portail simple des artisans VerifScan : activez vos packs,
+                  Le portail simple des artisans Prodtrust : activez vos packs,
                   publiez vos produits et laissez vos clients vérifier
                   l&apos;authenticité en un scan.
                 </p>
@@ -119,7 +119,7 @@ export default function ArtisanLoginPage() {
               </div>
 
               <p className="text-xs text-[#DCE7F2]/70">
-                © {new Date().getFullYear()} VerifScan — Dakar, Sénégal
+                © {new Date().getFullYear()} Prodtrust — Dakar, Sénégal
               </p>
             </div>
           </div>
@@ -137,7 +137,7 @@ export default function ArtisanLoginPage() {
             {/* Rassuration « vérifié » — rappel de la promesse du site */}
             <div className="mt-8 flex items-center gap-2 text-xs font-medium text-[#6B7280]">
               <CheckCircle2 className="h-4 w-4 text-[#10B981]" />
-              Produits vérifiables par vos clients sur verifscan.com
+              Produits vérifiables par vos clients sur newvisioncargo.pro
             </div>
           </div>
         </div>

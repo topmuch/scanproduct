@@ -112,7 +112,7 @@ export function UsersPage() {
     }
     window.open(
       `https://wa.me/${digits}?text=${encodeURIComponent(
-        `Bonjour ${m.company}, c'est l'équipe VerifScan. Nous vous contactons au sujet de votre compte.`,
+        `Bonjour ${m.company}, c'est l'équipe Prodtrust. Nous vous contactons au sujet de votre compte.`,
       )}`,
       "_blank",
       "noopener,noreferrer",
@@ -971,7 +971,7 @@ function AddMakerModal({
               <Shield className="h-4 w-4 shrink-0" />
               <span>
                 Le compte sera créé avec le statut <strong>Actif</strong> et un accès
-                administrateur complet au tableau de bord VerifScan.
+                administrateur complet au tableau de bord Prodtrust.
               </span>
             </div>
           )}

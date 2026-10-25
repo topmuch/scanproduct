@@ -47,17 +47,17 @@ const SLIDES: Slide[] = [
   {
     webpSrc: "/hero-slide-1.webp",
     pngSrc: "/hero-slide-1-opt.png",
-    alt: "VerifScan — une main tient un smartphone affichant l'application qui confirme l'authenticité d'une huile pure Natura après le scan de son QR code.",
+    alt: "Prodtrust — une main tient un smartphone affichant l'application qui confirme l'authenticité d'une huile pure Natura après le scan de son QR code.",
   },
   {
     webpSrc: "/hero-slide-2.webp",
     pngSrc: "/hero-slide-2-opt.png",
-    alt: "VerifScan — une main scanne le QR code d'une bouteille de jus d'orange 100% naturel, affichant sur l'écran du smartphone la confirmation « Produit authentique » avec les détails d'origine, ingrédients et traçabilité garantie.",
+    alt: "Prodtrust — une main scanne le QR code d'une bouteille de jus d'orange 100% naturel, affichant sur l'écran du smartphone la confirmation « Produit authentique » avec les détails d'origine, ingrédients et traçabilité garantie.",
   },
   {
     webpSrc: "/hero-slide-3.webp",
     pngSrc: "/hero-slide-3-opt.png",
-    alt: "VerifScan — un smartphone scanne un QR code sur un avocat au milieu de légumes frais, affichant l'écran « Passeport numérique du produit » confirmant un « Produit authentique » avec traçabilité complète.",
+    alt: "Prodtrust — un smartphone scanne un QR code sur un avocat au milieu de légumes frais, affichant l'écran « Passeport numérique du produit » confirmant un « Produit authentique » avec traçabilité complète.",
   },
 ];
 
@@ -115,7 +115,7 @@ export function Hero() {
       id="accueil"
       className="relative w-full overflow-hidden bg-[#0a0a0a] pt-16 lg:pt-20"
       aria-roledescription="carousel"
-      aria-label="Présentation VerifScan"
+      aria-label="Présentation Prodtrust"
     >
       {/* ── Slider ─────────────────────────────────────────────── */}
       <div

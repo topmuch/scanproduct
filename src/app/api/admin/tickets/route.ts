@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
         userId: data.userId ?? null,
         requesterName: data.requesterName ?? null,
         requesterCompany: data.requesterCompany ?? null,
-        assignedTo: "Admin VerifScan",
+        assignedTo: "Admin Prodtrust",
         tags: JSON.stringify([]),
         messages: JSON.stringify(firstMessage),
         internalNotes: JSON.stringify([]),

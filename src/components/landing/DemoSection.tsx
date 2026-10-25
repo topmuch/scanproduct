@@ -77,10 +77,10 @@ export function DemoSection() {
             Démo interactive
           </SectionBadge>
           <h2 className="mt-4 font-display text-[28px] font-semibold leading-tight text-[#111827] sm:text-[36px] lg:text-[40px]">
-            Vivez l&apos;expérience VerifScan en direct
+            Vivez l&apos;expérience Prodtrust en direct
           </h2>
           <p className="mx-auto mt-4 max-w-[600px] text-base text-[#6B7280]">
-            Cette démo se réinitialise toutes les heures. Découvrez ce que vos clients voient quand ils scannent un produit VerifScan.
+            Cette démo se réinitialise toutes les heures. Découvrez ce que vos clients voient quand ils scannent un produit Prodtrust.
           </p>
         </AnimatedSection>
 
@@ -124,7 +124,7 @@ export function DemoSection() {
               <div className="flex items-center justify-between border-t border-[#F3F4F6] bg-[#F9FAFB] px-6 py-4">
                 <div>
                   <p className="text-xs font-medium text-[#9CA3AF]">Scannez ce QR code</p>
-                  <p className="text-sm font-semibold text-[#111827]">pour voir le catalogue VerifScan</p>
+                  <p className="text-sm font-semibold text-[#111827]">pour voir le catalogue Prodtrust</p>
                 </div>
                 <div className="rounded-lg border-2 border-[#022150]/20 bg-white p-2">
                   <BadgeQRPreview value={`${getScanOrigin()}/produits`} size={72} />

@@ -65,7 +65,7 @@ function buildWhatsAppMessage(opts: {
     "",
     "💡 Scannez votre QR Code Maître pour activer vos produits.",
     "",
-    "L'équipe VerifScan",
+    "L'équipe Prodtrust",
   ].join("\n");
 }
 
@@ -84,7 +84,7 @@ function buildReturningWhatsAppMessage(opts: {
     "",
     `Votre NOUVEAU pack de ${opts.quantity} QR codes est prêt.`,
     "",
-    "✅ Il a été ajouté à votre tableau de bord VerifScan existant.",
+    "✅ Il a été ajouté à votre tableau de bord Prodtrust existant.",
     "",
     "📱 Connectez-vous avec vos identifiants habituels :",
     opts.loginUrl,
@@ -92,7 +92,7 @@ function buildReturningWhatsAppMessage(opts: {
     "",
     "💡 Scannez le QR Code Maître de ce nouveau lot pour activer vos produits.",
     "",
-    "L'équipe VerifScan",
+    "L'équipe Prodtrust",
   ].join("\n");
 }
 

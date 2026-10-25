@@ -29,7 +29,7 @@ import crypto from "crypto";
  * de tester en local (ex. http://localhost:3100) mais exige le secret.
  *
  * Appel conseillé (cron Coolify ou crontab) — voir scripts/ping-google.sh :
- *   0 8 * * * curl -s "https://verifscan.com/api/seo/ping?secret=$SEO_PING_SECRET"
+ *   0 8 * * * curl -s "https://newvisioncargo.pro/api/seo/ping?secret=$SEO_PING_SECRET"
  */
 
 export const dynamic = "force-dynamic";
@@ -53,7 +53,7 @@ async function fetchTimeout(
     const res = await fetch(url, {
       ...init,
       signal: controller.signal,
-      headers: { "User-Agent": "VerifScan-SEOPing/1.0", ...(init?.headers ?? {}) },
+      headers: { "User-Agent": "Prodtrust-SEOPing/1.0", ...(init?.headers ?? {}) },
       cache: "no-store",
     });
     clearTimeout(t);

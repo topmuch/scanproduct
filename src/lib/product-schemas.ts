@@ -1,5 +1,5 @@
 /**
- * VerifScan — Product Category Schemas (CLIENT-SAFE)
+ * Prodtrust — Product Category Schemas (CLIENT-SAFE)
  *
  * Defines the dynamic form schemas for all 10 product categories across 3
  * deployment phases. Each `ProductSchema` declares:

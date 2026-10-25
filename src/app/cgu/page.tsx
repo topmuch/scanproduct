@@ -2,13 +2,13 @@ import type { Metadata } from "next";
 import { LegalLayout, LegalArticle } from "@/components/public/LegalLayout";
 
 export const metadata: Metadata = {
-  title: "Conditions Générales d'Utilisation — VerifScan",
+  title: "Conditions Générales d'Utilisation — Prodtrust",
   description:
-    "Conditions Générales d'Utilisation (CGU) de la plateforme VerifScan : définition des services, obligations des utilisateurs, propriété intellectuelle, responsabilité et droit applicable.",
+    "Conditions Générales d'Utilisation (CGU) de la plateforme Prodtrust : définition des services, obligations des utilisateurs, propriété intellectuelle, responsabilité et droit applicable.",
   openGraph: {
-    title: "CGU — VerifScan",
+    title: "CGU — Prodtrust",
     description:
-      "Conditions Générales d'Utilisation de la plateforme VerifScan.",
+      "Conditions Générales d'Utilisation de la plateforme Prodtrust.",
     type: "website",
   },
 };
@@ -34,7 +34,7 @@ export default function CGUPage() {
   return (
     <LegalLayout
       title="Conditions Générales d'Utilisation"
-      description="Les présentes Conditions Générales d'Utilisation (CGU) encadrent l'utilisation de la plateforme VerifScan par ses utilisateurs, fabricants partenaires et visiteurs du catalogue public."
+      description="Les présentes Conditions Générales d'Utilisation (CGU) encadrent l'utilisation de la plateforme Prodtrust par ses utilisateurs, fabricants partenaires et visiteurs du catalogue public."
       updatedAt="Dernière mise à jour : 1 janvier 2026"
       sections={SECTIONS}
     >
@@ -42,9 +42,9 @@ export default function CGUPage() {
         <p>
           Les présentes Conditions Générales d&apos;Utilisation (ci-après les
           « <strong>CGU</strong> ») ont pour objet de définir les modalités
-          et conditions d&apos;utilisation de la plateforme VerifScan
+          et conditions d&apos;utilisation de la plateforme Prodtrust
           (ci-après la « <strong>Plateforme</strong> »), éditée par
-          VerifScan, ainsi que les droits et obligations des parties dans
+          Prodtrust, ainsi que les droits et obligations des parties dans
           ce cadre.
         </p>
         <p>
@@ -63,8 +63,8 @@ export default function CGUPage() {
         </p>
         <ul className="ml-5 list-disc space-y-2">
           <li>
-            <strong>Plateforme</strong> : désigne le service VerifScan,
-            accessible à l&apos;adresse verifscan.com, incluant l&apos;espace
+            <strong>Plateforme</strong> : désigne le service Prodtrust,
+            accessible à l&apos;adresse newvisioncargo.pro, incluant l&apos;espace
             fabricant, le catalogue public et les pages produits
             associées.
           </li>
@@ -74,12 +74,12 @@ export default function CGUPage() {
           </li>
           <li>
             <strong>Fabricant partenaire</strong> : un Utilisateur inscrit
-            qui utilise les services VerifScan pour générer des passeports
+            qui utilise les services Prodtrust pour générer des passeports
             numériques pour ses produits.
           </li>
           <li>
             <strong>Passeport numérique</strong> : la page produit publique
-            générée par VerifScan pour un lot donné, accessible via un QR
+            générée par Prodtrust pour un lot donné, accessible via un QR
             code unique.
           </li>
           <li>
@@ -89,14 +89,14 @@ export default function CGUPage() {
           </li>
           <li>
             <strong>QR code</strong> : un code à deux dimensions unique,
-            généré par VerifScan, qui renvoie vers le Passeport numérique
+            généré par Prodtrust, qui renvoie vers le Passeport numérique
             d&apos;un Lot.
           </li>
         </ul>
       </LegalArticle>
 
       <LegalArticle id="services" index={3} title="Description des services">
-        <p>VerifScan fournit les services suivants :</p>
+        <p>Prodtrust fournit les services suivants :</p>
         <ul className="ml-5 list-disc space-y-2">
           <li>
             Création d&apos;un compte Fabricant partenaire avec espace de
@@ -124,7 +124,7 @@ export default function CGUPage() {
           </li>
         </ul>
         <p>
-          VerifScan se réserve le droit de faire évoluer la nature et
+          Prodtrust se réserve le droit de faire évoluer la nature et
           l&apos;étendue des services proposés, sous réserve d&apos;en
           informer les Utilisateurs.
         </p>
@@ -185,10 +185,10 @@ export default function CGUPage() {
           Le Fabricant partenaire est responsable de la conservation de
           ses identifiants de connexion et de toute activité effectuée
           depuis son compte. Il s&apos;engage à notifier immédiatement
-          VerifScan de toute utilisation non autorisée de son compte.
+          Prodtrust de toute utilisation non autorisée de son compte.
         </p>
         <p>
-          VerifScan se réserve le droit de refuser une demande
+          Prodtrust se réserve le droit de refuser une demande
           d&apos;inscription, de suspendre ou de clôturer un compte en
           cas de manquement aux présentes CGU.
         </p>
@@ -201,7 +201,7 @@ export default function CGUPage() {
       >
         <p>
           La Plateforme, son code source, son design, ses textes, ses
-          logos et ses marques sont la propriété exclusive de VerifScan
+          logos et ses marques sont la propriété exclusive de Prodtrust
           ou de ses partenaires. Toute reproduction, représentation,
           modification ou diffusion, totale ou partielle, sans
           autorisation écrite préalable, est interdite.
@@ -211,13 +211,13 @@ export default function CGUPage() {
           leurs Passeports numériques (nom du produit, description,
           ingrédients, certifications, etc.) restent la propriété de ces
           derniers. En les publiant sur la Plateforme, le Fabricant
-          partenaire accorde à VerifScan une licence non exclusive,
+          partenaire accorde à Prodtrust une licence non exclusive,
           mondiale et gratuite d&apos;hébergement et d&apos;affichage
           public de ces informations, pour la durée d&apos;utilisation du
           service.
         </p>
         <p>
-          VerifScan est libre d&apos;anonymiser et d&apos;agréger les
+          Prodtrust est libre d&apos;anonymiser et d&apos;agréger les
           données de scans pour produire des statistiques sectorielles
           qui ne permettraient pas l&apos;identification d&apos;un
           Fabricant partenaire individuel.
@@ -226,7 +226,7 @@ export default function CGUPage() {
 
       <LegalArticle id="donnees" index={8} title="Données et confidentialité">
         <p>
-          VerifScan traite les données personnelles des Utilisateurs
+          Prodtrust traite les données personnelles des Utilisateurs
           conformément à sa Politique de confidentialité, accessible
           depuis le pied de page de la Plateforme. Les données collectées
           sont limitées à ce qui est strictement nécessaire au
@@ -242,23 +242,23 @@ export default function CGUPage() {
 
       <LegalArticle id="responsabilite" index={9} title="Responsabilité">
         <p>
-          VerifScan met tout en œuvre pour assurer la disponibilité et la
+          Prodtrust met tout en œuvre pour assurer la disponibilité et la
           sécurité de la Plateforme, mais ne peut garantir une
           disponibilité absolue. La Plateforme peut être indisponible
           notamment pour des raisons de maintenance, de mise à jour ou
           d&apos;aléa technique.
         </p>
         <p>
-          VerifScan ne saurait être tenu responsable des dommages directs
+          Prodtrust ne saurait être tenu responsable des dommages directs
           ou indirects résultant de l&apos;utilisation de la Plateforme,
           notamment en cas de perte de données, d&apos;interruption de
           service, ou de fraude imputable à un Fabricant partenaire ou à
           un tiers.
         </p>
         <p>
-          VerifScan ne contrôle pas le contenu des informations publiées
+          Prodtrust ne contrôle pas le contenu des informations publiées
           par les Fabricants partenaires dans leurs Passeports
-          numériques. La responsabilité de VerifScan ne saurait être
+          numériques. La responsabilité de Prodtrust ne saurait être
           engagée du fait de l&apos;inexactitude de ces informations. Le
           Fabricant partenaire reste seul responsable de la véracité et
           de la licéité des informations qu&apos;il publie.
@@ -271,7 +271,7 @@ export default function CGUPage() {
         title="Suspension et résiliation"
       >
         <p>
-          En cas de manquement aux présentes CGU, VerifScan se réserve le
+          En cas de manquement aux présentes CGU, Prodtrust se réserve le
           droit de suspendre ou de résilier, sans préavis ni
           indemnisation, l&apos;accès à la Plateforme pour
           l&apos;Utilisateur concerné, et le cas échéant de supprimer les
@@ -279,7 +279,7 @@ export default function CGUPage() {
         </p>
         <p>
           Le Fabricant partenaire peut à tout moment demander la
-          clôture de son compte auprès de VerifScan. Les Passeports
+          clôture de son compte auprès de Prodtrust. Les Passeports
           numériques associés peuvent alors être désactivés, sous réserve
           des obligations légales de conservation.
         </p>
@@ -287,7 +287,7 @@ export default function CGUPage() {
 
       <LegalArticle id="tarifs" index={11} title="Tarifs et facturation">
         <p>
-          Les tarifs applicables aux services VerifScan sont disponibles
+          Les tarifs applicables aux services Prodtrust sont disponibles
           sur la page Tarifs de la Plateforme et peuvent évoluer. Les
           Fabricants partenaires sont informés au moins 30 jours avant
           toute modification tarifaire.
@@ -304,7 +304,7 @@ export default function CGUPage() {
         title="Évolution des CGU"
       >
         <p>
-          VerifScan se réserve le droit de modifier les présentes CGU à
+          Prodtrust se réserve le droit de modifier les présentes CGU à
           tout moment. Les modifications entrent en vigueur à leur
           publication sur la Plateforme. Il appartient à
           l&apos;Utilisateur de consulter régulièrement la présente
@@ -338,16 +338,16 @@ export default function CGUPage() {
       <LegalArticle id="contact" index={14} title="Contact">
         <p>
           Pour toute question relative aux présentes CGU, vous pouvez
-          contacter VerifScan :
+          contacter Prodtrust :
         </p>
         <ul className="ml-5 list-disc space-y-2">
           <li>
             Par email :{" "}
             <a
-              href="mailto:contact@verifscan.com"
+              href="mailto:contact@newvisioncargo.pro"
               className="font-medium text-[#022150] underline-offset-2 hover:underline"
             >
-              contact@verifscan.com
+              contact@newvisioncargo.pro
             </a>
           </li>
           <li>

@@ -11,7 +11,7 @@ import { renderQRBuffer, resolveLogoPath } from "@/lib/qr-server";
  * QR d'un batch (A4, 4 QR par ligne, Maître encadré en rouge + libellé
  * "MAÎTRE"). Marque le batch comme "printed" à la première génération.
  *
- * ── Design officiel « LABEL VERIFSCAN » ──────────────────────────
+ * ── Design officiel « LABEL PRODTRUST » ──────────────────────────
  * Chaque étiquette porte le badge officiel rendu côté serveur par
  * qr-badge.ts — le même rendu que les QR fabricant (render-badge,
  * labels-pdf, export-zip). Si le SuperAdmin a importé un design
@@ -79,7 +79,7 @@ export async function GET(
     doc.on("end", () => resolve(Buffer.concat(chunks)));
   });
 
-  doc.fontSize(18).font("Helvetica-Bold").text("VerifScan — Étiquettes QR Artisans", {
+  doc.fontSize(18).font("Helvetica-Bold").text("Prodtrust — Étiquettes QR Artisans", {
     align: "center",
   });
   doc
@@ -87,7 +87,7 @@ export async function GET(
     .font("Helvetica")
     .fillColor("#374151")
     .text(
-      `Batch ${batch.id.slice(0, 8).toUpperCase()} · ${batch.totalQuantity} QR codes · ${batch.numberOfPacks} packs de ${batch.packSize} · Design officiel LABEL VERIFSCAN`,
+      `Batch ${batch.id.slice(0, 8).toUpperCase()} · ${batch.totalQuantity} QR codes · ${batch.numberOfPacks} packs de ${batch.packSize} · Design officiel LABEL PRODTRUST`,
       { align: "center" }
     )
     .fillColor("#555555")
@@ -135,7 +135,7 @@ export async function GET(
 
       try {
         // URL publique complète = QR scannable (la caméra ouvre la page).
-        // Design officiel « LABEL VERIFSCAN » : rendu badge serveur (sharp)
+        // Design officiel « LABEL PRODTRUST » : rendu badge serveur (sharp)
         // — cohérent avec render-badge / labels-pdf / export-zip. Le badge
         // impose ECC Q (modules plus grands à l'impression) et un QR noir
         // centré. Template importé (design officiel plateforme) priorisé.
@@ -202,7 +202,7 @@ export async function GET(
     .font("Helvetica")
     .fillColor("#6B7280")
     .text(
-      `VerifScan · La vérité au bout du scan · Généré le ${new Date().toLocaleDateString("fr-FR")} — ${batch.totalQuantity + batch.numberOfPacks} étiquettes au total`,
+      `Prodtrust · La vérité au bout du scan · Généré le ${new Date().toLocaleDateString("fr-FR")} — ${batch.totalQuantity + batch.numberOfPacks} étiquettes au total`,
       { align: "center" }
     );
   doc.end();

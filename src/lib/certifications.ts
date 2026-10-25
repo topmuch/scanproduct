@@ -1,7 +1,7 @@
 // ============================================================================
-// VerifScan — Catalogue de certifications produits
+// Prodtrust — Catalogue de certifications produits
 // ============================================================================
-// Catalogue statique des certifications reconnues par VerifScan, utilisé par:
+// Catalogue statique des certifications reconnues par Prodtrust, utilisé par:
 //   - DynamicProductForm (sélection à la création du produit)
 //   - Page produit scanné (/p/[lotId]) — affichage riche avec emoji + catégorie
 //

@@ -50,7 +50,7 @@ export function Footer() {
           {/* Column 1: brand */}
           <div className="col-span-2 lg:col-span-1">
             <p className="max-w-xs text-sm leading-relaxed text-white/70">
-              La vérité au bout du scan. VerifScan offre aux fabricants un passeport numérique pour leurs produits, garantissant traçabilité, authenticité et transparence pour les consommateurs sénégalais et ouest-africains.
+              La vérité au bout du scan. Prodtrust offre aux fabricants un passeport numérique pour leurs produits, garantissant traçabilité, authenticité et transparence pour les consommateurs sénégalais et ouest-africains.
             </p>
             <span className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-xs font-medium text-white/90">
               <Lock className="h-3 w-3" /> Sécurisé par blockchain
@@ -109,8 +109,8 @@ export function Footer() {
             <ul className="mt-4 space-y-3">
               <li className="flex items-start gap-2.5 text-sm text-white/70">
                 <Mail className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#10B981]" />
-                <a href="mailto:contact@verifscan.com" className="hover:text-white">
-                  contact@verifscan.com
+                <a href="mailto:contact@newvisioncargo.pro" className="hover:text-white">
+                  contact@newvisioncargo.pro
                 </a>
               </li>
               <li className="flex items-start gap-2.5 text-sm text-white/70">
@@ -129,7 +129,7 @@ export function Footer() {
 
         <div className="mt-12 border-t border-white/10 pt-6">
           <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
-            <p className="text-[13px] text-white/50">© 2026 VerifScan. Tous droits réservés.</p>
+            <p className="text-[13px] text-white/50">© 2026 Prodtrust. Tous droits réservés.</p>
             <div className="flex items-center gap-4 text-[13px] text-white/50">
               <span>Conçu au Sénégal 🇸🇳 · Pour l&apos;Afrique de l&apos;Ouest</span>
               <Link href="/login/admin" className="transition-colors hover:text-white">

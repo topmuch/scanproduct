@@ -3,7 +3,7 @@ import { Tag, Truck, BadgePercent, LayoutGrid, RefreshCw } from "lucide-react";
 /**
  * FeaturesBar — Nest-style bottom features bar (5 icons).
  *
- * Adapted to VerifScan's value props:
+ * Adapted to Prodtrust's value props:
  *   - Transparence totale — Score /100 affiché pour chaque produit
  *   - Scan gratuit — QR code généré pour chaque lot
  *   - Alertes de rappel — Notifications en temps réel
@@ -40,7 +40,7 @@ export function FeaturesBar() {
   ];
 
   return (
-    <section className="border-y border-[#ECECEC] bg-white py-8" aria-label="Avantages VerifScan">
+    <section className="border-y border-[#ECECEC] bg-white py-8" aria-label="Avantages Prodtrust">
       <div className="mx-auto max-w-[1320px] px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
           {features.map((f) => (

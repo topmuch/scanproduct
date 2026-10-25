@@ -97,7 +97,7 @@ export async function POST(request: NextRequest) {
           : 587;
     const secure =
       typeof input.secure === "boolean" ? input.secure : port === 465;
-    const to = input.to?.trim() || input.from?.trim() || "test@verifscan.com";
+    const to = input.to?.trim() || input.from?.trim() || "test@newvisioncargo.pro";
 
     // Auto-fallback: if the encryption mode mismatches the port (OpenSSL
     // "wrong version number"), verifySmtpConnection retries once with the
@@ -131,9 +131,9 @@ export async function POST(request: NextRequest) {
         tls: { rejectUnauthorized: false },
       });
       await transporter.sendMail({
-        from: input.from?.trim() || `VerifScan <${input.user!.trim()}>`,
+        from: input.from?.trim() || `Prodtrust <${input.user!.trim()}>`,
         to,
-        subject: "VerifScan — Test SMTP réussi",
+        subject: "Prodtrust — Test SMTP réussi",
         text: `Test d'envoi effectué le ${new Date().toLocaleString("fr-FR")} depuis Paramètres → Email & Notifications. Si vous lisez cet email, votre configuration SMTP fonctionne.`,
         html: `<p>Test d'envoi effectué le <strong>${new Date().toLocaleString("fr-FR")}</strong> depuis <strong>Paramètres → Email &amp; Notifications</strong>.</p><p>Si vous lisez cet email, votre configuration SMTP fonctionne : les notifications (nouvelles inscriptions, tickets, alertes) partiront bien vers ce serveur.</p>`,
       });
@@ -190,7 +190,7 @@ export async function POST(request: NextRequest) {
 
   const result = await sendEmail({
     to,
-    subject: "VerifScan — Test SMTP réussi",
+    subject: "Prodtrust — Test SMTP réussi",
     text: `Test d'envoi effectué le ${new Date().toLocaleString("fr-FR")} depuis /api/admin/test-smtp. Si vous lisez cet email, votre configuration SMTP fonctionne.`,
     html: `<p>Test d'envoi effectué le <strong>${new Date().toLocaleString("fr-FR")}</strong> depuis <code>/api/admin/test-smtp</code>.</p><p>Si vous lisez cet email, votre configuration SMTP fonctionne. Les notifications (nouvelles inscriptions, tickets, alertes contrefaçon) partiront bien vers ce serveur.</p>`,
   });

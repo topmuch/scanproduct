@@ -1,5 +1,5 @@
 // ============================================================================
-// VerifScan — Cron request authentication
+// Prodtrust — Cron request authentication
 // ============================================================================
 // The scheduled email jobs (weekly digest, expiry alerts) are triggered by an
 // external scheduler (Coolify Scheduled Task, system crontab, uptime pinger…)

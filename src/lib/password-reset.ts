@@ -1,5 +1,5 @@
 // ============================================================================
-// VerifScan — Réinitialisation de mot de passe (token HMAC sans stockage)
+// Prodtrust — Réinitialisation de mot de passe (token HMAC sans stockage)
 // ============================================================================
 // Même philosophie que lib/verify-email.ts : token HMAC stateless, aucune
 // migration DB nécessaire (fonctionne sur les vieilles DB de prod).
@@ -138,14 +138,14 @@ function emailShell(title: string, bodyRows: string): string {
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background-color:#FFFFFF;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.08);">
         <tr><td style="background-color:#022150;padding:20px 24px;">
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
-            <td style="font-size:20px;font-weight:700;color:#FFFFFF;letter-spacing:-0.01em;">VerifScan</td>
+            <td style="font-size:20px;font-weight:700;color:#FFFFFF;letter-spacing:-0.01em;">Prodtrust</td>
             <td align="right" style="font-size:12px;color:#DCE7F2;">La vérité au bout du scan</td>
           </tr></table>
         </td></tr>
         <tr><td style="background-color:#10B981;height:4px;line-height:4px;font-size:4px;">&nbsp;</td></tr>
         ${bodyRows}
         <tr><td style="background-color:#F9FAFB;padding:20px 24px;border-top:1px solid #E5E7EB;">
-          <p style="margin:0;font-size:12px;color:#6B7280;text-align:center;line-height:1.5;">© 2026 VerifScan — La vérité au bout du scan</p>
+          <p style="margin:0;font-size:12px;color:#6B7280;text-align:center;line-height:1.5;">© 2026 Prodtrust — La vérité au bout du scan</p>
         </td></tr>
       </table>
       <p style="margin:16px 0 0 0;font-size:11px;color:#9CA3AF;text-align:center;">Cet email a été envoyé automatiquement. Merci de ne pas y répondre.</p>
@@ -187,7 +187,7 @@ export async function sendPasswordResetEmail(user: {
     <tr><td style="padding:0 24px 12px 24px;">
       <p style="margin:0;font-size:15px;line-height:1.6;color:#374151;">
         Bonjour ${esc(firstName || user.email)}, vous avez demandé la réinitialisation
-        de votre mot de passe VerifScan. Cliquez sur le bouton ci-dessous pour en
+        de votre mot de passe Prodtrust. Cliquez sur le bouton ci-dessous pour en
         choisir un nouveau.
       </p>
     </td></tr>
@@ -209,12 +209,12 @@ export async function sendPasswordResetEmail(user: {
   try {
     await sendEmail({
       to: user.email,
-      subject: "VerifScan — Réinitialisez votre mot de passe",
+      subject: "Prodtrust — Réinitialisez votre mot de passe",
       html,
       text: [
         `Bonjour ${firstName},`,
         "",
-        "Vous avez demandé la réinitialisation de votre mot de passe VerifScan.",
+        "Vous avez demandé la réinitialisation de votre mot de passe Prodtrust.",
         `Ouvrez ce lien (valable 1 h) pour en choisir un nouveau : ${resetUrl}`,
         "",
         "Si vous n'êtes pas à l'origine de cette demande, ignorez cet email.",
@@ -242,14 +242,14 @@ export async function sendTempPasswordEmail(user: {
   const loginUrl = `${siteUrl}/login`;
 
   const html = emailShell(
-    "Votre nouveau mot de passe VerifScan",
+    "Votre nouveau mot de passe Prodtrust",
     `
     <tr><td style="padding:32px 24px 8px 24px;">
       <h1 style="margin:0 0 12px 0;font-size:22px;line-height:1.3;font-weight:700;color:#111827;">Votre mot de passe a été réinitialisé</h1>
     </td></tr>
     <tr><td style="padding:0 24px 12px 24px;">
       <p style="margin:0;font-size:15px;line-height:1.6;color:#374151;">
-        Bonjour ${esc(firstName || user.email)}, l'équipe VerifScan a réinitialisé
+        Bonjour ${esc(firstName || user.email)}, l'équipe Prodtrust a réinitialisé
         votre mot de passe. Voici votre mot de passe temporaire :
       </p>
     </td></tr>
@@ -270,12 +270,12 @@ export async function sendTempPasswordEmail(user: {
   try {
     await sendEmail({
       to: user.email,
-      subject: "VerifScan — Votre nouveau mot de passe",
+      subject: "Prodtrust — Votre nouveau mot de passe",
       html,
       text: [
         `Bonjour ${firstName},`,
         "",
-        "Votre mot de passe VerifScan a été réinitialisé par l'équipe.",
+        "Votre mot de passe Prodtrust a été réinitialisé par l'équipe.",
         `Mot de passe temporaire : ${tempPassword}`,
         `Connectez-vous ici : ${loginUrl}`,
         "",

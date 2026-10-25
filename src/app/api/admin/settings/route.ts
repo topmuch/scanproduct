@@ -199,7 +199,7 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json(
         {
           error:
-            "siteUrl : URL invalide — utilisez une adresse absolue comme https://verifscan.com",
+            "siteUrl : URL invalide — utilisez une adresse absolue comme https://newvisioncargo.pro",
         },
         { status: 400 },
       );

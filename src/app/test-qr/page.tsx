@@ -5,7 +5,7 @@ import { TestQrPanel, type FixtureTestQr } from "@/components/gs1/TestQrPanel";
 
 /**
  * ============================================================================
- * VerifScan — Page de test GS1 Digital Link : /test-qr
+ * Prodtrust — Page de test GS1 Digital Link : /test-qr
  * ============================================================================
  * Outil de recette : affiche des QR Codes RÉELS générés depuis les données de
  * la base (produit avec GTIN → GS1 Digital Link ; produit sans GTIN → QR
@@ -18,7 +18,7 @@ import { TestQrPanel, type FixtureTestQr } from "@/components/gs1/TestQrPanel";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Test GS1 Digital Link — VerifScan",
+  title: "Test GS1 Digital Link — Prodtrust",
   robots: { index: false, follow: false },
 };
 
@@ -88,7 +88,7 @@ export default async function TestQrPage() {
       <div className="mx-auto max-w-4xl px-4">
         <header className="mb-10 text-center">
           <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">
-            Test GS1 Digital Link — VerifScan
+            Test GS1 Digital Link — Prodtrust
           </h1>
           <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-slate-600">
             Scannez l&apos;un des QR Codes ci-dessous avec votre téléphone :
@@ -135,7 +135,7 @@ export default async function TestQrPage() {
             href="/"
             className="text-xs font-semibold text-teal-700 hover:underline"
           >
-            ← Retour à l&apos;accueil VerifScan
+            ← Retour à l&apos;accueil Prodtrust
           </Link>
         </p>
       </div>

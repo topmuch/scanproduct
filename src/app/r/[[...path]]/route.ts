@@ -1,6 +1,6 @@
 /**
  * ============================================================================
- * VerifScan — Resolver universel : /r/[[...path]]
+ * Prodtrust — Resolver universel : /r/[[...path]]
  * ============================================================================
  *
  * Point d'entrée des QR Codes « standard » (petits producteurs locaux) :

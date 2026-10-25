@@ -79,7 +79,7 @@ export function CatalogHero({
 
         {/* Subtitle */}
         <p className="mx-auto mt-4 max-w-2xl text-base text-[#DCE7F2]/90 sm:text-lg">
-          Parcourez notre catalogue de produits vérifiés par VerifScan.
+          Parcourez notre catalogue de produits vérifiés par Prodtrust.
           Scannez les QR codes pour accéder à leur traçabilité complète.
         </p>
 

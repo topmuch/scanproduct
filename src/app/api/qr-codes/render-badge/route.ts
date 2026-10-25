@@ -7,7 +7,7 @@ import { resolveBadgeTemplatePath } from "@/lib/qr-badge-template";
 /**
  * POST /api/qr-codes/render-badge
  *
- * Rend un QR code avec le design officiel « LABEL VERIFSCAN » (cercle
+ * Rend un QR code avec le design officiel « LABEL PRODTRUST » (cercle
  * jaune, textes en arc, QR noir au centre) et renvoie le PNG.
  *
  * Utilisé par le dashboard fabricant pour les TÉLÉCHARGEMENTS : les QR
@@ -20,10 +20,10 @@ import { resolveBadgeTemplatePath } from "@/lib/qr-badge-template";
  *   url        — string  (requis) URL à encoder. SÉCURITÉ : seul le
  *                        domaine de déploiement est autorisé (host de
  *                        NEXT_PUBLIC_SCAN_URL ou host de la requête) —
- *                        empêche la fabrication de badges VerifScan
+ *                        empêche la fabrication de badges Prodtrust
  *                        pointant vers des sites tiers (brand abuse).
  *   size?      — number  (256..2048, défaut 1200 = 1016 DPI à 3 cm)
- *   topText?   — string  (défaut « LABEL VERIFSCAN »)
+ *   topText?   — string  (défaut « LABEL PRODTRUST »)
  *   bottomText?— string  (défaut « SCANNEZ POUR EN SAVOIR PLUS »)
  *
  * ── Réponse ─────────────────────────────────────────────────────
@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
     );
     if (!allowedHosts.has(parsed.hostname)) {
       return NextResponse.json(
-        { error: "Domaine non autorisé — seules les URL VerifScan peuvent être rendues" },
+        { error: "Domaine non autorisé — seules les URL Prodtrust peuvent être rendues" },
         { status: 403 }
       );
     }

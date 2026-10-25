@@ -2,13 +2,13 @@ import type { Metadata } from "next";
 import { LegalLayout, LegalArticle } from "@/components/public/LegalLayout";
 
 export const metadata: Metadata = {
-  title: "Politique de confidentialité — VerifScan",
+  title: "Politique de confidentialité — Prodtrust",
   description:
-    "Politique de confidentialité de VerifScan : données collectées, finalité, durée de conservation, droits des utilisateurs et responsable du traitement.",
+    "Politique de confidentialité de Prodtrust : données collectées, finalité, durée de conservation, droits des utilisateurs et responsable du traitement.",
   openGraph: {
-    title: "Politique de confidentialité — VerifScan",
+    title: "Politique de confidentialité — Prodtrust",
     description:
-      "Comment VerifScan collecte, utilise et protège vos données personnelles.",
+      "Comment Prodtrust collecte, utilise et protège vos données personnelles.",
     type: "website",
   },
 };
@@ -32,7 +32,7 @@ export default function PolitiqueConfidentialitePage() {
   return (
     <LegalLayout
       title="Politique de confidentialité"
-      description="VerifScan s'engage à protéger la vie privée des utilisateurs de sa plateforme. La présente politique décrit quelles données sont collectées, pour quels usages, pendant combien de temps, et quels sont vos droits."
+      description="Prodtrust s'engage à protéger la vie privée des utilisateurs de sa plateforme. La présente politique décrit quelles données sont collectées, pour quels usages, pendant combien de temps, et quels sont vos droits."
       updatedAt="Dernière mise à jour : 1 janvier 2026"
       sections={SECTIONS}
     >
@@ -43,20 +43,20 @@ export default function PolitiqueConfidentialitePage() {
       >
         <p>
           Le responsable du traitement des données personnelles collectées
-          via la plateforme VerifScan est :
+          via la plateforme Prodtrust est :
         </p>
         <ul className="ml-5 list-disc space-y-2">
           <li>
-            <strong>VerifScan</strong>, société de droit sénégalais ;
+            <strong>Prodtrust</strong>, société de droit sénégalais ;
           </li>
           <li>Siège social : Dakar, Sénégal ;</li>
           <li>
             Email :{" "}
             <a
-              href="mailto:contact@verifscan.com"
+              href="mailto:contact@newvisioncargo.pro"
               className="font-medium text-[#022150] underline-offset-2 hover:underline"
             >
-              contact@verifscan.com
+              contact@newvisioncargo.pro
             </a>
           </li>
           <li>
@@ -70,7 +70,7 @@ export default function PolitiqueConfidentialitePage() {
           </li>
         </ul>
         <p>
-          VerifScan détermine les finalités et les moyens du traitement
+          Prodtrust détermine les finalités et les moyens du traitement
           des données personnelles collectées sur la plateforme.
         </p>
       </LegalArticle>
@@ -81,7 +81,7 @@ export default function PolitiqueConfidentialitePage() {
         title="Données collectées"
       >
         <p>
-          VerifScan collecte les catégories de données suivantes, selon
+          Prodtrust collecte les catégories de données suivantes, selon
           votre statut :
         </p>
         <p>
@@ -200,7 +200,7 @@ export default function PolitiqueConfidentialitePage() {
       >
         <p>
           Les données collectées sont destinées aux services internes de
-          VerifScan (support client, développement, sécurité). Elles
+          Prodtrust (support client, développement, sécurité). Elles
           peuvent être accessibles à :
         </p>
         <ul className="ml-5 list-disc space-y-2">
@@ -216,7 +216,7 @@ export default function PolitiqueConfidentialitePage() {
           </li>
         </ul>
         <p>
-          VerifScan ne vend, ne loue et ne cède jamais vos données
+          Prodtrust ne vend, ne loue et ne cède jamais vos données
           personnelles à des tiers à des fins commerciales.
         </p>
       </LegalArticle>
@@ -255,7 +255,7 @@ export default function PolitiqueConfidentialitePage() {
 
       <LegalArticle id="securite" index={7} title="Sécurité des données">
         <p>
-          VerifScan met en œuvre les mesures techniques et
+          Prodtrust met en œuvre les mesures techniques et
           organisationnelles appropriées pour protéger vos données
           personnelles contre la perte, l&apos;accès non autorisé, la
           divulgation ou la modification :
@@ -286,14 +286,14 @@ export default function PolitiqueConfidentialitePage() {
         title="Transferts hors Sénégal"
       >
         <p>
-          Les données personnelles collectées par VerifScan sont
+          Les données personnelles collectées par Prodtrust sont
           principalement hébergées sur des serveurs situés en Afrique de
           l&apos;Ouest ou en Europe, dans des pays offrant un niveau
           adéquat de protection des données.
         </p>
         <p>
           Le cas échéant, certains prestataires techniques peuvent
-          traiter des données en dehors de ces zones. VerifScan veille
+          traiter des données en dehors de ces zones. Prodtrust veille
           alors à encadrer ces transferts par des clauses contractuelles
           types ou des mécanismes de protection reconnus.
         </p>
@@ -336,12 +336,12 @@ export default function PolitiqueConfidentialitePage() {
           </li>
         </ul>
         <p>
-          Pour exercer ces droits, contactez VerifScan à l&apos;adresse{" "}
+          Pour exercer ces droits, contactez Prodtrust à l&apos;adresse{" "}
           <a
-            href="mailto:contact@verifscan.com"
+            href="mailto:contact@newvisioncargo.pro"
             className="font-medium text-[#022150] underline-offset-2 hover:underline"
           >
-            contact@verifscan.com
+            contact@newvisioncargo.pro
           </a>{" "}
           en précisant l&apos;objet de votre demande et en joignant une
           preuve de votre identité.
@@ -355,7 +355,7 @@ export default function PolitiqueConfidentialitePage() {
 
       <LegalArticle id="cookies" index={10} title="Cookies">
         <p>
-          La plateforme VerifScan utilise des cookies et traceurs. Le
+          La plateforme Prodtrust utilise des cookies et traceurs. Le
           détail de leur usage et de leur gestion est décrit dans la{" "}
           <a
             href="/cookies"
@@ -369,19 +369,19 @@ export default function PolitiqueConfidentialitePage() {
 
       <LegalArticle id="mineurs" index={11} title="Mineurs">
         <p>
-          La plateforme VerifScan n&apos;est pas destinée aux personnes de
-          moins de 16 ans. VerifScan ne collecte pas sciemment de
+          La plateforme Prodtrust n&apos;est pas destinée aux personnes de
+          moins de 16 ans. Prodtrust ne collecte pas sciemment de
           données personnelles auprès de mineurs sans le consentement
           vérifiable des titulaires de l&apos;autorité parentale.
         </p>
         <p>
           Si vous estimez qu&apos;un mineur a fourni des données à
-          VerifScan sans autorisation, merci de nous le signaler à{" "}
+          Prodtrust sans autorisation, merci de nous le signaler à{" "}
           <a
-            href="mailto:contact@verifscan.com"
+            href="mailto:contact@newvisioncargo.pro"
             className="font-medium text-[#022150] underline-offset-2 hover:underline"
           >
-            contact@verifscan.com
+            contact@newvisioncargo.pro
           </a>{" "}
           afin que nous puissions procéder à leur suppression.
         </p>
@@ -391,16 +391,16 @@ export default function PolitiqueConfidentialitePage() {
         <p>
           Pour toute question relative à la présente Politique de
           confidentialité ou au traitement de vos données personnelles,
-          vous pouvez contacter VerifScan :
+          vous pouvez contacter Prodtrust :
         </p>
         <ul className="ml-5 list-disc space-y-2">
           <li>
             Par email :{" "}
             <a
-              href="mailto:contact@verifscan.com"
+              href="mailto:contact@newvisioncargo.pro"
               className="font-medium text-[#022150] underline-offset-2 hover:underline"
             >
-              contact@verifscan.com
+              contact@newvisioncargo.pro
             </a>
           </li>
           <li>

@@ -297,7 +297,7 @@ function toWhatsAppLink(
 ): string {
   const message =
     customMessage ??
-    `Bonjour ${artisanName}, je suis intéressé(e) par votre ${productName} vu sur VerifScan.`;
+    `Bonjour ${artisanName}, je suis intéressé(e) par votre ${productName} vu sur Prodtrust.`;
   return buildWhatsAppLink(phone, message);
 }
 
@@ -780,7 +780,7 @@ export function ArtisanProductView({
     const url = window.location.href;
     const data = {
       title: `${lot.productName} — Produit Authentique`,
-      text: `Découvrez ${lot.productName} de ${lot.artisanName}, authentifié par VerifScan ✅`,
+      text: `Découvrez ${lot.productName} de ${lot.artisanName}, authentifié par Prodtrust ✅`,
       url,
     };
     if (typeof navigator !== "undefined" && "share" in navigator) {
@@ -848,7 +848,7 @@ export function ArtisanProductView({
     lot.contactPhone,
     lot.artisanName,
     lot.productName,
-    `Bonjour ${lot.artisanName}, je viens de scanner un QR code VerifScan (produit : ${lot.productName}) et une alerte de possible contrefaçon s'affiche. Je vous signale ce produit suspect.`
+    `Bonjour ${lot.artisanName}, je viens de scanner un QR code Prodtrust (produit : ${lot.productName}) et une alerte de possible contrefaçon s'affiche. Je vous signale ce produit suspect.`
   );
 
   // ── Catégorie produit : textes/emoji adaptés (agroalimentaire ≠ cosmétique)
@@ -1196,13 +1196,13 @@ export function ArtisanProductView({
             en bas pour asseoir le bouton Découvrir. */}
         <div className="absolute inset-0 bg-gradient-to-t from-stone-950/70 via-stone-950/5 to-transparent" />
 
-        {/* Pilule marque VerifScan (verre dépoli) */}
+        {/* Pilule marque Prodtrust (verre dépoli) */}
         <div className="art-fade-down relative z-10 flex justify-center pt-5">
           {/* Logo officiel EN COULEUR sur pastille blanche (retour test : la
               variante blanche passait inaperçue / paraissait délavée). */}
           <Link
             href="/"
-            aria-label="VerifScan accueil"
+            aria-label="Prodtrust accueil"
             className="inline-flex items-center rounded-full bg-white px-5 py-2.5 shadow-xl ring-1 ring-black/10 transition-transform hover:scale-105 active:scale-95"
           >
             <Logo variant="default" size="sm" />
@@ -1688,7 +1688,7 @@ export function ArtisanProductView({
                 <div className="min-w-0">
                   <p className="font-bold">{lot.artisanName}</p>
                   <span className="mt-1 inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-700">
-                    <ShieldCheck className="h-3 w-3" /> Artisan certifié VerifScan
+                    <ShieldCheck className="h-3 w-3" /> Artisan certifié Prodtrust
                   </span>
                 </div>
               </div>
@@ -2001,7 +2001,7 @@ export function ArtisanProductView({
                 </div>
               </div>
               <h3 className="flex items-center justify-center gap-2 text-xl font-bold text-white">
-                <Heart className="h-4 w-4 text-rose-400" /> Vérifié par VerifScan
+                <Heart className="h-4 w-4 text-rose-400" /> Vérifié par Prodtrust
               </h3>
               <p className="mx-auto mt-2 max-w-xs text-sm leading-relaxed text-stone-300">
                 Ce produit est authentique et traçable — chaque scan soutient{" "}

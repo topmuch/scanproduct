@@ -116,7 +116,7 @@ export function AuthenticityHero({
               : "Produit rappelé"}
           </h2>
           <p className="mt-0.5 truncate text-xs text-white/90">
-            Vérifié par VerifScan
+            Vérifié par Prodtrust
             {verifiedAt ? ` • ${formatDate(verifiedAt)}` : ""}
           </p>
         </div>

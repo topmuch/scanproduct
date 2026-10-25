@@ -134,7 +134,7 @@ export function WowHero({ product, lot, fabricant }: Props) {
               {isActive ? "Produit authentique" : "Produit rappelé"}
             </h1>
             <p className="mt-0.5 truncate text-xs text-white/90 sm:text-sm">
-              Vérifié par VerifScan • Blockchain sécurisée
+              Vérifié par Prodtrust • Blockchain sécurisée
             </p>
           </div>
 

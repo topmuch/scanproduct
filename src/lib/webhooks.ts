@@ -12,8 +12,8 @@ import {
  * reçoit un POST JSON :
  *   { event, timestamp, data }
  * En-têtes :
- *   X-VerifScan-Event:     nom de l'événement
- *   X-VerifScan-Signature: sha256=<HMAC-SHA256(secret, corps brut)>
+ *   X-Prodtrust-Event:     nom de l'événement
+ *   X-Prodtrust-Signature: sha256=<HMAC-SHA256(secret, corps brut)>
  * Le destinataire vérifie la signature avec le secret affiché à la création.
  *
  * CONTRAT : fireWebhooks ne JAMAIS jeter ni ralentir le flux appelant
@@ -90,9 +90,9 @@ export async function deliverWebhook(
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "User-Agent": "VerifScan-Webhooks/1.0",
-        "X-VerifScan-Event": event,
-        "X-VerifScan-Signature": signature,
+        "User-Agent": "Prodtrust-Webhooks/1.0",
+        "X-Prodtrust-Event": event,
+        "X-Prodtrust-Signature": signature,
       },
       body,
       signal: controller.signal,

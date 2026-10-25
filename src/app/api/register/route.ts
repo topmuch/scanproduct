@@ -152,7 +152,7 @@ export async function POST(req: NextRequest) {
             companyName,
             city: city || null,
           },
-          emailSubject: "VerifScan — Nouvelle inscription",
+          emailSubject: "Prodtrust — Nouvelle inscription",
         });
         console.log(
           `[register] admin notification: created=${result.created} emailed=${result.emailed} status=${result.emailStatus ?? "-"} to=${result.emailedTo ?? "-"}`,

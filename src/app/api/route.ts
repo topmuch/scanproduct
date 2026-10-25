@@ -8,7 +8,7 @@ import { NextResponse } from "next/server";
  */
 export async function GET() {
   return NextResponse.json({
-    name: "VerifScan API",
+    name: "Prodtrust API",
     version: "1.0.0",
     description:
       "Passeport numérique produit — authentification, traçabilité et transparence pour fabricants et consommateurs.",
@@ -27,6 +27,6 @@ export async function GET() {
       ],
     },
     docs: "/docs",
-    contact: "contact@verifscan.com",
+    contact: "contact@newvisioncargo.pro",
   });
 }

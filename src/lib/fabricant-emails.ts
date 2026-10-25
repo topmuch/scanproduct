@@ -1,5 +1,5 @@
 // ============================================================================
-// VerifScan — Scheduled email jobs for fabricants
+// Prodtrust — Scheduled email jobs for fabricants
 // ============================================================================
 // Pure server-side module (no React, no API routes). Powers two jobs meant to
 // be triggered by an external scheduler hitting /api/cron/* routes:
@@ -27,7 +27,7 @@ import { createNotification, type NotificationSeverity } from "@/lib/notificatio
 const APP_URL = (
   process.env.NEXTAUTH_URL ??
   process.env.NEXT_PUBLIC_APP_URL ??
-  "https://verifscan.com"
+  "https://newvisioncargo.pro"
 ).replace(/\/$/, "");
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -87,7 +87,7 @@ function emailShell(title: string, accentColor: string, bodyHtml: string): strin
         <!-- Banner -->
         <tr><td style="background:linear-gradient(135deg,#022150,#10B981);padding:20px 28px;">
           <table role="presentation" width="100%"><tr>
-            <td style="color:#ffffff;font-size:20px;font-weight:bold;">&#128737;&#65039; VerifScan</td>
+            <td style="color:#ffffff;font-size:20px;font-weight:bold;">&#128737;&#65039; Prodtrust</td>
             <td align="right" style="color:rgba(255,255,255,0.85);font-size:12px;">La v&eacute;rit&eacute; au bout du scan</td>
           </tr></table>
         </td></tr>
@@ -107,9 +107,9 @@ function emailShell(title: string, accentColor: string, bodyHtml: string): strin
         <!-- Footer -->
         <tr><td style="background:#F9FAFB;padding:16px 28px;border-top:1px solid #F3F4F6;">
           <div style="font-size:11px;color:#9CA3AF;line-height:1.5;">
-            Vous recevez cet email selon vos pr&eacute;f&eacute;rences de notification VerifScan.
+            Vous recevez cet email selon vos pr&eacute;f&eacute;rences de notification Prodtrust.
             G&eacute;rez-les depuis votre tableau de bord &rarr; Param&egrave;tres &rarr; Notifications.<br />
-            &copy; ${new Date().getFullYear()} VerifScan &mdash; Dakar, S&eacute;n&eacute;gal
+            &copy; ${new Date().getFullYear()} Prodtrust &mdash; Dakar, S&eacute;n&eacute;gal
           </div>
         </td></tr>
       </table>
@@ -493,7 +493,7 @@ export async function runWeeklyDigestJob(): Promise<JobResult> {
         message: messageParts.join(" "),
         severity: "info",
         data: { weekKey: stats.weekKey, periodLabel: stats.periodLabel },
-        emailSubject: `📊 VerifScan — votre rapport hebdomadaire (${stats.totalScans} scans)`,
+        emailSubject: `📊 Prodtrust — votre rapport hebdomadaire (${stats.totalScans} scans)`,
         emailHtml: renderDigestEmail(stats),
       });
 
@@ -676,7 +676,7 @@ export async function runExpiryAlertsJob(): Promise<JobResult> {
           lotIds: lots.map((l) => l.id),
           sentAt: now.toISOString(),
         },
-        emailSubject: `⏳ VerifScan — ${totalLots} lot(s) expirent bientôt`,
+        emailSubject: `⏳ Prodtrust — ${totalLots} lot(s) expirent bientôt`,
         emailHtml: renderExpiryAlertEmail(ordered),
       });
 
@@ -967,7 +967,7 @@ export function renderMonthlyReportEmail(stats: MonthlyReportStats): string {
   const deltaColor =
     delta === null ? "#10B981" : delta >= 0 ? "#10B981" : "#EF4444";
 
-  let body = `<p style="margin:0 0 16px 0;">Bonjour <strong>${escapeHtml(stats.fabricantName)}</strong>, voici le bilan complet de votre activit&eacute; VerifScan pour <strong>${escapeHtml(stats.periodLabel)}</strong>.</p>`;
+  let body = `<p style="margin:0 0 16px 0;">Bonjour <strong>${escapeHtml(stats.fabricantName)}</strong>, voici le bilan complet de votre activit&eacute; Prodtrust pour <strong>${escapeHtml(stats.periodLabel)}</strong>.</p>`;
 
   body += kpiRow([
     { value: String(stats.totalScans), label: "Scans du mois", color: "#022150" },
@@ -1092,7 +1092,7 @@ export async function runMonthlyReportJob(): Promise<JobResult> {
         message: messageParts.join(" "),
         severity: "info",
         data: { monthKey: stats.monthKey, periodLabel: stats.periodLabel },
-        emailSubject: `📊 VerifScan — votre rapport mensuel (${stats.periodLabel})`,
+        emailSubject: `📊 Prodtrust — votre rapport mensuel (${stats.periodLabel})`,
         emailHtml: renderMonthlyReportEmail(stats),
       });
 

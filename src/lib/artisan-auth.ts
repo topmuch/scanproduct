@@ -1,7 +1,7 @@
 import crypto from "crypto";
 
 /**
- * VerifScan — Authentification ARTISAN (portail informel).
+ * Prodtrust — Authentification ARTISAN (portail informel).
  *
  * ── Pourquoi un JWT maison alors que les fabricants passent par NextAuth ──
  * L'artisan informel n'a ni email ni entreprise : son identifiant est son

@@ -4,7 +4,7 @@ import * as React from "react";
 import { BadgeQRPreview } from "@/components/fabricant/BadgeQRPreview";
 
 /**
- * ProductQRCode — design officiel « LABEL VERIFSCAN » (badge jaune, QR noir
+ * ProductQRCode — design officiel « LABEL PRODTRUST » (badge jaune, QR noir
  * au centre) affiché à côté du produit.
  *
  * - Encode l'URL absolue `${origin}/p/[lotId]` (récupérée côté client via

@@ -308,7 +308,7 @@ function GeneralSection() {
   // ── Design QR officiel (badge plateforme) ──────────────────────
   // Image importée par le superadmin : devient le fond des badges QR de
   // tous les fabricants SANS design personnel (voir /api/admin/settings/
-  // qr-badge-template). null → badge jaune « LABEL VERIFSCAN » par défaut.
+  // qr-badge-template). null → badge jaune « LABEL PRODTRUST » par défaut.
   const [qrBadgeUrl, setQrBadgeUrl] = useState<string | null>(null);
   const [qrBadgeUploading, setQrBadgeUploading] = useState(false);
   const [qrBadgeError, setQrBadgeError] = useState<string | null>(null);
@@ -483,7 +483,7 @@ function GeneralSection() {
       }
       setQrBadgeUrl(null);
       toast.success("Design officiel retiré", {
-        description: "Retour au badge jaune « LABEL VERIFSCAN ».",
+        description: "Retour au badge jaune « LABEL PRODTRUST ».",
       });
     } catch (err) {
       const msg =
@@ -638,7 +638,7 @@ function GeneralSection() {
               <p className="text-[13px] font-medium text-[#111827]">
                 {qrBadgeUrl
                   ? "Design QR officiel actif"
-                  : "Badge jaune « LABEL VERIFSCAN » par défaut"}
+                  : "Badge jaune « LABEL PRODTRUST » par défaut"}
               </p>
               <p className="mt-0.5 text-[12px] text-[#6B7280]">
                 {qrBadgeUploading
@@ -691,7 +691,7 @@ function GeneralSection() {
             <input
               className={inputClass}
               data-testid="general-site-url"
-              placeholder="https://verifscan.com"
+              placeholder="https://newvisioncargo.pro"
               value={values.siteUrl ?? ""}
               onChange={(e) => setField("siteUrl", e.target.value)}
             />
@@ -884,19 +884,19 @@ function SeoSection() {
 
   // ── Google snippet preview values ─────────────────────────────────
   const siteUrl =
-    values.siteUrl?.trim() || "https://verifscan.com";
+    values.siteUrl?.trim() || "https://newvisioncargo.pro";
   const previewTitle =
     values.seoTitle?.trim() ||
-    "VerifScan — Passeport numérique produit | Traçabilité alimentaire & cosmétique, anti-contrefaçon par QR code";
+    "Prodtrust — Passeport numérique produit | Traçabilité alimentaire & cosmétique, anti-contrefaçon par QR code";
   const previewDesc =
     values.seoDescription?.trim() ||
-    "VerifScan est le passeport numérique de vos produits alimentaires et cosmétiques : un QR code unique qui garantit l'authenticité, assure la traçabilité du lot et protège votre marque contre la contrefaçon et la fraude.";
+    "Prodtrust est le passeport numérique de vos produits alimentaires et cosmétiques : un QR code unique qui garantit l'authenticité, assure la traçabilité du lot et protège votre marque contre la contrefaçon et la fraude.";
 
   return (
     <Card>
       <CardHeader
         title="SEO & Référencement"
-        subtitle="Optimisez la visibilité de VerifScan sur Google, Bing et les réseaux sociaux"
+        subtitle="Optimisez la visibilité de Prodtrust sur Google, Bing et les réseaux sociaux"
       />
       <div className="space-y-6 p-5">
         {/* ── Aperçu Google ─────────────────────────────────────── */}
@@ -934,7 +934,7 @@ function SeoSection() {
           <input
             className={inputClass}
             data-testid="seo-input-title"
-            placeholder="VerifScan — Passeport numérique produit | Anti-contrefaçon QR"
+            placeholder="Prodtrust — Passeport numérique produit | Anti-contrefaçon QR"
             maxLength={120}
             value={values.seoTitle ?? ""}
             onChange={(e) => setField("seoTitle", e.target.value)}
@@ -958,7 +958,7 @@ function SeoSection() {
           <textarea
             className={textareaClass}
             data-testid="seo-input-description"
-            placeholder="VerifScan est le passeport numérique de vos produits : QR code unique, authenticité garantie, traçabilité complète, protection anti-contrefaçon…"
+            placeholder="Prodtrust est le passeport numérique de vos produits : QR code unique, authenticité garantie, traçabilité complète, protection anti-contrefaçon…"
             maxLength={320}
             value={values.seoDescription ?? ""}
             onChange={(e) => setField("seoDescription", e.target.value)}
@@ -1059,7 +1059,7 @@ function SeoSection() {
         {/* ── Google Search Console ─────────────────────────────── */}
         <Field
           label="Code de vérification Google Search Console"
-          hint="Collez le code fourni par la Search Console (contenu du meta google-site-verification). Ajoutez aussi verifscan.com comme propriété « Domaine »."
+          hint="Collez le code fourni par la Search Console (contenu du meta google-site-verification). Ajoutez aussi newvisioncargo.pro comme propriété « Domaine »."
         >
           <input
             className={inputClass}
@@ -1078,7 +1078,7 @@ function SeoSection() {
                 Référencement multilingue automatique
               </p>
               <p className="mt-1 text-[#3B82F6]">
-                VerifScan déclare automatiquement les balises hreflang
+                Prodtrust déclare automatiquement les balises hreflang
                 (fr-FR, fr-BE, fr-CH, fr-CA, fr-SN) et les données structurées
                 zoneServed pour la France, la Belgique, la Suisse, le Canada et
                 le Sénégal. Déclarez le domaine dans la Google Search Console et
@@ -1118,27 +1118,27 @@ const EMAIL_TEMPLATES = [
   {
     id: "signup",
     name: "Inscription",
-    subject: "Bienvenue sur VerifScan — validez votre email",
+    subject: "Bienvenue sur Prodtrust — validez votre email",
   },
   {
     id: "welcome",
     name: "Bienvenue",
-    subject: "Votre compte VerifScan est prêt 🎉",
+    subject: "Votre compte Prodtrust est prêt 🎉",
   },
   {
     id: "reset",
     name: "Réinitialisation mot de passe",
-    subject: "Réinitialisez votre mot de passe VerifScan",
+    subject: "Réinitialisez votre mot de passe Prodtrust",
   },
   {
     id: "payment",
     name: "Notification paiement",
-    subject: "Confirmation de votre paiement VerifScan",
+    subject: "Confirmation de votre paiement Prodtrust",
   },
   {
     id: "weekly",
     name: "Rapport hebdomadaire",
-    subject: "Votre rapport hebdomadaire VerifScan",
+    subject: "Votre rapport hebdomadaire Prodtrust",
   },
 ];
 
@@ -1320,7 +1320,7 @@ function EmailSection() {
           <FormRow>
             <Field
               label="Serveur SMTP"
-              hint="Ex. smtp.gmail.com, smtp.hostinger.com, mail.verifscan.com"
+              hint="Ex. smtp.gmail.com, smtp.hostinger.com, mail.newvisioncargo.pro"
             >
               <input
                 className={inputClass}
@@ -1356,7 +1356,7 @@ function EmailSection() {
               <input
                 className={inputClass}
                 data-testid="email-smtp-user"
-                placeholder="noreply@verifscan.com"
+                placeholder="noreply@newvisioncargo.pro"
                 value={values.smtpUser ?? ""}
                 onChange={(e) => setField("smtpUser", e.target.value)}
               />
@@ -1378,7 +1378,7 @@ function EmailSection() {
               <input
                 className={inputClass}
                 data-testid="email-from"
-                placeholder="VerifScan <no-reply@verifscan.com>"
+                placeholder="Prodtrust <no-reply@newvisioncargo.pro>"
                 value={values.smtpFrom ?? ""}
                 onChange={(e) => setField("smtpFrom", e.target.value)}
               />
@@ -1392,7 +1392,7 @@ function EmailSection() {
                   aria-label="Chiffrement SSL direct"
                 />
                 <span className="text-[13px] text-[#374151]">
-                  SSL direct (port 465) — désactivé : STARTTLS (port 587). En cas d'erreur, VerifScan détecte le bon mode automatiquement.
+                  SSL direct (port 465) — désactivé : STARTTLS (port 587). En cas d'erreur, Prodtrust détecte le bon mode automatiquement.
                 </span>
               </div>
             </Field>
@@ -1497,7 +1497,7 @@ function EmailSection() {
               className={inputClass}
               type="email"
               data-testid="notif-recipient"
-              placeholder="admin@verifscan.com"
+              placeholder="admin@newvisioncargo.pro"
               value={values.notifEmailRecipient ?? ""}
               onChange={(e) => setField("notifEmailRecipient", e.target.value)}
             />
@@ -1593,25 +1593,25 @@ function PaymentSection() {
       enabled: true,
       connected: true,
       mode: "test",
-      webhook: "https://api.verifscan.com/webhooks/cinetpay",
+      webhook: "https://api.newvisioncargo.pro/webhooks/cinetpay",
     },
     stripe: {
       enabled: false,
       connected: false,
       mode: "test",
-      webhook: "https://api.verifscan.com/webhooks/stripe",
+      webhook: "https://api.newvisioncargo.pro/webhooks/stripe",
     },
     orange: {
       enabled: true,
       connected: true,
       mode: "production",
-      webhook: "https://api.verifscan.com/webhooks/orange-money",
+      webhook: "https://api.newvisioncargo.pro/webhooks/orange-money",
     },
     wave: {
       enabled: false,
       connected: false,
       mode: "test",
-      webhook: "https://api.verifscan.com/webhooks/wave",
+      webhook: "https://api.newvisioncargo.pro/webhooks/wave",
     },
   });
 
@@ -1843,7 +1843,7 @@ function SecuritySection() {
           >
             <textarea
               className={textareaClass}
-              defaultValue={"https://verifscan.com\nhttps://admin.verifscan.com\nhttps://app.verifscan.com"}
+              defaultValue={"https://newvisioncargo.pro\nhttps://admin.newvisioncargo.pro\nhttps://app.newvisioncargo.pro"}
             />
           </Field>
           <Field label="Méthodes autorisées">
@@ -2321,7 +2321,7 @@ function ApiSection() {
           <p className="mt-2 text-[12px] text-[#6B7280]">
             La clé complète n'est affichée qu'une seule fois à la génération —
             seuls le préfixe et la date de dernier usage sont conservés côté
-            VerifScan (empreinte SHA-256).
+            Prodtrust (empreinte SHA-256).
           </p>
         </div>
 
@@ -2352,7 +2352,7 @@ function ApiSection() {
             >
               <Field
                 label="URL de destination"
-                hint="Le payload JSON est signé HMAC-SHA256 : en-tête X-VerifScan-Signature: sha256=<hmac du corps avec votre secret>."
+                hint="Le payload JSON est signé HMAC-SHA256 : en-tête X-Prodtrust-Signature: sha256=<hmac du corps avec votre secret>."
               >
                 <input
                   value={whUrl}
@@ -2688,7 +2688,7 @@ function AppearanceSection() {
         <Field label="Texte de bienvenue">
           <textarea
             className={textareaClass}
-            defaultValue="Bienvenue sur VerifScan. Connectez-vous à votre espace pour gérer vos produits, vos QR codes et votre traçabilité."
+            defaultValue="Bienvenue sur Prodtrust. Connectez-vous à votre espace pour gérer vos produits, vos QR codes et votre traçabilité."
           />
         </Field>
       </div>
@@ -2734,7 +2734,7 @@ function MaintenanceSection() {
           <Field label="Message affiché">
             <textarea
               className={textareaClass}
-              defaultValue="VerifScan est actuellement en maintenance. Nous revenons très vite !"
+              defaultValue="Prodtrust est actuellement en maintenance. Nous revenons très vite !"
             />
           </Field>
           <Field label="IP autorisées" hint="Séparées par des virgules">
@@ -2881,7 +2881,7 @@ export function SettingsPage() {
     <PageContainer>
       <SectionTitle
         title="Paramètres"
-        subtitle="Configurez votre plateforme VerifScan"
+        subtitle="Configurez votre plateforme Prodtrust"
       />
 
       <div className="flex flex-col gap-6 lg:flex-row">

@@ -39,7 +39,7 @@ export default function Home() {
       <Header />
       <main className="flex-1">
         {/*
-         * Page d'accueil — présentation SaaS de VerifScan.
+         * Page d'accueil — présentation SaaS de Prodtrust.
          *
          * Le hero (slider d'images + proposition de valeur + CTA) attire
          * l'attention, puis les sections suivantes expliquent le concept :

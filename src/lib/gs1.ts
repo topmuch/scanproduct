@@ -1,6 +1,6 @@
 /**
  * ============================================================================
- * VerifScan — Intégration du standard GS1 Digital Link (v1.3)
+ * Prodtrust — Intégration du standard GS1 Digital Link (v1.3)
  * ============================================================================
  *
  * Cette bibliothèque gère les DEUX familles de QR Codes du système :
@@ -19,7 +19,7 @@
  *      est également reconnue au décodage (conformité GS1 Digital Link).
  *
  *   2. Petits producteurs LOCAUX (QR Code standard) :
- *      Les QR Codes encodent une URL courte VerifScan :
+ *      Les QR Codes encodent une URL courte Prodtrust :
  *
  *        https://<domaine>/r/<ID_UNIQUE_PRODUIT>
  *
@@ -42,7 +42,7 @@
 // Constantes du standard GS1
 // ---------------------------------------------------------------------------
 
-/** Application Identifiers GS1 utilisés par VerifScan. */
+/** Application Identifiers GS1 utilisés par Prodtrust. */
 export const GS1_AI = {
   /** AI 01 — GTIN (Global Trade Item Number). */
   GTIN: "01",
@@ -100,7 +100,7 @@ const RE_SERIE = /^[A-Za-z0-9\-_.+$% ]{1,20}$/;
  */
 const RE_TRAVERSAL = /^(?:\.{1,2})$/;
 
-/** Identifiant produit « standard » (cuid / identifiant interne VerifScan). */
+/** Identifiant produit « standard » (cuid / identifiant interne Prodtrust). */
 const RE_ID_PRODUIT = /^[A-Za-z0-9_-]{6,64}$/;
 
 // ---------------------------------------------------------------------------
@@ -196,27 +196,27 @@ export function validerSerie(serie: string): string | null {
 /**
  * Origine par défaut encodée dans les QR Codes des clients industriels GS1.
  * Configurable via la variable d'environnement `GS1_DOMAIN`
- * (sinon on retombe sur `NEXT_PUBLIC_SCAN_URL`, sinon sur verifscan.pro).
+ * (sinon on retombe sur `NEXT_PUBLIC_SCAN_URL`, sinon sur prodtrust.newvisioncargo.pro).
  */
 export function getDomaineGs1(): string {
   if (typeof process !== "undefined") {
     return (
       process.env.GS1_DOMAIN ||
       process.env.NEXT_PUBLIC_SCAN_URL ||
-      "https://verifscan.pro"
+      "https://prodtrust.newvisioncargo.pro"
     ).replace(/\/+$/, "");
   }
-  return "https://verifscan.pro";
+  return "https://prodtrust.newvisioncargo.pro";
 }
 
 /** Origine par défaut des QR Codes « standard » (petits producteurs). */
 export function getDomaineStandard(): string {
   if (typeof process !== "undefined") {
     return (
-      process.env.NEXT_PUBLIC_SCAN_URL || "https://verifscan.pro"
+      process.env.NEXT_PUBLIC_SCAN_URL || "https://prodtrust.newvisioncargo.pro"
     ).replace(/\/+$/, "");
   }
-  return "https://verifscan.pro";
+  return "https://prodtrust.newvisioncargo.pro";
 }
 
 /**
@@ -224,7 +224,7 @@ export function getDomaineStandard(): string {
  *
  * Génère l'URL à encoder dans le QR Code pour un produit SANS code GS1 :
  *
- *     https://verifscan.pro/r/<ID_UNIQUE_PRODUIT>
+ *     https://prodtrust.newvisioncargo.pro/r/<ID_UNIQUE_PRODUIT>
  *
  * Le chemin /r/<id> est intercepté par le resolver (`/r/[[...path]]`) qui
  * redirige (302) vers la page passeport `/p/<lotId>` du lot actif du produit.
@@ -317,7 +317,7 @@ export function genererUrlGs1(
  * Sépare une entrée arbitraire (URL absolue, URL relative ou chemin seul)
  * en { chemin, requête }.
  *
- * Gère les URL absolues (« https://verifscan.com/01/… ») dont le scheme et
+ * Gère les URL absolues (« https://newvisioncargo.pro/01/… ») dont le scheme et
  * l'autorité doivent être retirés AVANT le découpage en segments — sinon le
  * premier segment serait « https: » et la détection GS1 échouerait.
  */
@@ -473,7 +473,7 @@ function parserSegments(segments: string[]): Gs1Decodage | null {
           throw new ErreurGs1("SERIE_INVALIDE", "Numéro de série invalide.");
         serie = serieValide;
       } else {
-        // AI non supporté par VerifScan → on ignore proprement la paire
+        // AI non supporté par Prodtrust → on ignore proprement la paire
         // (le standard autorise la présence d'AIs additionnels: ex 17=DLUO).
       }
     }

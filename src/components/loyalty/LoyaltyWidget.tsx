@@ -559,7 +559,7 @@ export function LoyaltyWidget({
           <div className="flex items-center gap-1.5">
             <Trophy className="h-4 w-4 text-[#F59E0B]" />
             <span className="text-[12px] font-bold uppercase tracking-wide text-[#92400E]">
-              Fidélité VerifScan
+              Fidélité Prodtrust
             </span>
           </div>
           {scanning && (

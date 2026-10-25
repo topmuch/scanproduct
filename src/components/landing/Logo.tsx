@@ -19,8 +19,8 @@ const SIZE_CLASSES = {
 } as const;
 
 /**
- * VerifScan logo: official brand image.
- * The image itself already contains the "VerifScan" wordmark (icon + text),
+ * Prodtrust logo: official brand image.
+ * The image itself already contains the "Prodtrust" wordmark (icon + text),
  * so no additional text is rendered next to it.
  * intrinsic ratio 720x247 — width/height attrs keep layout stable pre-load,
  * `shrink-0` prevents flex containers from squashing the wordmark.
@@ -39,15 +39,15 @@ export function Logo({ className, variant = "default", size = "lg" }: LogoProps)
   // L'ancien hack CSS `brightness-0 invert` aplatait tout en un blob blanc
   // opaque : le QR et la coche du bouclier devenaient illisibles.
   const src =
-    variant === "light" ? "/verifscan-logo-white.webp?v=1" : "/verifscan-logo.webp?v=5";
+    variant === "light" ? "/brand/prodtrust-logo-white.png?v=1" : "/brand/prodtrust-logo.png?v=5";
   return (
     <span className={cn("inline-flex items-center select-none", className)}>
       <img
         src={src}
-        alt="VerifScan"
+        alt="Prodtrust"
         className={cn("w-auto shrink-0", SIZE_CLASSES[size])}
-        width={720}
-        height={247}
+        width={274}
+        height={68}
       />
     </span>
   );

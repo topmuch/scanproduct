@@ -1,5 +1,5 @@
 // ============================================================================
-// VerifScan — Subscription lifecycle + end-of-subscription email alerts
+// Prodtrust — Subscription lifecycle + end-of-subscription email alerts
 // ============================================================================
 // Pure server-side module (no React, no API routes).
 //
@@ -35,7 +35,7 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 const APP_URL = (
   process.env.NEXTAUTH_URL ??
   process.env.NEXT_PUBLIC_APP_URL ??
-  "https://verifscan.com"
+  "https://newvisioncargo.pro"
 ).replace(/\/$/, "");
 
 function escapeHtml(input: string | null | undefined): string {
@@ -181,7 +181,7 @@ export async function setUserSubscription(
           planName: PLANS[planId].name,
           expiresAt: expiresAt.toISOString(),
         },
-        emailSubject: "VerifScan — Nouvel abonnement activé",
+        emailSubject: "Prodtrust — Nouvel abonnement activé",
       });
     } catch (err) {
       console.error("[subscription] SuperAdmin payment notification failed:", err);
@@ -286,7 +286,7 @@ export const SUBSCRIPTION_BUCKETS: SubBucket[] = [
     severity: "critical",
     color: "#DC2626",
     label: "a expiré",
-    title: "Votre abonnement VerifScan a expiré",
+    title: "Votre abonnement Prodtrust a expiré",
   },
 ];
 
@@ -315,7 +315,7 @@ function subEmailShell(title: string, accentColor: string, bodyHtml: string): st
       <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
         <tr><td style="background:linear-gradient(135deg,#022150,#10B981);padding:20px 28px;">
           <table role="presentation" width="100%"><tr>
-            <td style="color:#ffffff;font-size:20px;font-weight:bold;">&#128737;&#65039; VerifScan</td>
+            <td style="color:#ffffff;font-size:20px;font-weight:bold;">&#128737;&#65039; Prodtrust</td>
             <td align="right" style="color:rgba(255,255,255,0.85);font-size:12px;">La v&eacute;rit&eacute; au bout du scan</td>
           </tr></table>
         </td></tr>
@@ -331,9 +331,9 @@ function subEmailShell(title: string, accentColor: string, bodyHtml: string): st
         </td></tr>
         <tr><td style="background:#F9FAFB;padding:16px 28px;border-top:1px solid #F3F4F6;">
           <div style="font-size:11px;color:#9CA3AF;line-height:1.5;">
-            Vous recevez cet email selon vos pr&eacute;f&eacute;rences de notification VerifScan.
+            Vous recevez cet email selon vos pr&eacute;f&eacute;rences de notification Prodtrust.
             G&eacute;rez-les depuis votre tableau de bord &rarr; Param&egrave;tres &rarr; Notifications.<br />
-            &copy; ${new Date().getFullYear()} VerifScan &mdash; Dakar, S&eacute;n&eacute;gal
+            &copy; ${new Date().getFullYear()} Prodtrust &mdash; Dakar, S&eacute;n&eacute;gal
           </div>
         </td></tr>
       </table>
@@ -364,9 +364,9 @@ export function renderSubscriptionAlertEmail(
   const isExpired = daysLeft < 0;
 
   let body = isExpired
-    ? `<p style="margin:0 0 16px 0;">Votre abonnement <strong>VerifScan ${escapeHtml(planName)}</strong> a expir&eacute; le <strong>${fmtDate(expiresAt)}</strong>.</p>
+    ? `<p style="margin:0 0 16px 0;">Votre abonnement <strong>Prodtrust ${escapeHtml(planName)}</strong> a expir&eacute; le <strong>${fmtDate(expiresAt)}</strong>.</p>
        <div style="background:#FEF2F2;border-radius:8px;padding:12px 14px;font-size:13px;color:#991B1B;margin-bottom:16px;">⚠️ Pour continuer &agrave; g&eacute;n&eacute;rer des QR codes et prot&eacute;ger vos produits, renouvelez votre abonnement d&egrave;s maintenant.</div>`
-    : `<p style="margin:0 0 16px 0;">Votre abonnement <strong>VerifScan ${escapeHtml(planName)}</strong> expire dans <strong style="color:${bucket.color};">${daysLeft} jour${daysLeft > 1 ? "s" : ""}</strong>, le <strong>${fmtDate(expiresAt)}</strong>.</p>`;
+    : `<p style="margin:0 0 16px 0;">Votre abonnement <strong>Prodtrust ${escapeHtml(planName)}</strong> expire dans <strong style="color:${bucket.color};">${daysLeft} jour${daysLeft > 1 ? "s" : ""}</strong>, le <strong>${fmtDate(expiresAt)}</strong>.</p>`;
 
   body += `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:6px;">
     <tr>
@@ -502,8 +502,8 @@ export async function runSubscriptionAlertsJob(): Promise<SubJobResult> {
           daysLeft,
         },
         emailSubject: isExpired
-          ? `🔒 VerifScan — votre abonnement a expiré`
-          : `⏳ VerifScan — votre abonnement expire dans ${daysLeft} jour${daysLeft > 1 ? "s" : ""}`,
+          ? `🔒 Prodtrust — votre abonnement a expiré`
+          : `⏳ Prodtrust — votre abonnement expire dans ${daysLeft} jour${daysLeft > 1 ? "s" : ""}`,
         emailHtml: renderSubscriptionAlertEmail({
           planName: sub.planName,
           priceMonthly: config.priceMonthly,

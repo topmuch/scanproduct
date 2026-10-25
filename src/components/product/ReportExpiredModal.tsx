@@ -295,7 +295,7 @@ export function ReportExpiredModal({
                 {/* Privacy note */}
                 <p className="rounded-lg bg-[#F0F4F9] p-3 text-xs leading-relaxed text-[#011D46]">
                   🔒 Votre signalement sera transmis au fabricant et à l&apos;équipe
-                  VerifScan. Vos données ne sont jamais partagées avec des tiers.
+                  Prodtrust. Vos données ne sont jamais partagées avec des tiers.
                 </p>
 
                 {/* Actions */}

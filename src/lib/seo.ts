@@ -7,24 +7,24 @@ import { getSetting, SETTING_KEYS } from "@/lib/settings";
  *   1. Setting "siteUrl"  (editable by the SuperAdmin in Paramètres → Général,
  *      persisted in the Setting table)
  *   2. NEXT_PUBLIC_APP_URL (Coolify env var, set at deploy time)
- *   3. DEFAULT_SITE_URL ("https://verifscan.com")
+ *   3. DEFAULT_SITE_URL ("https://newvisioncargo.pro")
  *
  * The result is cached for 60s by the settings layer (metadata functions run
  * on every page load — we must not hammer the DB).
  */
 
 /** Fallback canonical origin when nothing is configured. */
-export const DEFAULT_SITE_URL = "https://verifscan.com";
+export const DEFAULT_SITE_URL = "https://newvisioncargo.pro";
 
 /** Fallback public contact email. */
-export const DEFAULT_CONTACT_EMAIL = "contact@verifscan.com";
+export const DEFAULT_CONTACT_EMAIL = "contact@newvisioncargo.pro";
 
 /** Fallback public phone (JSON-LD contactPoint). */
 export const DEFAULT_CONTACT_PHONE = "+221773821822";
 
 /**
  * Resolve the canonical public origin of the site.
- * Returns an origin WITHOUT a trailing slash (e.g. "https://verifscan.com").
+ * Returns an origin WITHOUT a trailing slash (e.g. "https://newvisioncargo.pro").
  */
 export async function getSiteUrl(): Promise<string> {
   const stored = await getSetting(SETTING_KEYS.siteUrl);

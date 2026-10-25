@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
 
 /**
- * VerifScan NextAuth configuration.
+ * Prodtrust NextAuth configuration.
  *
  * - JWT strategy (no session DB rows needed)
  * - Credentials provider with bcrypt password verification

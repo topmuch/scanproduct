@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * VerifScan — Fabricant dashboard data context.
+ * Prodtrust — Fabricant dashboard data context.
  *
  * Wraps the entire fabricant shell so every page can read the server-fetched
  * data (profile, products, lots, qrCodes, stats, score, abonnement, …)

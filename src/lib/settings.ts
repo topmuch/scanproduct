@@ -99,18 +99,18 @@ export async function getSettings(
 export const SETTING_KEYS = {
   /** Public URL of the site favicon (e.g. "/api/uploads/site/favicon.png"). */
   faviconUrl: "faviconUrl",
-  /** Site name shown in the UI + metadata (defaults to "VerifScan"). */
+  /** Site name shown in the UI + metadata (defaults to "Prodtrust"). */
   siteName: "siteName",
   /** Tagline shown in the UI (defaults to "La vérité au bout du scan"). */
   siteSlogan: "siteSlogan",
   /**
-   * Canonical public origin of the site, e.g. "https://verifscan.com".
+   * Canonical public origin of the site, e.g. "https://newvisioncargo.pro".
    * Drives metadataBase, canonical URLs, hreflang alternates, the sitemap,
    * JSON-LD and OpenGraph URLs. Falls back to DEFAULT_SITE_URL (lib/seo.ts)
    * when absent.
    */
   siteUrl: "siteUrl",
-  /** Public contact email (defaults to "contact@verifscan.com"). */
+  /** Public contact email (defaults to "contact@newvisioncargo.pro"). */
   contactEmail: "contactEmail",
   /** Public contact phone (defaults to "+221773821822"). */
   contactPhone: "contactPhone",
@@ -142,7 +142,7 @@ export const SETTING_KEYS = {
   smtpPass: "smtpPass",
   /** "true" (SSL/direct) or "false" (STARTTLS/plain). Empty = auto (465). */
   smtpSecure: "smtpSecure",
-  /** From header, e.g. "VerifScan <no-reply@verifscan.com>". */
+  /** From header, e.g. "Prodtrust <no-reply@newvisioncargo.pro>". */
   smtpFrom: "smtpFrom",
   // ── Admin notification toggles ────────────────────────────────────────────
   /** Notify admins of new signups ("true"/"false"). */

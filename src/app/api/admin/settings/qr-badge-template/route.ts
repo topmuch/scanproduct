@@ -17,7 +17,7 @@ import { db } from "@/lib/db";
  *
  * ── GET /api/admin/settings/qr-badge-template ────────────────────
  *   { url: string | null } — design officiel actuel (ou null → badge
- *   jaune « LABEL VERIFSCAN » par défaut).
+ *   jaune « LABEL PRODTRUST » par défaut).
  *
  * ── POST /api/admin/settings/qr-badge-template ───────────────────
  *   multipart/form-data, champ "file" (image 5 MB max, magic bytes).

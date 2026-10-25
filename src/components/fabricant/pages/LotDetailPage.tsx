@@ -135,7 +135,7 @@ export function LotDetailPage() {
   function handleDownloadQR() {
     // Encode la même URL publique que la génération serveur (GS1 ou
     // standard selon le barcode du produit) pour un QR téléchargé
-    // identique à ce qui est imprimé — design officiel « LABEL VERIFSCAN ».
+    // identique à ce qui est imprimé — design officiel « LABEL PRODTRUST ».
     const qr = urlQrDuLot();
     downloadBadgeQR(
       qr.url,
@@ -529,7 +529,7 @@ function ActionButton({
 }
 
 function RealMiniQR({ value }: { value: string }) {
-  // Design officiel « LABEL VERIFSCAN » (cercle jaune, QR noir au centre) —
+  // Design officiel « LABEL PRODTRUST » (cercle jaune, QR noir au centre) —
   // même rendu que la grille QR Codes et les téléchargements.
   return <BadgeQRPreview value={value} size={84} />;
 }

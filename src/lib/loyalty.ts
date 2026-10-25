@@ -1,5 +1,5 @@
 /**
- * VerifScan V3 — Programme de Fidélité Consommateur
+ * Prodtrust V3 — Programme de Fidélité Consommateur
  * ==================================================
  *
  * Server-only module that implements the consumer loyalty program:

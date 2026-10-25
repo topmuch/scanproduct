@@ -7,11 +7,11 @@ import { RubricProducts } from "@/components/landing/RubricProducts";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Produits 100% authentiques — VerifScan",
+  title: "Produits 100% authentiques — Prodtrust",
   description:
-    "Découvrez les produits VerifScan avec un score de transparence Or ou supérieur. Origine, lot, ingrédients et traçabilité vérifiés en un scan.",
+    "Découvrez les produits Prodtrust avec un score de transparence Or ou supérieur. Origine, lot, ingrédients et traçabilité vérifiés en un scan.",
   openGraph: {
-    title: "Produits 100% authentiques — VerifScan",
+    title: "Produits 100% authentiques — Prodtrust",
     description:
       "Vérifiez l'origine et la traçabilité en un scan. Score de transparence Or ou supérieur.",
     type: "website",

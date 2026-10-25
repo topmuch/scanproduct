@@ -677,7 +677,7 @@ export default function ArtisanDashboardPage() {
                       <CheckCircle2 className="h-5 w-5 text-white" />
                     </span>
                     <span className="text-[12px] font-extrabold leading-tight text-white">
-                      À propos de VerifScan
+                      À propos de Prodtrust
                     </span>
                   </a>
                 </div>
@@ -703,7 +703,7 @@ export default function ArtisanDashboardPage() {
                   </div>
                   <a
                     href={`https://wa.me/?text=${encodeURIComponent(
-                      `🌿 Découvrez mes produits faits main sur VerifScan : ${
+                      `🌿 Découvrez mes produits faits main sur Prodtrust : ${
                         typeof window !== "undefined" ? window.location.origin : ""
                       }/a/${firstPublicProduct.viewCode}`
                     )}`}
@@ -733,7 +733,7 @@ export default function ArtisanDashboardPage() {
 
               {/* ── Pied de page marque ──────────────────────────────────── */}
               <p className="pb-2 text-center text-[11px] font-semibold text-gray-400">
-                <span className="font-extrabold text-gray-500">VerifScan</span>{" "}
+                <span className="font-extrabold text-gray-500">Prodtrust</span>{" "}
                 · Authentifiez vos produits faits main 🌿
               </p>
             </div>

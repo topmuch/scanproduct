@@ -1,5 +1,5 @@
 /**
- * VerifScan — Fabricant dashboard types & UI constants.
+ * Prodtrust — Fabricant dashboard types & UI constants.
  *
  * This module contains ONLY types and pure UI constants (no DB queries, no
  * server-only code) so it can be safely imported by both server and client
@@ -82,7 +82,7 @@ export type QRCode = {
   status: "actif" | "desactive";
   /** PNG persisté côté serveur (bulk-generate) — null pour les QR unitaires. */
   imageUrl?: string | null;
-  /** Design du rendu : "badge" (LABEL VERIFSCAN jaune) ou "classic". */
+  /** Design du rendu : "badge" (LABEL PRODTRUST jaune) ou "classic". */
   design?: "badge" | "classic";
 };
 

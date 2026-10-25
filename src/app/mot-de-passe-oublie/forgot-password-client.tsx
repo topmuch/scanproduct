@@ -216,7 +216,7 @@ function ForgotPasswordForm() {
                 Vérifiez votre boîte email
               </h1>
               <p className="mt-2 text-sm text-[#6B7280]">
-                Si un compte VerifScan existe pour{" "}
+                Si un compte Prodtrust existe pour{" "}
                 <span className="font-semibold text-[#111827]">{email}</span>,
                 un lien de réinitialisation vient d&apos;être envoyé. Il est
                 valable <span className="font-semibold">1 heure</span>.

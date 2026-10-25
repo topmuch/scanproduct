@@ -1,7 +1,7 @@
 /**
  * Utilitaires WhatsApp — un seul endroit pour construire les liens wa.me.
  *
- * ⚠️ Contexte bug production (verifscan.com) : le bouton « Commander sur
+ * ⚠️ Contexte bug production (newvisioncargo.pro) : le bouton « Commander sur
  * WhatsApp » affichait « Ce destinataire n'est pas sur WhatsApp » alors que
  * le numéro était « bien renseigné ». Cause : un numéro sénégalais saisi au
  * format local (ex. « 78 135 13 94 ») ou avec des zéros parasites après
@@ -101,6 +101,6 @@ export function buildWhatsAppLink(phone: string, message?: string): string {
 export function buildWhatsAppTestLink(phone: string): string {
   return buildWhatsAppLink(
     phone,
-    "Test VerifScan — vérification du numéro WhatsApp de la boutique."
+    "Test Prodtrust — vérification du numéro WhatsApp de la boutique."
   );
 }
